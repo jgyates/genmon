@@ -81,6 +81,7 @@ class GenOtodataData(MySupport):
         self.running = True
         self.current_level = None
         self.CommAccessLock = threading.Lock()
+        self.debug = False
 
         if not bleak_installed:
             self.LogError(
@@ -111,6 +112,7 @@ class GenOtodataData(MySupport):
             .strip()
             .lower()
         )
+        self.debug = self.config.ReadValue("debug", return_type=bool, default=False)
 
         try:
             self.Generator = ClientInterface(host=host, port=port, log=self.log)
@@ -125,7 +127,7 @@ class GenOtodataData(MySupport):
                 self.TankCheckThread, Name="TankCheckThread", start=False
             )
         self.Threads["TankCheckThread"].Start()
-        self.LogError("GenOtodataData: Started.")
+        self.LogDebug("GenOtodataData: Started.")
 
     # ------------------------------------------------------------------
     def SendCommand(self, Command):
@@ -179,14 +181,14 @@ class GenOtodataData(MySupport):
             return
 
         while True:
-            self.LogError(
+            self.LogDebug(
                 "GenOtodataData: Scanning %.0f s for Otodata TM6030 sensor..."
                 % self.scan_time
             )
             addr, level = self.GetTankReading()
 
             if level is not None:
-                self.LogError(
+                self.LogDebug(
                     "GenOtodataData: Sensor [%s] level %.1f%%" % (addr, level)
                 )
                 if level != self.current_level:
@@ -198,7 +200,7 @@ class GenOtodataData(MySupport):
                         "generator: set_tank_data=" + json.dumps(data)
                     )
             else:
-                self.LogError(
+                self.LogDebug(
                     "GenOtodataData: Sensor not found during scan window. "
                     "Check Bluetooth adapter and sensor proximity."
                 )
