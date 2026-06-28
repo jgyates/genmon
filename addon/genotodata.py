@@ -112,6 +112,7 @@ class GenOtodataData(MySupport):
             .strip()
             .lower()
         )
+        self.debug = self.config.ReadValue("debug", return_type=bool, default=False)
 
         try:
             self.Generator = ClientInterface(host=host, port=port, log=self.log)
@@ -123,8 +124,11 @@ class GenOtodataData(MySupport):
             self.Generator = None
 
         self.Threads["TankCheckThread"] = MyThread(
-            self.TankCheckThread, Name="TankCheckThread"
+            self.TankCheckThread, Name="TankCheckThread", start=False
         )
+
+        self.Threads["TankCheckThread"].Start()
+
         self.LogError("GenOtodataData: Started.")
 
     # ------------------------------------------------------------------
@@ -189,14 +193,14 @@ class GenOtodataData(MySupport):
             return
 
         while True:
-            self.LogError(
+            self.LogDebug(
                 "GenOtodataData: Scanning %.0f s for Otodata TM6030 sensor..."
                 % self.scan_time
             )
             addr, level = self.GetTankReading()
 
             if level is not None:
-                self.LogError(
+                self.LogDebug(
                     "GenOtodataData: Sensor [%s] level %.1f%%" % (addr, level)
                 )
                 if level != self.current_level:
