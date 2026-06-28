@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Performance improvement for temperature graphs, Thanks @MichaelB2018
 - New add on for Otodata Bluetooth propane tank sensor, Thanks @bdwilson
 - Update to change the web app cache priority that may fix some networks with slow loading web pages
+- New add on for Hubitat Elevation hub, Thanks @bdwilson
 
 
 ## 2.0.00 -2026-04-05
