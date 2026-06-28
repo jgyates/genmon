@@ -1,4 +1,4 @@
-const CACHE_NAME = 'genmon-v2';
+const CACHE_NAME = 'genmon-v3';
 const SHELL_ASSETS = [
   '/',
   '/css/genmon.css',
@@ -36,13 +36,20 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Network-first for all static assets: always try fresh copy,
-  // fall back to cache when offline
+  // Cache-first with background refresh (stale-while-revalidate) for static
+  // assets: serve the cached copy immediately so a flaky/slow network fetch can
+  // never leave the page unstyled, while still updating the cache in the
+  // background for the next load.
   event.respondWith(
-    fetch(event.request).then(response => {
-      const clone = response.clone();
-      caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-      return response;
-    }).catch(() => caches.match(event.request))
+    caches.match(event.request).then(cached => {
+      const networkFetch = fetch(event.request).then(response => {
+        if (response && response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        }
+        return response;
+      }).catch(() => cached);
+      return cached || networkFetch;
+    })
   );
 });
