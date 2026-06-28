@@ -311,12 +311,18 @@ class Loader(MySupport):
                         self.LibraryDependency("bleak"),
                     ],
                 },
+                {
+                    "modules": ["genhubitat"],
+                    "dependencies": [
+                        self.LibraryDependency("aiohttp"),
+                    ],
+                },
             ],
             "features": [
                 {
                     # zeroconf is optional within genhalink. Do not install it
                     # unless the add-on is enabled and mDNS discovery is on.
-                    "modules": ["genhalink"],
+                    "modules": ["genhalink", "genhubitat"],
                     "config": {
                         "file": "genhalink.conf",
                         "section": "genhalink",
