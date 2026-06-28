@@ -2962,7 +2962,7 @@ def GetAddOns():
         AddOnCfg["genhubitat"]["icon"] = "hubitat"
         AddOnCfg["genhubitat"][
             "url"
-        ] = "https://github.com/bdwilson/hubitat/tree/master/Genmon"
+        ] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genhubitatpy-optional"
         AddOnCfg["genhubitat"]["parameters"] = collections.OrderedDict()
 
         AddOnCfg["genhubitat"]["parameters"]["port"] = CreateAddOnParam(
