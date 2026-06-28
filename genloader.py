@@ -988,6 +988,7 @@ class Loader(MySupport):
                 "gencthat",
                 "genmopeka",
                 "genotodata",
+                "genhubitat",
                 "gencustomgpio",
                 "gensms_voip",
                 "genloader",
@@ -1140,6 +1141,15 @@ class Loader(MySupport):
                             section=entry,
                             module="genotodata.py",
                             conffile="genotodata.conf",
+                        )
+                    if entry == "genhubitat":
+                        self.LogError(
+                            "Warning: Missing entry: " + entry + " , adding entry"
+                        )
+                        self.AddEntry(
+                            section=entry,
+                            module="genhubitat.py",
+                            conffile="genhubitat.conf",
                         )
                     if entry == "gensms_voip":
                         self.LogError(
