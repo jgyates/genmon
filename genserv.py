@@ -2973,7 +2973,7 @@ def GetAddOns():
         AddOnCfg["genotodata"]["icon"] = "Genmon"
         AddOnCfg["genotodata"]["url"] = (
             "https://github.com/jgyates/genmon/wiki/"
-            "1----Software-Overview#genototadatapy-optional"
+            "1----Software-Overview#genotodatapy-optional"
         )
         AddOnCfg["genotodata"]["parameters"] = collections.OrderedDict()
 
