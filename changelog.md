@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Added setting in Web UI to adjust light / dark theme based on broswer settings Thanks @soumya92
 - Performance improvement for temperature graphs, Thanks @MichaelB2018
 - New add on for Otodata Bluetooth propane tank sensor, Thanks @bdwilson
+- Update to change the web app cache priority that may fix some networks with slow loading web pages
 
 
 ## 2.0.00 -2026-04-05
