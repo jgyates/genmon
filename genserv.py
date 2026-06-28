@@ -2949,6 +2949,82 @@ def GetAddOns():
             display_name="Zeroconf Discovery",
         )
 
+
+        # GENHUBITAT - Native Hubitat Integration
+        AddOnCfg["genhubitat"] = collections.OrderedDict()
+        AddOnCfg["genhubitat"]["enable"] = ConfigFiles[GENLOADER_CONFIG].ReadValue(
+            "enable", return_type=bool, section="genhubitat", default=False
+        )
+        AddOnCfg["genhubitat"]["title"] = "Native Hubitat Integration via REST/WebSocket API"
+        AddOnCfg["genhubitat"][
+            "description"
+        ] = "Native Hubitat integration via REST/WebSocket API. No MQTT broker required."
+        AddOnCfg["genhubitat"]["icon"] = "hubitat"
+        AddOnCfg["genhubitat"][
+            "url"
+        ] = "https://github.com/bdwilson/hubitat/tree/master/Genmon"
+        AddOnCfg["genhubitat"]["parameters"] = collections.OrderedDict()
+
+        AddOnCfg["genhubitat"]["parameters"]["port"] = CreateAddOnParam(
+            ConfigFiles[GENHUBITAT_CONFIG].ReadValue(
+                "port", return_type=int, default=9084
+            ),
+            "int",
+            "Port for the REST/WebSocket API server.",
+            bounds="required digits range:1024:65535",
+            display_name="API Server Port",
+        )
+        genhubitat_api_key = ConfigFiles[GENHUBITAT_CONFIG].ReadValue(
+            "api_key", return_type=str, default=""
+        )
+        if not genhubitat_api_key:
+            genhubitat_api_key = str(uuid.uuid4())
+            ConfigFiles[GENHUBITAT_CONFIG].WriteValue("api_key", genhubitat_api_key)
+            LogError("Auto-generated API key for genhubitat")
+        AddOnCfg["genhubitat"]["parameters"]["api_key"] = CreateAddOnParam(
+            genhubitat_api_key,
+            "readonly",
+            "API key for authentication (auto-generated). Copy this value into Hubitat when adding the integration.",
+            bounds="",
+            display_name="API Key (read-only)",
+        )
+        AddOnCfg["genhubitat"]["parameters"]["poll_interval"] = CreateAddOnParam(
+            ConfigFiles[GENHUBITAT_CONFIG].ReadValue(
+                "poll_interval", return_type=float, default=3.0
+            ),
+            "int",
+            "Interval in seconds between polling genmon for status updates. Default is 3.",
+            bounds="number",
+            display_name="Poll Interval",
+        )
+        AddOnCfg["genhubitat"]["parameters"]["blacklist"] = CreateAddOnParam(
+            ConfigFiles[GENHUBITAT_CONFIG].ReadValue(
+                "blacklist", return_type=str, default="Tiles"
+            ),
+            "string",
+            "Comma-separated keywords to exclude from the API. Matches any data path containing the keyword (case-insensitive).",
+            bounds="",
+            display_name="Excluded Data Paths",
+        )
+        AddOnCfg["genhubitat"]["parameters"]["include_monitor_stats"] = CreateAddOnParam(
+            ConfigFiles[GENHUBITAT_CONFIG].ReadValue(
+                "include_monitor_stats", return_type=bool, default=True
+            ),
+            "boolean",
+            "Include monitor/platform statistics (CPU temp, WiFi, memory).",
+            bounds="",
+            display_name="Include Monitor Stats",
+        )
+        AddOnCfg["genhubitat"]["parameters"]["include_weather"] = CreateAddOnParam(
+            ConfigFiles[GENHUBITAT_CONFIG].ReadValue(
+                "include_weather", return_type=bool, default=True
+            ),
+            "boolean",
+            "Include weather data if available.",
+            bounds="",
+            display_name="Include Weather",
+        )
+
     except Exception as e1:
         LogErrorLine("Error in GetAddOns: " + str(e1))
 
@@ -3205,6 +3281,7 @@ def SaveAddOnSettings(query_string):
             "gensms_voip": ConfigFiles[GENSMS_VOIP_CONFIG],
             "genhomeassistant": ConfigFiles[GENHOMEASSISTANT_CONFIG],
             "genhalink": ConfigFiles[GENHALINK_CONFIG],
+            "genhubitat": ConfigFiles[GENHUBITAT_CONFIG],
         }
 
         for module, entries in settings.items():  # module
@@ -3239,6 +3316,15 @@ def SaveAddOnSettings(query_string):
                             ConfigFiles[GENHALINK_CONFIG].WriteValue("api_key", new_key)
                             LogError("Auto-generated API key for genhalink")
 
+                    if module == "genhubitat" and basevalues.lower() == "true":
+                        # Auto-generate API key if empty when addon is enabled
+                        current_key = ConfigFiles[GENHUBITAT_CONFIG].ReadValue(
+                            "api_key", return_type=str, default=""
+                        )
+                        if not current_key:
+                            new_key = str(uuid.uuid4())
+                            ConfigFiles[GENHUBITAT_CONFIG].WriteValue("api_key", new_key)
+                            LogError("Auto-generated API key for genhubitat")
                 if basesettings == "parameters":
                     for params, paramvalue in basevalues.items():
                         if module == "genlog" and params == "Log File Name":
@@ -6756,6 +6842,7 @@ if __name__ == "__main__":
     GENSMS_VOIP_CONFIG = os.path.join(ConfigFilePath, "gensms_voip.conf")
     GENHOMEASSISTANT_CONFIG = os.path.join(ConfigFilePath, "genhomeassistant.conf")
     GENHALINK_CONFIG = os.path.join(ConfigFilePath, "genhalink.conf")
+    GENHUBITAT_CONFIG = os.path.join(ConfigFilePath, "genhubitat.conf")
 
     ConfigFileList = [
         GENMON_CONFIG,
@@ -6784,6 +6871,7 @@ if __name__ == "__main__":
         GENSMS_VOIP_CONFIG,
         GENHOMEASSISTANT_CONFIG,
         GENHALINK_CONFIG,
+        GENHUBITAT_CONFIG,
     ]
 
     for ConfigFile in ConfigFileList:

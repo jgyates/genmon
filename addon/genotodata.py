@@ -30,6 +30,7 @@ import asyncio
 import json
 import os
 import re
+import subprocess
 import sys
 import threading
 import time
@@ -81,7 +82,6 @@ class GenOtodataData(MySupport):
         self.running = True
         self.current_level = None
         self.CommAccessLock = threading.Lock()
-        self.debug = False
 
         if not bleak_installed:
             self.LogError(
@@ -112,7 +112,6 @@ class GenOtodataData(MySupport):
             .strip()
             .lower()
         )
-        self.debug = self.config.ReadValue("debug", return_type=bool, default=False)
 
         try:
             self.Generator = ClientInterface(host=host, port=port, log=self.log)
@@ -124,10 +123,9 @@ class GenOtodataData(MySupport):
             self.Generator = None
 
         self.Threads["TankCheckThread"] = MyThread(
-                self.TankCheckThread, Name="TankCheckThread", start=False
-            )
-        self.Threads["TankCheckThread"].Start()
-        self.LogDebug("GenOtodataData: Started.")
+            self.TankCheckThread, Name="TankCheckThread"
+        )
+        self.LogError("GenOtodataData: Started.")
 
     # ------------------------------------------------------------------
     def SendCommand(self, Command):
@@ -165,6 +163,16 @@ class GenOtodataData(MySupport):
         return result.get("addr"), result.get("level")
 
     def GetTankReading(self):
+        # Ensure the BLE adapter is powered on. Genmon runs as root so this
+        # always succeeds; it is a no-op if the adapter is already up.
+        try:
+            subprocess.run(
+                ["hciconfig", "hci0", "up"],
+                capture_output=True,
+                timeout=5,
+            )
+        except Exception:
+            pass
         loop = asyncio.new_event_loop()
         try:
             return loop.run_until_complete(self._ble_scan_async())
@@ -181,14 +189,14 @@ class GenOtodataData(MySupport):
             return
 
         while True:
-            self.LogDebug(
+            self.LogError(
                 "GenOtodataData: Scanning %.0f s for Otodata TM6030 sensor..."
                 % self.scan_time
             )
             addr, level = self.GetTankReading()
 
             if level is not None:
-                self.LogDebug(
+                self.LogError(
                     "GenOtodataData: Sensor [%s] level %.1f%%" % (addr, level)
                 )
                 if level != self.current_level:
@@ -200,7 +208,7 @@ class GenOtodataData(MySupport):
                         "generator: set_tank_data=" + json.dumps(data)
                     )
             else:
-                self.LogDebug(
+                self.LogError(
                     "GenOtodataData: Sensor not found during scan window. "
                     "Check Bluetooth adapter and sensor proximity."
                 )
