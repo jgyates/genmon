@@ -322,10 +322,24 @@ class Loader(MySupport):
                 {
                     # zeroconf is optional within genhalink. Do not install it
                     # unless the add-on is enabled and mDNS discovery is on.
-                    "modules": ["genhalink", "genhubitat"],
+                    "modules": ["genhalink"],
                     "config": {
                         "file": "genhalink.conf",
                         "section": "genhalink",
+                        "option": "zeroconf_enabled",
+                        "default": True,
+                    },
+                    "dependencies": [
+                        self.LibraryDependency("zeroconf"),
+                    ],
+                },
+                {
+                    # zeroconf is optional within genhubitat. Do not install it
+                    # unless the add-on is enabled and mDNS discovery is on.
+                    "modules": ["genhubitat"],
+                    "config": {
+                        "file": "genhubitat.conf",
+                        "section": "genhubitat",
                         "option": "zeroconf_enabled",
                         "default": True,
                     },
