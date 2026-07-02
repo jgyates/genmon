@@ -646,7 +646,7 @@ class CustomController(GeneratorController):
             self.LogErrorLine("Error in RegisterIsLog: " + str(e1))
             return False, 0, ""
 
-    # -------------CustomController:MasterEmulation------------------------------ 
+    # -------------CustomController:UpdateLogRegistersAsMaster------------------
     def UpdateLogRegistersAsMaster(self):
         try:
             if not "log_registers" in self.controllerimport.keys():

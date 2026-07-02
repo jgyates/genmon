@@ -51,6 +51,8 @@ class MyThread:
     def Name(self):
         return self.ThreadObj.name
 
-    # ---------- MyThread::Name-------------------------------------------------
+    # ---------- MyThread::WaitForThreadToEnd-----------------------------------
     def WaitForThreadToEnd(self, Timeout=None):
         return self.ThreadObj.join(Timeout)
+
+
