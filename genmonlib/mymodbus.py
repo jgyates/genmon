@@ -103,7 +103,7 @@ class ModbusProtocol(ModbusBase):
         except Exception as e1:
             self.FatalError("Unable to find crcmod package: " + str(e1))
 
-    # --------------------ModbusProtocol:GetExceptionString----------------------
+    # --------------------ModbusProtocol:GetExceptionString---------------------
     def GetExceptionString(self, Code):
 
         try:

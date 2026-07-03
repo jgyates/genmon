@@ -233,6 +233,11 @@ class ModbusBase(MySupport):
             self.AdditionalModbusTimeout = self.config.ReadValue(
                 "additional_modbus_timeout", return_type=float, default=0.0, NoLog=True
             )
+            # the delay in seconds between modbus requests
+            self.BetweenFrameDelay = self.config.ReadValue(
+                "modbus_between_frame_delay", return_type=float, default=0.0, NoLog=True
+            )
+            
             ResponseAddressStr = self.config.ReadValue("response_address", default=None)
             if ResponseAddressStr != None:
                 try:
@@ -256,6 +261,8 @@ class ModbusBase(MySupport):
         self.console = SetupLogger("mymodbus_console", log_file="", stream=True)
 
         if self.UseModbusFunction4:
+            # This option is no longer needed as both input and holding registers 
+            # are supported with the custom config controller type
             # use modbus function code 4 instead of 3 for reading modbus values
             self.MBUS_CMD_READ_HOLDING_REGS = self.MBUS_CMD_READ_INPUT_REGS
             self.LogError("Using Modbus function 4 instead of 3")

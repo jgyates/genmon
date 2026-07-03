@@ -13,6 +13,7 @@
 import getopt
 import os
 import sys
+import time
 
 # Adds higher directory to python modules path.
 sys.path.append(os.path.dirname(sys.path[0]))  
@@ -180,6 +181,8 @@ if __name__ == "__main__":  #
     UseInputReg = False
     UseCoils = False
     SingleRegWrites = False
+    DelayMS = 0.0
+    Length = 1
 
     HelpStr = "\npython3 mobusdump.py -r <Baud Rate> -p <serial port> -a <modbus address to query> -s <start modbus register>  -e <end modbus register>\n"
     HelpStr += "\n   Example: python3 modbusdump.py -r 9600 -p /dev/serial0 -a 9d -s 5 -e 100 \n"
@@ -199,13 +202,15 @@ if __name__ == "__main__":  #
     HelpStr += "\n      -m  Use Modbus TCP, if omitted and IP and port provided then use Modbus RTU over TCP"
     HelpStr += "\n      -n  read input registers instead of holding registers (modbus fuction 0x04)"
     HelpStr += "\n      -u  use single register writes for holding (modbus function 0x06) and coil writes (modbus fuction 0x05)"
+    HelpStr += "\n      -d  delay between modbus requests in milliseconds (e.g. 10 for 10 ms)"
+    HelpStr += "\n      -l  length of each read. 16 bit incriments. Use 1 for 16 bit, 2 for 32 bit, 3 for 48 bit, etc"
     HelpStr += "\n\n     Default read and write use holding registers (modbus fuction 0x03 and 0x10)"
     HelpStr += "\n \n"
 
     try:
         opts, args = getopt.getopt(
             sys.argv[1:],
-            "ucnmbhr:p:s:e:a:x:w:i:t:",
+            "ucnmbhr:p:s:e:a:x:w:i:t:d:l:",
             [
                 "rate=",
                 "port=",
@@ -219,6 +224,7 @@ if __name__ == "__main__":  #
             ],
         )
     except getopt.GetoptError:
+        print("HELLO")
         print(HelpStr)
         sys.exit(2)
 
@@ -278,6 +284,12 @@ if __name__ == "__main__":  #
             elif opt in ("-u", "--usesingle"):
                 SingleRegWrites = True
                 print("Using Single Register Writes")
+            elif opt in ("-d", "--delay"):
+                DelayMS = float(arg)
+                print(f"Using Delay of {DelayMS}")
+            elif opt in ("-l", "--length"):
+                Length = int(arg)
+                print(f"Length: {Length}")
 
     except Exception as e1:
         print("\nError parsing command line: " + str(e1) + "\n")
@@ -293,10 +305,12 @@ if __name__ == "__main__":  #
         or startregister == None
         or modbusaddress == None
     ):
+        print("\nInvalid comm settings\n")
         print(HelpStr)
         sys.exit(2)
     if writevalue == None:
         if endregister == None or startregister > endregister:
+            print("\nInvalid start or end register\n")
             print(HelpStr)
             sys.exit(2)
 
@@ -352,9 +366,11 @@ if __name__ == "__main__":  #
                 print("Error opening serial device...: " + str(e1))
                 sys.exit(2)
             try:
-                for Reg in range(startregister, endregister):
+                for Reg in range(startregister, endregister, Length):
                     RegStr = "%04x" % Reg
-                    modbus.ProcessTransaction(RegStr, 1, IsCoil = UseCoils, IsInput = UseInputReg)
+                    modbus.ProcessTransaction(RegStr, Length, IsCoil = UseCoils, IsInput = UseInputReg)
+                    if DelayMS > 0:
+                        time.sleep(DelayMS * 1000.0)
             except Exception as e1:
                 print("Error reading device: " + str(e1))
                 sys.exit(2)

@@ -44,6 +44,7 @@ class SerialTCPDevice(MySupport):
 
         self.host = host
         self.port = port
+        self.keepalive = False
 
         if self.config != None:
             self.loglocation = self.config.ReadValue("loglocation", default=ProgramDefaults.LogPath)

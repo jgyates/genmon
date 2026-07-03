@@ -1233,7 +1233,7 @@ class GeneratorController(MySupport):
                                 return "Command not found."
                         self.LogDebug("Write List: len: " + str(int(len(Data)  // 2)) + " : "  + self.LogHexList(Data, prefix=command["reg"], nolog = True))
                         self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) // 2, Data, IsCoil = IsCoil, IsSingle = IsSingle)
-
+                        self.DelayBetweenFrames(ignoreerror = True)
                     elif isinstance(command["value"], str):
                         # only supports single word writes
                         value = int(command["value"], 16)
@@ -1244,6 +1244,7 @@ class GeneratorController(MySupport):
                         Data.append(LowByte)  
                         self.LogDebug("Write Str: len: "+ str(int(len(Data)  // 2)) + " : " + command["reg"] + ": "+ ("%04x %04x" % (HighByte, LowByte)))
                         self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) // 2, Data, IsCoil = IsCoil, IsSingle = IsSingle)
+                        self.DelayBetweenFrames(ignoreerror = True)
                     elif isinstance(command["value"], int):
                         # only supports single word writes
                         value = command["value"]
@@ -1254,6 +1255,7 @@ class GeneratorController(MySupport):
                         Data.append(LowByte)  
                         self.LogDebug("Write Int: len: "+ str(int(len(Data)  // 2)) + " : " + command["reg"]+ ": "+ ("%04x %04x" % (HighByte, LowByte)))
                         self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) // 2, Data, IsCoil = IsCoil, IsSingle = IsSingle)
+                        self.DelayBetweenFrames(ignoreerror = True)
                     else:
                         self.LogDebug("Error in ExecuteCommandSequence: invalid value type")
                         return "Command not found."
@@ -1263,6 +1265,17 @@ class GeneratorController(MySupport):
             self.LogDebug(str(command_sequence))
             return "Error in ExecuteCommandSequence"
         return "The command was sent to the controller."
+
+    # --------------------ModbusProtocol:DelayBetweenFrames---------------------
+    def DelayBetweenFrames(self, ignoreerror = False):
+        # add a delay between modbus requests
+        try:
+            if self.ModBus.BetweenFrameDelay <= 0:
+                return
+            
+            self.WaitForExit(timeout = self.ModBus.BetweenFrameDelay, ignoreerror=ignoreerror)
+        except Exception as e1:
+            self.LogErrorLine(f"Error in DelayBetween Frames: {e1}")
 
     # ------------ GeneratorController::GetStartInfo ----------------------------
     # return a dictionary with startup info for the gui
@@ -1607,6 +1620,7 @@ class GeneratorController(MySupport):
             Data.append(HighByte)
             Data.append(LowByte)
             RegValue = self.ModBus.ProcessWriteTransaction(Register, len(Data) // 2, Data)
+            self.DelayBetweenFrames(ignoreerror = True)
 
             if RegValue == "":
                 msgbody = "OK"

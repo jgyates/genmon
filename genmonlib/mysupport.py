@@ -206,11 +206,18 @@ class MySupport(MyCommon):
         return Thread.StopSignaled()
 
     # ---------- MySupport::WaitForExit-----------------------------------------
-    def WaitForExit(self, Name, timeout=None):
+    def WaitForExit(self, Name = None, timeout=None, ignoreerror = False):
+
+        # If called without a specific thread name
+        if Name == None:
+            ThreadObj = threading.current_thread()
+            Name = ThreadObj.name
 
         Thread = self.Threads.get(Name, None)
         if Thread == None:
-            self.LogError("Error getting thread name in WaitForExit: " + Name)
+            if ignoreerror == False:
+                self.LogError(f"Error getting thread name in WaitForExit: ({Name})")
+            time.sleep(timeout)
             return False
 
         return Thread.Wait(timeout)

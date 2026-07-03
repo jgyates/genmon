@@ -681,6 +681,7 @@ class CustomController(GeneratorController):
                             or localTimeoutCount != self.ModBus.ComTimoutError
                         ) and self.ModBus.RxPacketCount:
                             self.WaitAndPergeforTimeout()
+                        self.DelayBetweenFrames()
                         RegisterInt += Step
                         Iteration -= 1
 
@@ -715,6 +716,7 @@ class CustomController(GeneratorController):
                             or localTimeoutCount != self.ModBus.ComTimoutError
                         ) and self.ModBus.RxPacketCount:
                             self.WaitAndPergeforTimeout()
+                        self.DelayBetweenFrames()
                     except Exception as e1:
                         self.LogErrorLine("Error in MasterEmulation (holding): " + str(e1))
 
@@ -735,6 +737,7 @@ class CustomController(GeneratorController):
                             or localTimeoutCount != self.ModBus.ComTimoutError
                         ) and self.ModBus.RxPacketCount:
                             self.WaitAndPergeforTimeout()
+                        self.DelayBetweenFrames()
                     except Exception as e1:
                         self.LogErrorLine("Error in MasterEmulation (input): " + str(e1))
 
@@ -756,6 +759,7 @@ class CustomController(GeneratorController):
                             or localTimeoutCount != self.ModBus.ComTimoutError
                         ) and self.ModBus.RxPacketCount:
                             self.WaitAndPergeforTimeout()
+                        self.DelayBetweenFrames()
                     except Exception as e1:
                         self.LogErrorLine("Error in MasterEmulation (coil): " + str(e1))
 
