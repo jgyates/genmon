@@ -370,7 +370,7 @@ if __name__ == "__main__":  #
                     RegStr = "%04x" % Reg
                     modbus.ProcessTransaction(RegStr, Length, IsCoil = UseCoils, IsInput = UseInputReg)
                     if DelayMS > 0:
-                        time.sleep(DelayMS * 1000.0)
+                        time.sleep(DelayMS / 1000.0)
             except Exception as e1:
                 print("Error reading device: " + str(e1))
                 sys.exit(2)
