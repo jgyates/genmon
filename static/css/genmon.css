@@ -1409,8 +1409,13 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .notif-cat-label {
   display: inline-flex; align-items: center; cursor: pointer; user-select: none;
+  position: relative;
 }
-.notif-cat-label input { display: none; }
+.notif-cat-label input:focus + .notif-cat-chip,
+.notif-cat-label input:focus-visible + .notif-cat-chip {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 .notif-cat-chip {
   display: inline-block;
   padding: 4px 10px;
