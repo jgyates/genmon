@@ -3909,7 +3909,7 @@ var Pages = {
           '<div class="notif-cats">';
         CATS.forEach(function(cat) {
           var checked = r.cats.indexOf(cat) >= 0 ? ' checked' : '';
-          c += '<label class="notif-cat-label"><input type="checkbox" class="n-cat" data-cat="'+esc(cat)+'"'+checked+'>' +
+          c += '<label class="notif-cat-label"><input type="checkbox" class="n-cat sr-only" data-cat="'+esc(cat)+'"'+checked+'>' +
             '<span class="notif-cat-chip">'+(CAT_LABELS[cat]||cat)+'</span></label>';
         });
         c += '</div></div>';
@@ -4714,7 +4714,7 @@ var Pages = {
           '<div class="notif-cats">';
         NOTIF_CATS.forEach(function(cat) {
           var checked = r.cats.indexOf(cat) >= 0 ? ' checked' : '';
-          c += '<label class="notif-cat-label"><input type="checkbox" class="n-cat" data-cat="'+esc(cat)+'"'+checked+'>' +
+          c += '<label class="notif-cat-label"><input type="checkbox" class="n-cat sr-only" data-cat="'+esc(cat)+'"'+checked+'>' +
             '<span class="notif-cat-chip">'+(NOTIF_CAT_LABELS[cat]||cat)+'</span></label>';
         });
         c += '</div></div>';
