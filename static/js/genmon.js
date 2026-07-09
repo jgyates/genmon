@@ -4220,7 +4220,7 @@ var Pages = {
       { id:'system',   label:'Monitor',        icon:'cpu' }
     ],
     render: function($c) {
-      $c.html('<div class="page-title">'+icon('settings')+' Settings</div>' +
+      $c.html('<h1 class="page-title">'+icon('settings')+' Settings</h1>' +
         '<div id="set-wrap"><div class="text-muted text-center">Loading\u2026</div></div>');
       var self = this;
       API.get('settings', 12000).done(function(d){
@@ -4241,7 +4241,10 @@ var Pages = {
       var devMode = Store.get('devMode', false);
       var showModbus = Store.get('showModbus', true);
 
-      /* Dependent field rules: parent checkbox → child fields hidden when condition met.
+      function _setTabId(cat) { return 'set-tab-' + cat; }
+      function _setPanelId(cat) { return 'set-panel-' + cat; }
+
+      /* Dependent field rules:
          NOTE: 'disable*' keys are displayed INVERTED (checked = enabled).
          So 'when:true' means 'when the original config value is true (=disabled)',
          which in the inverted UI means 'when checkbox is UNchecked'. We flip the
@@ -4314,36 +4317,43 @@ var Pages = {
       var h = '<div class="set-toolbar">' +
         '<div class="set-search-wrap">' +
         btnIcon('search', 16) +
-        '<input class="set-search-input" id="set-search" type="text" placeholder="Search settings\u2026"></div>' +
+        '<input class="set-search-input" id="set-search" type="search" aria-label="Search settings" placeholder="Search settings\u2026"></div>' +
         '<button class="set-adv-btn'+(devMode?' set-adv-on':'')+' " id="set-adv-toggle">' +
         btnIcon('advanced', 14) + ' Advanced</button></div>';
 
       /* --- Category tabs (with icons) --- */
-      h += '<div class="set-cats" id="set-cats">';
+      h += '<div class="set-cats" id="set-cats" role="tablist" aria-label="Settings sections">';
       CATS.forEach(function(c, i) {
         var cnt = buckets[c.id] ? buckets[c.id].length : 0;
-        h += '<button class="set-cat'+(i===0?' active':'')+'" data-cat="'+c.id+'">' +
+        var isActive = (i === 0);
+        h += '<button class="set-cat'+(isActive?' active':'')+'" role="tab" id="'+_setTabId(c.id)+'" data-cat="'+c.id+'"' +
+          ' aria-selected="'+(isActive?'true':'false')+'" aria-controls="'+_setPanelId(c.id)+'" tabindex="'+(isActive?'0':'-1')+'">' +
           icon(c.icon) + '<span class="set-cat-label">'+esc(c.label)+'</span>' +
           '<span class="set-cat-count">'+cnt+'</span></button>';
         if (c.id === 'email') {
-          h += '<button class="set-cat" data-cat="__notifications__">' +
+          h += '<button class="set-cat" role="tab" id="'+_setTabId('__notifications__')+'" data-cat="__notifications__"' +
+            ' aria-selected="false" aria-controls="'+_setPanelId('__notifications__')+'" tabindex="-1">' +
             icon('notifications') + '<span class="set-cat-label">Notifications</span></button>';
         }
       });
       /* Advanced & System Actions tabs (hidden unless dev mode) */
-      h += '<button class="set-cat set-cat-adv'+(devMode?'':' hidden')+'" data-cat="__advanced__">' +
+      h += '<button class="set-cat set-cat-adv'+(devMode?'':' hidden')+'" role="tab" id="'+_setTabId('__advanced__')+'" data-cat="__advanced__"' +
+        ' aria-selected="false" aria-controls="'+_setPanelId('__advanced__')+'" tabindex="-1">' +
         icon('advanced') + '<span class="set-cat-label">Advanced</span></button>';
-      h += '<button class="set-cat set-cat-adv'+(devMode?'':' hidden')+'" data-cat="__sysactions__">' +
+      h += '<button class="set-cat set-cat-adv'+(devMode?'':' hidden')+'" role="tab" id="'+_setTabId('__sysactions__')+'" data-cat="__sysactions__"' +
+        ' aria-selected="false" aria-controls="'+_setPanelId('__sysactions__')+'" tabindex="-1">' +
         icon('power') + '<span class="set-cat-label">System Actions</span></button>';
       h += '</div>';
 
       /* --- Setting panels --- */
       h += '<div id="set-panels">';
       CATS.forEach(function(c, i) {
-        h += '<div class="set-panel'+(i===0?' active':'')+'" data-cat="'+c.id+'">';
+        var isActive = (i === 0);
+        h += '<div class="set-panel'+(isActive?' active':'')+'" role="tabpanel" id="'+_setPanelId(c.id)+'" data-cat="'+c.id+'"' +
+          (isActive?'':' hidden')+' aria-labelledby="'+_setTabId(c.id)+'">';
         h += '<div class="set-panel-hdr">' +
           '<div class="set-panel-icon">'+icon(c.icon)+'</div>' +
-          '<div><div class="set-panel-title">'+esc(c.label)+'</div>' +
+          '<div><h2 class="set-panel-title">'+esc(c.label)+'</h2>' +
           '<div class="set-panel-sub">'+buckets[c.id].length+' settings</div></div></div>';
         h += '<div class="set-panel-fields">';
         if (c.id === 'security') {
@@ -4365,7 +4375,7 @@ var Pages = {
           SEC_SUBS.forEach(function(sub) {
             h += '<div class="set-sec-group" id="'+sub.id+'">' +
               '<div class="set-sec-group-hdr">' + icon(sub.icon) +
-              '<div><div class="set-sec-group-title">'+esc(sub.label)+'</div>' +
+              '<div><h3 class="set-sec-group-title">'+esc(sub.label)+'</h3>' +
               '<div class="set-sec-group-desc">'+sub.desc+'</div></div></div>';
             h += '<div class="set-sec-group-fields">';
             if (sub.id === 'sec-mfa') {
@@ -4634,7 +4644,7 @@ var Pages = {
             if (emlMap[sub.toggle]) h += UI.formField(sub.toggle, emlMap[sub.toggle].def, emlMap[sub.toggle].def[3]);
             h += '<div class="set-sec-group" id="'+sub.id+'">' +
               '<div class="set-sec-group-hdr">' + icon(sub.icon) +
-              '<div><div class="set-sec-group-title">'+esc(sub.label)+'</div>' +
+              '<div><h3 class="set-sec-group-title">'+esc(sub.label)+'</h3>' +
               '<div class="set-sec-group-desc">'+sub.desc+'</div></div></div>';
             h += '<div class="set-sec-group-fields">';
             sub.fields.forEach(function(fk) {
@@ -4668,10 +4678,10 @@ var Pages = {
 
       /* --- Advanced settings panel (hidden unless dev mode) --- */
       var advData = self._advData;
-      h += '<div class="set-panel set-panel-adv'+(devMode?'':' hidden')+'" data-cat="__advanced__">';
+      h += '<div class="set-panel set-panel-adv'+(devMode?'':' hidden')+'" role="tabpanel" id="'+_setPanelId('__advanced__')+'" data-cat="__advanced__" hidden aria-labelledby="'+_setTabId('__advanced__')+'">';
       h += '<div class="set-panel-hdr">' +
         '<div class="set-panel-icon">'+icon('advanced')+'</div>' +
-        '<div><div class="set-panel-title">Advanced Settings</div>' +
+        '<div><h2 class="set-panel-title">Advanced Settings</h2>' +
         '<div class="set-panel-sub">For experienced users only</div></div></div>';
       h += '<div class="badge badge-warning mb-2">'+btnIcon('warning',14)+' Changing these settings may break your system. Proceed with caution.</div>';
       if (advData && typeof advData === 'object') {
@@ -4688,10 +4698,10 @@ var Pages = {
       h += '</div>';
 
       /* --- System Actions panel (hidden unless dev mode) --- */
-      h += '<div class="set-panel set-panel-adv'+(devMode?'':' hidden')+'" data-cat="__sysactions__">';
+      h += '<div class="set-panel set-panel-adv'+(devMode?'':' hidden')+'" role="tabpanel" id="'+_setPanelId('__sysactions__')+'" data-cat="__sysactions__" hidden aria-labelledby="'+_setTabId('__sysactions__')+'">';
       h += '<div class="set-panel-hdr">' +
         '<div class="set-panel-icon">'+icon('power')+'</div>' +
-        '<div><div class="set-panel-title">System Actions</div>' +
+        '<div><h2 class="set-panel-title">System Actions</h2>' +
         '<div class="set-panel-sub">Control the running system</div></div></div>';
       h += '<div class="badge badge-warning mb-2">'+btnIcon('warning',14)+' These actions affect the running system.</div>';
       h += '<div class="btn-group flex-wrap" style="gap:8px;margin-top:12px">' +
@@ -4721,10 +4731,10 @@ var Pages = {
         return c;
       }
 
-      h += '<div class="set-panel" data-cat="__notifications__">';
+      h += '<div class="set-panel" role="tabpanel" id="'+_setPanelId('__notifications__')+'" data-cat="__notifications__" hidden aria-labelledby="'+_setTabId('__notifications__')+'">';
       h += '<div class="set-panel-hdr">' +
         '<div class="set-panel-icon">'+icon('notifications')+'</div>' +
-        '<div><div class="set-panel-title">Notifications</div>' +
+        '<div><h2 class="set-panel-title">Notifications</h2>' +
         '<div class="set-panel-sub">Email recipients &amp; categories</div></div></div>';
       h += '<div class="card"><div class="card-header">' + icon('mail') + ' Email Recipients</div><div class="card-body">';
       h += '<div id="notif-list" class="notif-list">';
@@ -4750,6 +4760,24 @@ var Pages = {
 
       var $w = $('#set-wrap').html(h);
 
+      function _syncSetTabs(activeCat) {
+        $w.find('.set-cat').each(function() {
+          var $t = $(this);
+          var on = $t.data('cat') === activeCat;
+          $t.attr('aria-selected', on ? 'true' : 'false');
+          $t.attr('tabindex', on ? '0' : '-1');
+          $t.toggleClass('active', on);
+        });
+        $w.find('.set-panel').each(function() {
+          var $p = $(this);
+          if ($p.hasClass('hidden')) return;
+          var on = $p.data('cat') === activeCat;
+          $p.toggleClass('active', on);
+          if (on) $p.removeAttr('hidden');
+          else if (!$p.hasClass('set-search-mode')) $p.attr('hidden', '');
+        });
+      }
+
       /* --- Tab switching (with dirty guard) --- */
       $w.on('click', '.set-cat', function() {
         var $btn = $(this);
@@ -4757,11 +4785,10 @@ var Pages = {
         var activeCat = $('.set-cat.active').data('cat');
         if (activeCat === cat) return;
         function doSwitch() {
-          $('.set-cat').removeClass('active'); $btn.addClass('active');
           $('#set-search-results').hide();
-          $('.set-panel').removeClass('active');
-          $('.set-panel[data-cat="'+cat+'"]').addClass('active');
           $('#set-search').val('');
+          $('#set-cats').show().removeAttr('aria-hidden');
+          _syncSetTabs(cat);
         }
         if (_isTabDirty(activeCat)) {
           Modal.confirm('Unsaved Changes',
@@ -4772,32 +4799,49 @@ var Pages = {
         doSwitch();
       });
 
+      /* Arrow-key navigation between settings tabs */
+      $w.on('keydown', '.set-cat', function(e) {
+        var $tabs = $w.find('.set-cat:visible');
+        var idx = $tabs.index(this);
+        var next = -1;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (idx + 1) % $tabs.length;
+        else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (idx - 1 + $tabs.length) % $tabs.length;
+        else if (e.key === 'Home') next = 0;
+        else if (e.key === 'End') next = $tabs.length - 1;
+        else return;
+        e.preventDefault();
+        $tabs.eq(next).focus().trigger('click');
+      });
+
       /* --- Search filter (improved: hides non-matching fields and empty panels) --- */
       $('#set-search').on('input', function() {
         var q = $(this).val().toLowerCase();
         if (!q) {
           /* Restore normal tab view */
-          $('#set-panels .set-panel').removeClass('active set-search-mode');
+          $('#set-panels .set-panel').removeClass('set-search-mode');
           $('.setting-field').show();
-          var active = $('.set-cat.active').data('cat');
-          $('.set-panel[data-cat="'+active+'"]').addClass('active');
-          $('#set-cats').show();
+          $('#set-cats').show().removeAttr('aria-hidden');
+          _syncSetTabs($('.set-cat.active').data('cat') || 'general');
           return;
         }
         /* Hide category tabs, show all panels in search mode */
-        $('#set-cats').hide();
+        $('#set-cats').hide().attr('aria-hidden', 'true');
         $('#set-panels .set-panel').each(function() {
           var $panel = $(this);
           /* Skip hidden panels (e.g. Advanced when dev mode is off) */
-          if ($panel.hasClass('hidden')) { $panel.removeClass('active set-search-mode'); return; }
+          if ($panel.hasClass('hidden')) { $panel.removeClass('active set-search-mode').attr('hidden', ''); return; }
           var hasMatch = false;
           $panel.find('.setting-field').each(function() {
             var match = ($(this).data('label') || '').indexOf(q) >= 0;
             $(this).toggle(match);
             if (match) hasMatch = true;
           });
-          $panel.toggleClass('active set-search-mode', hasMatch);
-          if (!hasMatch) $panel.removeClass('active');
+          $panel.toggleClass('set-search-mode', hasMatch);
+          if (hasMatch) {
+            $panel.addClass('active').removeAttr('hidden');
+          } else {
+            $panel.removeClass('active set-search-mode').attr('hidden', '');
+          }
         });
       });
 
@@ -4825,8 +4869,7 @@ var Pages = {
           $btn.removeClass('set-adv-on');
           $('.set-cat-adv, .set-panel-adv').removeClass('active').addClass('hidden');
           var $first = $('.set-cat:not(.set-cat-adv)').first();
-          $first.addClass('active');
-          $('.set-panel[data-cat="'+$first.data('cat')+'"]').addClass('active');
+          _syncSetTabs($first.data('cat'));
         } else {
           Modal.confirm('Enable Advanced Settings',
             Modal.html('<strong>'+btnIcon('warning',16)+' Warning:</strong> Advanced settings are intended for experienced users. ' +
