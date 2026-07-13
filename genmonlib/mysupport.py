@@ -90,6 +90,12 @@ class MySupport(MyCommon):
                 log.error("Error in CopyFile : " + str(source) + " : " + str(e1))
             return False
 
+    # ------------ MySupport::SwapWords32---------------------------------------
+    def SwapWords32(val):
+        # Mask and shift the lower 16 bits to the left, and upper 16 bits to the right
+        # Little-Endian Word Swap
+        return ((val & 0xFFFF) << 16) | ((val >> 16) & 0xFFFF)
+
     # ------------ MySupport::GetSiteName----------------------------------------
     def GetSiteName(self):
         return self.SiteName

@@ -92,6 +92,7 @@ class Evolution(GeneratorController):
         # Controller Type
         self.EvolutionController = None
         self.SynergyController = False
+        self.PowerZone200 = False
         self.Evolution2 = False
         self.PowerPact = False
         self.PreNexus = False
@@ -929,6 +930,7 @@ class Evolution(GeneratorController):
              # EcoGen Variable Speed Constant Frequency
             11: ["15KW","ECOVSCF","120/240","1","999 cc","240",],
          }
+        
         # This should cover the guardian line
         ModelLookUp_EvoAC = {  # ID : [KW or KVA Rating, Hz Rating, Voltage Rating, Phase, Engine Displacement Nominal Line Voltage ]
             1: ["10KW", "60", "120/240", "1", "426 cc", "240"],     #
@@ -988,6 +990,10 @@ class Evolution(GeneratorController):
             14: ["13KVA","50","220,230,240","1","992 cc","240",],   #
         }
 
+        ModelLookup_PowerZone200 = {
+            6: ["22KW","60","120/240","1","997 cc","240",],        #
+        }
+
         LookUp = None
         if self.Evolution2:
             LookUp = ModelLookUp_EvoAC2
@@ -995,6 +1001,8 @@ class Evolution(GeneratorController):
             LookUp = ModelLookup_PowerPact
         elif self.SynergyController:
             LookUp = ModelLookUp_EvoAC_Synergy
+        elif self.PowerZone200:
+            LookUp = ModelLookup_PowerZone200
         elif self.EvolutionController:
             LookUp = ModelLookUp_EvoAC
         else:
@@ -1235,6 +1243,7 @@ class Evolution(GeneratorController):
         # 0x12,0x13 or 0x14  Evolution Power Pact, Air Cooled
         # 0x15  Evolution 2.0, Air Cooled
         # 0x16  Evolution 4.5L, Liquid Cooled
+        # 0x19  PowerZone200, 115200 serial data rate
 
         msgbody = "\nThis email is a notification informing you that the software has detected a generator "
         msgbody += "model variant that has not been validated by the authors of this sofrware. "
@@ -1245,6 +1254,9 @@ class Evolution(GeneratorController):
         msgbody += "Once your feedback is receivd we an add your model product code and controller type to the list in the software."
 
         if self.EvolutionController == None:
+
+            if ProductModel == 0x19:
+                self.PowerZone200 = True
 
             if ProductModel == 0x0A:
                 self.SynergyController = True
@@ -1264,7 +1276,7 @@ class Evolution(GeneratorController):
             # if reg 000 is 3 or less then assume we have a Nexus Controller
             if ProductModel == 0x03 or ProductModel == 0x06 or ProductModel == 0x02:
                 self.EvolutionController = False  # "Nexus"
-            elif (ProductModel in [0x09, 0x0b, 0x0C, 0x0A, 0x12, 0x13, 0x14, 0x15, 0x16]):
+            elif (ProductModel in [0x09, 0x0b, 0x0C, 0x0A, 0x12, 0x13, 0x14, 0x15, 0x16, 0x19]):
                 self.EvolutionController = True  # "Evolution"
             else:
                 # set a reasonable default
@@ -1294,7 +1306,7 @@ class Evolution(GeneratorController):
 
         if self.LiquidCooled == None:
             if (
-                ProductModel in [0x02, 0x03, 0x04, 0x05, 0x09, 0x0A, 0x0B, 0x12, 0x13, 0x04, 0x15]
+                ProductModel in [0x02, 0x03, 0x04, 0x05, 0x09, 0x0A, 0x0B, 0x12, 0x13, 0x04, 0x15, 0x19]
             ):
                 self.LiquidCooled = False  # Air Cooled
             elif ProductModel in [0x06, 0x0C, 0x16]:
@@ -1321,7 +1333,7 @@ class Evolution(GeneratorController):
             self.bUseLegacyWrite = True
 
         if not self.bEnhancedExerciseFrequency:
-            if self.Evolution2 or self.PowerPact or self.SynergyController:
+            if self.Evolution2 or self.PowerPact or self.SynergyController or self.PowerZone200:
                 self.bEnhancedExerciseFrequency = True
         if UnknownController:
             msg = "Unknown Controller Found: %x" % ProductModel
@@ -1352,6 +1364,7 @@ class Evolution(GeneratorController):
                 0x14: "Power Pact Evolution, Air Cooled (20)",
                 0x15: "Evolution 2.0, Air Cooled",
                 0x16: "Evolution 4.5L, Liquid Cooled",
+                0x19: "Power Zone 200, Air Cooled"
             }
             Value = self.GetRegisterValueFromList("0000")
             if len(Value) != 4:
@@ -1362,6 +1375,8 @@ class Evolution(GeneratorController):
         else:
 
             if self.EvolutionController:
+                if self.PowerZone200:
+                    outstr = "Power Zone 200"
                 if self.SynergyController:
                     outstr = "Synergy Evolution, "
                 elif self.PowerPact:
@@ -4519,6 +4534,7 @@ class Evolution(GeneratorController):
                     self.EvolutionController
                     and self.LiquidCooled
                     or self.SynergyController
+                    or self.PowerZone200
                 ):
                     return self.GetParameter(
                         "0008", ReturnFloat=ReturnFloat, Divider=10.0, Label="Hz"
@@ -5159,7 +5175,7 @@ class Evolution(GeneratorController):
             if self.EvolutionController and self.LiquidCooled:
                 Engine.append({"Battery Status": self.GetBatteryStatus()})
 
-            if self.EvolutionController and not self.PowerPact and not self.SynergyController:
+            if self.EvolutionController and not self.PowerPact and not self.SynergyController and not self.PowerZone200:
                 Engine.append(
                     {"Battery Charger Current": self.ValueOut(
                         self.GetParameter("05ee", ReturnInt= True), "mA", JSONNum

@@ -433,6 +433,8 @@ class CustomController(GeneratorController):
 
             if "holding_registers" in self.controllerimport.keys():
                 for Register, RegisterData in self.controllerimport["holding_registers"].items():
+                    if Register.lower().startswith("comment"):
+                        continue
                     if isinstance(RegisterData, dict):
                         Length = RegisterData["length"]
                     else:
@@ -447,6 +449,8 @@ class CustomController(GeneratorController):
                         return False
             if "input_registers" in self.controllerimport.keys():
                 for Register, RegisterData in self.controllerimport["input_registers"].items():
+                    if Register.lower().startswith("comment"):
+                        continue
                     if isinstance(RegisterData, dict):
                         Length = RegisterData["length"]
                     else:
@@ -462,6 +466,8 @@ class CustomController(GeneratorController):
 
             if "coil_registers" in self.controllerimport.keys():
                 for Register, RegisterData in self.controllerimport["coil_registers"].items():
+                    if Register.lower().startswith("comment"):
+                        continue
                     if isinstance(RegisterData, dict):
                         Length = RegisterData["length"]
                     else:
@@ -637,6 +643,8 @@ class CustomController(GeneratorController):
                 return False, 0, ""
             RegInt = int(Register,16)
             for LogRegister, LogRegisterData in self.controllerimport["log_registers"].items():
+                if LogRegister.lower().startswith("comment"):
+                        continue
                 LogRegInt = int(LogRegister,16)
                 LogRegEndOffset = int(LogRegisterData["step"]) * int(LogRegisterData["iteration"])
                 if RegInt >= LogRegInt and RegInt <= (LogRegInt + LogRegEndOffset):
@@ -657,6 +665,8 @@ class CustomController(GeneratorController):
                 if not self.ConfigValidated:
                     return
             for Register, RegisterData in self.controllerimport["log_registers"].items():
+                if Register.lower().startswith("comment"):
+                        continue
                 if not isinstance(RegisterData, dict):
                     self.LogDebug("Invalid register data in log register description")
                     return
@@ -701,6 +711,8 @@ class CustomController(GeneratorController):
                     return
             if "holding_registers" in self.controllerimport.keys():
                 for Register, RegisterData in self.controllerimport["holding_registers"].items():
+                    if Register.lower().startswith("comment"):
+                        continue
                     if isinstance(RegisterData, dict):
                         Length = RegisterData["length"]
                     else:
@@ -722,6 +734,8 @@ class CustomController(GeneratorController):
 
             if "input_registers" in self.controllerimport.keys():
                 for Register, RegisterData in self.controllerimport["input_registers"].items():
+                    if Register.lower().startswith("comment"):
+                        continue
                     if isinstance(RegisterData, dict):
                         Length = RegisterData["length"]
                     else:
@@ -743,6 +757,8 @@ class CustomController(GeneratorController):
 
             if "coil_registers" in self.controllerimport.keys():
                 for Register, RegisterData in self.controllerimport["coil_registers"].items():
+                    if Register.lower().startswith("comment"):
+                        continue
                     if isinstance(RegisterData, dict):
                         Length = RegisterData["length"]
                     else:
@@ -941,8 +957,7 @@ class CustomController(GeneratorController):
         # return JSON of dict with registers and text descriptions
         try:
             ReturnDict = {}
-            # todo: this presently does not support displaying multiple types of registers
-            # this should be fixed
+            # 
             if "holding_registers" in self.controllerimport.keys():
                 HoldingRegLabels = {}
                 for Register in self.Holding.keys():
@@ -1876,6 +1891,11 @@ class CustomController(GeneratorController):
     def ProcessBitModifiers(self, entry, value, ReturnFloat = False):
         try:
             orignialvalue = value
+
+            if "swapwords32" in entry.keys():
+                # change from 01234567 to 456701234
+                if entry["multiplier"] == True:
+                    value = self.SwapWords32(value)
             if "shiftright" in entry.keys():
                 value = value >> int(entry["shiftright"])
             if "shiftleft" in entry.keys():
