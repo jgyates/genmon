@@ -329,10 +329,131 @@ class MyMail(MySupport):
     # ---------- MyMail.ConvertTextToHTML --------------------------------------
     @staticmethod
     def ConvertTextToHTML(text):
+        """Turn genmon's plain key/value notification text into accessible HTML.
+
+        Plain text is still attached as multipart/alternative. The HTML part uses
+        real headings and a data table so screen readers pause between rows
+        instead of reading the whole body as one run-on block (as often happens
+        with a single <pre>).
+        """
         try:
-            return "<pre>" + text + "</pre>"
-        except:
-            return text
+            try:
+                from html import escape as html_escape
+            except ImportError:
+                try:
+                    from cgi import escape as html_escape
+                except ImportError:
+
+                    def html_escape(s, quote=True):
+                        s = (
+                            str(s)
+                            .replace("&", "&amp;")
+                            .replace("<", "&lt;")
+                            .replace(">", "&gt;")
+                        )
+                        if quote:
+                            s = s.replace('"', "&quot;")
+                        return s
+
+            import re
+
+            if text is None:
+                text = ""
+            text = str(text).replace("\r\n", "\n").replace("\r", "\n")
+            lines = text.split("\n")
+
+            parts = []
+            table_open = [False]
+            # Genmon status lines use "Key : Value" (spaces around colon). Also
+            # accept "Time: stamp" from the mail wrapper. Skip URL-only lines.
+            kv_re = re.compile(r"^\s*(.+?)(?:\s+:\s*|:\s+)(.*)$")
+            url_re = re.compile(r"^\s*https?://", re.I)
+            font = "font-family:system-ui,Segoe UI,sans-serif"
+
+            def close_table():
+                if table_open[0]:
+                    parts.append("</tbody></table>")
+                    table_open[0] = False
+
+            def open_table():
+                if not table_open[0]:
+                    parts.append(
+                        '<table role="table" style="border-collapse:collapse;'
+                        "width:100%;max-width:640px;" + font +
+                        ';font-size:14px;line-height:1.45"><tbody>'
+                    )
+                    table_open[0] = True
+
+            def add_paragraph(s):
+                parts.append(
+                    '<p style="margin:10px 0;' + font +
+                    ';font-size:14px;line-height:1.5">'
+                    + html_escape(s)
+                    + "</p>"
+                )
+
+            for raw in lines:
+                line = raw.rstrip()
+                if not line.strip():
+                    close_table()
+                    continue
+
+                if url_re.match(line):
+                    close_table()
+                    add_paragraph(line.strip())
+                    continue
+
+                m = kv_re.match(line)
+                if m:
+                    key = m.group(1).strip()
+                    val = m.group(2).strip()
+                    # Avoid treating "https://..." as key/value if regex still matched
+                    if key.lower() in ("http", "https") or "://" in key:
+                        close_table()
+                        add_paragraph(line.strip())
+                        continue
+                    if val == "":
+                        # Section title from ProcessDispatchToString ("Status :")
+                        close_table()
+                        parts.append(
+                            '<h2 style="font-size:16px;margin:18px 0 8px;'
+                            + font + '">'
+                            + html_escape(key)
+                            + "</h2>"
+                        )
+                    else:
+                        open_table()
+                        parts.append(
+                            "<tr>"
+                            '<th scope="row" style="text-align:left;vertical-align:top;'
+                            "padding:5px 14px 5px 0;white-space:nowrap;font-weight:600;"
+                            'color:#222">'
+                            + html_escape(key)
+                            + "</th>"
+                            '<td style="text-align:left;vertical-align:top;padding:5px 0;'
+                            'color:#111">'
+                            + html_escape(val)
+                            + "</td></tr>"
+                        )
+                else:
+                    close_table()
+                    add_paragraph(line.strip())
+
+            close_table()
+            body_inner = "\n".join(parts) if parts else "<p></p>"
+            return (
+                '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
+                '<meta name="viewport" content="width=device-width">'
+                "<title>Genmon Notification</title></head>"
+                '<body style="margin:16px;color:#111;background:#fff">'
+                + body_inner
+                + "</body></html>"
+            )
+        except Exception:
+            try:
+                return "<pre>" + str(text) + "</pre>"
+            except Exception:
+                return text
 
     # ---------- MyMail.GetConfig -----------------------------------------------
     def GetConfig(self, reload=False):
@@ -370,8 +491,9 @@ class MyMail(MySupport):
             if self.config.HasOption("usebcc"):
                 self.UseBCC = self.config.ReadValue("usebcc", return_type=bool)
             
-            if self.config.HasOption("use_html"):
-                self.UseHTML = self.config.ReadValue("use_html", return_type=bool)
+            self.UseHTML = self.config.ReadValue(
+                "use_html", return_type=bool, default=False
+            )
 
             if self.config.HasOption("extend_wait"):
                 self.ExtendWait = self.config.ReadValue(

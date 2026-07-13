@@ -507,14 +507,14 @@ var ICONS = {
 };
 function icon(name) {
   return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
-    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
     (ICONS[name]||ICONS.about) + '</svg>';
 }
 /** Small icon for placement inside buttons */
 function btnIcon(name, sz) {
   sz = sz || 14;
   return '<svg class="btn-ico" width="'+sz+'" height="'+sz+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
-    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
     (ICONS[name]||'') + '</svg>';
 }
 /**
@@ -1411,13 +1411,13 @@ var Pages = {
       var detailView = !!Store.get('detailView');
       var alwaysDetail = !!Store.get('alwaysDetail');
       var h = '<div class="dash-header">' +
-        '<div class="page-title">' + icon('status') + ' Dashboard</div>' +
+        '<h1 class="page-title">' + icon('status') + ' Dashboard</h1>' +
         '</div>';
 
       var self = Pages.status;
 
       /* --- Tile grid --- */
-      h += '<div id="tile-grid" class="tile-grid">';
+      h += '<div id="tile-grid" class="tile-grid" role="list" aria-label="Dashboard tiles">';
       for (var oi = 0; oi < order.length; oi++) {
         var key = order[oi];
         if (Store.isTileHidden(key)) continue;
@@ -1469,11 +1469,12 @@ var Pages = {
 
       /* --- Status text (collapsible, auto-expanded in detail view) --- */
       h += '<div class="card status-panel-card mt-2">' +
-        '<div class="card-header status-panel-toggle" id="status-panel-hdr" style="cursor:pointer;user-select:none">' +
+        '<h2 class="card-header status-panel-toggle" id="status-panel-hdr" style="cursor:pointer;user-select:none"' +
+        ' role="button" tabindex="0" aria-expanded="' + (detailView || alwaysDetail ? 'true' : 'false') + '" aria-controls="status-panel">' +
         icon('logs') + ' <span>Detailed Status</span>' +
-        '<svg class="status-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>' +
-        '</div>' +
-        '<div id="status-panel" class="status-panel" style="display:' + (detailView || alwaysDetail ? 'block' : 'none') + '">' +
+        '<svg class="status-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>' +
+        '</h2>' +
+        '<div id="status-panel" class="status-panel" role="region" aria-labelledby="status-panel-hdr" style="display:' + (detailView || alwaysDetail ? 'block' : 'none') + '">' +
         '<div class="text-muted text-center">Loading status\u2026</div></div></div>';
 
       $c.html(h);
@@ -1534,7 +1535,8 @@ var Pages = {
         if (on) {
           $('#tile-grid').slideUp(250);
           $('#status-panel').slideDown(250);
-          $('#status-panel-hdr').find('.status-chevron').css('transform', 'rotate(180deg)');
+          $('#status-panel-hdr').attr('aria-expanded', 'true')
+            .find('.status-chevron').css('transform', 'rotate(180deg)');
           /* Auto-enable Always Show Detailed Status */
           if (!$('#always-detail-cb').is(':checked')) {
             $('#always-detail-cb').prop('checked', true).trigger('change');
@@ -1543,7 +1545,8 @@ var Pages = {
           $('#tile-grid').slideDown(250);
           if (!$('#always-detail-cb').is(':checked')) {
             $('#status-panel').slideUp(200);
-            $('#status-panel-hdr').find('.status-chevron').css('transform', '');
+            $('#status-panel-hdr').attr('aria-expanded', 'false')
+              .find('.status-chevron').css('transform', '');
           }
         }
       });
@@ -1554,10 +1557,12 @@ var Pages = {
         Store.set('alwaysDetail', on);
         if (on) {
           $('#status-panel').slideDown(250);
-          $('#status-panel-hdr').find('.status-chevron').css('transform', 'rotate(180deg)');
+          $('#status-panel-hdr').attr('aria-expanded', 'true')
+            .find('.status-chevron').css('transform', 'rotate(180deg)');
         } else if (!$('#detail-view-cb').is(':checked')) {
           $('#status-panel').slideUp(200);
-          $('#status-panel-hdr').find('.status-chevron').css('transform', '');
+          $('#status-panel-hdr').attr('aria-expanded', 'false')
+            .find('.status-chevron').css('transform', '');
         }
       });
 
@@ -1566,7 +1571,13 @@ var Pages = {
         var $body = $('#status-panel');
         var open = $body.is(':visible');
         $body.slideToggle(200);
+        $(this).attr('aria-expanded', open ? 'false' : 'true');
         $(this).find('.status-chevron').css('transform', open ? '' : 'rotate(180deg)');
+      }).on('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          $(this).trigger('click');
+        }
       });
 
       /* Clock mode toggle */
@@ -1587,6 +1598,11 @@ var Pages = {
         $g.toggleClass('editing', S.editMode);
         $g.find('.tile').attr('draggable', S.editMode ? 'true' : 'false');
         $g.find('.tile-edit-controls').toggle(S.editMode);
+        /* Edit chrome is aria-hidden while browsing; expose it only in edit mode */
+        $g.find('.tile-hide-btn, .tile-drag-handle, .tile-edit-controls')
+          .attr('aria-hidden', S.editMode ? 'false' : 'true');
+        $g.find('.tile-hide-btn, .tile-edit-controls button')
+          .attr('tabindex', S.editMode ? '0' : '-1');
         if (S.editMode) {
           self._buildDrawer();
           $('#tile-drawer').slideDown(200);
@@ -1721,7 +1737,11 @@ var Pages = {
           self._initGauge(key, gi4, tiles[gi4]);
           /* Rebuild edit controls to reflect new gauge-type constraints */
           $tile.find('.tile-edit-controls').replaceWith(self._editControlsHtml(false, key));
-          if (S.editMode) $tile.find('.tile-edit-controls').show();
+          if (S.editMode) {
+            $tile.find('.tile-edit-controls').show()
+              .attr('aria-hidden', 'false')
+              .find('button').attr('tabindex', '0');
+          }
           /* Refresh the value immediately */
           API.get('gui_status_json').done(function(d) {
             if (d && d.tiles) Pages._updateGauges(d.tiles);
@@ -1948,56 +1968,56 @@ var Pages = {
     /* --- Special tile HTML builders --- */
     _chartTileHtml: function() {
       var chartSize = Store.getChartSize() || 'xl';
-      return '<div class="tile tile-chart tile-' + esc(chartSize) + '" data-tile="chart" data-size="' + esc(chartSize) + '" draggable="false">' +
-        '<button class="tile-hide-btn" title="Hide tile">&times;</button>' +
-        '<div class="tile-drag-handle" title="Drag to reorder">' + icon('monitor') + '</div>' +
-        '<div class="tile-edit-controls" style="display:none"><div class="tile-ctrl-row">' +
+      return '<div class="tile tile-chart tile-' + esc(chartSize) + '" role="listitem" data-tile="chart" data-size="' + esc(chartSize) + '" draggable="false">' +
+        '<button type="button" class="tile-hide-btn" title="Hide tile" tabindex="-1" aria-hidden="true">&times;</button>' +
+        '<div class="tile-drag-handle" title="Drag to reorder" aria-hidden="true">' + icon('monitor') + '</div>' +
+        '<div class="tile-edit-controls" style="display:none" aria-hidden="true"><div class="tile-ctrl-row">' +
         '<span class="tile-ctrl-label">Width</span>' +
-        '<button class="chart-size-btn' + (chartSize==='md'?' active':'') + '" data-csz="md" title="1 column">1</button>' +
-        '<button class="chart-size-btn' + (chartSize==='lg'?' active':'') + '" data-csz="lg" title="2 columns">2</button>' +
-        '<button class="chart-size-btn' + (chartSize==='xl'?' active':'') + '" data-csz="xl" title="3 columns">3</button>' +
+        '<button type="button" class="chart-size-btn' + (chartSize==='md'?' active':'') + '" data-csz="md" title="1 column" tabindex="-1">1</button>' +
+        '<button type="button" class="chart-size-btn' + (chartSize==='lg'?' active':'') + '" data-csz="lg" title="2 columns" tabindex="-1">2</button>' +
+        '<button type="button" class="chart-size-btn' + (chartSize==='xl'?' active':'') + '" data-csz="xl" title="3 columns" tabindex="-1">3</button>' +
         '</div></div>' +
-        '<div class="tile-title">' + esc(S.chartTitle || 'Power Output') + '</div>' +
-        '<div class="chart-wrap"><canvas id="pwr-chart"></canvas></div>' +
-        '<div class="chart-controls">' +
-        '<button class="chart-btn" data-mins="60">1h</button>' +
-        '<button class="chart-btn" data-mins="360">6h</button>' +
-        '<button class="chart-btn" data-mins="1440">24h</button>' +
-        '<button class="chart-btn" data-mins="10080">7d</button>' +
-        '<button class="chart-btn active" data-mins="43200">30d</button>' +
+        '<h2 class="tile-title">' + esc(S.chartTitle || 'Power Output') + '</h2>' +
+        '<div class="chart-wrap" aria-hidden="true"><canvas id="pwr-chart"></canvas></div>' +
+        '<div class="chart-controls" aria-label="Chart time range">' +
+        '<button type="button" class="chart-btn" data-mins="60">1h</button>' +
+        '<button type="button" class="chart-btn" data-mins="360">6h</button>' +
+        '<button type="button" class="chart-btn" data-mins="1440">24h</button>' +
+        '<button type="button" class="chart-btn" data-mins="10080">7d</button>' +
+        '<button type="button" class="chart-btn active" data-mins="43200">30d</button>' +
         '</div></div>';
     },
 
     _clockTileHtml: function() {
       var savedSize = Store.getTileSize('clock') || 'sm';
       var clockMode = Store.get('clockMode', 'digital');
-      return '<div class="tile tile-clock tile-' + esc(savedSize) + '" data-tile="clock" data-size="' + esc(savedSize) + '" draggable="false">' +
-        '<button class="tile-hide-btn" title="Hide tile">&times;</button>' +
-        '<div class="tile-drag-handle" title="Drag to reorder">' + icon('clock') + '</div>' +
-        '<div class="tile-edit-controls" style="display:none"><div class="tile-ctrl-row">' +
+      return '<div class="tile tile-clock tile-' + esc(savedSize) + '" role="listitem" data-tile="clock" data-size="' + esc(savedSize) + '" draggable="false">' +
+        '<button type="button" class="tile-hide-btn" title="Hide tile" tabindex="-1" aria-hidden="true">&times;</button>' +
+        '<div class="tile-drag-handle" title="Drag to reorder" aria-hidden="true">' + icon('clock') + '</div>' +
+        '<div class="tile-edit-controls" style="display:none" aria-hidden="true"><div class="tile-ctrl-row">' +
         '<span class="tile-ctrl-label">Size</span>' +
-        '<button class="tile-size-btn" data-dir="down" title="Smaller">&minus;</button>' +
-        '<button class="tile-size-btn" data-dir="up" title="Larger">+</button>' +
+        '<button type="button" class="tile-size-btn" data-dir="down" title="Smaller" tabindex="-1">&minus;</button>' +
+        '<button type="button" class="tile-size-btn" data-dir="up" title="Larger" tabindex="-1">+</button>' +
         '</div><div class="tile-ctrl-row">' +
         '<span class="tile-ctrl-label">Style</span>' +
-        '<button class="clock-mode-btn' + (clockMode==='digital'?' active':'') + '" data-cmode="digital" title="Digital">D</button>' +
-        '<button class="clock-mode-btn' + (clockMode==='analog'?' active':'') + '" data-cmode="analog" title="Analog">A</button>' +
+        '<button type="button" class="clock-mode-btn' + (clockMode==='digital'?' active':'') + '" data-cmode="digital" title="Digital" tabindex="-1">D</button>' +
+        '<button type="button" class="clock-mode-btn' + (clockMode==='analog'?' active':'') + '" data-cmode="analog" title="Analog" tabindex="-1">A</button>' +
         '</div></div>' +
-        '<div class="tile-title">Clock</div>' +
+        '<h2 class="tile-title">Clock</h2>' +
         '<div id="clock-face"></div></div>';
     },
 
     _weatherTileHtml: function() {
       var savedSize = Store.getTileSize('weather') || 'md';
-      return '<div class="tile tile-weather tile-' + esc(savedSize) + '" data-tile="weather" data-size="' + esc(savedSize) + '" draggable="false">' +
-        '<button class="tile-hide-btn" title="Hide tile">&times;</button>' +
-        '<div class="tile-drag-handle" title="Drag to reorder">' + icon('cloud') + '</div>' +
-        '<div class="tile-edit-controls" style="display:none"><div class="tile-ctrl-row">' +
+      return '<div class="tile tile-weather tile-' + esc(savedSize) + '" role="listitem" data-tile="weather" data-size="' + esc(savedSize) + '" draggable="false">' +
+        '<button type="button" class="tile-hide-btn" title="Hide tile" tabindex="-1" aria-hidden="true">&times;</button>' +
+        '<div class="tile-drag-handle" title="Drag to reorder" aria-hidden="true">' + icon('cloud') + '</div>' +
+        '<div class="tile-edit-controls" style="display:none" aria-hidden="true"><div class="tile-ctrl-row">' +
         '<span class="tile-ctrl-label">Size</span>' +
-        '<button class="tile-size-btn" data-dir="down" title="Smaller">&minus;</button>' +
-        '<button class="tile-size-btn" data-dir="up" title="Larger">+</button>' +
+        '<button type="button" class="tile-size-btn" data-dir="down" title="Smaller" tabindex="-1">&minus;</button>' +
+        '<button type="button" class="tile-size-btn" data-dir="up" title="Larger" tabindex="-1">+</button>' +
         '</div></div>' +
-        '<div class="tile-title">Weather</div>' +
+        '<h2 class="tile-title">Weather</h2>' +
         '<div id="weather-tile-body" class="weather-body">' +
         '<div class="text-muted" style="font-size:.8rem;text-align:center;padding:16px 0">No weather data</div>' +
         '</div></div>';
@@ -2011,24 +2031,25 @@ var Pages = {
       var font = Store.get('ovFont') || 'md';
       var rev  = !!Store.get('ovReversed');
       return '<div class="tile tile-overview ov-span-' + span + ' ov-font-' + esc(font) + (rev ? ' ov-reversed' : '') + '" ' +
-        'data-tile="overview" data-ov-span="' + span + '" draggable="false">' +
-        '<button class="tile-hide-btn" title="Hide tile">&times;</button>' +
-        '<div class="tile-drag-handle" title="Drag to reorder">' + icon('status') + '</div>' +
-        '<div class="tile-edit-controls" style="display:none">' +
+        'role="listitem" data-tile="overview" data-ov-span="' + span + '" draggable="false">' +
+        '<button type="button" class="tile-hide-btn" title="Hide tile" tabindex="-1" aria-hidden="true">&times;</button>' +
+        '<div class="tile-drag-handle" title="Drag to reorder" aria-hidden="true">' + icon('status') + '</div>' +
+        '<div class="tile-edit-controls" style="display:none" aria-hidden="true">' +
         '<div class="tile-ctrl-row">' +
         '<span class="tile-ctrl-label">Size</span>' +
-        '<button class="tile-size-btn ov-span-btn" data-dir="down" title="Narrower">&minus;</button>' +
-        '<button class="tile-size-btn ov-span-btn" data-dir="up" title="Wider">+</button>' +
+        '<button type="button" class="tile-size-btn ov-span-btn" data-dir="down" title="Narrower" tabindex="-1">&minus;</button>' +
+        '<button type="button" class="tile-size-btn ov-span-btn" data-dir="up" title="Wider" tabindex="-1">+</button>' +
         '</div>' +
         '<div class="tile-ctrl-row">' +
         '<span class="tile-ctrl-label">Font</span>' +
-        '<button class="tile-font-btn ov-font-btn" data-dir="down" title="Smaller font">A&minus;</button>' +
-        '<button class="tile-font-btn ov-font-btn" data-dir="up" title="Larger font">A+</button>' +
+        '<button type="button" class="tile-font-btn ov-font-btn" data-dir="down" title="Smaller font" tabindex="-1">A&minus;</button>' +
+        '<button type="button" class="tile-font-btn ov-font-btn" data-dir="up" title="Larger font" tabindex="-1">A+</button>' +
         '</div>' +
         '<div class="tile-ctrl-row">' +
-        '<button class="tile-font-btn ov-reverse-btn" title="Toggle coloured background">' + (rev ? '\u25cb' : '\u25cf') + '</button>' +
+        '<button type="button" class="tile-font-btn ov-reverse-btn" title="Toggle coloured background" tabindex="-1">' + (rev ? '\u25cb' : '\u25cf') + '</button>' +
         '</div>' +
         '</div>' +
+        '<h2 class="sr-only">Overview</h2>' +
         '<div class="overview-headline" id="overview-headline" data-level="ready">--</div>' +
         '<div class="overview-sub" id="overview-sub"></div></div>';
     },
@@ -2068,29 +2089,29 @@ var Pages = {
       /* Logs tile has special body */
       if (info.isLogs) {
         return '<div class="tile tile-info tile-logs tile-' + esc(savedSize) + ' tile-font-' + esc(savedFont) + '" ' +
-          'data-tile="' + idx + '" data-size="' + esc(savedSize) + '" data-fontsize="' + esc(savedFont) + '" draggable="false">' +
-          '<button class="tile-hide-btn" title="Hide tile">&times;</button>' +
-          '<div class="tile-drag-handle" title="Drag to reorder">' + icon(info.icon) + '</div>' +
+          'role="listitem" data-tile="' + idx + '" data-size="' + esc(savedSize) + '" data-fontsize="' + esc(savedFont) + '" draggable="false">' +
+          '<button type="button" class="tile-hide-btn" title="Hide tile" tabindex="-1" aria-hidden="true">&times;</button>' +
+          '<div class="tile-drag-handle" title="Drag to reorder" aria-hidden="true">' + icon(info.icon) + '</div>' +
           Pages.status._editControlsHtml(true) +
-          '<div class="tile-title">' + esc(info.title) + '</div>' +
+          '<h2 class="tile-title">' + esc(info.title) + '</h2>' +
           '<div class="tile-logs-body" id="info-logs-body">'+
           '<div class="text-muted" style="font-size:.75rem;text-align:center;padding:8px 0">No log data</div></div></div>';
       }
       var subsHtml = '';
       if (info.subs && info.subs.length) {
-        subsHtml = '<div class="tile-subs" id="info-subs-' + esc(info.id) + '">';
+        subsHtml = '<ul class="tile-subs" id="info-subs-' + esc(info.id) + '">';
         for (var s = 0; s < info.subs.length; s++) {
-          subsHtml += '<div class="tile-sub"><span class="tile-sub-label">' + esc(info.subs[s].label) + '</span>' +
-            '<span class="tile-sub-val" data-field="' + esc(info.subs[s].field) + '">--</span></div>';
+          subsHtml += '<li class="tile-sub"><span class="tile-sub-label">' + esc(info.subs[s].label) + ':</span>' +
+            '<span class="tile-sub-val" data-field="' + esc(info.subs[s].field) + '">--</span></li>';
         }
-        subsHtml += '</div>';
+        subsHtml += '</ul>';
       }
       return '<div class="tile tile-info tile-' + esc(savedSize) + ' tile-font-' + esc(savedFont) + '" ' +
-        'data-tile="' + idx + '" data-size="' + esc(savedSize) + '" data-fontsize="' + esc(savedFont) + '" draggable="false">' +
-        '<button class="tile-hide-btn" title="Hide tile">&times;</button>' +
-        '<div class="tile-drag-handle" title="Drag to reorder">' + icon(info.icon) + '</div>' +
+        'role="listitem" data-tile="' + idx + '" data-size="' + esc(savedSize) + '" data-fontsize="' + esc(savedFont) + '" draggable="false">' +
+        '<button type="button" class="tile-hide-btn" title="Hide tile" tabindex="-1" aria-hidden="true">&times;</button>' +
+        '<div class="tile-drag-handle" title="Drag to reorder" aria-hidden="true">' + icon(info.icon) + '</div>' +
         Pages.status._editControlsHtml(true) +
-        '<div class="tile-title">' + esc(info.title) + '</div>' +
+        '<h2 class="tile-title">' + esc(info.title) + '</h2>' +
         '<div class="tile-info-value" id="info-val-' + esc(info.id) + '">--</div>' +
         subsHtml + '</div>';
     },
@@ -2110,12 +2131,12 @@ var Pages = {
       else if (gtype === 'arc' && savedSize === 'lg') savedSize = 'lg';
       var savedFont = Store.getTileFontSize(idx) || 'md';
       return '<div class="tile tile-' + esc(savedSize) + ' tile-font-' + esc(savedFont) + '" ' +
-        'data-tile="' + idx + '" data-size="' + esc(savedSize) + '" data-fontsize="' + esc(savedFont) + '" data-gtype="' + esc(gtype) + '" draggable="false">' +
-        '<button class="tile-hide-btn" title="Hide tile">&times;</button>' +
-        '<div class="tile-drag-handle" title="Drag to reorder">' + icon('status') + '</div>' +
+        'role="listitem" data-tile="' + idx + '" data-size="' + esc(savedSize) + '" data-fontsize="' + esc(savedFont) + '" data-gtype="' + esc(gtype) + '" draggable="false">' +
+        '<button type="button" class="tile-hide-btn" title="Hide tile" tabindex="-1" aria-hidden="true">&times;</button>' +
+        '<div class="tile-drag-handle" title="Drag to reorder" aria-hidden="true">' + icon('status') + '</div>' +
         Pages.status._editControlsHtml(false, idx) +
-        '<div class="tile-title">' + esc(t.title) + '</div>' +
-        '<div class="tile-gauge" id="gw-' + idx + '"></div>' +
+        '<h2 class="tile-title">' + esc(t.title) + '</h2>' +
+        '<div class="tile-gauge" id="gw-' + idx + '" aria-hidden="true"></div>' +
         '<div class="tile-value" id="tile-val-' + idx + '">--</div></div>';
     },
 
@@ -2124,14 +2145,14 @@ var Pages = {
       var max = t.maximum || 100, min = t.minimum || 0;
       /* Vertical thermometer: tube (x=19..41, rounded top) + bulb (cx=30, cy=118, r=18) */
       var bp = 'M19,16 A11,11 0 0,1 41,16 L41,103.7 A18,18 0 1,1 19,103.7 Z';
-      return '<div class="tile tile-md tile-thermo" data-tile="' + idx + '" data-size="md" data-gtype="thermo" ' +
+      return '<div class="tile tile-md tile-thermo" role="listitem" data-tile="' + idx + '" data-size="md" data-gtype="thermo" ' +
         'data-min="' + min + '" data-max="' + max + '" draggable="false">' +
-        '<button class="tile-hide-btn" title="Hide tile">&times;</button>' +
-        '<div class="tile-drag-handle" title="Drag to reorder">' + icon('status') + '</div>' +
-        '<div class="tile-edit-controls" style="display:none"></div>' +
-        '<div class="tile-title">' + esc(t.title) + '</div>' +
-        '<div class="thermo-wrap" id="gw-' + idx + '">' +
-          '<svg class="thermo-svg" viewBox="0 0 70 140">' +
+        '<button type="button" class="tile-hide-btn" title="Hide tile" tabindex="-1" aria-hidden="true">&times;</button>' +
+        '<div class="tile-drag-handle" title="Drag to reorder" aria-hidden="true">' + icon('status') + '</div>' +
+        '<div class="tile-edit-controls" style="display:none" aria-hidden="true"></div>' +
+        '<h2 class="tile-title">' + esc(t.title) + '</h2>' +
+        '<div class="thermo-wrap" id="gw-' + idx + '" aria-hidden="true">' +
+          '<svg class="thermo-svg" viewBox="0 0 70 140" focusable="false">' +
             '<defs>' +
               '<clipPath id="tclip-'+idx+'">' +
                 '<path d="'+bp+'"/>' +
@@ -2162,14 +2183,14 @@ var Pages = {
     /* --- WiFi signal tile — classic WiFi fan icon --- */
     _wifiTileHtml: function(idx, t, sub) {
       var isPct = sub === 'wifipercent';
-      return '<div class="tile tile-md tile-wifi" data-tile="' + idx + '" data-size="md" data-gtype="wifibar" ' +
+      return '<div class="tile tile-md tile-wifi" role="listitem" data-tile="' + idx + '" data-size="md" data-gtype="wifibar" ' +
         'data-wifi-pct="' + (isPct ? '1' : '0') + '" draggable="false">' +
-        '<button class="tile-hide-btn" title="Hide tile">&times;</button>' +
-        '<div class="tile-drag-handle" title="Drag to reorder">' + icon('status') + '</div>' +
-        '<div class="tile-edit-controls" style="display:none"></div>' +
-        '<div class="tile-title">' + esc(t.title) + '</div>' +
-        '<div class="wifi-wrap" id="gw-' + idx + '">' +
-          '<svg class="wifi-svg" viewBox="0 0 24 24">' +
+        '<button type="button" class="tile-hide-btn" title="Hide tile" tabindex="-1" aria-hidden="true">&times;</button>' +
+        '<div class="tile-drag-handle" title="Drag to reorder" aria-hidden="true">' + icon('status') + '</div>' +
+        '<div class="tile-edit-controls" style="display:none" aria-hidden="true"></div>' +
+        '<h2 class="tile-title">' + esc(t.title) + '</h2>' +
+        '<div class="wifi-wrap" id="gw-' + idx + '" aria-hidden="true">' +
+          '<svg class="wifi-svg" viewBox="0 0 24 24" focusable="false" aria-hidden="true">' +
             '<path id="wifi-a3-'+idx+'" class="wifi-arc wifi-arc-dim" d="M1.42 9a16.02 16.02 0 0121.16 0" fill="none" stroke-width="2.2" stroke-linecap="round"/>' +
             '<path id="wifi-a2-'+idx+'" class="wifi-arc wifi-arc-dim" d="M5 12.55a11 11 0 0114 0" fill="none" stroke-width="2.2" stroke-linecap="round"/>' +
             '<path id="wifi-a1-'+idx+'" class="wifi-arc wifi-arc-dim" d="M8.53 16.11a6 6 0 016.95 0" fill="none" stroke-width="2.2" stroke-linecap="round"/>' +
@@ -2195,22 +2216,22 @@ var Pages = {
               : (Store.getGaugeType(tileKey) || self._defaultGaugeType(tc ? tc.title : '', sub));
       }
       /* Fixed gauges (thermo, wifibar): no controls at all */
-      if (isFixed) return '<div class="tile-edit-controls" style="display:none"></div>';
+      if (isFixed) return '<div class="tile-edit-controls" style="display:none" aria-hidden="true"></div>';
       /* Radial & fuel: no size control. Arc: size up to lg only. */
       var showSize = (gtype !== 'radial' && gtype !== 'fuel');
-      var h = '<div class="tile-edit-controls" style="display:none">';
+      var h = '<div class="tile-edit-controls" style="display:none" aria-hidden="true">';
       if (showSize) {
         h += '<div class="tile-ctrl-row">' +
           '<span class="tile-ctrl-label">Size</span>' +
-          '<button class="tile-size-btn" data-dir="down" title="Smaller">&minus;</button>' +
-          '<button class="tile-size-btn" data-dir="up" title="Larger">+</button>' +
+          '<button type="button" class="tile-size-btn" data-dir="down" title="Smaller" tabindex="-1">&minus;</button>' +
+          '<button type="button" class="tile-size-btn" data-dir="up" title="Larger" tabindex="-1">+</button>' +
           '</div>';
       }
       if (showFontCtrl) {
         h += '<div class="tile-ctrl-row">' +
           '<span class="tile-ctrl-label">Font</span>' +
-          '<button class="tile-font-btn" data-dir="down" title="Smaller font">A&minus;</button>' +
-          '<button class="tile-font-btn" data-dir="up" title="Larger font">A+</button>' +
+          '<button type="button" class="tile-font-btn" data-dir="down" title="Smaller font" tabindex="-1">A&minus;</button>' +
+          '<button type="button" class="tile-font-btn" data-dir="up" title="Larger font" tabindex="-1">A+</button>' +
           '</div>';
       }
       /* Gauge style picker — hide for fuel tiles (only radial/fuel work) */
@@ -2220,7 +2241,7 @@ var Pages = {
           '<span class="tile-ctrl-label">Style</span>';
         for (var g = 0; g < self.GAUGE_TYPES.length; g++) {
           var gt = self.GAUGE_TYPES[g];
-          h += '<button class="gauge-pick-btn' + (gt === cur ? ' active' : '') + '" data-gtype="' + gt + '" title="' + gt + '">' + self.GAUGE_TYPE_LABELS[gt] + '</button>';
+          h += '<button type="button" class="gauge-pick-btn' + (gt === cur ? ' active' : '') + '" data-gtype="' + gt + '" title="' + gt + '" tabindex="-1">' + self.GAUGE_TYPE_LABELS[gt] + '</button>';
         }
         h += '</div>';
       }
@@ -2327,8 +2348,9 @@ var Pages = {
                 for (var k in obj) {
                   if (!obj.hasOwnProperty(k)) continue;
                   var val = Array.isArray(obj[k]) ? (obj[k][0] || '') : obj[k];
-                  html += '<div class="log-entry"><span class="log-label">' + esc(k) + '</span>' +
-                    '<span class="log-text" title="' + esc(val) + '">' + esc(val) + '</span></div>';
+                  html += '<div class="log-entry" role="group" aria-label="' + esc(k) + '">' +
+                    '<div class="log-label">' + esc(k) + '</div>' +
+                    '<div class="log-text" title="' + esc(val) + '">' + esc(val) + '</div></div>';
                 }
               }
             } else {
@@ -2336,8 +2358,9 @@ var Pages = {
                 if (!logs.hasOwnProperty(key)) continue;
                 var v = logs[key];
                 if (typeof v !== 'string') v = Array.isArray(v) ? (v[0] || '') : String(v);
-                html += '<div class="log-entry"><span class="log-label">' + esc(key) + '</span>' +
-                  '<span class="log-text" title="' + esc(v) + '">' + esc(v) + '</span></div>';
+                html += '<div class="log-entry" role="group" aria-label="' + esc(key) + '">' +
+                  '<div class="log-label">' + esc(key) + '</div>' +
+                  '<div class="log-text" title="' + esc(v) + '">' + esc(v) + '</div></div>';
               }
             }
             if (html) { $lb.html(html); }
@@ -2749,23 +2772,23 @@ var Pages = {
     _tempChartTileHtml: function(sensorName) {
       var key = 'tempchart-' + Store.slugify(sensorName);
       var chartSize = Store.getChartSize() || 'xl';
-      return '<div class="tile tile-chart tile-' + esc(chartSize) + '" data-tile="' + esc(key) + '" data-size="' + esc(chartSize) + '" data-sensor="' + esc(sensorName) + '" draggable="false">' +
-        '<button class="tile-hide-btn" title="Hide tile">&times;</button>' +
-        '<div class="tile-drag-handle" title="Drag to reorder">' + icon('monitor') + '</div>' +
-        '<div class="tile-edit-controls" style="display:none"><div class="tile-ctrl-row">' +
+      return '<div class="tile tile-chart tile-' + esc(chartSize) + '" role="listitem" data-tile="' + esc(key) + '" data-size="' + esc(chartSize) + '" data-sensor="' + esc(sensorName) + '" draggable="false">' +
+        '<button type="button" class="tile-hide-btn" title="Hide tile" tabindex="-1" aria-hidden="true">&times;</button>' +
+        '<div class="tile-drag-handle" title="Drag to reorder" aria-hidden="true">' + icon('monitor') + '</div>' +
+        '<div class="tile-edit-controls" style="display:none" aria-hidden="true"><div class="tile-ctrl-row">' +
         '<span class="tile-ctrl-label">Width</span>' +
-        '<button class="chart-size-btn' + (chartSize==='md'?' active':'') + '" data-csz="md" title="1 column">1</button>' +
-        '<button class="chart-size-btn' + (chartSize==='lg'?' active':'') + '" data-csz="lg" title="2 columns">2</button>' +
-        '<button class="chart-size-btn' + (chartSize==='xl'?' active':'') + '" data-csz="xl" title="3 columns">3</button>' +
+        '<button type="button" class="chart-size-btn' + (chartSize==='md'?' active':'') + '" data-csz="md" title="1 column" tabindex="-1">1</button>' +
+        '<button type="button" class="chart-size-btn' + (chartSize==='lg'?' active':'') + '" data-csz="lg" title="2 columns" tabindex="-1">2</button>' +
+        '<button type="button" class="chart-size-btn' + (chartSize==='xl'?' active':'') + '" data-csz="xl" title="3 columns" tabindex="-1">3</button>' +
         '</div></div>' +
-        '<div class="tile-title">' + esc(sensorName) + '</div>' +
-        '<div class="chart-wrap"><canvas id="temp-chart-' + esc(Store.slugify(sensorName)) + '"></canvas></div>' +
-        '<div class="chart-controls">' +
-        '<button class="chart-btn" data-mins="60" data-sensor="' + esc(sensorName) + '">1h</button>' +
-        '<button class="chart-btn" data-mins="360" data-sensor="' + esc(sensorName) + '">6h</button>' +
-        '<button class="chart-btn active" data-mins="1440" data-sensor="' + esc(sensorName) + '">24h</button>' +
-        '<button class="chart-btn" data-mins="10080" data-sensor="' + esc(sensorName) + '">7d</button>' +
-        '<button class="chart-btn" data-mins="43200" data-sensor="' + esc(sensorName) + '">30d</button>' +
+        '<h2 class="tile-title">' + esc(sensorName) + '</h2>' +
+        '<div class="chart-wrap" aria-hidden="true"><canvas id="temp-chart-' + esc(Store.slugify(sensorName)) + '"></canvas></div>' +
+        '<div class="chart-controls" aria-label="Chart time range">' +
+        '<button type="button" class="chart-btn" data-mins="60" data-sensor="' + esc(sensorName) + '">1h</button>' +
+        '<button type="button" class="chart-btn" data-mins="360" data-sensor="' + esc(sensorName) + '">6h</button>' +
+        '<button type="button" class="chart-btn active" data-mins="1440" data-sensor="' + esc(sensorName) + '">24h</button>' +
+        '<button type="button" class="chart-btn" data-mins="10080" data-sensor="' + esc(sensorName) + '">7d</button>' +
+        '<button type="button" class="chart-btn" data-mins="43200" data-sensor="' + esc(sensorName) + '">30d</button>' +
         '</div></div>';
     },
 
@@ -3485,10 +3508,12 @@ var Pages = {
   /* ========== LOGS ========== */
   logs: {
     cmd: 'logs_json',
+    _entryDateRe: /^\s*(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})\s+(\d{1,2}:\d{2}:\d{2})\s+(.*)$/,
     render: function($c) {
       $c.html(
-        '<div class="page-title">' + icon('logs') + ' Logs</div>' +
-        '<div id="cal-heatmap" class="cal-heatmap-wrap"></div>' +
+        '<h1 class="page-title">' + icon('logs') + ' Logs</h1>' +
+        /* Decorative day map — same data is in the lists below; hide from AT */
+        '<div id="cal-heatmap" class="cal-heatmap-wrap" aria-hidden="true"></div>' +
         '<div id="logs-data"><div class="text-muted text-center">Loading…</div></div>'
       );
       API.get('logs_json').done(function(d){ Pages.logs.update(d); });
@@ -3509,6 +3534,12 @@ var Pages = {
       }
       return out;
     },
+    /** Split "MM/DD/YY HH:MM:SS message" into {time, msg} for clearer AT reading */
+    _splitLogEntry: function(raw) {
+      var m = Pages.logs._entryDateRe.exec(String(raw || ''));
+      if (!m) return { time: '', msg: String(raw || '') };
+      return { time: m[1] + '/' + m[2] + '/' + m[3] + ' ' + m[4], msg: (m[5] || '').trim() };
+    },
     _renderLogCards: function(d) {
       if (!d || !d.Logs) { UI.refreshJsonPanel($('#logs-data'), d); return; }
       var logs = this._flattenLogs(d.Logs);
@@ -3522,17 +3553,31 @@ var Pages = {
         if (!logs.hasOwnProperty(logName)) continue;
         var entries = logs[logName];
         var ic = secIcons[logName] || icon('logs');
-        h += '<div class="card mb-2"><div class="card-header">' + ic + ' ' + esc(logName);
-        if (Array.isArray(entries)) h += ' <span class="badge" style="font-size:.7rem;margin-left:6px;background:var(--bg-3);padding:2px 8px;border-radius:10px">' + entries.length + '</span>';
-        h += '</div><div class="card-body">';
+        var count = Array.isArray(entries) ? entries.length : 0;
+        var secId = 'logs-h-' + String(logName).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        h += '<section class="card mb-2" aria-labelledby="' + secId + '">' +
+          '<h2 class="card-header" id="' + secId + '">' +
+          ic + ' ' + esc(logName);
+        if (count) {
+          h += ' <span class="badge logs-count-badge" aria-hidden="true">' + count + '</span>' +
+            '<span class="sr-only">, ' + count + ' ' + (count === 1 ? 'entry' : 'entries') + '</span>';
+        }
+        h += '</h2><div class="card-body">';
         if (Array.isArray(entries) && entries.length) {
+          h += '<ul class="logs-list">';
           entries.forEach(function(e) {
-            h += '<div class="kv-row" style="padding:4px 0;font-size:.85rem">' + esc(e) + '</div>';
+            var parts = Pages.logs._splitLogEntry(e);
+            h += '<li class="logs-entry">';
+            if (parts.time) {
+              h += '<time class="logs-entry-time">' + esc(parts.time) + '</time> ';
+            }
+            h += '<span class="logs-entry-msg">' + esc(parts.msg || e) + '</span></li>';
           });
+          h += '</ul>';
         } else {
           h += '<div class="text-muted">No entries.</div>';
         }
-        h += '</div></div>';
+        h += '</div></section>';
       }
       $('#logs-data').html(h || '<div class="text-muted text-center">No log data.</div>');
     },
@@ -3551,7 +3596,7 @@ var Pages = {
         if (n.indexOf('service') !== -1) return 2;
         return 1;
       };
-      var dateRe = /^\s*(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})\s+(\d{1,2}:\d{2}:\d{2})\s+(.*)$/;
+      var dateRe = Pages.logs._entryDateRe;
 
       var flatLogs = Pages.logs._flattenLogs(d.Logs);
       for (var logName in flatLogs) {
@@ -3690,7 +3735,7 @@ var Pages = {
       var H = TOP + days * STEP + BOTTOM_LABEL + 2;
 
       var html = '<svg class="cal-heatmap-svg" viewBox="0 0 ' + W + ' ' + H +
-                 '" width="100%" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Log activity heatmap">';
+                 '" width="100%" preserveAspectRatio="xMidYMin meet" focusable="false">';
 
       /* Day-of-week labels (left side) */
       var dayLabels = ['','Mon','','Wed','','Fri','','Sun'];
@@ -3716,8 +3761,8 @@ var Pages = {
       html += '<div class="cal-legend">';
       if (totalMonths < 12) {
         html += '<span class="cal-page-nav">' +
-          '<button class="cal-pg-btn" id="cal-pg-prev" title="Older"' + (page >= maxPages - 1 ? ' disabled' : '') + '>&lsaquo;</button>' +
-          '<button class="cal-pg-btn" id="cal-pg-next" title="Newer"' + (page <= 0 ? ' disabled' : '') + '>&rsaquo;</button></span>';
+          '<button type="button" class="cal-pg-btn" id="cal-pg-prev" tabindex="-1" title="Older"' + (page >= maxPages - 1 ? ' disabled' : '') + '>&lsaquo;</button>' +
+          '<button type="button" class="cal-pg-btn" id="cal-pg-next" tabindex="-1" title="Newer"' + (page <= 0 ? ' disabled' : '') + '>&rsaquo;</button></span>';
       }
       html += '<span class="cal-legend-label">Less</span>' +
         '<span class="cal-cell-preview cal-lv0"></span>' +
@@ -4220,7 +4265,7 @@ var Pages = {
       { id:'system',   label:'Monitor',        icon:'cpu' }
     ],
     render: function($c) {
-      $c.html('<div class="page-title">'+icon('settings')+' Settings</div>' +
+      $c.html('<h1 class="page-title">'+icon('settings')+' Settings</h1>' +
         '<div id="set-wrap"><div class="text-muted text-center">Loading\u2026</div></div>');
       var self = this;
       API.get('settings', 12000).done(function(d){
@@ -4241,7 +4286,10 @@ var Pages = {
       var devMode = Store.get('devMode', false);
       var showModbus = Store.get('showModbus', true);
 
-      /* Dependent field rules: parent checkbox → child fields hidden when condition met.
+      function _setTabId(cat) { return 'set-tab-' + cat; }
+      function _setPanelId(cat) { return 'set-panel-' + cat; }
+
+      /* Dependent field rules:
          NOTE: 'disable*' keys are displayed INVERTED (checked = enabled).
          So 'when:true' means 'when the original config value is true (=disabled)',
          which in the inverted UI means 'when checkbox is UNchecked'. We flip the
@@ -4314,36 +4362,43 @@ var Pages = {
       var h = '<div class="set-toolbar">' +
         '<div class="set-search-wrap">' +
         btnIcon('search', 16) +
-        '<input class="set-search-input" id="set-search" type="text" placeholder="Search settings\u2026"></div>' +
+        '<input class="set-search-input" id="set-search" type="search" aria-label="Search settings" placeholder="Search settings\u2026"></div>' +
         '<button class="set-adv-btn'+(devMode?' set-adv-on':'')+' " id="set-adv-toggle">' +
         btnIcon('advanced', 14) + ' Advanced</button></div>';
 
       /* --- Category tabs (with icons) --- */
-      h += '<div class="set-cats" id="set-cats">';
+      h += '<div class="set-cats" id="set-cats" role="tablist" aria-label="Settings sections">';
       CATS.forEach(function(c, i) {
         var cnt = buckets[c.id] ? buckets[c.id].length : 0;
-        h += '<button class="set-cat'+(i===0?' active':'')+'" data-cat="'+c.id+'">' +
+        var isActive = (i === 0);
+        h += '<button class="set-cat'+(isActive?' active':'')+'" role="tab" id="'+_setTabId(c.id)+'" data-cat="'+c.id+'"' +
+          ' aria-selected="'+(isActive?'true':'false')+'" aria-controls="'+_setPanelId(c.id)+'" tabindex="'+(isActive?'0':'-1')+'">' +
           icon(c.icon) + '<span class="set-cat-label">'+esc(c.label)+'</span>' +
           '<span class="set-cat-count">'+cnt+'</span></button>';
         if (c.id === 'email') {
-          h += '<button class="set-cat" data-cat="__notifications__">' +
+          h += '<button class="set-cat" role="tab" id="'+_setTabId('__notifications__')+'" data-cat="__notifications__"' +
+            ' aria-selected="false" aria-controls="'+_setPanelId('__notifications__')+'" tabindex="-1">' +
             icon('notifications') + '<span class="set-cat-label">Notifications</span></button>';
         }
       });
       /* Advanced & System Actions tabs (hidden unless dev mode) */
-      h += '<button class="set-cat set-cat-adv'+(devMode?'':' hidden')+'" data-cat="__advanced__">' +
+      h += '<button class="set-cat set-cat-adv'+(devMode?'':' hidden')+'" role="tab" id="'+_setTabId('__advanced__')+'" data-cat="__advanced__"' +
+        ' aria-selected="false" aria-controls="'+_setPanelId('__advanced__')+'" tabindex="-1">' +
         icon('advanced') + '<span class="set-cat-label">Advanced</span></button>';
-      h += '<button class="set-cat set-cat-adv'+(devMode?'':' hidden')+'" data-cat="__sysactions__">' +
+      h += '<button class="set-cat set-cat-adv'+(devMode?'':' hidden')+'" role="tab" id="'+_setTabId('__sysactions__')+'" data-cat="__sysactions__"' +
+        ' aria-selected="false" aria-controls="'+_setPanelId('__sysactions__')+'" tabindex="-1">' +
         icon('power') + '<span class="set-cat-label">System Actions</span></button>';
       h += '</div>';
 
       /* --- Setting panels --- */
       h += '<div id="set-panels">';
       CATS.forEach(function(c, i) {
-        h += '<div class="set-panel'+(i===0?' active':'')+'" data-cat="'+c.id+'">';
+        var isActive = (i === 0);
+        h += '<div class="set-panel'+(isActive?' active':'')+'" role="tabpanel" id="'+_setPanelId(c.id)+'" data-cat="'+c.id+'"' +
+          (isActive?'':' hidden')+' aria-labelledby="'+_setTabId(c.id)+'">';
         h += '<div class="set-panel-hdr">' +
           '<div class="set-panel-icon">'+icon(c.icon)+'</div>' +
-          '<div><div class="set-panel-title">'+esc(c.label)+'</div>' +
+          '<div><h2 class="set-panel-title">'+esc(c.label)+'</h2>' +
           '<div class="set-panel-sub">'+buckets[c.id].length+' settings</div></div></div>';
         h += '<div class="set-panel-fields">';
         if (c.id === 'security') {
@@ -4365,7 +4420,7 @@ var Pages = {
           SEC_SUBS.forEach(function(sub) {
             h += '<div class="set-sec-group" id="'+sub.id+'">' +
               '<div class="set-sec-group-hdr">' + icon(sub.icon) +
-              '<div><div class="set-sec-group-title">'+esc(sub.label)+'</div>' +
+              '<div><h3 class="set-sec-group-title">'+esc(sub.label)+'</h3>' +
               '<div class="set-sec-group-desc">'+sub.desc+'</div></div></div>';
             h += '<div class="set-sec-group-fields">';
             if (sub.id === 'sec-mfa') {
@@ -4634,7 +4689,7 @@ var Pages = {
             if (emlMap[sub.toggle]) h += UI.formField(sub.toggle, emlMap[sub.toggle].def, emlMap[sub.toggle].def[3]);
             h += '<div class="set-sec-group" id="'+sub.id+'">' +
               '<div class="set-sec-group-hdr">' + icon(sub.icon) +
-              '<div><div class="set-sec-group-title">'+esc(sub.label)+'</div>' +
+              '<div><h3 class="set-sec-group-title">'+esc(sub.label)+'</h3>' +
               '<div class="set-sec-group-desc">'+sub.desc+'</div></div></div>';
             h += '<div class="set-sec-group-fields">';
             sub.fields.forEach(function(fk) {
@@ -4668,10 +4723,10 @@ var Pages = {
 
       /* --- Advanced settings panel (hidden unless dev mode) --- */
       var advData = self._advData;
-      h += '<div class="set-panel set-panel-adv'+(devMode?'':' hidden')+'" data-cat="__advanced__">';
+      h += '<div class="set-panel set-panel-adv'+(devMode?'':' hidden')+'" role="tabpanel" id="'+_setPanelId('__advanced__')+'" data-cat="__advanced__" hidden aria-labelledby="'+_setTabId('__advanced__')+'">';
       h += '<div class="set-panel-hdr">' +
         '<div class="set-panel-icon">'+icon('advanced')+'</div>' +
-        '<div><div class="set-panel-title">Advanced Settings</div>' +
+        '<div><h2 class="set-panel-title">Advanced Settings</h2>' +
         '<div class="set-panel-sub">For experienced users only</div></div></div>';
       h += '<div class="badge badge-warning mb-2">'+btnIcon('warning',14)+' Changing these settings may break your system. Proceed with caution.</div>';
       if (advData && typeof advData === 'object') {
@@ -4688,10 +4743,10 @@ var Pages = {
       h += '</div>';
 
       /* --- System Actions panel (hidden unless dev mode) --- */
-      h += '<div class="set-panel set-panel-adv'+(devMode?'':' hidden')+'" data-cat="__sysactions__">';
+      h += '<div class="set-panel set-panel-adv'+(devMode?'':' hidden')+'" role="tabpanel" id="'+_setPanelId('__sysactions__')+'" data-cat="__sysactions__" hidden aria-labelledby="'+_setTabId('__sysactions__')+'">';
       h += '<div class="set-panel-hdr">' +
         '<div class="set-panel-icon">'+icon('power')+'</div>' +
-        '<div><div class="set-panel-title">System Actions</div>' +
+        '<div><h2 class="set-panel-title">System Actions</h2>' +
         '<div class="set-panel-sub">Control the running system</div></div></div>';
       h += '<div class="badge badge-warning mb-2">'+btnIcon('warning',14)+' These actions affect the running system.</div>';
       h += '<div class="btn-group flex-wrap" style="gap:8px;margin-top:12px">' +
@@ -4721,10 +4776,10 @@ var Pages = {
         return c;
       }
 
-      h += '<div class="set-panel" data-cat="__notifications__">';
+      h += '<div class="set-panel" role="tabpanel" id="'+_setPanelId('__notifications__')+'" data-cat="__notifications__" hidden aria-labelledby="'+_setTabId('__notifications__')+'">';
       h += '<div class="set-panel-hdr">' +
         '<div class="set-panel-icon">'+icon('notifications')+'</div>' +
-        '<div><div class="set-panel-title">Notifications</div>' +
+        '<div><h2 class="set-panel-title">Notifications</h2>' +
         '<div class="set-panel-sub">Email recipients &amp; categories</div></div></div>';
       h += '<div class="card"><div class="card-header">' + icon('mail') + ' Email Recipients</div><div class="card-body">';
       h += '<div id="notif-list" class="notif-list">';
@@ -4750,6 +4805,24 @@ var Pages = {
 
       var $w = $('#set-wrap').html(h);
 
+      function _syncSetTabs(activeCat) {
+        $w.find('.set-cat').each(function() {
+          var $t = $(this);
+          var on = $t.data('cat') === activeCat;
+          $t.attr('aria-selected', on ? 'true' : 'false');
+          $t.attr('tabindex', on ? '0' : '-1');
+          $t.toggleClass('active', on);
+        });
+        $w.find('.set-panel').each(function() {
+          var $p = $(this);
+          if ($p.hasClass('hidden')) return;
+          var on = $p.data('cat') === activeCat;
+          $p.toggleClass('active', on);
+          if (on) $p.removeAttr('hidden');
+          else if (!$p.hasClass('set-search-mode')) $p.attr('hidden', '');
+        });
+      }
+
       /* --- Tab switching (with dirty guard) --- */
       $w.on('click', '.set-cat', function() {
         var $btn = $(this);
@@ -4757,11 +4830,10 @@ var Pages = {
         var activeCat = $('.set-cat.active').data('cat');
         if (activeCat === cat) return;
         function doSwitch() {
-          $('.set-cat').removeClass('active'); $btn.addClass('active');
           $('#set-search-results').hide();
-          $('.set-panel').removeClass('active');
-          $('.set-panel[data-cat="'+cat+'"]').addClass('active');
           $('#set-search').val('');
+          $('#set-cats').show().removeAttr('aria-hidden');
+          _syncSetTabs(cat);
         }
         if (_isTabDirty(activeCat)) {
           Modal.confirm('Unsaved Changes',
@@ -4772,32 +4844,49 @@ var Pages = {
         doSwitch();
       });
 
+      /* Arrow-key navigation between settings tabs */
+      $w.on('keydown', '.set-cat', function(e) {
+        var $tabs = $w.find('.set-cat:visible');
+        var idx = $tabs.index(this);
+        var next = -1;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (idx + 1) % $tabs.length;
+        else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (idx - 1 + $tabs.length) % $tabs.length;
+        else if (e.key === 'Home') next = 0;
+        else if (e.key === 'End') next = $tabs.length - 1;
+        else return;
+        e.preventDefault();
+        $tabs.eq(next).focus().trigger('click');
+      });
+
       /* --- Search filter (improved: hides non-matching fields and empty panels) --- */
       $('#set-search').on('input', function() {
         var q = $(this).val().toLowerCase();
         if (!q) {
           /* Restore normal tab view */
-          $('#set-panels .set-panel').removeClass('active set-search-mode');
+          $('#set-panels .set-panel').removeClass('set-search-mode');
           $('.setting-field').show();
-          var active = $('.set-cat.active').data('cat');
-          $('.set-panel[data-cat="'+active+'"]').addClass('active');
-          $('#set-cats').show();
+          $('#set-cats').show().removeAttr('aria-hidden');
+          _syncSetTabs($('.set-cat.active').data('cat') || 'general');
           return;
         }
         /* Hide category tabs, show all panels in search mode */
-        $('#set-cats').hide();
+        $('#set-cats').hide().attr('aria-hidden', 'true');
         $('#set-panels .set-panel').each(function() {
           var $panel = $(this);
           /* Skip hidden panels (e.g. Advanced when dev mode is off) */
-          if ($panel.hasClass('hidden')) { $panel.removeClass('active set-search-mode'); return; }
+          if ($panel.hasClass('hidden')) { $panel.removeClass('active set-search-mode').attr('hidden', ''); return; }
           var hasMatch = false;
           $panel.find('.setting-field').each(function() {
             var match = ($(this).data('label') || '').indexOf(q) >= 0;
             $(this).toggle(match);
             if (match) hasMatch = true;
           });
-          $panel.toggleClass('active set-search-mode', hasMatch);
-          if (!hasMatch) $panel.removeClass('active');
+          $panel.toggleClass('set-search-mode', hasMatch);
+          if (hasMatch) {
+            $panel.addClass('active').removeAttr('hidden');
+          } else {
+            $panel.removeClass('active set-search-mode').attr('hidden', '');
+          }
         });
       });
 
@@ -4825,8 +4914,7 @@ var Pages = {
           $btn.removeClass('set-adv-on');
           $('.set-cat-adv, .set-panel-adv').removeClass('active').addClass('hidden');
           var $first = $('.set-cat:not(.set-cat-adv)').first();
-          $first.addClass('active');
-          $('.set-panel[data-cat="'+$first.data('cat')+'"]').addClass('active');
+          _syncSetTabs($first.data('cat'));
         } else {
           Modal.confirm('Enable Advanced Settings',
             Modal.html('<strong>'+btnIcon('warning',16)+' Warning:</strong> Advanced settings are intended for experienced users. ' +

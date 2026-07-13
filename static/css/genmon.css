@@ -710,7 +710,7 @@ input, select, textarea { font: inherit; color: inherit; }
 
 /* ---------- Page header ------------------------------------- */
 .page-title {
-  font-size: 1.15rem; font-weight: 700; margin-bottom: 6px;
+  font-size: 1.15rem; font-weight: 700; margin: 0 0 6px;
   display: flex; align-items: center; gap: 8px;
 }
 .page-title svg { width: 22px; height: 22px; color: var(--accent); }
@@ -765,9 +765,35 @@ input, select, textarea { font: inherit; color: inherit; }
   display: flex; align-items: center; gap: 8px;
   padding: 12px 16px; border-bottom: 1px solid var(--border);
   font-weight: 600; font-size: .92rem;
+  margin: 0;
 }
 .card-body { padding: 16px; }
 .card-footer { padding: 12px 16px; border-top: 1px solid var(--border); }
+
+/* ---------- Logs page lists --------------------------------- */
+.logs-list {
+  list-style: none; margin: 0; padding: 0;
+}
+.logs-entry {
+  display: flex; flex-wrap: wrap; gap: 6px 10px;
+  padding: 6px 0; font-size: .85rem;
+  border-bottom: 1px solid var(--border);
+}
+.logs-entry:last-child { border-bottom: none; }
+[data-theme~="dark"] .logs-entry {
+  border-bottom-color: rgba(55,75,110,.25);
+}
+.logs-entry-time {
+  flex-shrink: 0; font-family: var(--mono, ui-monospace, monospace);
+  font-size: .8rem; color: var(--text-2); font-variant-numeric: tabular-nums;
+}
+.logs-entry-msg {
+  flex: 1; min-width: 12rem; color: var(--text-0); word-break: break-word;
+}
+.logs-count-badge {
+  font-size: .7rem; margin-left: 6px; background: var(--bg-3);
+  padding: 2px 8px; border-radius: 10px;
+}
 
 /* ---------- Dashboard tile grid ----------------------------- */
 .dash-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
@@ -797,7 +823,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .tile-title {
   font-size: .72rem; font-weight: 600; color: var(--text-2);
   text-transform: uppercase; letter-spacing: .5px;
-  margin-bottom: 3px; text-align: center;
+  margin: 0 0 3px; text-align: center;
 }
 .tile-gauge { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; }
 .tile-value {
@@ -805,10 +831,13 @@ input, select, textarea { font: inherit; color: inherit; }
   margin-top: 1px; color: var(--text-0);
 }
 .tile-value .unit { font-size: .75rem; font-weight: 400; color: var(--text-2); margin-left: 2px; }
-/* Hide external value for dial-type gauges (value shown inside the dial) */
+/* Dial gauges show the value in the SVG; keep .tile-value for AT (not display:none) */
 .tile[data-gtype="radial"] .tile-value,
 .tile[data-gtype="arc"] .tile-value,
-.tile[data-gtype="fuel"] .tile-value { display: none; }
+.tile[data-gtype="fuel"] .tile-value {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); border: 0;
+}
 /* HBar: tighter spacing */
 .tile[data-gtype="hbar"] .tile-value { margin-top: 0; }
 
@@ -827,8 +856,9 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .tile-subs {
   display: flex; flex-wrap: wrap; gap: 1px 8px; justify-content: center;
-  margin-top: 4px; padding-top: 4px;
+  margin: 4px 0 0; padding: 4px 0 0;
   border-top: 1px solid var(--border);
+  list-style: none;
 }
 .tile-sub {
   display: flex; flex-direction: column; align-items: center;
@@ -2017,7 +2047,7 @@ input, select, textarea { font: inherit; color: inherit; }
   background: rgba(79,143,250,.1); color: var(--accent); flex-shrink: 0;
 }
 .set-panel-icon svg { width: 20px; height: 20px; }
-.set-panel-title { font-size: 1rem; font-weight: 700; color: var(--text-0); }
+.set-panel-title { font-size: 1rem; font-weight: 700; color: var(--text-0); margin: 0; }
 .set-panel-sub { font-size: .75rem; color: var(--text-3); margin-top: 1px; }
 
 /* Save bar */
@@ -2069,7 +2099,7 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .set-sec-group-hdr > svg { flex-shrink: 0; color: var(--accent); margin-top: 2px; }
 .set-sec-group-title {
-  font-size: .88rem; font-weight: 700; color: var(--text-0);
+  font-size: .88rem; font-weight: 700; color: var(--text-0); margin: 0;
 }
 .set-sec-group-desc {
   font-size: .75rem; color: var(--text-2); margin-top: 2px; line-height: 1.4;
