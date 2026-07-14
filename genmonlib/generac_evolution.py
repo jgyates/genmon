@@ -475,7 +475,7 @@ class Evolution(GeneratorController):
                 )
                 self.TileList.append(Tile)
 
-                if self.EvolutionController and not self.LiquidCooled and not self.bDisablePowerLog and not self.PowerPact:
+                if self.EvolutionController and not self.LiquidCooled and not self.bDisablePowerLog and not self.PowerPact and not self.PowerZone200:
                     NominalLegCurrent = ((float(self.NominalKW) * 1000) / 2 ) / (self.NominalLineVolts / 2)
                     # Setup gauges for EvoAC internal CTs
                     Tile = MyTile(
@@ -5010,7 +5010,7 @@ class Evolution(GeneratorController):
 
         try:
             RunHours = None
-            if not self.EvolutionController or not self.LiquidCooled:
+            if not self.EvolutionController or not self.LiquidCooled and not self.PowerZone200:
                 # get total hours running
                 RunHours = self.GetParameter("000b", ReturnInt=True)
                 if self.AdditionalRunHours != None:
