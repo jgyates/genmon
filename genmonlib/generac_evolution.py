@@ -5537,6 +5537,8 @@ class Evolution(GeneratorController):
             return False
         if self.PowerPact:
             return False
+        if self.PowerZone200:
+            return False
         
         if (
             not len(self.NominalKW)
