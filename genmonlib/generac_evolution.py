@@ -992,6 +992,7 @@ class Evolution(GeneratorController):
 
         ModelLookup_PowerZone200 = {
             6: ["22KW","60","120/240","1","997 cc","240",],        #
+            9: ["28KW","60","120/240","1","997 cc","240",],        #
         }
 
         LookUp = None
