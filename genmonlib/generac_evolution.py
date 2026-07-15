@@ -3095,9 +3095,13 @@ class Evolution(GeneratorController):
             0x2B: "Running - Utility Loss",  # Start / Stop Log
             0x2C: "Running - 2 Wire Start",  # Start / Stop Log
             0x2D: "Running - Remote Start",  # Start / Stop Log
-            0x2E: "Running - Exercise",  # Start / Stop Log
-            0x2F: "Stopped - Alarm"  # Start / Stop Log
+            0x2E: "Running - Exercise",     # Start / Stop Log
+            0x2F: "Stopped - Alarm",        # Start / Stop Log
             # Stopped Alarm
+            # PowerZone200
+            0x7f: "Ran with Transfer",
+            0x81: "Off - Utility Returned",
+            0x82: "Enter Service Mode",
         }
 
         # This should be the same for all Evo models , Not sure about service C, this may be a Nexus thing

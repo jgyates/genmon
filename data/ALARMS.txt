@@ -4,6 +4,7 @@
 # Format: items are delimited by !, each line must have 5 items
 #AlarmCode! Type (ALARM, WARNING)! AlarmName! Condition! Additional Info
 
+1006!ALARM!Internal Fault!Internal Fault!Reboot controller
 1001!ALARM!Controller Harness!Internal Harness Loop Broken - Internal Harness connecting external display board to main board has become disconnected.!Triggered when main board does not see communication from display board
 1100!ALARM!Overcrank!Engine cranks but will not start.! Unit turns over but will not start. Controller is receiving signal on Wire 18. because of the nature of Cranking there is almost no insight into the cause of an Overcrank Alarm with the current Sensors.
 1101!ALARM!Overcrank!Engine/Starter Problem. Limiting number of cranking cycles to protect the starter motor.!If the engine has tried to crank for 10 times unsuccessfully, this will trigger. For Liquid Cooled models: Low to No fuel pressure while cranking. To set fuel pressure has to be measured as low for at least 1200ms before the overcrank alarm is set
@@ -88,6 +89,7 @@
 2651!ALARM!External Ignition Missing Cam!No cam pulses detected by External ignition!No further description
 2660!ALARM!Internal Ignition Missing Crank Pulses!Missing crank pulses detected by Internal ignition!No further description
 2661!ALARM!External Ignition Missing Crank Pulses!Missing crank pulses detected by External ignition!No further description
+2670!ALARM!CAN Bus!CANbus error reported by external ignition!No further description
 2671!ALARM!CAN Bus!CANbus error reported by external ignition!No further description
 
 ######## End Gas Only##############################
@@ -121,14 +123,22 @@
 
 
 #**Additional codes FOR 8 kW Units Only**
-
-#1100!ALARM!Overcrank (Engine/Starter Problem)!Limiting number of cranking cycles to protect the starter motor.!If the engine has tried to crank for 10 times unsuccessfully, this will trigger.
-#1600!ALARM!Underspeed!The engine never comes up to 3700 RPM.!Check fuel selection and fuel supply.
-#2102!ALARM!Overload Remove Load!Overloaded!Unit re-cranks 5 times when load is applied, engine dies (0 RPM) and has low voltage (< 180V) Check for Overloaded condition on unit. Inspect stepper motor operation.
-#2103!ALARM!Overload Remove Load!Unit has run and attempted to accept load 10 times, could not accept due to overload condition.!Check for Overloaded condition on unit
+# 1100!ALARM!Overcrank (Engine/Starter Problem)!Limiting number of cranking cycles to protect the starter motor.!If the engine has tried to crank for 10 times unsuccessfully, this will trigger.
+# 1600!ALARM!Underspeed!The engine never comes up to 3700 RPM.!Check fuel selection and fuel supply.
+# 2102!ALARM!Overload Remove Load!Overloaded!Unit re-cranks 5 times when load is applied, engine dies (0 RPM) and has low voltage (< 180V) Check for Overloaded condition on unit. Inspect stepper motor operation.
+# 2103!ALARM!Overload Remove Load!Unit has run and attempted to accept load 10 times, could not accept due to overload condition.!Check for Overloaded condition on unit
 
 
 ## Validated on 4.5L Evolution Controller
 3201!ALARM!Fuel Delivery Pressure!Fuel Delivery Pressure!Fuel Delivery Pressure
 3217!ALARM!Fuel Delivery Pressure!Fuel Delivery Pressure!Fuel Delivery Pressure
 3003!ALARM!ECU Faulted!ECU Faulted!ECU Faulted
+
+# Power Zone 200
+3104!ALARM!Engine Throttle Valve 1 Position
+3204!ALARM!Engine Fuel Delivery Pressure
+3404!ALARM!Engine Intake Manifold #1 Pressure
+4904!ALARM!Engine Fuel Valve 1 Position
+4101!ALARM!Engine Position Sensor
+5101!ALARM!Engine Speed Low!Engine Speed Low!No further description
+
