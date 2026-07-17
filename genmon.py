@@ -29,7 +29,7 @@ try:
     from genmonlib.custom_controller import CustomController
     from genmonlib.generac_evolution import Evolution
     from genmonlib.generac_HPanel import HPanel
-    from genmonlib.generac_powerzone import PowerZone
+    from genmonlib.generac_powerzone_pro import PowerZonePro
     from genmonlib.myconfig import MyConfig
     from genmonlib.mylog import SetupLogger
     from genmonlib.mymail import MyMail
@@ -245,8 +245,8 @@ class Monitor(MySupport):
                     feedback=self.FeedbackPipe,
                     config=self.config,
                 )
-            elif self.ControllerSelected.lower() == "powerzone":
-                self.Controller = PowerZone(
+            elif self.ControllerSelected.lower() == "powerzone_pro":
+                self.Controller = PowerZonePro(
                     self.log,
                     newinstall=self.NewInstall,
                     simulation=self.Simulation,

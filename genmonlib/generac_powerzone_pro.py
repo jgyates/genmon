@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -------------------------------------------------------------------------------
-#    FILE: generac_powerzone.py
-# PURPOSE: Controller Specific Detils for Generac Power Zone controller
+#    FILE: generac_powerzone_pro.py
+# PURPOSE: Controller Specific Detils for Generac Power Zone Pro controller
 #
 #  AUTHOR: Jason G Yates
 #    DATE: 13-Feb-2021
@@ -47,8 +47,8 @@ ALARM_LOG_START = 0x0123
 ALARM_LOG_ENTRIES = 5
 ALARM_LOG_LENGTH = 64
 
-# ---------------------PowerZoneReg::PowerZoneReg--------------------------------
-class PowerZoneReg(object):
+# ---------------------PowerZoneProReg::PowerZoneProReg--------------------------------
+class PowerZoneProReg(object):
     # Remote Annunciator Status
     RA_STATUS_0 = ["0000", 2]
     RA_STATUS_1 = ["0001", 2]
@@ -290,7 +290,7 @@ class PowerZoneReg(object):
     EXT_SW_VERSION = ["025f", 2]  # External Switch SW Version
     EXT_SW_SELECTED = ["0260", 2]  # External Switch Selected
 
-    # ---------------------PowerZoneReg::hexsort---------------------------------
+    # ---------------------PowerZoneProReg::hexsort---------------------------------
     # @staticmethod
     def hexsort(self, e):
         try:
@@ -299,10 +299,10 @@ class PowerZoneReg(object):
             return 0
 
     # @staticmethod
-    # ---------------------PowerZoneReg::GetRegList------------------------------
+    # ---------------------PowerZoneProReg::GetRegList------------------------------
     def GetRegList(self):
         RetList = []
-        for attr, value in PowerZoneReg.__dict__.items():
+        for attr, value in PowerZoneProReg.__dict__.items():
             if not callable(getattr(self, attr)) and not attr.startswith("__"):
                 RetList.append(value)
 
@@ -310,8 +310,8 @@ class PowerZoneReg(object):
         return RetList
 
 
-# ---------------------------PowerZoneIO:PowerZoneIO-----------------------------
-class PowerZoneIO(object):
+# ---------------------------PowerZoneProIO:PowerZoneProIO-----------------------------
+class PowerZoneProIO(object):
 
     Inputs = {
         # DI Results
@@ -479,9 +479,9 @@ class RegisterFileEnum(object):
         return RetList
 
 
-class PowerZone(GeneratorController):
+class PowerZonePro(GeneratorController):
 
-    # ---------------------PowerZone::__init__--------------------------------------
+    # ---------------------PowerZonePro::__init__--------------------------------------
     def __init__(
         self,
         log,
@@ -494,7 +494,7 @@ class PowerZone(GeneratorController):
     ):
 
         # call parent constructor
-        super(PowerZone, self).__init__(
+        super(PowerZonePro, self).__init__(
             log,
             newinstall=newinstall,
             simulation=simulation,
@@ -514,8 +514,8 @@ class PowerZone(GeneratorController):
             threading.RLock()
         )  # lock to synchronize access to the logs
         self.ControllerDetected = False
-        self.Reg = PowerZoneReg()
-        self.IO = PowerZoneIO()
+        self.Reg = PowerZoneProReg()
+        self.IO = PowerZoneProIO()
 
         self.DaysOfWeek = {
             0: "Sunday",  # decode for register values with day of week
@@ -543,7 +543,7 @@ class PowerZone(GeneratorController):
 
         self.SetupClass()
 
-    # -------------PowerZone:SetupClass------------------------------------------
+    # -------------PowerZonePro:SetupClass------------------------------------------
     def SetupClass(self):
 
         # read config file
@@ -577,7 +577,7 @@ class PowerZone(GeneratorController):
             self.FatalError("Error opening modbus device: " + str(e1))
             return None
 
-    # ---------------------PowerZone::GetConfig----------------------------------
+    # ---------------------PowerZonePro::GetConfig----------------------------------
     # read conf file, used internally, not called by genmon
     # return True on success, else False
     def GetConfig(self):
@@ -608,13 +608,13 @@ class PowerZone(GeneratorController):
 
         except Exception as e1:
             self.FatalError(
-                "Missing config file or config file entries (PowerZone): " + str(e1)
+                "Missing config file or config file entries (PowerZonePro): " + str(e1)
             )
             return False
 
         return True
 
-    # -------------PowerZone:IdentifyController----------------------------------
+    # -------------PowerZonePro:IdentifyController----------------------------------
     def IdentifyController(self):
 
         try:
@@ -628,7 +628,7 @@ class PowerZone(GeneratorController):
             self.LogErrorLine("Error in IdentifyController: " + str(e1))
             return False
 
-    # -------------PowerZone:InitDevice------------------------------------------
+    # -------------PowerZonePro:InitDevice------------------------------------------
     # One time reads, and read all registers once
     def InitDevice(self):
 
@@ -649,7 +649,7 @@ class PowerZone(GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in InitDevice: " + str(e1))
 
-    # -------------PowerZone:SetupTiles------------------------------------------
+    # -------------PowerZonePro:SetupTiles------------------------------------------
     def SetupTiles(self):
         try:
             with self.ExternalDataLock:
@@ -832,7 +832,7 @@ class PowerZone(GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in SetupTiles: " + str(e1))
 
-    # -------------PowerZone:CheckModelSpecificInfo------------------------------
+    # -------------PowerZonePro:CheckModelSpecificInfo------------------------------
     # check for model specific info in read from conf file, if not there then add some defaults
     def CheckModelSpecificInfo(self):
 
@@ -870,7 +870,7 @@ class PowerZone(GeneratorController):
             self.LogErrorLine("Error in CheckModelSpecificInfo: " + str(e1))
         return
 
-    # -------------PowerZone:GetGeneratorFileData--------------------------------
+    # -------------PowerZonePro:GetGeneratorFileData--------------------------------
     def GetGeneratorFileData(self):
 
         try:
@@ -896,7 +896,7 @@ class PowerZone(GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in GetGeneratorFileData: (2)" + str(e1))
 
-    # ------------ PowerZone:WaitAndPergeforTimeout -----------------------------
+    # ------------ PowerZonePro:WaitAndPergeforTimeout -----------------------------
     def WaitAndPergeforTimeout(self):
         # if we get here a timeout occured, and we have recieved at least one good packet
         # this logic is to keep from receiving a packet that we have already requested once we
@@ -910,7 +910,7 @@ class PowerZone(GeneratorController):
             return
         self.ModBus.Flush()
 
-    # ------------ PowerZone:GetGeneratorLogFileData ----------------------------
+    # ------------ PowerZonePro:GetGeneratorLogFileData ----------------------------
     def GetGeneratorLogFileData(self):
 
         try:
@@ -969,7 +969,7 @@ class PowerZone(GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in GetGeneratorStrings: " + str(e1))
 
-    # -------------PowerZone:MasterEmulation-------------------------------------
+    # -------------PowerZonePro:MasterEmulation-------------------------------------
     def MasterEmulation(self):
 
         try:
@@ -1000,7 +1000,7 @@ class PowerZone(GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in MasterEmulation: " + str(e1))
 
-    # ------------ PowerZone:GetTransferStatus ----------------------------------
+    # ------------ PowerZonePro:GetTransferStatus ----------------------------------
     def GetTransferStatus(self):
 
         LineState = "Unknown"
@@ -1008,7 +1008,7 @@ class PowerZone(GeneratorController):
 
         return LineState
 
-    # ------------ PowerZone:GetCondition ---------------------------------------
+    # ------------ PowerZonePro:GetCondition ---------------------------------------
     def GetCondition(self, RegList=None, type=None):
 
         try:
@@ -1043,7 +1043,7 @@ class PowerZone(GeneratorController):
             self.LogErrorLine("Error in GetCondition: " + str(e1))
             return []
 
-    # ------------ PowerZone:ParseLogEntry --------------------------------------
+    # ------------ PowerZonePro:ParseLogEntry --------------------------------------
     def ParseLogEntry(self, Entry, Type=None):
 
         try:
@@ -1111,7 +1111,7 @@ class PowerZone(GeneratorController):
             self.LogErrorLine("Error in ParseLogEntry: " + str(e1))
             return ""
 
-    # ------------ PowerZone:CheckForAlarms -------------------------------------
+    # ------------ PowerZonePro:CheckForAlarms -------------------------------------
     def CheckForAlarms(self):
 
         try:
@@ -1160,7 +1160,7 @@ class PowerZone(GeneratorController):
 
         return
 
-    # ------------ PowerZone:RegisterIsFileRecord -------------------------------
+    # ------------ PowerZonePro:RegisterIsFileRecord -------------------------------
     def RegisterIsFileRecord(self, Register, Value):
 
         try:
@@ -1198,7 +1198,7 @@ class PowerZone(GeneratorController):
             self.LogErrorLine("Error in RegisterIsBaseRegister: " + str(e1))
         return False
 
-    # ------------ PowerZone:RegisterIsBaseRegister -----------------------------
+    # ------------ PowerZonePro:RegisterIsBaseRegister -----------------------------
     def RegisterIsBaseRegister(self, Register, Value, validate_length=False):
 
         try:
@@ -1215,7 +1215,7 @@ class PowerZone(GeneratorController):
             self.LogErrorLine("Error in RegisterIsBaseRegister: " + str(e1))
         return False
 
-    # ------------ PowerZone:UpdateRegisterList ---------------------------------
+    # ------------ PowerZonePro:UpdateRegisterList ---------------------------------
     def UpdateRegisterList(self, Register, Value, IsString=False, IsFile=False, IsCoil = False, IsInput = False):
 
         try:
@@ -1254,7 +1254,7 @@ class PowerZone(GeneratorController):
             self.LogErrorLine("Error in UpdateRegisterList: " + str(e1))
             return False
 
-    # ---------------------PowerZone::SystemInAlarm------------------------------
+    # ---------------------PowerZonePro::SystemInAlarm------------------------------
     # return True if generator is in alarm, else False
     def SystemInAlarm(self):
 
@@ -1278,7 +1278,7 @@ class PowerZone(GeneratorController):
             self.LogErrorLine("Error in SystemInAlarm: " + str(e1))
             return False
 
-    # ------------ PowerZone:GetSwitchState -------------------------------------
+    # ------------ PowerZonePro:GetSwitchState -------------------------------------
     def GetSwitchState(self):
 
         try:
@@ -1303,7 +1303,7 @@ class PowerZone(GeneratorController):
             self.LogErrorLine("Error in GetSwitchState: " + str(e1))
             return "Unknown"
 
-    # ------------ PowerZone:GetGeneratorStatus ---------------------------------
+    # ------------ PowerZonePro:GetGeneratorStatus ---------------------------------
     def GetGeneratorStatus(self):
 
         try:
@@ -1365,7 +1365,7 @@ class PowerZone(GeneratorController):
             self.LogErrorLine("Error in GetGeneratorStatus: " + str(e1))
             return "Unknown"
 
-    # ------------ PowerZone:GetEngineState -------------------------------------
+    # ------------ PowerZonePro:GetEngineState -------------------------------------
     def GetEngineState(self):
 
         try:
@@ -1414,7 +1414,7 @@ class PowerZone(GeneratorController):
             self.LogErrorLine("Error in GetEngineState: " + str(e1))
             return "Unknown"
 
-    # ------------ PowerZone:GetDateTime ----------------------------------------
+    # ------------ PowerZonePro:GetDateTime ----------------------------------------
     def GetDateTime(self):
 
         ErrorReturn = "Unknown"
@@ -1484,7 +1484,7 @@ class PowerZone(GeneratorController):
             self.LogErrorLine("Error in GetDateTime: " + str(e1))
             return ErrorReturn
 
-    # ------------ PowerZone::GetTimeFromString ---------------------------------
+    # ------------ PowerZonePro::GetTimeFromString ---------------------------------
     def GetTimeFromString(self, input_string):
 
         try:
@@ -1518,7 +1518,7 @@ class PowerZone(GeneratorController):
             self.LogErrorLine("Error in GetTimeFromString: " + str(e1))
             return "Unknown"
 
-    # ------------ PowerZone::GetStartInfo --------------------------------------
+    # ------------ PowerZonePro::GetStartInfo --------------------------------------
     # return a dictionary with startup info for the gui
     def GetStartInfo(self, NoTile=False):
 
@@ -1580,7 +1580,7 @@ class PowerZone(GeneratorController):
 
         return StartInfo
 
-    # ------------ PowerZone::GetStatusForGUI -----------------------------------
+    # ------------ PowerZonePro::GetStatusForGUI -----------------------------------
     # return dict for GUI
     def GetStatusForGUI(self):
 
@@ -1623,7 +1623,7 @@ class PowerZone(GeneratorController):
 
         return Status
 
-    # ---------------------PowerZone::DisplayLogs--------------------------------
+    # ---------------------PowerZonePro::DisplayLogs--------------------------------
     def DisplayLogs(self, AllLogs=False, DictOut=False, RawOutput=False):
 
         RetValue = collections.OrderedDict()
@@ -1700,7 +1700,7 @@ class PowerZone(GeneratorController):
 
         return RetValue
 
-    # ------------ PowerZone::DisplayMaintenance --------------------------------
+    # ------------ PowerZonePro::DisplayMaintenance --------------------------------
     def DisplayMaintenance(self, DictOut=False, JSONNum=False):
 
         try:
@@ -1926,7 +1926,7 @@ class PowerZone(GeneratorController):
 
         return Maintenance
 
-    # ------------ PowerZone::DisplayStatus -------------------------------------
+    # ------------ PowerZonePro::DisplayStatus -------------------------------------
     def DisplayStatus(self, DictOut=False, JSONNum=False):
 
         try:
@@ -2779,7 +2779,7 @@ class PowerZone(GeneratorController):
     def GetRunHours(self):
         return self.GetParameter(self.Reg.ENGINE_HOURS_NOW[REGISTER], "", 10.0)
 
-    # ------------------- PowerZone::DisplayOutage ------------------------------
+    # ------------------- PowerZonePro::DisplayOutage ------------------------------
     def DisplayOutage(self, DictOut=False, JSONNum=False):
 
         try:
@@ -2799,7 +2799,7 @@ class PowerZone(GeneratorController):
 
         return Outage
 
-    # ------------ PowerZone::DisplayRegisters ----------------------------------
+    # ------------ PowerZonePro::DisplayRegisters ----------------------------------
     def DisplayRegisters(self, AllRegs=False, DictOut=False):
 
         try:
@@ -2840,7 +2840,7 @@ class PowerZone(GeneratorController):
 
         return Registers
 
-    # ----------  PowerZone::SetGeneratorTimeDate--------------------------------
+    # ----------  PowerZonePro::SetGeneratorTimeDate--------------------------------
     # set generator time to system time
     def SetGeneratorTimeDate(self):
 
@@ -2887,7 +2887,7 @@ class PowerZone(GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in SetGeneratorTimeDate: " + str(e1))
 
-    # ----------  PowerZone::SetGeneratorQuietMode-------------------------------
+    # ----------  PowerZonePro::SetGeneratorQuietMode-------------------------------
     # Format of CmdString is "setquiet=yes" or "setquiet=no"
     # return  "Set Quiet Mode Command sent" or some meaningful error string
     def SetGeneratorQuietMode(self, CmdString):
@@ -2895,7 +2895,7 @@ class PowerZone(GeneratorController):
         # TODO QUIET_TEST_REQUEST
         return "Not Supported"
 
-    # ----------  PowerZone::SetGeneratorExerciseTime----------------------------
+    # ----------  PowerZonePro::SetGeneratorExerciseTime----------------------------
     # CmdString is in the format:
     #   setexercise=Monday,13:30,Weekly
     #   setexercise=Monday,13:30,BiWeekly
@@ -2904,7 +2904,7 @@ class PowerZone(GeneratorController):
     def SetGeneratorExerciseTime(self, CmdString):
         return "Not Supported"
 
-    # ----------  PowerZone::SetGeneratorRemoteCommand---------------------------
+    # ----------  PowerZonePro::SetGeneratorRemoteCommand---------------------------
     # CmdString will be in the format: "setremote=start"
     # valid commands are start, stop, starttransfer, startexercise
     # return string "Remote command sent successfully" or some descriptive error
@@ -3046,7 +3046,7 @@ class PowerZone(GeneratorController):
             self.LogErrorLine("Error in SetGeneratorRemoteCommand: " + str(e1))
             return "Error"
 
-    # ----------  PowerZone:GetController  --------------------------------------
+    # ----------  PowerZonePro:GetController  --------------------------------------
     # return the name of the controller, if Actual == False then return the
     # controller name that the software has been instructed to use if overridden
     # in the conf file
@@ -3055,7 +3055,7 @@ class PowerZone(GeneratorController):
         # TODO Power Zone vs Power Zone Pro
         return "Power Zone"
 
-    # ----------  PowerZone:ComminicationsIsActive  -----------------------------
+    # ----------  PowerZonePro:ComminicationsIsActive  -----------------------------
     # Called every few seconds, if communictions are failing, return False, otherwise
     # True
     def ComminicationsIsActive(self):
@@ -3065,12 +3065,12 @@ class PowerZone(GeneratorController):
             self.LastRxPacketCount = self.ModBus.RxPacketCount
             return True
 
-    # ----------  PowerZone:RemoteButtonsSupported  -----------------------------
+    # ----------  PowerZonePro:RemoteButtonsSupported  -----------------------------
     # return true if Panel buttons are settable via the software
     def RemoteButtonsSupported(self):
         return False
 
-    # ----------  PowerZone:PowerMeterIsSupported  ------------------------------
+    # ----------  PowerZonePro:PowerMeterIsSupported  ------------------------------
     # return true if GetPowerOutput is supported
     def PowerMeterIsSupported(self):
 
@@ -3080,7 +3080,7 @@ class PowerZone(GeneratorController):
             return True
         return True
 
-    # ---------------------PowerZone::GetPowerOutput-----------------------------
+    # ---------------------PowerZonePro::GetPowerOutput-----------------------------
     # returns current kW
     # rerturn empty string ("") if not supported,
     # return kW with units i.e. "2.45kW"
@@ -3097,7 +3097,7 @@ class PowerZone(GeneratorController):
                 self.Reg.TOTAL_POWER_KW[REGISTER], "kW", ReturnFloat=False,  Divider = 1000
             )
 
-    # ------------ PowerZone:GetPowerOutputAlt ----------------------------------
+    # ------------ PowerZonePro:GetPowerOutputAlt ----------------------------------
     def GetPowerOutputAlt(self, ReturnFloat=False):
 
         if ReturnFloat:
@@ -3142,7 +3142,7 @@ class PowerZone(GeneratorController):
             return round((PowerOut / 1000.0), 3)
         return "%.2f kW" % (PowerOut / 1000.0)
 
-    # ------------ PowerZone:CheckExternalCTData ----------------------------
+    # ------------ PowerZonePro:CheckExternalCTData ----------------------------
     def CheckExternalCTData(self, request="current", ReturnFloat=False, gauge=False):
         try:
 
@@ -3191,12 +3191,12 @@ class PowerZone(GeneratorController):
             self.LogErrorLine("Error in CheckExternalCTData: " + str(e1))
             return DefaultReturn
 
-    # ----------  PowerZone:GetCommStatus  --------------------------------------
+    # ----------  PowerZonePro:GetCommStatus  --------------------------------------
     # return Dict with communication stats
     def GetCommStatus(self):
         return self.ModBus.GetCommStats()
 
-    # ------------ PowerZone:GetBaseStatus --------------------------------------
+    # ------------ PowerZonePro:GetBaseStatus --------------------------------------
     # return one of the following: "ALARM", "SERVICEDUE", "EXERCISING", "RUNNING",
     # "RUNNING-MANUAL", "OFF", "MANUAL", "READY"
     def GetBaseStatus(self):
@@ -3257,19 +3257,19 @@ class PowerZone(GeneratorController):
             self.LogErrorLine("Error in GetBaseStatus: " + str(e1))
             return "UNKNOWN"
 
-    # ------------ PowerZone:GetOneLineStatus -----------------------------------
+    # ------------ PowerZonePro:GetOneLineStatus -----------------------------------
     # returns a one line status for example : switch state and engine state
     def GetOneLineStatus(self):
         return self.GetSwitchState() + " : " + self.GetEngineState()
 
-    # ----------  PowerZone::FuelSensorSupported---------------------------------
+    # ----------  PowerZonePro::FuelSensorSupported---------------------------------
     def FuelSensorSupported(self):
 
         if self.UseFuelSensor:
             return True
         return False
 
-    # ------------ PowerZone:GetFuelSensor --------------------------------------
+    # ------------ PowerZonePro:GetFuelSensor --------------------------------------
     def GetFuelSensor(self, ReturnInt=False):
 
         if not self.FuelSensorSupported():
@@ -3277,7 +3277,7 @@ class PowerZone(GeneratorController):
 
         return self.GetParameter(self.Reg.FUEL_LEVEL[REGISTER], ReturnInt=ReturnInt)
 
-    # ----------  PowerZone::GetFuelConsumptionDataPoints------------------------
+    # ----------  PowerZonePro::GetFuelConsumptionDataPoints------------------------
     def GetFuelConsumptionDataPoints(self):
 
         try:

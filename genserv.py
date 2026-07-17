@@ -3647,7 +3647,7 @@ def ReadAdvancedSettingsFromFile():
             14,
             "generac_evo_nexus",
             "",
-            "generac_evo_nexus,h_100,powerzone,custom",
+            "generac_evo_nexus,h_100,powerzone_pro,custom",
             GENMON_CONFIG,
             GENMON_SECTION,
             "controllertype",
@@ -4526,7 +4526,7 @@ def ReadSettingsFromFile():
             "usesensorforfuelgauge",
         ]
 
-    if ControllerType == "h_100" or ControllerType == "powerzone":
+    if ControllerType == "h_100" or ControllerType == "powerzone_pro":
         Choices = "120/208,120/240,230/400,240/415,277/480,347/600"
         ConfigSettings["voltageconfiguration"] = [
             "list",
