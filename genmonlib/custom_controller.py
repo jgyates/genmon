@@ -436,9 +436,9 @@ class CustomController(GeneratorController):
                     if Register.lower().startswith("comment"):
                         continue
                     if isinstance(RegisterData, dict):
-                        Length = RegisterData["length"]
+                        Length = int(RegisterData["length"])
                     else:
-                        Length = RegisterData
+                        Length = int(RegisterData)
                     if Length % 2 != 0:
                         self.LogError(
                             "Error: Controller Import: modbus register lenghts must be divisible by 2 (holding_registers): "
