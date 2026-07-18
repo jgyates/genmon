@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - Update to change the web app cache priority that may fix some networks with slow loading web pages
 - New add on for Hubitat Elevation hub, Thanks @bdwilson
 - Initial updates for PowerZone 200. Note: a special cable is required.
+- Initial support for Basler Controller
 
 
 ## 2.0.00 -2026-04-05
