@@ -21,6 +21,7 @@ import sys
 import threading
 import time
 import itertools
+import struct
 import copy
 import re
 
@@ -1225,8 +1226,11 @@ class GeneratorController(MySupport):
                         Data = []
                         for item in command["value"]:
                             if isinstance(item, str):
-                                Data.append(int(item, 16))
+                                item = int(item, 16)
+                                item = self.ProcessBitModifiers(command, item)
+                                Data.append(item)
                             elif isinstance(item, int):
+                                item = self.ProcessBitModifiers(command, item)
                                 Data.append(item)
                             else:
                                 self.LogDebug("Error in ExecuteCommandSequence: invalid type if value list")
@@ -1237,6 +1241,7 @@ class GeneratorController(MySupport):
                     elif isinstance(command["value"], str):
                         # only supports single word writes
                         value = int(command["value"], 16)
+                        value = self.ProcessBitModifiers(command, value)
                         LowByte = value & 0x00FF
                         HighByte = (value >> 8) & 0x00ff
                         Data = []
@@ -1248,6 +1253,7 @@ class GeneratorController(MySupport):
                     elif isinstance(command["value"], int):
                         # only supports single word writes
                         value = command["value"]
+                        value = self.ProcessBitModifiers(command, value)
                         LowByte = value & 0x00FF
                         HighByte = (value >> 8) & 0x00ff
                         Data = []
@@ -1266,7 +1272,43 @@ class GeneratorController(MySupport):
             return "Error in ExecuteCommandSequence"
         return "The command was sent to the controller."
 
-    # --------------------ModbusProtocol:DelayBetweenFrames---------------------
+    # ------------ GeneratorController:ProcessBitModifiers ----------------------
+    def ProcessBitModifiers(self, entry, value, ReturnFloat = False):
+        try:
+            orignialvalue = value
+
+            if "swapwords32" in entry.keys():
+                # change from 01234567 to 456701234
+                if entry["swapwords32"] == True:
+                    value = self.SwapWords32(value)
+            if "shiftright" in entry.keys():
+                value = value >> int(entry["shiftright"])
+            if "shiftleft" in entry.keys():
+                value = value << int(entry["shiftleft"])
+            if "ieee754" in entry.keys() and ReturnFloat:
+                # Use this for testing: https://www.h-schmidt.net/FloatConverter/IEEE754.html
+                if entry["ieee754"].lower() == "half":  # 16 bits
+                    value = float(struct.unpack('f', struct.pack('H', int(value)))[0])
+                elif entry["ieee754"].lower() == "single":  # 32 bits
+                    value = float(struct.unpack('f', struct.pack('I', int(value)))[0])
+                elif entry["ieee754"].lower() == "double":  # 64 bits
+                    value = float(struct.unpack('f', struct.pack('Q', int(value)))[0])
+                else:
+                    self.LogError("Error converting IEEE754 floating point: invalid ieee754 type: " + str(entry))
+                if math.isnan(value):
+                    self.LogDebug("Error: value is not an IEEE floating point number: " + ("%x" % orignialvalue) + " : " + str(entry["title"]) + ": " + str(value))
+                    return 0.0
+            if "multiplier" in entry.keys():
+                if ReturnFloat:
+                    value = float(value * float(entry["multiplier"]))
+                else:
+                    value = int(value * float(entry["multiplier"]))
+            return value
+        except Exception as e1:
+            self.LogErrorLine("Error in ProcessBitModifiers: " + str(e1) + ": " + str(entry["title"]))
+            return value
+
+    # --------------------GeneratorController:DelayBetweenFrames----------------
     def DelayBetweenFrames(self, ignoreerror = False):
         # add a delay between modbus requests
         try:

@@ -1,0 +1,921 @@
+{
+  "controller_name": "Basler DGC-2020HD",
+  "rated_max_output_power_kw": {
+    "reg": "0DE9",
+    "title":"Rated kW", 
+    "mask": "ffffffff",
+    "include": "swap32",
+    "type": "int"
+  }, 
+  "rated_nominal_voltage": {
+    "reg": "0DAB",
+    "include": "swap32",
+    "mask": "ffffffff",
+    "type": "int",
+    "title": "Nominal Voltage"
+  },
+  "rated_nominal_rpm": {
+    "reg": "0DEB",
+    "include": "swap32",
+    "mask": "ffffffff",
+    "title": "Rated Engine RPM", 
+    "type": "int"
+  },
+  "rated_nominal_freq": {
+    "reg": "0DE7",
+    "include": "swap32",
+    "title": "Nominal Frequency",
+    "type": "object_int_index",
+    "object": {
+      "0": 50,
+      "1": 60
+  },
+  "nominal_battery_voltage": {
+    "reg": "0DB1",
+    "include": "swap32",
+    "title": "Nominal Battery Voltage",
+    "type": "object_int_index",
+    "object": {
+      "0": 12,
+      "1": 24
+    }
+  },
+  "generator_phase": {
+    "comment": "RW, 0 = Delta; 1 = Wye; 2 = 1-phase AB; 3 = 1-phase AC; 4 = Grounded Delta",
+    "reg": "0DB1",
+    "include": "swap32",
+    "title": "Generator Phase",
+    "type": "object_int_index",
+    "object": {
+      "0": 3,
+      "1": 3,
+      "2": 1,
+      "3": 1,
+      "4": 3
+    }
+  },
+  "include":{
+      "offgrid":{
+        "disable":{
+        "comment":"If this evaluates to true then the entry will be disabled. Note that this reads from the config file",
+        "reg": "disableoutagecheck",
+        "reg_type": "config",
+        "type":"bool",
+        "title":"Off Grid",
+        "default":false
+       }
+      },
+      "threephase":{
+        "disable":{
+        "comment":"Used to enable indications related to 3 phase generators. Note that this reads from the config file",
+        "reg": "phase",
+        "reg_type": "config",
+        "type":"bits",
+        "mask": "0003",
+        "value": "0003",
+        "text": false,
+        "title": "Single Phase",
+        "default": true
+        }
+      },
+      "swap32": {
+        "swapwords32": true
+      }
+  },
+  "holding_registers": {
+    "0DAB":{"length": "4", "text": "Rated Volts Float Volt", "comment": "RW, 1 - 99999"},
+    "0DAD":{"length": "4", "text": "Pre-Start Contact Config", "comment": "RW, 0 = Open After Disconnect; 1 = Closed While Running"},
+    "0DAF":{"length": "4", "text": "System Units", "comment": "RW, 0 = English; 1 = Metric"},
+    "0DB1":{"length": "4", "text": "Battery Volts", "comment": "RW, 0 = 12V; 1 = 24V"},
+    "0DB3":{"length": "4", "text": "Off Mode Status", "comment": "R, 0 = Disable; 1 = Enable"},
+    "0DB5":{"length": "4", "text": "Run Mode Status", "comment": "R, 0 = Disable; 1 = Enable"},
+    "0DB7":{"length": "4", "text": "Auto Mode Status", "comment": "R, 0 = Disable; 1 = Enable"},
+    "0DC1":{"length": "4", "text": "RTC Clock Hour", "comment": "Hour, RW, 0 - 23"},
+    "0DC3":{"length": "4", "text": "RTC Minute", "comment": "Minute, RW, 0 - 59"},
+    "0DC5":{"length": "4", "text": "RTC Second", "comment": "Second, RW, 0 - 59"},
+    "0DC7":{"length": "4", "text": "RTC Month", "comment": "RW, 1 - 12"},
+    "0DC9":{"length": "4", "text": "RTC Day", "comment": "RW, 1 - 31"},
+    "0DCB":{"length": "4", "text": "RTC Year", "comment": "RW, 0 - 99"},
+    "0DCF":{"length": "4", "text": "Gen PT Primary", "comment": "Volt, RW, 1 - 99999"},
+    "0DD1":{"length": "4", "text": "Gen PT Secondary", "comment": "Volt, RW, 1 - 480"},
+    "0DD3":{"length": "4", "text": "Gen CT Primary", "comment": "Amp, RW, 1 - 9999"},
+    "0DD5":{"length": "4", "text": "Bus PT Primary", "comment": "Volt, RW, 1 - 99999"},
+    "0DD7":{"length": "4", "text": "Bus PT Secondary", "comment": "Volt, RW, 1 - 480"},
+    "0DD9":{"length": "4", "text": "Cranking Style", "comment": "RW, 0 = Continuous; 1 = Cycle"},
+    "0DDB":{"length": "4", "text": "Number of Crank Cycles", "comment": "RW, 1-7"},
+    "0DDD":{"length": "4", "text": "Cycle Crank Time", "comment": "Second, RW, 5 - 15"},
+    "0DDF":{"length": "4", "text": "Continuous Crank Time", "comment": "Second, RW, 5 - 60"},
+    "0DE1":{"length": "4", "text": "Crank Disconnect Limit", "comment": "Percent, RW, 10 - 100"},
+    "0DE3":{"length": "4", "text": "Pre Crank Delay", "comment": "Second, RW, 0 - 30"},
+    "0DE5":{"length": "4", "text": "Configured Gen Connection", "comment": "RW, 0 = Delta; 1 = Wye; 2 = 1-phase AB; 3 = 1-phase AC; 4 = Grounded Delta"},
+    "0DE7":{"length": "4", "text": "Gen Rated Frequency", "comment": "Hertz, RW, 0 = 50 Hz; 1 = 60 Hz"},
+    "0DE9":{"length": "4", "text": "Rated kW", "comment": "kilowatt, RW, 5 - 9999"},
+    "0DEB":{"length": "4", "text": "Rated Engine RPM", "comment": "RPM, RW, 750 - 3600"},
+    "0DED":{"length": "4", "text": "No Load Cool Down Time", "comment": "Minute, RW, 0 - 60"},
+    "0DEF":{"length": "4", "text": "EPS Current Threshold", "comment": "Percent CT Pri, RW, 3 - 10"},
+    "0DF1":{"length": "4", "text": "Fuel Level Function", "comment": "RW, 0 = Disable; 1 = Fuel Lvl; 2 = Natural Gas; 3 = Propane"},
+    "0DF3":{"length": "4", "text": "Number Flywheel Teeth", "comment": "RW, 1 - 500"},
+    "0DF5":{"length": "4", "text": "Speed Signal Source", "comment": "RW, 1 = MPU; 2 = Gen Freq; 3 = MPU Freq"},
+    "0DF7":{"length": "4", "text": "NFPA Level", "comment": "RW, 0 = Zero; 1 = One; 2 = Two"},
+    "0DF9":{"length": "4", "text": "Horn Enable", "comment": "RW, 0 = Disabled; 1 = Enabled"},
+    "0DFB":{"length": "4", "text": "Single-Phase Override Sensing", "comment": "RW, 0 = AB; 1 = AC"},
+    "0E05":{"length": "4", "text": "UTC Offset", "comment": "Minute, RW, (-1440) - 1440"},
+    "0E07":{"length": "4", "text": "DST Configuration", "comment": "RW, 0 = Disabled; 1 = Floating; 2 = Fixed"},
+    "0E09":{"length": "4", "text": "Start/End Time Reference", "comment": "RW, 0 = Local Time; 1 = UTC Time"},
+    "0E0B":{"length": "4", "text": "DST Bias Hours", "comment": "RW, 0 - 23"},
+    "0E0D":{"length": "4", "text": "DST Bias Minutes", "comment": "RW, 0 - 59"},
+    "0E0F":{"length": "4", "text": "DST Start Month", "comment": "RW, 1 = January; 2 = February; 3 = March; 4 = April; 5 = May; 6 = June; 7 = July; 8 = August; 9 = September; 10 = October; 11 = November; 12 = December"},
+    "0E11":{"length": "4", "text": "DST Start Day", "comment": "RW, 1 - 31"},
+    "0E13":{"length": "4", "text": "DST Start Week of Month", "comment": "RW, 0 = First; 1 = Second; 2 = Third; 3 = Fourth; 4 = Last"},
+    "0E15":{"length": "4", "text": "DST Start Day of Week", "comment": "RW, 0 = Sunday; 1 = Monday; 2 = Tuesday; 3 = Wednesday; 4 = Thursday; 5 = Friday; 6 = Saturday"},
+    "0E17":{"length": "4", "text": "DST Start Hour", "comment": "RW, 0 - 23"},
+    "0E19":{"length": "4", "text": "DST Start Minute", "comment": "RW, 0 - 59"},
+    "0E1B":{"length": "4", "text": "DST End Month", "comment": "RW, 1 = January; 2 = February; 3 = March; 4 = April; 5 = May; 6 = June; 7 = July; 8 = August; 9 = September; 10 = October; 11 = November; 12 = December"},
+    "0E1D":{"length": "4", "text": "DST End Day", "comment": "RW, 1 - 31"},
+    "0E1F":{"length": "4", "text": "DST End Week of Month", "comment": "RW, 0 = First; 1 = Second; 2 = Third; 3 = Fourth; 4 = Last"},
+    "0E21":{"length": "4", "text": "DST End Day of Week", "comment": "RW, 0 = Sunday; 1 = Monday; 2 = Tuesday; 3 = Wednesday; 4 = Thursday; 5 = Friday; 6 = Saturday"},
+    "0E23":{"length": "4", "text": "DST End Hour", "comment": "RW, 0 - 23"},
+    "0E25":{"length": "4", "text": "DST End Minute", "comment": "RW, 0 - 59"},
+    "0E29":{"length": "4", "text": "Rated Power Factor", "comment": "Power Factor, RW, \"(-1) - 1"},
+    "0E2D":{"length": "4", "text": "Oil Pressure Crank Disconnect", "comment": "RW, 0 = Disable; 1 = Enable"},
+    "0E31":{"length": "4", "text": "Crank Disconnect Pressure in kPa", "comment": "kPa, Deci, RW, 200 - 10345"},
+    "0E33":{"length": "4", "text": "Power Up Delay", "comment": "Second, RW, 0 - 60"},
+    "0E37":{"length": "4", "text": "Low Line Detect Threshold", "comment": "Volt, RW, 0 - 480"},
+    "0E39":{"length": "4", "text": "Single-Phase Detect Threshold", "comment": "Volt, RW, 0 - 480"},
+    "0E3B":{"length": "4", "text": "Start Relay Control", "comment": "RW, 0 = Predefined; 1 = Programmable"},
+    "0E3D":{"length": "4", "text": "Run Relay Control", "comment": "RW, 0 = Predefined; 1 = Programmable"},
+    "0E3F":{"length": "4", "text": "Prestart Relay Control", "comment": "RW, 0 = Predefined; 1 = Programmable"},
+    "0E41":{"length": "4", "text": "Single-Phase Connect Generator Detection", "comment": "RW, 0 = A-B; 1 = A-C"},
+    "0E43":{"length": "4", "text": "Off Mode Cool Down Enable", "comment": "RW, 0 = Disable; 1 = Enable"},
+    "0E47":{"length": "4", "text": "Not In Auto Horn Enable", "comment": "RW, 0 = Disable; 1 = Enable"},
+    "0E49":{"length": "4", "text": "Clock Not Set Warning Enable", "comment": "RW, 0 = Disable; 1 = Enable"},
+    "0E4B":{"length": "4", "text": "Alternate Frequency", "comment": "Hertz, Centi, RW, 1000 - 9000"},
+    "0E4D":{"length": "4", "text": "Generator System Type", "comment": "RW, 0 = Single Generator; 1 = Multiple Generator"},
+    "0E4F":{"length": "4", "text": "Gen CT Low Line Scale Factor", "comment": "RW, \"0.001 - 3"},
+    "0E51":{"length": "4", "text": "Metric Pressure Units", "comment": "RW, 0 = Bar; 1 = kPa"},
+    "0E53":{"length": "4", "text": "System Units", "comment": "RW, 0 = English; 1 = Metric"},
+    "0E59":{"length": "4", "text": "RPM Bandwidth Data", "comment": "RW, 0 - 1000"},
+    "0E5B":{"length": "4", "text": "Number Flywheel Teeth", "comment": "Deci, RW, 10 - 5000"},
+    "0E5D":{"length": "4", "text": "Phase Rotation", "comment": "RW, 0 = ACB; 1 = ABC"},
+    "0E5F":{"length": "4", "text": "Restart Delay", "comment": "Second, RW, 0 - 120"},
+    "0E61":{"length": "4", "text": "Configured Bus Connection", "comment": "RW, 0 = Single-Phase; 1 = Three-Phase"},
+    "0E63":{"length": "4", "text": "Fuel Level Source", "comment": "RW, 1-9"},
+    "0E65":{"length": "4", "text": "Fuel Level Percent Max", "comment": "RW, 0 - 150"},
+    "0E67":{"length": "4", "text": "Fuel Level Percent Min", "comment": "RW, 0 - 150"},
+    "128D":{"length": "4", "text": "Gen VAB Metering 4 Volt", "comment": "R (-2147483648) - 2147483647, Float?"},
+    "128F":{"length": "4", "text": "Gen VBC Metering 4 Volt", "comment": "R (-2147483648) - 2147483647, Float?"},
+    "1291":{"length": "4", "text": "Gen VCA Metering", "comment": "Volt, R, (-2147483648) - 2147483647"},
+    "1293":{"length": "4", "text": "Gen VAN Metering", "comment": "Volt, R, (-2147483648) - 2147483647"},
+    "1295":{"length": "4", "text": "Gen VBN Metering", "comment": "Volt, R, (-2147483648) - 2147483647"},
+    "1297":{"length": "4", "text": "Gen VCN Metering", "comment": "Volt, R, (-2147483648) - 2147483647"},
+    "1299":{"length": "4", "text": "Bus Voltage Metering", "comment": "Volt, R, (-2147483648) - 2147483647"},
+    "129B":{"length": "4", "text": "Gen IA Metering", "comment": "Amp, R, (-32768) - 32767"},
+    "129D":{"length": "4", "text": "Gen IB Metering", "comment": "Amp, R, (-32768) - 32767"},
+    "129F":{"length": "4", "text": "Gen IC Metering", "comment": "Amp, R, (-32768) - 32767"},
+    "12A1":{"length": "4", "text": "Gen kVA A Metering", "comment": "kiloVA, R, (-2147483648) - 2147483647"},
+    "12A3":{"length": "4", "text": "Gen kVA B Metering", "comment": "kiloVA, R, (-2147483648) - 2147483647"},
+    "12A5":{"length": "4", "text": "Gen kVA C Metering", "comment": "kiloVA, R, (-2147483648) - 2147483647"},
+    "12A7":{"length": "4", "text": "Gen kVA Total Metering", "comment": "kiloVA, R, (-2147483648) - 2147483647"},
+    "12A9":{"length": "4", "text": "Gen kW A Metering", "comment": "kilowatt, R, (-2147483648) - 2147483647"},
+    "12AB":{"length": "4", "text": "Gen kW B Metering", "comment": "kilowatt, R, (-2147483648) - 2147483647"},
+    "12AD":{"length": "4", "text": "Gen kW C Metering", "comment": "kilowatt, R, (-2147483648) - 2147483647"},
+    "12AF":{"length": "4", "text": "Gen kW Total Metering", "comment": "kilowatt, R, (-2147483648) - 2147483647"},
+    "12B1":{"length": "4", "text": "Power Factor Metering", "comment": "R, \"(-1) - 1"},
+    "12B3":{"length": "4", "text": "Gen PF Lagging", "comment": "R, (-128) - 127"},
+    "12B5":{"length": "4", "text": "Gen Frequency Metering", "comment": "Hertz, R, \"45 - 440"},
+    "12B7":{"length": "4", "text": "Bus Frequency Metering", "comment": "Hertz, R, \"45 - 440"},
+    "12B9":{"length": "4", "text": "Active Speed Source", "comment": "R, 1 = Magnetic Pickup; 2 = Gen Freq; 3 = MPU/Gen Freq"},
+    "12BB":{"length": "4", "text": "Engine Speed Metering", "comment": "RPM, R, 0 - 65535"},
+    "12BD":{"length": "4", "text": "Engine Load Metering", "comment": "Percent, R, (-32768) - 32767"},
+    "12BF":{"length": "4", "text": "Coolant Temp. Metering", "comment": "Deg F, R, (-32768) - 32767"},
+    "12C1":{"length": "4", "text": "Oil Pressure Metering", "comment": "PSI, R, (-32768) - 32767"},
+    "12C3":{"length": "4", "text": "Battery Voltage Metering", "comment": "DeciVolt, R, (-32768) - 32767"},
+    "12C5":{"length": "4", "text": "Fuel Level Metering", "comment": "R, (-32768) - 32767"},
+    "12C7":{"length": "4", "text": "ECU Coolant Level Metering", "comment": "R, 0 - 255"},
+    "12C9":{"length": "4", "text": "Cool Down Time Remaining", "comment": "Minute, R, (-128) - 127"},
+    "12CB":{"length": "4", "text": "Alarm Metering", "comment": "R, Bit 0 = Not Used; Bit 1 = Not Used; Bit 2 = Not Used; Bit 3 = Not Used; Bit 4 = Not Used; Bit 5 = Not Used; Bit 6 = Not Used; Bit 7 = Not Used; Bit 8 = Not Used; Bit 9 = Not Used; Bit 10 = Not Used; Bit 11 = Not Used; Bit 12 = Not Used; Bit 13 = Not Used; Bit 14 = Not Used; Bit 15 = Not Used; Bit 16 = Unexpected Shutdown; Bit 17 = Global Alarm; Bit 18 = Auto Restart Failure; Bit 19 = Fuel Leak Detect; Bit 20 = Battery Charger Failure; Bit 21 = Transfer Fail; Bit 22 = Low Coolant Level; Bit 23 = ECU Shutdown; Bit 24 = Emergency Shutdown; Bit 25 = Overcrank; Bit 26 = Loss of ECU Comms; Bit 27 = Global Sender Fail; Bit 28 = Low Fuel Level; Bit 29 = Low Oil Pressure; Bit 30 = Hi Coolant Temp; Bit 31 = Overspeed"},
+    "12CD":{"length": "4", "text": "Pre-Alarm Metering 1", "comment": "R, Bit 0 = Not Used; Bit 1 = Not Used; Bit 2 = Not Used; Bit 3 = Not Used; Bit 4 = Global Pre-Alarm; Bit 5 = Fuel Filter 2 Leak; Bit 6 = Fuel Filter 1 Leak; Bit 7 = Engine kW Overload 3; Bit 8 = Engine kW Overload 2; Bit 9 = MPU Fail; Bit 10 = Fuel Leak Detect; Bit 11 = Battery Charger Failure; Bit 12 = Low Coolant Level; Bit 13 = Mains Brkr Fail to Open; Bit 14 = Mains Brkr Fail to Close; Bit 15 = Sync Fail at Mains Brkr; Bit 16 = Gen Brkr Fail to Open; Bit 17 = Gen Brkr Fail to Close; Bit 18 = Sync Fail at Gen Brkr; Bit 19 = High Fuel Level; Bit 20 = Loss of Rem. Mod. Com; Bit 21 = Engine kW Overload; Bit 22 = Diagnostic Trouble Code; Bit 23 = Loss of ECU Comms; Bit 24 = Maintenance Due; Bit 25 = Battery Overvoltage; Bit 26 = Weak Battery; Bit 27 = Low Battery Voltage; Bit 28 = Low Coolant Temp; Bit 29 = Low Fuel Level; Bit 30 = Low Oil Pressure; Bit 31 = Hi Coolant Temp"},
+    "12CF":{"length": "4", "text": "mtu Alarm Metering", "comment": "R, Bit 0 = Not Used; Bit 1 = Not Used; Bit 2 = Not Used; Bit 3 = Not Used; Bit 4 = Not Used; Bit 5 = Not Used; Bit 6 = Not Used; Bit 7 = Not Used; Bit 8 = Not Used; Bit 9 = Not Used; Bit 10 = Not Used; Bit 11 = Not Used; Bit 12 = Not Used; Bit 13 = Not Used; Bit 14 = Not Used; Bit 15 = Not Used; Bit 16 = Not Used; Bit 17 = Not Used; Bit 18 = Not Used; Bit 19 = Not Used; Bit 20 = Not Used; Bit 21 = Not Used; Bit 22 = Not Used; Bit 23 = High ECU Supply; Bit 24 = Combined Red; Bit 25 = Overspeed; Bit 26 = Low Oil Pressure; Bit 27 = Low Fuel Delivery Press.; Bit 28 = Low Aftercooler Coolant Level; Bit 29 = High Coolant Temp; Bit 30 = High Oil Temp; Bit 31 = High Charge Air Temp"},
+    "12D1":{"length": "4", "text": "mtu Pre-Alarm Metering", "comment": "R, Bit 0 = Low Storage Tank; Bit 1 = High Storage Tank; Bit 2 = Low Day Tank; Bit 3 = High Day Tank; Bit 4 = Alternator Winding Temp; Bit 5 = Idle Speed Low; Bit 6 = Run Up Speed Low; Bit 7 = Start Speed Low; Bit 8 = Priming Fault; Bit 9 = Low Charge Air Coolant Level; Bit 10 = High Fuel Temp.; Bit 11 = High Exhaust Temp. B; Bit 12 = High Exhaust Temp. A; Bit 13 = Low ECU Supply Voltage; Bit 14 = Engine Speed Too Low; Bit 15 = High Voltage Supply; Bit 16 = Low Voltage Supply; Bit 17 = Speed Demand Fail; Bit 18 = ECU Faulty; Bit 19 = Combined Yellow; Bit 20 = Low Oil Press.; Bit 21 = Low Fuel Delivery Press.; Bit 22 = Low Charge Air Press.; Bit 23 = Low Coolant Level; Bit 24 = Low Fuel Rail Press.; Bit 25 = High Fuel Rail Press.; Bit 26 = Shutdown Override; Bit 27 = High Coolant Temp.; Bit 28 = High Charge Air Temp.; Bit 29 = High Intercooler Temp.; Bit 30 = High Oil Temp.; Bit 31 = High ECU Temp."},
+    "12D3":{"length": "4", "text": "Sender Fail Alarm Metering", "comment": "R, Bit 0 = Not Used; Bit 1 = Not Used; Bit 2 = Not Used; Bit 3 = Not Used; Bit 4 = Not Used; Bit 5 = Not Used; Bit 6 = Not Used; Bit 7 = Not Used; Bit 8 = Not Used; Bit 9 = Not Used; Bit 10 = Not Used; Bit 11 = Not Used; Bit 12 = Not Used; Bit 13 = Not Used; Bit 14 = Not Used; Bit 15 = Not Used; Bit 16 = Not Used; Bit 17 = Not Used; Bit 18 = Not Used; Bit 19 = Not Used; Bit 20 = Not Used; Bit 21 = Not Used; Bit 22 = Not Used; Bit 23 = Not Used; Bit 24 = Not Used; Bit 25 = Not Used; Bit 26 = Not Used; Bit 27 = Generator Voltage; Bit 28 = Fuel Level; Bit 29 = Coolant Temp; Bit 30 = Oil Pressure; Bit 31 = Speed"},
+    "12DF":{"length": "4", "text": "Status Metering 1", "comment": "R, Bit 0 = Idle Request; Bit 1 = Lamp Test; Bit 2 = Alarm Silence; Bit 3 = Reset; Bit 4 = Alternate Frequency Override; Bit 5 = Start Delay Bypass; Bit 6 = Cooldown and Stop Request from Logic; Bit 7 = Cooldown Request from Logic; Bit 8 = External Start Delay; Bit 9 = Off Mode Cooldown; Bit 10 = PF Mode Active; Bit 11 = Var Mode Active; Bit 12 = Cooldown Timer Active; Bit 13 = Engine Running; Bit 14 = Fuel Leak Detect; Bit 15 = Battery Charger Failure; Bit 16 = Low Coolant Level; Bit 17 = Gen Failed; Bit 18 = Gen Stable; Bit 19 = Gen Dead; Bit 20 = Bus Failed; Bit 21 = Bus Stable; Bit 22 = Bus Dead; Bit 23 = Gen Breaker Closed; Bit 24 = Mains Breaker Closed; Bit 25 = Grounded Delta Override; Bit 26 = Battle Override; Bit 27 = Auto Transfer Switch; Bit 28 = Low Line Override; Bit 29 = Single-Phase AC Override; Bit 30 = Single-Phase Override; Bit 31 = EPS Supplying Load"},
+    "12E1":{"length": "4", "text": "Hours Until Maintenance", "comment": "RW, 0 - 5000"},
+    "12E3":{"length": "4", "text": "Cum. Total Engine Run Hrs.", "comment": "Hour, R, 0 - 99999"},
+    "12E5":{"length": "4", "text": "Cum. Total Engine Run Min.", "comment": "R, 0 - 59"},
+    "12E7":{"length": "4", "text": "Cum. Loaded Engine Run Hrs.", "comment": "R, 0 - 99999"},
+    "12E9":{"length": "4", "text": "Cum. Loaded Engine Run Min.", "comment": "R, 0 - 59"},
+    "12EB":{"length": "4", "text": "Cum. Unloaded Engine Run Hrs.", "comment": "Hour, R, 0 - 99999"},
+    "12ED":{"length": "4", "text": "Cum. Unloaded Engine Run Min.", "comment": "R, 0 - 59"},
+    "12EF":{"length": "4", "text": "Cum. Total kW-Hrs", "comment": "kilowatt-hour, R, 0 - 999999999"},
+    "12F1":{"length": "", "text": "Reserved", "comment": ""},
+    "12F3":{"length": "4", "text": "Commission Date Month", "comment": "RW, 1 - 12"},
+    "12F5":{"length": "4", "text": "Commission Date Day", "comment": "RW, 1 - 31"},
+    "12F7":{"length": "4", "text": "Commission Date Year", "comment": "RW, 0 - 99"},
+    "12F9":{"length": "4", "text": "Session Total Engine Run Hrs.", "comment": "Hour, R, 0 - 99999"},
+    "12FB":{"length": "4", "text": "Session Total Engine Run Min.", "comment": "R, 0 - 59"},
+    "12FD":{"length": "4", "text": "Session Loaded Engine Run Hrs.", "comment": "Hour, R, 0 - 99999"},
+    "12FF":{"length": "4", "text": "Session Loaded Engine Run Min.", "comment": "R, 0 - 59"},
+    "1301":{"length": "4", "text": "Session Unloaded Engine Run Hrs.", "comment": "Hour, R, 0 - 99999"},
+    "1303":{"length": "4", "text": "Session Unloaded Engine Run Min.", "comment": "R, 0 - 59"},
+    "1305":{"length": "4", "text": "Session kW-Hrs", "comment": "kilowatt-hour, R, 0 - 999999999"},
+    "1307":{"length": "4", "text": "Cumulative Number of Engine Starts", "comment": "RW, 0 - 65535"},
+    "1309":{"length": "4", "text": "Session Start Date Month", "comment": "RW, 1 - 12"},
+    "130B":{"length": "4", "text": "Session Start Date Day", "comment": "RW, 1 - 31"},
+    "130D":{"length": "4", "text": "Session Start Date Year", "comment": "RW, 0 - 99"},
+    "130F":{"length": "4", "text": "Generator Status", "comment": "R, 0 = RESET State; 1 = READY State; 2 = CRANKING State; 3 = RESTING State; 4 = RUNNING State; 5 = ALARM State; 6 = PRESTART State; 7 = COOLING State; 8 = CONNECTING State; 9 = DISCONNECT State; 10 = PULSING State; 11 = UNLOADING State"},
+    "1345":{"length": "4", "text": "Protection Alarm Metering", "comment": "R, Bit 0 = Not Used; Bit 1 = Not Used; Bit 2 = Not Used; Bit 3 = Not Used; Bit 4 = Not Used; Bit 5 = Not Used; Bit 6 = Not Used; Bit 7 = Not Used; Bit 8 = Not Used; Bit 9 = Not Used; Bit 10 = Not Used; Bit 11 = Not Used; Bit 12 = Not Used; Bit 13 = Not Used; Bit 14 = Not Used; Bit 15 = Not Used; Bit 16 = Not Used; Bit 17 = Not Used; Bit 18 = 81 ROC DF/DT Trip; Bit 19 = 78 Vector Shift Trip; Bit 20 = 51-3 Overcurrent; Bit 21 = 40Q Loss of Excitation; Bit 22 = 32 Reverse Power; Bit 23 = 59-2 Overvoltage; Bit 24 = 27-2 Undervoltage; Bit 25 = 51-2 Overcurrent; Bit 26 = 81 Underfrequency; Bit 27 = 81 Overfrequency; Bit 28 = 59-1 Overvoltage; Bit 29 = 27-1 Undervoltage; Bit 30 = 47 Phase Imbalance; Bit 31 = 51-1 Overcurrent"},
+    "1347":{"length": "4", "text": "Cumulative Stats - Total Run Hours", "comment": "Hour, RW, 0 - 5999940"},
+    "1349":{"length": "4", "text": "Cumulative Stats - Loaded Run Hours", "comment": "Hour, RW, 0 - 5999940"},
+    "134B":{"length": "4", "text": "Cumulative Stats - Unloaded Run Hours", "comment": "Hour, RW, 0 - 5999940"},
+    "134D":{"length": "4", "text": "Run Stats - Total Run Hours", "comment": "Hour, RW, 0 - 5999940"},
+    "134F":{"length": "4", "text": "Run Stats - Loaded Run Hours", "comment": "Hour, RW, 0 - 5999940"},
+    "1351":{"length": "4", "text": "Run Stats - Unloaded Run Hours", "comment": "Hour, RW, 0 - 5999940"},
+    "1355":{"length": "4", "text": "Global Alarm", "comment": "R, Bit 0 = No system alarms in effect; Bit 1 = System alarm(s) in effect"},
+    "1379":{"length": "4", "text": "Generator Frequency", "comment": "Hertz, Deci, R, 0 - 4400"},
+    "137D":{"length": "4", "text": "Power Factor", "comment": "Centi, R, (-100) - 100"},
+    "1685":{"length": "4", "text": "Model Number", "comment": "R"}
+  },
+   "switch_state": [
+    {
+      "reg": "0DB3",
+      "include": "swap32",
+      "mask": "0001",
+      "value": "0001",
+      "type": "bits",
+      "title": "Switch Status",
+      "text": "Off"
+    },
+    {
+      "reg": "0DB5",
+      "include": "swap32",
+      "mask": "0001",
+      "value": "0001",
+      "type": "bits",
+      "title": "Switch Status",
+      "text": "Run"
+    },
+    {
+      "reg": "0DB7",
+      "include": "swap32",
+      "mask": "0001",
+      "value": "0001",
+      "type": "bits",
+      "title": "Switch Status",
+      "text": "Auto"
+    }
+  ],
+  "generator_status": [
+    {
+      "reg": "12DF",
+      "type": "object_bit_index",
+      "include": "swap32",
+      "default": "",
+      "title": "Generator Status",
+      "object": {
+          "0": "Idle Request", 
+          "1": "Lamp Test", 
+          "2": "Alarm Silence", 
+          "3": "Reset", 
+          "4": "Alternate Frequency Override", 
+          "5": "Start Delay Bypass", 
+          "6": "Cooldown and Stop Request from Logic", 
+          "7": "Cooldown Request from Logic", 
+          "8": "External Start Delay", 
+          "9": "Off Mode Cooldown", 
+          "10": "PF Mode Active", 
+          "11": "Var Mode Active", 
+          "12": "Cooldown Timer Active", 
+          "13": "Engine Running", 
+          "14": "Fuel Leak Detect", 
+          "15": "Battery Charger Failure", 
+          "16": "Low Coolant Level", 
+          "17": "Gen Failed", 
+          "18": "Gen Stable", 
+          "19": "Gen Dead", 
+          "20": "Bus Failed", 
+          "21": "Bus Stable", 
+          "22": "Bus Dead", 
+          "23": "Gen Breaker Closed", 
+          "24": "Mains Breaker Closed", 
+          "25": "Grounded Delta Override", 
+          "26": "Battle Override", 
+          "27": "Auto Transfer Switch", 
+          "28": "Low Line Override", 
+          "29": "Single-Phase AC Override", 
+          "30": "Single-Phase Override", 
+          "31": "EPS Supplying Load"
+        }
+    }
+  ],
+  "engine_state": [
+    {
+      "reg": "130F",
+      "type": "object_bit_index",
+      "include": "swap32",
+      "default": "",
+      "title": "Engine State",
+        "object":{
+            "0": "RESET State", 
+            "1": "READY State", 
+            "2": "CRANKING State", 
+            "3": "RESTING State", 
+            "4": "RUNNING State", 
+            "5": "ALARM State", 
+            "6": "PRESTART State", 
+            "7": "COOLING State", 
+            "8": "CONNECTING State", 
+            "9": "DISCONNECT State", 
+            "10": "PULSING State", 
+            "11": "UNLOADING State"
+        }
+    }
+  ],
+  "alarm_active" : [
+    {
+      "reg": "1355",
+      "type": "bits",
+      "include": "swap32",
+      "mask": "00000001",
+      "value": "00000001",
+      "title": "Alarm Active",
+      "text": "System In Alarm"
+    }
+  ],
+  "alarm_conditions": [
+    {
+      "reg": "12CB",
+      "include": "swap32",
+      "type": "object_bit_index",
+      "default": "",
+      "title": "Alarm Condition",
+      "object": {
+        "16": "Unexpected Shutdown", 
+        "17": "Global Alarm", 
+        "18": "Auto Restart Failure", 
+        "19": "Fuel Leak Detect", 
+        "20": "Battery Charger Failure", 
+        "21": "Transfer Fail", 
+        "22": "Low Coolant Level", 
+        "23": "ECU Shutdown", 
+        "24": "Emergency Shutdown", 
+        "25": "Overcrank", 
+        "26": "Loss of ECU Comms", 
+        "27": "Global Sender Fail", 
+        "28": "Low Fuel Level", 
+        "29": "Low Oil Pressure", 
+        "30": "Hi Coolant Temp", 
+        "31": "Overspeed"
+      }
+    },
+    {
+      "reg": "12CD",
+      "comment": "Pre-alarm metering",
+      "include": "swap32",
+      "type": "object_bit_index",
+      "default": "",
+      "title": "Alarm Condition",
+      "object": {
+        "4": "Global Pre-Alarm", 
+        "5": "Fuel Filter 2 Leak", 
+        "6": "Fuel Filter 1 Leak", 
+        "7": "Engine kW Overload 3", 
+        "8": "Engine kW Overload 2", 
+        "9": "MPU Fail", 
+        "13": "Mains Brkr Fail to Open", 
+        "14": "Mains Brkr Fail to Close", 
+        "15": "Sync Fail at Mains Brkr", 
+        "16": "Gen Brkr Fail to Open", 
+        "17": "Gen Brkr Fail to Close", 
+        "18": "Sync Fail at Gen Brkr", 
+        "19": "High Fuel Level", 
+        "20": "Loss of Rem. Mod. Com", 
+        "21": "Engine kW Overload", 
+        "22": "Diagnostic Trouble Code", 
+        "23": "Loss of ECU Comms", 
+        "24": "Maintenance Due", 
+        "25": "Battery Overvoltage", 
+        "26": "Weak Battery", 
+        "27": "Low Battery Voltage", 
+        "28": "Low Coolant Temp", 
+        "31": "Hi Coolant Temp"
+      }
+    },
+    {
+      "reg": "1345",
+      "comment": "Protection Alarm Metering",
+      "include": "swap32",
+      "type": "object_bit_index",
+      "default": "",
+      "title": "Alarm Condition",
+      "object": {
+        "18": "81 ROC DF/DT Trip", 
+        "19": "78 Vector Shift Trip", 
+        "20": "51-3 Overcurrent", 
+        "21": "40Q Loss of Excitation", 
+        "22": "32 Reverse Power", 
+        "23": "59-2 Overvoltage", 
+        "24": "27-2 Undervoltage", 
+        "25": "51-2 Overcurrent", 
+        "26": "81 Underfrequency", 
+        "27": "81 Overfrequency", 
+        "28": "59-1 Overvoltage", 
+        "29": "27-1 Undervoltage", 
+        "30": "47 Phase Imbalance", 
+        "31": "51-1 Overcurrent"
+    }
+  }
+  ],
+  "status": [
+    {"title": "Engine",
+        "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy", 
+        "container": true,
+        "value" : [
+          {
+              "reg": "1293",
+              "include": "swap32",
+              "mask": "ffffffff",
+              "type": "int",
+              "title": "Voltage A-N",
+              "units": "V"
+          },
+          {
+              "reg": "1295",
+              "include": "swap32",
+              "mask": "ffffffff",
+              "type": "int",
+              "title": "Voltage B-N",
+              "units": "V"
+          },
+          {
+              "reg": "1297",
+              "include": "swap32,threephase",
+              "mask": "ffffffff",
+              "type": "int",
+              "title": "Voltage C-N",
+              "units": "V"
+          },
+          {
+              "reg": "129B",
+              "include": "swap32",
+              "mask": "ffffffff",
+              "type": "int",
+              "title": "Amps A",
+              "units": "A"
+          },
+          {
+              "reg": "129D",
+              "include": "swap32",
+              "mask": "ffffffff",
+              "type": "int",
+              "title": "Amps B",
+              "units": "A"
+          },
+          {
+              "reg": "129F",
+              "include": "swap32,threephase",
+              "mask": "ffffffff",
+              "type": "int",
+              "title": "Amps C",
+              "units": "A"
+          },
+          {
+              "reg": "12B5",
+              "include": "swap32",
+              "mask": "ffffffff",
+              "type": "int",
+              "title": "Frequency",
+              "units": "Hz"
+          },
+          {
+              "reg": "12C3",
+              "comment": "(-32768) - 32767",
+              "include": "swap32",
+              "mask": "ffffffff",
+              "multiplier": 0.1,
+              "type": "float",
+              "title": "Battery Voltage",
+              "units": "V"
+          },
+          {
+            "reg": "12BB",
+            "include": "swap32",
+            "mask": "ffffffff",
+            "type": "int",
+            "title": "RPM",
+            "units": null
+          },
+          {
+              "reg": "12B1",
+              "comment": "(-1) - 1",
+              "include": "swap32",
+              "mask": "ffffffff",
+              "type": "float",
+              "title": "Power Factor",
+              "units": null
+          },
+          {
+              "reg": "12A7",
+              "comment": "(-2147483648) - 2147483647",
+              "include": "swap32",
+              "mask": "ffffffff",
+              "type": "float",
+              "title": "Total kVA",
+              "units": "kVA"
+          },
+          {
+              "reg": "12AF",
+              "comment": "(-2147483648) - 2147483647",
+              "include": "swap32",
+              "mask": "ffffffff",
+              "type": "float",
+              "title": "Total kWM",
+              "units": "wK"
+          },
+          {
+              "reg": "12C3",
+              "comment": "(-32768) - 32767",
+              "include": "swap32",
+              "mask": "ffffffff",
+              "type": "float",
+              "title": "Coolant Temp",
+              "temperature": "fahrenheit",
+              "units": "F"
+          },
+          {
+              "reg": "12C1",
+              "comment": "(-32768) - 32767",
+              "include": "swap32",
+              "mask": "ffffffff",
+              "type": "float",
+              "title": "Oil Pressure",
+              "units": "psi"
+          }
+        ]
+      }
+  ],
+  "maintenance": [
+    {
+      "reg": "12E1",
+      "include": "swap32",
+      "mask": "ffffffff",
+      "type": "int",
+      "title": "Hours Until Maintenance Due",
+      "units": "h"
+    },
+    {
+      "reg": "12C9",
+      "include": "swap32",
+      "mask": "ffffffff",
+      "type": "int",
+      "title": "Cool Down Time Remaining",
+      "units": "minutes",
+      "comment": "(-128) - 127"
+    },
+    {
+      "reg": "12EF",
+      "include": "swap32",
+      "mask": "ffffffff",
+      "type": "int",
+      "title": "Cum. Total kW-Hrs",
+      "units": "kWh",
+      "comment": "0 - 999999999"
+    },
+    {
+      "type": "list",
+      "separator": ":",
+      "title": "Cum. Total Engine Run Time",
+      "value": [
+        {
+          "reg": "12E3",
+          "include": "swap32",
+          "mask": "ffffffff",
+          "type": "int",
+          "title": "Hours"
+        },
+        {
+          "reg": "12E5",
+          "include": "swap32",
+          "mask": "ffffffff",
+          "type": "int",
+          "format": "%02d",
+          "title": "Minutes"
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "separator": ":",
+      "title": "Cum. Loaded Engine Run Time",
+      "value": [
+        {
+          "reg": "12E7",
+          "include": "swap32",
+          "mask": "ffffffff",
+          "type": "int",
+          "title": "Hours"
+        },
+        {
+          "reg": "12E9",
+          "include": "swap32",
+          "mask": "ffffffff",
+          "type": "int",
+          "format": "%02d",
+          "title": "Minutes"
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "separator": ":",
+      "title": "Cum. Unloaded Engine Run Time",
+      "value": [
+        {
+          "reg": "12EB",
+          "include": "swap32",
+          "mask": "ffffffff",
+          "type": "int",
+          "title": "Hours"
+        },
+        {
+          "reg": "12ED",
+          "include": "swap32",
+          "mask": "ffffffff",
+          "type": "int",
+          "format": "%02d",
+          "title": "Minutes"
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "separator": "/",
+      "title": "Commission Date",
+      "value": [
+        {
+          "reg": "12F3",
+          "type": "int",
+          "title": "month",
+          "include": "swap32",
+          "mask": "ffffffff"
+        },
+        {
+          "reg": "12F5",
+          "include": "swap32",
+          "mask": "ffffffff",
+          "type": "int",
+          "title": "day"
+        },
+        {
+          "reg": "12F7",
+          "include": "swap32",
+          "mask": "ffffffff",
+          "type": "int",
+          "title": "year"
+        }
+      ]
+    }
+  ],
+  "gauges": [
+    {
+        "reg": "1293",
+        "include": "swap32",
+        "mask": "ffffffff",
+        "type": "int",
+        "title": "Voltage A-N",
+        "units": "V",
+        "sensor": "linevolts"
+    },
+    {
+        "reg": "1295",
+        "include": "swap32",
+        "mask": "ffffffff",
+        "type": "int",
+        "title": "Voltage B-N",
+        "units": "V",
+        "sensor": "linevolts"
+    },
+    {
+        "reg": "1297",
+        "include": "swap32,threephase",
+        "mask": "ffffffff",
+        "type": "int",
+        "title": "Voltage C-N",
+        "units": "V",
+        "sensor": "linevolts"
+    },
+    {
+        "reg": "129B",
+        "include": "swap32",
+        "mask": "ffffffff",
+        "type": "int",
+        "title": "Amps A",
+        "units": "A",
+        "sensor": "current"
+    },
+    {
+        "reg": "129D",
+        "include": "swap32",
+        "mask": "ffffffff",
+        "type": "int",
+        "title": "Amps B",
+        "units": "A",
+        "sensor": "current"
+    },
+    {
+        "reg": "129F",
+        "include": "swap32,threephase",
+        "mask": "ffffffff",
+        "type": "int",
+        "title": "Amps C",
+        "units": "A",
+        "sensor": "current"
+    },
+    {
+        "reg": "12B5",
+        "include": "swap32",
+        "mask": "ffffffff",
+        "type": "int",
+        "title": "Frequency",
+        "units": "Hz",
+        "sensor": "frequency"
+    },
+    {
+        "reg": "12C3",
+        "comment": "(-32768) - 32767",
+        "include": "swap32",
+        "mask": "ffffffff",
+        "multiplier": 0.1,
+        "type": "float",
+        "title": "Battery Voltage",
+        "units": "V",
+        "sensor": "batteryvolts"
+    },
+    {
+      "reg": "12BB",
+      "include": "swap32",
+      "mask": "ffffffff",
+      "type": "int",
+      "title": "RPM",
+      "units": null,
+      "sensor": "RPM"
+    },
+    {
+      "reg": "12AF",
+      "comment": "(-2147483648) - 2147483647",
+      "include": "swap32",
+      "mask": "ffffffff",
+      "type": "float",
+      "title": "Power Output",
+      "units": "kW",
+      "sensor": "powergraph"
+    }
+  ],
+  "buttons": [
+    {
+        "onewordcommand" : "auto",
+        "title" : "Select Auto Mode",
+        "command_sequence" : [
+                                {
+                                  "reg": "0DB7",
+                                  "value": "00000001",
+                                  "length": 4,
+                                  "swapwords32": true
+                                }
+                              ]
+    },
+    {
+        "onewordcommand" : "off",
+        "title" : "Select Off Mode",
+        "command_sequence" : [
+                                {
+                                  "reg": "0DB3",
+                                  "value": "00000001",
+                                  "length": 4,
+                                  "swapwords32": true
+                                }
+                              ]
+    },
+    {
+        "onewordcommand" : "run",
+        "title" : "Select Run Mode",
+        "command_sequence" : [
+                                {
+                                  "reg": "0DB5",
+                                  "value": "00000001",
+                                  "length": 4,
+                                  "swapwords32": true
+                                }
+                              ]
+    }
+  ],
+  "maintenance_due": [
+    {
+      "reg": "12CD",
+      "include": "swap32",
+      "type": "bits",
+      "mask": "01000000",
+      "value": "01000000",
+      "text": "Yes",
+      "title": "Maintenance Due"
+    }
+  ],
+  "power": {
+    "reg": "12AF",
+    "comment": "(-2147483648) - 2147483647",
+    "include": "swap32",
+    "mask": "ffffffff",
+    "type": "float",
+    "title": "Power Output",
+    "units": "kW",
+    "sensor": "power"
+  },
+  "fuel": {
+        "reg": "12C5",
+        "comment": "(-32768) - 32767",
+        "include": "swap32",
+        "mask": "ffffffff",
+        "type": "float",
+        "title": "Fuel Level",
+        "units": "%",
+        "sensor": "fuel"
+  },
+  "thresholdvoltage": 143,
+  "pickupvoltage": 190,
+  "run_hours": {
+      "reg": "1347",
+      "include": "swap32",
+      "type": "int",
+      "title": "Run Hours",
+      "units": "h"
+    },
+  "batteryvoltage": {
+        "reg": "12C3",
+        "comment": "(-32768) - 32767",
+        "include": "swap32",
+        "mask": "ffffffff",
+        "multiplier": 0.1,
+        "type": "float",
+        "title": "Battery Voltage",
+        "units": "V"
+  },
+  "datetime":{
+      "comment":"Used to print the date and time of the controller",
+      "type" : "list",
+      "exec": "exec_out = (datetime.datetime.strptime('{}/{}/{} {}:{}:{}','%m/%d/%Y %H:%M:%S')).strftime('%A %B %d, %Y %H:%M:%S')",
+      "title" : "Generator Time",
+      "value": [
+          {
+            "title": "Month",
+            "reg": "0DC7",
+            "include": "swap32",
+            "type": "int",
+            "mask" : "ffffffff",
+            "comment" : "RW 1-12"
+          },
+          {
+            "title": "Day",
+            "reg": "0DC9",
+            "include": "swap32",
+            "type": "int",
+            "mask" : "ffffffff",
+            "comment": "RW, 1 - 31"
+          },
+          {
+            "title": "Year",
+            "type": "int",
+            "mask" : "ffffffff",
+            "reg": "0DCB",
+            "include": "swap32",
+            "comment": "RW, 0 - 99"
+          },
+          {
+            "title": "Hours",
+            "type": "int",
+            "mask" : "ffffffff",
+            "reg": "0DC1",
+            "include": "swap32",
+            "comment": "RW, 0 - 23"
+          },
+          {
+            "reg": "0DC3",
+            "mask" : "ffffffff",
+            "title": "Minutes",
+            "format": "%02d",
+            "type": "int",
+            "include": "swap32",
+            "comment": "RW, 0 - 59"
+          },
+          {
+            "reg": "0DC5",
+            "mask" : "ffffffff",
+            "title": "Seconds",
+            "format": "%02d",
+            "type": "int",
+            "include": "swap32",
+            "comment": "RW, 0 - 59"
+          }
+      ]
+    }
+}
+
+
