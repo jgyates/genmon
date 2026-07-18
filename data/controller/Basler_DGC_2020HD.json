@@ -510,6 +510,7 @@
               "include": "swap32",
               "mask": "ffffffff",
               "type": "float",
+              "multiplier": 1.0,
               "title": "Power Factor",
               "units": null
           },
@@ -518,7 +519,7 @@
               "comment": "(-2147483648) - 2147483647",
               "include": "swap32",
               "mask": "ffffffff",
-              "type": "float",
+              "type": "int",
               "title": "Total kVA",
               "units": "kVA"
           },
@@ -527,7 +528,7 @@
               "comment": "(-2147483648) - 2147483647",
               "include": "swap32",
               "mask": "ffffffff",
-              "type": "float",
+              "type": "int",
               "title": "Total kWM",
               "units": "wK"
           },
@@ -536,7 +537,7 @@
               "comment": "(-32768) - 32767",
               "include": "swap32",
               "mask": "ffffffff",
-              "type": "float",
+              "type": "int",
               "title": "Coolant Temp",
               "temperature": "fahrenheit",
               "units": "F"
@@ -546,7 +547,7 @@
               "comment": "(-32768) - 32767",
               "include": "swap32",
               "mask": "ffffffff",
-              "type": "float",
+              "type": "int",
               "title": "Oil Pressure",
               "units": "psi"
           }
@@ -764,7 +765,7 @@
       "comment": "(-2147483648) - 2147483647",
       "include": "swap32",
       "mask": "ffffffff",
-      "type": "float",
+      "type": "int",
       "title": "Power Output",
       "units": "kW",
       "sensor": "powergraph"
@@ -824,7 +825,7 @@
     "comment": "(-2147483648) - 2147483647",
     "include": "swap32",
     "mask": "ffffffff",
-    "type": "float",
+    "type": "int",
     "title": "Power Output",
     "units": "kW",
     "sensor": "power"
@@ -834,7 +835,7 @@
         "comment": "(-32768) - 32767",
         "include": "swap32",
         "mask": "ffffffff",
-        "type": "float",
+        "type": "int",
         "title": "Fuel Level",
         "units": "%",
         "sensor": "fuel"
