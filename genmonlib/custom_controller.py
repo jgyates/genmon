@@ -1894,7 +1894,7 @@ class CustomController(GeneratorController):
 
             if "swapwords32" in entry.keys():
                 # change from 01234567 to 456701234
-                if entry["multiplier"] == True:
+                if entry["swapwords32"] == True:
                     value = self.SwapWords32(value)
             if "shiftright" in entry.keys():
                 value = value >> int(entry["shiftright"])
