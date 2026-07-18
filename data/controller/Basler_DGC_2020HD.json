@@ -29,6 +29,7 @@
     "object": {
       "0": 50,
       "1": 60
+    }
   },
   "nominal_battery_voltage": {
     "reg": "0DB1",
@@ -839,8 +840,22 @@
         "units": "%",
         "sensor": "fuel"
   },
-  "thresholdvoltage": 143,
-  "pickupvoltage": 190,
+  "thresholdvoltage": {
+      "reg": "0E37",
+      "comment": "0 - 480",
+      "include": "swap32",
+      "mask": "ffffffff",
+      "type": "int",
+      "title": "Threshold Voltage"
+  },
+  "pickupvoltage": {
+      "reg": "0E39",
+      "comment": "0 - 480",
+      "include": "swap32",
+      "mask": "ffffffff",
+      "type": "int",
+      "title": "Pickup Voltage"
+  },
   "run_hours": {
       "reg": "1347",
       "include": "swap32",
