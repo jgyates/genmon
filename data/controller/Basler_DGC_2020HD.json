@@ -208,7 +208,6 @@
     "12EB":{"length": 4, "text": "Cum. Unloaded Engine Run Hrs.", "comment": "Hour, R, 0 - 99999"},
     "12ED":{"length": 4, "text": "Cum. Unloaded Engine Run Min.", "comment": "R, 0 - 59"},
     "12EF":{"length": 4, "text": "Cum. Total kW-Hrs", "comment": "kilowatt-hour, R, 0 - 999999999"},
-    "12F1":{"length": "", "text": "Reserved", "comment": ""},
     "12F3":{"length": 4, "text": "Commission Date Month", "comment": "RW, 1 - 12"},
     "12F5":{"length": 4, "text": "Commission Date Day", "comment": "RW, 1 - 31"},
     "12F7":{"length": 4, "text": "Commission Date Year", "comment": "RW, 0 - 99"},
