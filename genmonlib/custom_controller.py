@@ -589,7 +589,7 @@ class CustomController(GeneratorController):
                     elif sensor["sensor"].lower() == "rpm":
                         nominal = int(self.NominalRPM)
                     elif sensor["sensor"].lower() == "current":
-                        nominal = (float(self.NominalKW) * 1000) / self.NominalLineVolts
+                        nominal = round((float(self.NominalKW) * 1000) / self.NominalLineVolts,0)
                     else:
                         nominal = None
                         self.LogError("Nominal is unknown for type " + sensor["sensor"])
@@ -603,6 +603,13 @@ class CustomController(GeneratorController):
                             units = self.ProcessTemperatureModifier(sensor, sensor["units"], units = True)
                     else:
                         nominal = sensor["nominal"]
+                
+                if maximum == None:
+                    maximum = round(nominal * 1.25, 0)
+                    #self.LogDebug(f"SetupTiles: Max set to {sensor["sensor"].lower()}: {maximum}, nominal {nominal}")
+                else:
+                    #self.LogDebug(f"SetupTiles: not set Max to {sensor["sensor"].lower()}:{maximum}, nominal {nominal}")
+
                 Tile = MyTile(
                     self.log,
                     title=sensor["title"],

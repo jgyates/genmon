@@ -6,8 +6,9 @@
     "mask": "ffffffff",
     "include": "swap32",
     "type": "int"
-  }, 
-  "rated_nominal_voltage": {
+  },
+  "rated_nominal_voltage" : "Unknown",
+  "comment_rated_nominal_voltage": {
     "reg": "0DAB",
     "include": "swap32",
     "mask": "ffffffff",
