@@ -1322,9 +1322,6 @@ class CustomController(GeneratorController):
                 retval, gentime =  self.GetSingleEntry("datetime")
                 if retval or len(gentime) == 0:
                     Time.append({"Generator Time": gentime})
-                    self.LogDebug(str(gentime))
-                else:
-                    self.LogDebug("Error getting generator time.")
 
         except Exception as e1:
             self.LogErrorLine("Error in DisplayStatus: " + str(e1))
