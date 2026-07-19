@@ -607,7 +607,7 @@ class CustomController(GeneratorController):
                 if maximum == None:
                     maximum = round(nominal * 1.25, 0)
                     #self.LogDebug(f"SetupTiles: Max set to {sensor["sensor"].lower()}: {maximum}, nominal {nominal}")
-                else:
+                #else:
                     #self.LogDebug(f"SetupTiles: not set Max to {sensor["sensor"].lower()}:{maximum}, nominal {nominal}")
 
                 Tile = MyTile(
