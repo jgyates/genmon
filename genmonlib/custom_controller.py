@@ -946,7 +946,7 @@ class CustomController(GeneratorController):
                     return False
                 return True
             else:
-                #self.LogDebug("Error in ValidateRegister: register " + str(Register) + " not in " + str(type))
+                self.LogDebug("Error in ValidateRegister: register " + str(Register) + " not in " + str(type))
                 return False
         except Exception as e1:
             self.LogErrorLine("Error in ValidateRegister: " + str(e1))
@@ -1320,8 +1320,11 @@ class CustomController(GeneratorController):
             Time.append({"Monitor Time": datetime.datetime.now().strftime("%A %B %d, %Y %H:%M:%S")})
             if "datetime" in self.controllerimport.keys():
                 retval, gentime =  self.GetSingleEntry("datetime")
-                if retval:
+                if retval or len(gentime) == 0:
                     Time.append({"Generator Time": gentime})
+                    self.LogDebug(str(gentime))
+                else:
+                    self.LogDebug("Error getting generator time.")
 
         except Exception as e1:
             self.LogErrorLine("Error in DisplayStatus: " + str(e1))
@@ -2014,7 +2017,7 @@ class CustomController(GeneratorController):
 
         except Exception as e1:
             self.LogErrorLine("Error in ProcessExecModifier: " + str(e1) + ": " + str(entry["title"]))
-            self.LogDebug(exec_string)
+            self.LogDebug(f"ProcessExecModifier exec_string: {exec_string}")
             return ReturnValue
     
     # ------------ GeneratorController:ProcessTemperatureModifier --------------

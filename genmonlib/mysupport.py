@@ -91,7 +91,7 @@ class MySupport(MyCommon):
             return False
 
     # ------------ MySupport::SwapWords32---------------------------------------
-    def SwapWords32(val):
+    def SwapWords32(self, val):
         # Mask and shift the lower 16 bits to the left, and upper 16 bits to the right
         # Little-Endian Word Swap
         return ((val & 0xFFFF) << 16) | ((val >> 16) & 0xFFFF)
