@@ -116,7 +116,7 @@ Gemmon supports several type of generator controllers. The following table shows
 | Kohler APM603| [Product Page](https://powersystems.kohlerenergy.com/en/product/apm603)| Settings -> Advanced -> Controller Type -> custom, then Settings -> Advanced -> Custom Controller Config File -> Kohler_APM603.json |
 | [MEBAY DCxx  (DC04-DC90)](https://github.com/jgyates/genmon/wiki/Appendix-R---MEBAY-Controller-with-RS-485) | [MEBAY DC4x, DC5x, DC6x, DC7x, DC8x and DC9x](https://mebay.cn/#/index/product_display/list?sign=product_display&id=39&level=1&random=7)| Settings -> Advanced -> Controller Type -> custom, then Settings -> Advanced -> Custom Controller Config File -> MEBAY_DCxx.json.json |
 | SmartGen HGM40x0 | [SmartGen HGM40x0 Series](https://www.smartgen-america.com/catalog/products/genset-controllers/)| Settings -> Advanced -> Controller Type -> custom, then Settings -> Advanced -> Custom Controller Config File -> SmartGen_HGM4000.json |
-
+| [Basler DGC 2020HD](https://github.com/jgyates/genmon/wiki/Appendix-U-Basler-DGC-2020HD-Controller) | [Product Page](https://www.basler.com/product/dgc-2020hd-digital-genset-controller/)| Settings -> Advanced -> Controller Type -> custom, then Settings -> Advanced -> Custom Controller Config File -> Basler_DGC_2020HD.json |
 
 ***NOTE:*** Some controllers have specific settings related to the serial data or modbus addressing. Please see the links in the table above for more info. For controller that use the Custom Controller Config File in the table above, see [this wiki page](https://github.com/jgyates/genmon/wiki/Appendix-N-Genmon-Supporting-Other-Controller-Types) for more info on creating new custom config files and the format of the files.
 
