@@ -7,12 +7,13 @@
     "include": "swap32",
     "type": "int"
   },
-  "rated_nominal_voltage" : "Unknown",
-  "comment_rated_nominal_voltage": {
+  "rated_nominal_voltage": {
     "reg": "0DAB",
     "include": "swap32",
     "mask": "ffffffff",
-    "type": "int",
+    "type": "float",
+    "multiplier": 1.0,
+    "ieee754": "single",
     "title": "Nominal Voltage"
   },
   "rated_nominal_rpm": {
@@ -182,10 +183,10 @@
     "12ab":{"length": 4, "text": "Gen kW B Metering", "comment": "kilowatt, R, (-2147483648) - 2147483647"},
     "12ad":{"length": 4, "text": "Gen kW C Metering", "comment": "kilowatt, R, (-2147483648) - 2147483647"},
     "12af":{"length": 4, "text": "Gen kW Total Metering", "comment": "kilowatt, R, (-2147483648) - 2147483647"},
-    "12b1":{"length": 4, "text": "Power Factor Metering", "comment": "R, \"(-1) - 1"},
+    "12b1":{"length": 4, "text": "Power Factor Metering", "comment": "R, (-1) - 1"},
     "12b3":{"length": 4, "text": "Gen PF Lagging", "comment": "R, (-128) - 127"},
-    "12b5":{"length": 4, "text": "Gen Frequency Metering", "comment": "Hertz, R, \"45 - 440"},
-    "12b7":{"length": 4, "text": "Bus Frequency Metering", "comment": "Hertz, R, \"45 - 440"},
+    "12b5":{"length": 4, "text": "Gen Frequency Metering", "comment": "Hertz, R, 45 - 440"},
+    "12b7":{"length": 4, "text": "Bus Frequency Metering", "comment": "Hertz, R, 45 - 440"},
     "12b9":{"length": 4, "text": "Active Speed Source", "comment": "R, 1 = Magnetic Pickup; 2 = Gen Freq; 3 = MPU/Gen Freq"},
     "12bb":{"length": 4, "text": "Engine Speed Metering", "comment": "RPM, R, 0 - 65535"},
     "12bd":{"length": 4, "text": "Engine Load Metering", "comment": "Percent, R, (-32768) - 32767"},
@@ -240,28 +241,28 @@
     {
       "reg": "0DB3",
       "include": "swap32",
-      "mask": "0001",
-      "value": "0001",
+      "mask": "00000001",
+      "value": "00000001",
       "type": "bits",
-      "title": "Switch Status",
+      "title": "Switch State",
       "text": "Off"
     },
     {
       "reg": "0DB5",
       "include": "swap32",
-      "mask": "0001",
-      "value": "0001",
+      "mask": "00000001",
+      "value": "00000001",
       "type": "bits",
-      "title": "Switch Status",
+      "title": "Switch State",
       "text": "Run"
     },
     {
       "reg": "0DB7",
       "include": "swap32",
-      "mask": "0001",
-      "value": "0001",
+      "mask": "00000001",
+      "value": "00000001",
       "type": "bits",
-      "title": "Switch Status",
+      "title": "Switch State",
       "text": "Auto"
     }
   ],
@@ -311,7 +312,7 @@
   "engine_state": [
     {
       "reg": "130F",
-      "type": "object_bit_index",
+      "type": "object_int_index",
       "include": "swap32",
       "default": "",
       "title": "Engine State",
@@ -432,6 +433,14 @@
         "container": true,
         "value" : [
           {
+              "reg": "12bd",
+              "include": "swap32",
+              "mask": "ffffffff",
+              "type": "int",
+              "title": "Engine Load",
+              "units": "%"
+          },
+          {
               "reg": "1293",
               "include": "swap32",
               "mask": "ffffffff",
@@ -483,7 +492,9 @@
               "reg": "12B5",
               "include": "swap32",
               "mask": "ffffffff",
-              "type": "int",
+              "type": "float",
+              "multiplier": 1.0,
+              "ieee754": "single",
               "title": "Frequency",
               "units": "Hz"
           },
@@ -511,6 +522,7 @@
               "include": "swap32",
               "mask": "ffffffff",
               "type": "float",
+              "ieee754": "single",
               "multiplier": 1.0,
               "title": "Power Factor",
               "units": null
@@ -530,11 +542,11 @@
               "include": "swap32",
               "mask": "ffffffff",
               "type": "int",
-              "title": "Total kWM",
-              "units": "wK"
+              "title": "Total kW",
+              "units": "kW"
           },
           {
-              "reg": "12C3",
+              "reg": "12bf",
               "comment": "(-32768) - 32767",
               "include": "swap32",
               "mask": "ffffffff",
@@ -542,6 +554,15 @@
               "title": "Coolant Temp",
               "temperature": "fahrenheit",
               "units": "F"
+          },
+          {
+              "reg": "12c7",
+              "comment": "(-32768) - 32767",
+              "include": "swap32",
+              "mask": "ffffffff",
+              "type": "int",
+              "title": "Coolant Level",
+              "units": "%"
           },
           {
               "reg": "12C1",
@@ -556,6 +577,14 @@
       }
   ],
   "maintenance": [
+    {
+      "reg": "1685",
+      "include": "swap32",
+      "mask": "ffffffff",
+      "type": "int",
+      "title": "Model Number",
+      "units": null
+    },
     {
       "reg": "12E1",
       "include": "swap32",
@@ -739,10 +768,34 @@
         "nominal": "Unknown"
     },
     {
-        "reg": "12B5",
+      "reg": "12AF",
+      "comment": "(-2147483648) - 2147483647",
+      "include": "swap32",
+      "mask": "ffffffff",
+      "type": "int",
+      "title": "Power Output",
+      "units": "kW",
+      "sensor": "power",
+      "nominal": "Unknown"
+    },
+    {
+        "reg": "12A7",
+        "comment": "(-2147483648) - 2147483647",
         "include": "swap32",
         "mask": "ffffffff",
         "type": "int",
+        "title": "Total kVA",
+        "units": "kVA",
+        "sensor": "power",
+        "nominal": "Unknown"
+    },
+    {
+        "reg": "12B5",
+        "include": "swap32",
+        "mask": "ffffffff",
+        "type": "float",
+        "multiplier": 1.0,
+        "ieee754": "single",
         "title": "Frequency",
         "units": "Hz",
         "sensor": "frequency",
@@ -868,12 +921,26 @@
       "title": "Pickup Voltage"
   },
   "run_hours": {
-      "reg": "1347",
-      "include": "swap32",
-      "type": "int",
-      "mask": "ffffffff",
+      "type": "list",
+      "separator": ":",
       "title": "Run Hours",
-      "units": "h"
+      "value": [
+        {
+          "reg": "12E3",
+          "include": "swap32",
+          "mask": "ffffffff",
+          "type": "int",
+          "title": "Hours"
+        },
+        {
+          "reg": "12E5",
+          "include": "swap32",
+          "mask": "ffffffff",
+          "type": "int",
+          "format": "%02d",
+          "title": "Minutes"
+        }
+      ]
     },
   "batteryvoltage": {
         "reg": "12C3",

@@ -1734,6 +1734,7 @@ class CustomController(GeneratorController):
                         if value == int(entry["value"], 16):
                             ReturnValue = entry["text"]
                     else:
+                        value = self.ProcessEndianModifiers(entry, value)
                         value = self.ProcessSignedModifier(entry, value)
                         value = self.ProcessBitModifiers(entry, value)
                         if "bounds_regex" in entry.keys():
@@ -1743,6 +1744,7 @@ class CustomController(GeneratorController):
                             ReturnValue = self.ProcessExecModifier(entry, int(self.ProcessTemperatureModifier(entry, value)))
                 elif entry["type"] == "float":
                     ReturnValue = self.config.ReadValue(Register, return_type=float, default=ReturnValue)
+                    value = self.ProcessEndianModifiers(entry, value)
                     value = self.ProcessMaskModifier(entry, value)
                     value = self.ProcessBitModifiers(entry, value, ReturnFloat=True)
                     value = self.ProcessTemperatureModifier( entry, value)
@@ -1758,6 +1760,7 @@ class CustomController(GeneratorController):
             
             if entry["type"] == "bits":
                 value = self.GetParameter(Register, ReturnInt=True, IsCoil=IsCoil, IsInput=IsInput)
+                value = self.ProcessEndianModifiers(entry, value)
                 value = self.ProcessMaskModifier(entry, value)
                 if value == int(entry["value"], 16):
                     ReturnValue = entry["text"]
@@ -1773,12 +1776,14 @@ class CustomController(GeneratorController):
                         logical_value = True
                 else:
                     logical_value = True
+                value = self.ProcessEndianModifiers(entry, value)
                 value = self.ProcessMaskModifier(entry, value)
                 value = self.ProcessBitModifiers(entry, value)
                 if (not (value == 0)) == logical_value:
                     ReturnValue = entry["text"]
             elif entry["type"] == "float":
                 value = self.GetParameter(Register, ReturnInt=True, IsCoil=IsCoil, IsInput=IsInput)
+                value = self.ProcessEndianModifiers(entry, value)
                 value = self.ProcessMaskModifier(entry, value)
                 value = self.ProcessSignedModifier(entry, value)
                 value = self.ProcessBitModifiers(entry, value, ReturnFloat=True)
@@ -1791,6 +1796,7 @@ class CustomController(GeneratorController):
                     ReturnValue = self.ProcessExecModifier(entry, float(value))
             elif entry["type"] == "int":
                 value = self.GetParameter(Register, ReturnInt=True, IsCoil=IsCoil, IsInput=IsInput)
+                value = self.ProcessEndianModifiers(entry, value)
                 value = self.ProcessMaskModifier(entry, value)
                 value = self.ProcessSignedModifier(entry, value)
                 value = self.ProcessBitModifiers(entry, value)
@@ -1802,6 +1808,7 @@ class CustomController(GeneratorController):
             elif entry["type"] == "regex":
                 regex_pattern = entry["regex"]
                 value = self.GetParameter(Register, ReturnInt=True, IsCoil=IsCoil, IsInput=IsInput)
+                value = self.ProcessEndianModifiers(entry, value)
                 value = self.ProcessMaskModifier(entry, value)
                 value = self.ProcessBitModifiers(entry, value)
                 value = "%x" % value
@@ -1830,6 +1837,7 @@ class CustomController(GeneratorController):
                         ReturnValue = separator.join(value_list)
             elif entry["type"] == "object_int_index":
                 value = self.GetParameter(Register, ReturnInt=True, IsCoil=IsCoil, IsInput=IsInput)
+                value = self.ProcessEndianModifiers(entry, value)
                 value = self.ProcessMaskModifier(entry, value)
                 value = self.ProcessBitModifiers(entry, value)
                 if "default" in entry.keys():
@@ -1840,6 +1848,7 @@ class CustomController(GeneratorController):
 
             elif entry["type"] == "object_bit_index":
                 value = self.GetParameter(Register, ReturnInt=True, IsCoil=IsCoil, IsInput=IsInput)
+                value = self.ProcessEndianModifiers(entry, value)
                 value = self.ProcessMaskModifier(entry, value)
                 value = self.ProcessBitModifiers(entry, value)
                 if "default" in entry.keys():
@@ -1894,15 +1903,23 @@ class CustomController(GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in ProcessRoundModifiers: " + str(e1) + ": " + str(entry["title"]))
             return value
+    # ------------ GeneratorController:ProcessEndianModifiers -------------------
+    def ProcessEndianModifiers(self, entry, value, ReturnFloat = False):
+        try:
+            if "swapwords32" in entry.keys():
+                # change from 01234567 to 456701234
+                if entry["swapwords32"] == True:
+                    value = self.SwapWords32(value)
+            return value
+        except Exception as e1:
+            self.LogErrorLine("Error in ProcessEndianModifiers: " + str(e1) + ": " + str(entry["title"]))
+            return value
+
     # ------------ GeneratorController:ProcessBitModifiers ----------------------
     def ProcessBitModifiers(self, entry, value, ReturnFloat = False):
         try:
             orignialvalue = value
 
-            if "swapwords32" in entry.keys():
-                # change from 01234567 to 456701234
-                if entry["swapwords32"] == True:
-                    value = self.SwapWords32(value)
             if "shiftright" in entry.keys():
                 value = value >> int(entry["shiftright"])
             if "shiftleft" in entry.keys():
