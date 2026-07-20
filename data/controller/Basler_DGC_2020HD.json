@@ -46,7 +46,7 @@
   },
   "generator_phase": {
     "comment": "RW, 0 = Delta; 1 = Wye; 2 = 1-phase AB; 3 = 1-phase AC; 4 = Grounded Delta",
-    "reg": "0DB1",
+    "reg": "0de5",
     "include": "swap32",
     "title": "Generator Phase",
     "type": "object_int_index",
