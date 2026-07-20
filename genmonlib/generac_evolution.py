@@ -1584,11 +1584,15 @@ class Evolution(GeneratorController):
         if Command == "start":
             Register = 0x0001  # remote start (radio start)
         elif Command == "stop":
-            Register = 0x0000  # remote stop (radio stop)
+            if self.PowerZone200:
+                Register = 0x0028
+                Value = 0x0000     # This is the number of seconds to run (0 seconds to stop)
+            else:
+                Register = 0x0000  # remote stop (radio stop)
         elif Command == "starttransfer":
             if self.PowerZone200:
                 Register = 0x0028
-                Value = 0x0012C
+                Value = 0x0012C     # This is the number of seconds to run (300)
             else:
                 Register = 0x0002  # start the generator, then engage the transfer transfer switch
         elif Command == "startexercise":

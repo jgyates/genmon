@@ -583,11 +583,20 @@ class CustomController(GeneratorController):
                     elif sensor["sensor"].lower() == "linevolts":
                         nominal = self.NominalLineVolts
                     elif sensor["sensor"].lower() == "frequency":
-                        nominal = int(self.NominalFreq)
+                        try:
+                            nominal = int(self.NominalFreq)
+                        except:
+                            nominal = 60
                     elif sensor["sensor"].lower() == "batteryvolts":
-                        nominal = self.NominalBatteryVolts
+                        try:
+                            nominal = self.NominalBatteryVolts
+                        except:
+                            nominal = 12
                     elif sensor["sensor"].lower() == "rpm":
-                        nominal = int(self.NominalRPM)
+                        try:
+                            nominal = int(self.NominalRPM)
+                        except:
+                            nominal = 1800
                     elif sensor["sensor"].lower() == "current":
                         nominal = round((float(self.NominalKW) * 1000) / self.NominalLineVolts,0)
                     else:
