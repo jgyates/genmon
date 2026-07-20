@@ -72,14 +72,15 @@
       "threephase":{
         "disable":{
         "comment":"Used to enable indications related to 3 phase generators. Note that this reads from the config file",
-        "reg": "phase",
-        "reg_type": "config",
-        "type":"bits",
-        "mask": "0003",
-        "value": "0003",
-        "text": false,
-        "title": "Single Phase",
-        "default": true
+        "reg": "0de5",
+        "include": "swap32",
+        "type":"regex",
+        "regex": "^[2-3]$",
+        "comment": "This will return true if the values are 2-3 (single phase)",
+        "mask": "0000000f",
+        "text": true,
+        "title": "Phase",
+        "default": false
         }
       },
       "swap32": {
