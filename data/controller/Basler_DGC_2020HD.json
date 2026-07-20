@@ -12,6 +12,7 @@
     "include": "swap32",
     "mask": "ffffffff",
     "type": "float",
+    "round": 1,
     "multiplier": 1.0,
     "ieee754": "single",
     "title": "Nominal Voltage"
@@ -493,6 +494,7 @@
               "include": "swap32",
               "mask": "ffffffff",
               "type": "float",
+              "round": 1,
               "multiplier": 1.0,
               "ieee754": "single",
               "title": "Frequency",
@@ -504,6 +506,7 @@
               "include": "swap32",
               "mask": "ffffffff",
               "multiplier": 0.1,
+              "round": 1,
               "type": "float",
               "title": "Battery Voltage",
               "units": "V"
@@ -524,6 +527,7 @@
               "type": "float",
               "ieee754": "single",
               "multiplier": 1.0,
+              "round": 1,
               "title": "Power Factor",
               "units": null
           },
@@ -806,6 +810,7 @@
         "ieee754": "single",
         "title": "Frequency",
         "units": "Hz",
+        "round": 1,
         "sensor": "frequency",
         "nominal": "Unknown"
     },
@@ -818,6 +823,7 @@
         "type": "float",
         "title": "Battery Voltage",
         "units": "V",
+        "round": 1,
         "sensor": "batteryvolts",
         "nominal": "Unknown"
     },
@@ -958,6 +964,7 @@
         "multiplier": 0.1,
         "type": "float",
         "title": "Battery Voltage",
+        "round": 1,
         "units": "V"
   },
   "datetime":{
