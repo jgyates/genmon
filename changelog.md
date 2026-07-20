@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - New add on for Hubitat Elevation hub, Thanks @bdwilson
 - Initial updates for PowerZone 200. Note: a special cable is required.
 - Initial support for Basler DGC-2020HD Controller
+- Added start / transfer command for PowerZone 200 (Thanks @LSGONE and @BillyEll)
 
 
 ## 2.0.00 -2026-04-05

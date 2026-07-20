@@ -1586,7 +1586,11 @@ class Evolution(GeneratorController):
         elif Command == "stop":
             Register = 0x0000  # remote stop (radio stop)
         elif Command == "starttransfer":
-            Register = 0x0002  # start the generator, then engage the transfer transfer switch
+            if self.PowerZone200:
+                Register = 0x0028
+                Value = 0x0012C
+            else:
+                Register = 0x0002  # start the generator, then engage the transfer transfer switch
         elif Command == "startexercise":
             Register = 0x0003  # remote run in quiet mode (exercise)
         # This command resets all maintenance timers
