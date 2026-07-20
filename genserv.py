@@ -3678,12 +3678,12 @@ def ReadAdvancedSettingsFromFile():
             "ignore_alarms",
         ]
         ConfigSettings["phase"] = [
-            "int",
+            "list",
             "Generator Phase",
             22,
             "1",
             "",
-            "number",
+            "1,3",
             GENMON_CONFIG,
             GENMON_SECTION,
             "phase",
