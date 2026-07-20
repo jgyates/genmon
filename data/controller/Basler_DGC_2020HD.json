@@ -678,6 +678,14 @@
       ]
     },
     {
+        "reg": "1307",
+        "include": "swap32",
+        "mask": "ffffffff",
+        "type": "int",
+        "title": "Total Generator Starts",
+        "units": null
+    },
+    {
       "type": "list",
       "separator": "/",
       "title": "Commission Date",
