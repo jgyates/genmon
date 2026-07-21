@@ -2736,7 +2736,7 @@ class Evolution(GeneratorController):
             if not self.SmartSwitch:
                 Exercise = []
                 Exercise.append({"Exercise Time": self.GetExerciseTime()})
-                if self.EvolutionController and self.LiquidCooled:
+                if self.EvolutionController and self.LiquidCooled or self.PowerZone200:
                     Exercise.append({"Exercise Duration": self.GetExerciseDuration()})
                 Maintenance["Maintenance"].append({"Exercise": Exercise})
 
@@ -3499,7 +3499,7 @@ class Evolution(GeneratorController):
                     Items = line.split("!")
                     if len(Items) != 5:
                         continue
-                    if Items[0] == str(int(ErrorCode, 16)):
+                    if int(Items[0]) == int(ErrorCode, 16):
                         if ReturnNameOnly:
                             outstr = Items[2]
                         else:
@@ -3668,7 +3668,8 @@ class Evolution(GeneratorController):
                 AlarmStr = self.GetAlarmInfo(Value, ReturnNameOnly=True)
                 if not "unknown" in AlarmStr.lower():
                     outString = AlarmStr
-
+            else:
+                self.LogDebug(f"Unabled to get error code for {Value}")
         return outString
 
     # ------------ Evolution:Reg0001IsValid -------------------------------------
@@ -5409,8 +5410,14 @@ class Evolution(GeneratorController):
     # -------------Evolution:SetupButtons---------------------------------------
     def SetupButtons(self):
         try:
+            FileName = None
+
             if self.EvolutionController and self.LiquidCooled:
                 FileName = "EvoLC_commands.json"
+            elif self.PowerZone200:
+                FileName = "PowerZone200_commands.json"
+            
+            if FileName != None:
                 ConfigFileName = os.path.join(
                     os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
                     "data",

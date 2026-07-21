@@ -1,0 +1,75 @@
+{
+    "buttons":[
+         {
+            "information": "This file is used for the buttons on an Power Zone 200 controller",
+            "onewordcommand" : "pzremotestart",
+            "title" : "Remote Start",
+            "command_sequence" : [
+                                 {
+                                    "reg": "0003",
+                                    "value": "0019"
+                                 },
+                                 {
+                                    "reg": "0004",
+                                    "input_title": "Seconds",
+                                    "type": "int",
+                                    "length": 2,
+                                    "bounds_regex":"^([5-9]|[1-9][0-9]|[1-9][0-9]{2}|[1-2][0-9]{3}|3[0-5][0-9]{2}|3600)$",
+                                    "tooltip": "The numbef of seconds to run once started. This must be a whole number between 5 and 3600"
+                                 }
+                                 ]
+         },
+         {
+            "onewordcommand" : "pzremotestop",
+            "title" : "Stop an existing remote command",
+            "command_sequence" : [
+                                 {
+                                    "reg": "0003",
+                                    "value": "001a"
+                                 }
+                                 ]
+         },
+         {
+            "onewordcommand" : "pzremoteexercise",
+            "title" : "Start Exercise Cycle",
+            "command_sequence" : [
+                                 {
+                                    "reg": "0003",
+                                    "value": "001b"
+                                 }
+                                 ]
+         },
+        {
+            "onewordcommand" : "pzremotestarttransfer",
+            "title" : "Remote Start and Transfer",
+            "command_sequence" : [
+                                 {
+                                    "reg": "0003",
+                                    "value": "0028"
+                                 },
+                                 {
+                                    "reg": "0004",
+                                    "input_title": "Seconds",
+                                    "type": "int",
+                                    "length": 2,
+                                    "bounds_regex":"^([5-9]|[1-9][0-9]|[1-9][0-9]{2}|[1-2][0-9]{3}|3[0-5][0-9]{2}|3600)$",
+                                    "tooltip": "The number of seconds to run once started. This must be a whole number between 5 and 3600"
+                                 }
+                                 ]
+         },
+         {
+            "onewordcommand" : "exerciseduration",
+            "title" : "Exercise Duration",
+            "command_sequence" : [
+                                   {
+                                      "reg": "023e",
+                                      "input_title": "Minutes",
+                                      "type": "int",
+                                      "length": 2,
+                                      "bounds_regex":"^(?:([1][2-9])|([2][0-9])|([2][0]))$",
+                                      "tooltip": "The duration of the exercise cycle. This must be a whole number between 12 and 60 minutes."
+                                   }
+                                 ]
+        }
+    ]
+}
