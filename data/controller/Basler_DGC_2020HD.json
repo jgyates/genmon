@@ -76,7 +76,7 @@
         "include": "swap32",
         "type":"regex",
         "regex": "^[2-3]$",
-        "comment": "This will return true if the values are 2-3 (single phase)",
+        "comment2": "This will return true if the values are 2-3 (single phase)",
         "mask": "0000000f",
         "text": true,
         "title": "Phase",
