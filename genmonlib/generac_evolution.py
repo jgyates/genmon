@@ -1583,11 +1583,14 @@ class Evolution(GeneratorController):
         Value = None # 0x000  # writing any value to index register is valid for remote start / stop commands
 
         if Command == "start":
-            Register = 0x0001  # remote start (radio start)
+            if self.PowerZone200:
+                Register = 0x0019
+                Value = 0x012c  # # This is the number of seconds to run (300)
+            else:
+                Register = 0x0001  # remote start (radio start)
         elif Command == "stop":
             if self.PowerZone200:
-                Register = 0x0028
-                Value = 0x0000     # This is the number of seconds to run (0 seconds to stop)
+                Register = 0x001a
             else:
                 Register = 0x0000  # remote stop (radio stop)
         elif Command == "starttransfer":
@@ -1597,7 +1600,10 @@ class Evolution(GeneratorController):
             else:
                 Register = 0x0002  # start the generator, then engage the transfer transfer switch
         elif Command == "startexercise":
-            Register = 0x0003  # remote run in quiet mode (exercise)
+            if self.PowerZone200:
+                Register = 0x001b
+            else:
+                Register = 0x0003  # remote run in quiet mode (exercise)
         # This command resets all maintenance timers
         elif Command == "resetmainttimer":
             Register == 0x0009
