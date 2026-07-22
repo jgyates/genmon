@@ -559,9 +559,9 @@ class Evolution(GeneratorController):
     def GetGenericModel(self):
 
         if self.LiquidCooled:
-            return "Generic Liquid Cooled"
+            return "Generac Liquid Cooled"
         else:
-            return "Generic Air Cooled"
+            return "Generac Air Cooled"
 
     # ---------------------------------------------------------------------------
     def GetGenericKW(self):
@@ -1378,8 +1378,8 @@ class Evolution(GeneratorController):
 
             if self.EvolutionController:
                 if self.PowerZone200:
-                    outstr = "Power Zone 200"
-                if self.SynergyController:
+                    outstr = "Power Zone 200, "
+                elif self.SynergyController:
                     outstr = "Synergy Evolution, "
                 elif self.PowerPact:
                     outstr = "Power Pact Evolution, "

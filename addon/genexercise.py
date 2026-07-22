@@ -71,6 +71,11 @@ class GenExercise(MySupport):
         self.debug = False
         self.ControllerExercise = False
 
+        self.CMD_START = "generator: setremote=start"
+        self.CMD_STARTEXERCISE = "generator: setremote=startexercise"
+        self.CMD_STARTTRANSFER = "generator: setremote=starttransfer"
+        self.CMD_STOP = "generator: setremote=stop"
+        
         try:
             self.config = MyConfig(
                 filename=os.path.join(ConfigFilePath, "genexercise.conf"),
@@ -182,7 +187,7 @@ class GenExercise(MySupport):
 
             status = self.SendCommand("generator: getbase")
             if status.lower() in ["exercising"]:
-                self.SendCommand("generator: setremote=stop")
+                self.SendCommand(self.CMD_STOP)
             # start thread monitor time for exercise
             if self.ExerciseFrequency.lower() in ["daily","weekly","biweekly","monthly"]:
                 self.Threads["ExerciseThread"] = MyThread(
@@ -295,10 +300,10 @@ class GenExercise(MySupport):
             self.LogError(
                 "WARNING: generator not running post warmup. Transfer switch not activated."
             )
-            self.SendCommand("generator: setremote=stop")
+            self.SendCommand(self.CMD_STOP)
             return
 
-        self.SendCommand("generator: setremote=starttransfer")
+        self.SendCommand(self.CMD_STARTTRANSFER)
         self.LogDebug("Starting transfer exercise cycle (post warmup).")
         # set timer to stop
         self.StopTimer = threading.Timer(
@@ -327,14 +332,14 @@ class GenExercise(MySupport):
             return
         
         if self.ExerciseType.lower() == "normal" and self.ReadyToExercise():
-            self.SendCommand("generator: setremote=start")
+            self.SendCommand(self.CMD_START)
             self.LogDebug("Starting normal exercise cycle.")
             self.StopTimer = threading.Timer(
                 float(self.ExerciseDuration * 60.0), self.StopExercise
             )
             self.StopTimer.start()
         elif self.ExerciseType.lower() == "quiet" and self.ReadyToExercise():
-            self.SendCommand("generator: setremote=startexercise")
+            self.SendCommand(self.CMD_STARTEXERCISE)
             self.LogDebug("Starting quiet exercise cycle.")
             self.StopTimer = threading.Timer(
                 float(self.ExerciseDuration * 60.0), self.StopExercise
@@ -342,14 +347,14 @@ class GenExercise(MySupport):
             self.StopTimer.start()
         elif self.ExerciseType.lower() == "transfer" and self.ReadyToExercise():
             if self.ExerciseWarmup == 0:
-                self.SendCommand("generator: setremote=starttransfer")
+                self.SendCommand(self.CMD_STARTTRANSFER)
                 self.LogDebug("Starting transfer exercise cycle.")
                 self.StopTimer = threading.Timer(
                     float(self.ExerciseDuration * 60.0), self.StopExercise
                 )
                 self.StopTimer.start()
             else:
-                self.SendCommand("generator: setremote=start")
+                self.SendCommand(self.CMD_START)
                 self.LogDebug("Starting warmup for transfer exercise cycle.")
                 # start timer for post warmup transition to starttransfer command
                 self.WarmupTimer = threading.Timer(
@@ -366,7 +371,7 @@ class GenExercise(MySupport):
     def StopExercise(self):
 
         if self.ExerciseActive:
-            self.SendCommand("generator: setremote=stop")
+            self.SendCommand(self.CMD_STOP)
             self.LogDebug("Stopping exercise cycle.")
             self.ExerciseActive = False
         else:

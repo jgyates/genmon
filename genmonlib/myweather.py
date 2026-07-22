@@ -205,7 +205,7 @@ class MyWeather(MySupport):
                 Data.append({"Longitude": self.Observation.location.lon})
                 Data.append({"City ID": self.Observation.location.id})
 
-                self.LogDebug("Location: " + str(self.Observation.location.name))
+                #self.LogDebug("Location: " + str(self.Observation.location.name))
             else:
                 if self.ObservationLocation == None:
                     return None
