@@ -6,16 +6,16 @@
             "title" : "Remote Start",
             "command_sequence" : [
                                  {
-                                    "reg": "0003",
-                                    "value": "0019"
-                                 },
-                                 {
                                     "reg": "0004",
                                     "input_title": "Seconds",
                                     "type": "int",
                                     "length": 2,
                                     "bounds_regex":"^([5-9]|[1-9][0-9]|[1-9][0-9]{2}|[1-2][0-9]{3}|3[0-5][0-9]{2}|3600)$",
                                     "tooltip": "The number of seconds to run once started. This must be a whole number between 5 and 3600"
+                                 },
+                                 {
+                                    "reg": "0003",
+                                    "value": "0019"
                                  }
                                  ]
          },
@@ -44,17 +44,17 @@
             "title" : "Remote Start and Transfer",
             "command_sequence" : [
                                  {
-                                    "reg": "0003",
-                                    "value": "0028"
-                                 },
-                                 {
                                     "reg": "0004",
                                     "input_title": "Seconds",
                                     "type": "int",
                                     "length": 2,
                                     "bounds_regex":"^([5-9]|[1-9][0-9]|[1-9][0-9]{2}|[1-2][0-9]{3}|3[0-5][0-9]{2}|3600)$",
                                     "tooltip": "The number of seconds to run once started. This must be a whole number between 5 and 3600"
-                                 }
+                                 },
+                                 {
+                                    "reg": "0003",
+                                    "value": "0028"
+                                 },
                                  ]
          },
          {
