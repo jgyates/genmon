@@ -4068,7 +4068,7 @@ class Evolution(GeneratorController):
 
         if not self.EvolutionController:
             return ""  # Not supported on Nexus
-        if not self.LiquidCooled:
+        if not self.LiquidCooled and not self.PowerZone200:
             return ""  # Not supported on Air Cooled
         # get exercise duration
         return self.GetParameter("023e", Label="min")
@@ -5364,10 +5364,10 @@ class Evolution(GeneratorController):
             StartInfo["FuelSensor"] = self.FuelSensorSupported()
             StartInfo["FuelConsumption"] = self.FuelConsumptionSupported()
             StartInfo["UtilityVoltage"] = True
-            StartInfo["RemoteCommands"] = not self.SmartSwitch  # Start and Stop
+            StartInfo["RemoteCommands"] = not self.SmartSwitch  and not self.PowerZone200 # Start and Stop
             StartInfo["ResetAlarms"] = EvoLC or Evo2
             StartInfo["AckAlarms"] = False
-            StartInfo["RemoteTransfer"] = not self.SmartSwitch  # Start / Transfer
+            StartInfo["RemoteTransfer"] = not self.SmartSwitch  and not self.PowerZone200 # Start / Transfer
             StartInfo["RemoteButtons"] = self.RemoteButtonsSupported()  # On, Off , Auto
             StartInfo["ExerciseControls"] = not self.SmartSwitch
             StartInfo["WriteQuietMode"] = EvoLC
