@@ -82,7 +82,7 @@
                                  ]
          },
          {
-            "onewordcommand" : "pzauto",
+            "onewordcommand" : "pzmanual",
             "title" : "Select Manual Mode",
             "command_sequence" : [
                                  {
@@ -92,7 +92,7 @@
                                  ]
          },
          {
-            "onewordcommand" : "pzauto",
+            "onewordcommand" : "pzoff",
             "title" : "Select Off Mode",
             "command_sequence" : [
                                  {
