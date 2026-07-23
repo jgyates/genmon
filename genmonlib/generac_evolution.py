@@ -5374,7 +5374,7 @@ class Evolution(GeneratorController):
             StartInfo["RemoteTransfer"] = not self.SmartSwitch  and not self.PowerZone200 # Start / Transfer
             StartInfo["RemoteButtons"] = self.RemoteButtonsSupported()  # On, Off , Auto
             StartInfo["ExerciseControls"] = not self.SmartSwitch
-            StartInfo["WriteQuietMode"] = EvoLC or self.PowerZone200
+            StartInfo["WriteQuietMode"] = EvoLC
             StartInfo["Firmware"] = self.GetFirmwareVersion()
             StartInfo["Hardware"] = self.GetHardwareVersion()
             StartInfo["import_config_file"] = None
@@ -5553,6 +5553,9 @@ class Evolution(GeneratorController):
 
         if self.Evo45L:
             return False
+
+        if self.PowerZone200:
+            return True
         
         if self.EvolutionController and self.LiquidCooled:
             return True
