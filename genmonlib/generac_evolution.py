@@ -3921,8 +3921,8 @@ class Evolution(GeneratorController):
                 return "Cranking in Alarm"
             else:
                 return "Cranking"
-        elif self.BitIsEqual(RegVal, 0x001F0000, 0x000C0000):
-            return "Cranking Remote Start"  # Power Zone 200
+        elif self.BitIsEqual(RegVal, 0x001F0000, 0x000c0000):
+            return "Running - Warm Up"  # Power Zone 200
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x000D0000):
             return "Cranking in Warning"
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x000B0000):
