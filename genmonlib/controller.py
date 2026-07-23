@@ -352,6 +352,7 @@ class GeneratorController(MySupport):
         self.Threads["ProcessThread"].Start()
 
         if self.EnableDebug:  # for debugging registers
+            self.LogDebug("STARTING REGISTER DEBUG THREAD")
             self.Threads["DebugThread"] = MyThread(self.DebugThread, Name="DebugThread", start = False)
             self.Threads["DebugThread"].Start()
 
