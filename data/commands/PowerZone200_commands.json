@@ -70,6 +70,36 @@
                                       "tooltip": "The duration of the exercise cycle. This must be a whole number between 12 and 60 minutes."
                                    }
                                  ]
-        }
+        },
+        {
+            "onewordcommand" : "pzauto",
+            "title" : "Select Auto Mode",
+            "command_sequence" : [
+                                 {
+                                    "reg": "0003",
+                                    "value": "000f"
+                                 }
+                                 ]
+         },
+         {
+            "onewordcommand" : "pzauto",
+            "title" : "Select Manual Mode",
+            "command_sequence" : [
+                                 {
+                                    "reg": "0003",
+                                    "value": "000e"
+                                 }
+                                 ]
+         },
+         {
+            "onewordcommand" : "pzauto",
+            "title" : "Select Off Mode",
+            "command_sequence" : [
+                                 {
+                                    "reg": "0003",
+                                    "value": "0010"
+                                 }
+                                 ]
+         }
     ]
 }
