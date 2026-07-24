@@ -10,7 +10,7 @@ chump
 paho-mqtt
 pysnmp==5.1.0
 ldap3
-pyasn1==0.4.8
+pyasn1==0.6.4
 pyotp
 webauthn>=2.0
 psutil
