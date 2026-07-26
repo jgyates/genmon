@@ -231,24 +231,43 @@ def SendNotice(Message, **kwargs):
             log.error("Unable to authenticate app ID")
             return False
 
-        user = app.get_user(userid)
+        # userids is a list of one or more Pushover user/group keys so that
+        # notifications can be sent to more than one person
+        AllSuccessful = True
+        for SingleUserID in userids:
+            try:
+                user = app.get_user(SingleUserID)
 
-        if user == None:
-            log.error("Unable to get user context")
-            return False
-        
-        if not user.is_authenticated:
-            log.error("Unable to authenticate user ID")
-            return False
+                if user == None:
+                    log.error("Unable to get user context for " + SingleUserID)
+                    AllSuccessful = False
+                    continue
 
-        message = user.create_message(
-            message=Message, priority=priority, sound=pushsound
-        )
+                if not user.is_authenticated:
+                    log.error("Unable to authenticate user ID " + SingleUserID)
+                    AllSuccessful = False
+                    continue
 
-        message.send()
+                message = user.create_message(
+                    message=Message, priority=priority, sound=pushsound
+                )
 
-        console.info(message.id)
-        return True
+                message.send()
+
+                console.info(message.id)
+            except Exception as e1:
+                log.error(
+                    "Send Notice Error for user "
+                    + SingleUserID
+                    + ": "
+                    + GetErrorLine()
+                    + ": "
+                    + str(e1)
+                )
+                console.error("Send Notice Error for user " + SingleUserID + ": " + str(e1))
+                AllSuccessful = False
+
+        return AllSuccessful
     except Exception as e1:
         log.error("Send Notice Error: " + GetErrorLine() + ": " + str(e1))
         console.error("Send Notice Error: " + str(e1))
@@ -301,6 +320,15 @@ if __name__ == "__main__":
 
         appid = config.ReadValue("appid", default=None)
         userid = config.ReadValue("userid", default=None)
+        # Support one or more Pushover user/group keys, separated by spaces
+        # and/or commas, so notifications can be sent to multiple people
+        userids = []
+        if userid != None:
+            userids = [
+                SingleUserID
+                for SingleUserID in userid.replace(",", " ").split()
+                if len(SingleUserID)
+            ]
         pushsound = config.ReadValue("pushsound", default="updown")
         pushsound = pushsound.lower()
 
@@ -319,7 +347,7 @@ if __name__ == "__main__":
             console.error("Error:  invalid app ID")
             sys.exit(2)
 
-        if userid == None or not len(userid):
+        if not len(userids):
             log.error("Error:  invalid user ID")
             console.error("Error:  invalid user ID")
             sys.exit(2)
