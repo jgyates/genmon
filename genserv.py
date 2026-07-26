@@ -1447,71 +1447,6 @@ def GetAddOns():
             bounds="required minmax:30:500",
             display_name="Pushover User Key",
         )
-        AddOnCfg["genpushover"]["parameters"]["extra_userid"] = CreateAddOnParam(
-            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue(
-                "extra_userid", return_type=str, default=""
-            ),
-            "string",
-            "Optional additional Pushover user (or group) key(s), separated by spaces and/or commas, for recipients who "
-            "should only receive some notification categories (e.g. a family member who only wants outage alerts). Use "
-            "the 'Additional Recipient(s)' Notify settings below to choose which categories they receive. A category "
-            "must also be enabled above for it to be sent to these recipients.",
-            bounds="minmax:0:500",
-            display_name="Additional Recipient(s) User Key",
-        )
-        AddOnCfg["genpushover"]["parameters"]["extra_notify_error"] = CreateAddOnParam(
-            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue(
-                "extra_notify_error", return_type=bool, default=True
-            ),
-            "boolean",
-            "Send messages for errors (Generator Alarms) to the Additional Recipient(s) above.",
-            display_name="Additional Recipient(s) Notify for Errors",
-        )
-        AddOnCfg["genpushover"]["parameters"]["extra_notify_warn"] = CreateAddOnParam(
-            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue(
-                "extra_notify_warn", return_type=bool, default=True
-            ),
-            "boolean",
-            "Send messages for warnings (service due, fuel low) to the Additional Recipient(s) above.",
-            display_name="Additional Recipient(s) Notify for Warnings",
-        )
-        AddOnCfg["genpushover"]["parameters"]["extra_notify_info"] = CreateAddOnParam(
-            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue(
-                "extra_notify_info", return_type=bool, default=True
-            ),
-            "boolean",
-            "Send messages for information (switch state change, engine state change, exercising) to the Additional "
-            "Recipient(s) above.",
-            display_name="Additional Recipient(s) Notify for Information",
-        )
-        AddOnCfg["genpushover"]["parameters"]["extra_notify_outage"] = CreateAddOnParam(
-            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue(
-                "extra_notify_outage", return_type=bool, default=True
-            ),
-            "boolean",
-            "Send messages for outages to the Additional Recipient(s) above.",
-            display_name="Additional Recipient(s) Notify for Outages",
-        )
-        AddOnCfg["genpushover"]["parameters"][
-            "extra_notify_sw_update"
-        ] = CreateAddOnParam(
-            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue(
-                "extra_notify_sw_update", return_type=bool, default=True
-            ),
-            "boolean",
-            "Send messages for software updates to the Additional Recipient(s) above.",
-            display_name="Additional Recipient(s) Notify for Software Updates",
-        )
-        AddOnCfg["genpushover"]["parameters"][
-            "extra_notify_pi_state"
-        ] = CreateAddOnParam(
-            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue(
-                "extra_notify_pi_state", return_type=bool, default=True
-            ),
-            "boolean",
-            "Send messages for Pi hardware sensor status to the Additional Recipient(s) above.",
-            display_name="Additional Recipient(s) Notify for Pi Hardware Issues",
-        )
         AddOnCfg["genpushover"]["parameters"]["pushsound"] = CreateAddOnParam(
             ConfigFiles[GENPUSHOVER_CONFIG].ReadValue(
                 "pushsound", return_type=str, default="updown"
@@ -1612,6 +1547,73 @@ def GetAddOns():
         AddOnCfg = AddNotificationAddOnParam(
             AddOnCfg, "genpushover", GENPUSHOVER_CONFIG
         )
+
+        AddOnCfg["genpushover"]["parameters"]["extra_userid"] = CreateAddOnParam(
+            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue(
+                "extra_userid", return_type=str, default=""
+            ),
+            "string",
+            "Optional additional Pushover user (or group) key(s), separated by spaces and/or commas, for recipients who "
+            "should only receive some notification categories (e.g. a family member who only wants outage alerts). Use "
+            "the 'Additional Recipient(s)' Notify settings below to choose which categories they receive. A category "
+            "must also be enabled above for it to be sent to these recipients.",
+            bounds="minmax:0:500",
+            display_name="Additional Recipient(s) User Key",
+        )
+        AddOnCfg["genpushover"]["parameters"]["extra_notify_error"] = CreateAddOnParam(
+            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue(
+                "extra_notify_error", return_type=bool, default=True
+            ),
+            "boolean",
+            "Send messages for errors (Generator Alarms) to the Additional Recipient(s) above.",
+            display_name="Additional Recipient(s) Notify for Errors",
+        )
+        AddOnCfg["genpushover"]["parameters"]["extra_notify_warn"] = CreateAddOnParam(
+            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue(
+                "extra_notify_warn", return_type=bool, default=True
+            ),
+            "boolean",
+            "Send messages for warnings (service due, fuel low) to the Additional Recipient(s) above.",
+            display_name="Additional Recipient(s) Notify for Warnings",
+        )
+        AddOnCfg["genpushover"]["parameters"]["extra_notify_info"] = CreateAddOnParam(
+            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue(
+                "extra_notify_info", return_type=bool, default=True
+            ),
+            "boolean",
+            "Send messages for information (switch state change, engine state change, exercising) to the Additional "
+            "Recipient(s) above.",
+            display_name="Additional Recipient(s) Notify for Information",
+        )
+        AddOnCfg["genpushover"]["parameters"]["extra_notify_outage"] = CreateAddOnParam(
+            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue(
+                "extra_notify_outage", return_type=bool, default=True
+            ),
+            "boolean",
+            "Send messages for outages to the Additional Recipient(s) above.",
+            display_name="Additional Recipient(s) Notify for Outages",
+        )
+        AddOnCfg["genpushover"]["parameters"][
+            "extra_notify_sw_update"
+        ] = CreateAddOnParam(
+            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue(
+                "extra_notify_sw_update", return_type=bool, default=True
+            ),
+            "boolean",
+            "Send messages for software updates to the Additional Recipient(s) above.",
+            display_name="Additional Recipient(s) Notify for Software Updates",
+        )
+        AddOnCfg["genpushover"]["parameters"][
+            "extra_notify_pi_state"
+        ] = CreateAddOnParam(
+            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue(
+                "extra_notify_pi_state", return_type=bool, default=True
+            ),
+            "boolean",
+            "Send messages for Pi hardware sensor status to the Additional Recipient(s) above.",
+            display_name="Additional Recipient(s) Notify for Pi Hardware Issues",
+        )
+
         AddOnCfg = AddRetryAddOnParam(AddOnCfg, "genpushover", GENPUSHOVER_CONFIG)
 
         # GENSYSLOG
