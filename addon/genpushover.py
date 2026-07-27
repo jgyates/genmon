@@ -78,7 +78,9 @@ def OnRun(Active):
 
     if Active:
         console.info("Generator Running")
-        Queue.SendMessage("Generator Running", priority=run_state_priority)
+        Queue.SendMessage(
+            "Generator Running", priority=run_state_priority, category="info"
+        )
     else:
         console.info("Generator Running End")
 
@@ -89,7 +91,9 @@ def OnRunManual(Active):
     if Active:
         console.info("Generator Running in Manual Mode")
         Queue.SendMessage(
-            "Generator Running in Manual Mode", priority=run_state_priority
+            "Generator Running in Manual Mode",
+            priority=run_state_priority,
+            category="info",
         )
     else:
         console.info("Generator Running in Manual Mode End")
@@ -100,7 +104,9 @@ def OnExercise(Active):
 
     if Active:
         console.info("Generator Exercising")
-        Queue.SendMessage("Generator Exercising", priority=run_state_priority)
+        Queue.SendMessage(
+            "Generator Exercising", priority=run_state_priority, category="info"
+        )
     else:
         console.info("Generator Exercising End")
 
@@ -110,7 +116,9 @@ def OnReady(Active):
 
     if Active:
         console.info("Generator Ready")
-        Queue.SendMessage("Generator Ready", priority=run_state_priority)
+        Queue.SendMessage(
+            "Generator Ready", priority=run_state_priority, category="info"
+        )
     else:
         console.info("Generator Ready End")
 
@@ -120,7 +128,9 @@ def OnOff(Active):
 
     if Active:
         console.info("Generator Off")
-        Queue.SendMessage("Generator Off", priority=switch_state_priority)
+        Queue.SendMessage(
+            "Generator Off", priority=switch_state_priority, category="info"
+        )
     else:
         console.info("Generator Off End")
 
@@ -130,7 +140,9 @@ def OnManual(Active):
 
     if Active:
         console.info("Generator Manual")
-        Queue.SendMessage("Generator Manual", priority=switch_state_priority)
+        Queue.SendMessage(
+            "Generator Manual", priority=switch_state_priority, category="info"
+        )
     else:
         console.info("Generator Manual End")
 
@@ -140,7 +152,9 @@ def OnAlarm(Active):
 
     if Active:
         console.info("Generator Alarm")
-        Queue.SendMessage("Generator Alarm", priority=alarm_priority)
+        Queue.SendMessage(
+            "Generator Alarm", priority=alarm_priority, category="error"
+        )
     else:
         console.info("Generator Alarm End")
 
@@ -150,7 +164,9 @@ def OnService(Active):
 
     if Active:
         console.info("Generator Service Due")
-        Queue.SendMessage("Generator Service Due", priority=service_state_priority)
+        Queue.SendMessage(
+            "Generator Service Due", priority=service_state_priority, category="warn"
+        )
     else:
         console.info("Generator Servcie Due End")
 
@@ -160,9 +176,9 @@ def OnUtilityChange(Active):
 
     if Active:
         console.info("Utility Service is Down")
-        Queue.SendMessage("Utility Service is Down")
+        Queue.SendMessage("Utility Service is Down", category="outage")
     else:
-        Queue.SendMessage("Utility Service is Up")
+        Queue.SendMessage("Utility Service is Up", category="outage")
         console.info("Utility Service is Up")
 
 
@@ -171,15 +187,21 @@ def OnSoftwareUpdate(Active):
 
     if Active:
         console.info("Software Update Available")
-        Queue.SendMessage("Software Update Available", priority=sw_update_priority)
+        Queue.SendMessage(
+            "Software Update Available",
+            priority=sw_update_priority,
+            category="sw_update",
+        )
     else:
-        Queue.SendMessage("Software Is Up To Date")
+        Queue.SendMessage("Software Is Up To Date", category="sw_update")
         console.info("Software Is Up To Date")
 
 
 # ----------  OnSystemHealth ----------------------------------------------------
 def OnSystemHealth(Notice):
-    Queue.SendMessage("System Health : " + Notice, priority=system_health_priority)
+    Queue.SendMessage(
+        "System Health : " + Notice, priority=system_health_priority, category="info"
+    )
     console.info("System Health : " + Notice)
 
 
@@ -187,15 +209,17 @@ def OnSystemHealth(Notice):
 def OnFuelState(Active):
     if Active:  # True is OK
         console.info("Fuel Level is OK")
-        Queue.SendMessage("Fuel Level is OK", priority=fuel_priority)
+        Queue.SendMessage("Fuel Level is OK", priority=fuel_priority, category="warn")
     else:  # False = Low
-        Queue.SendMessage("Fuel Level is Low", priority=fuel_priority)
+        Queue.SendMessage("Fuel Level is Low", priority=fuel_priority, category="warn")
         console.info("Fuel Level is Low")
 
 
 # ----------  OnPiState ---------------------------------------------------------
 def OnPiState(Notice):
-    Queue.SendMessage("Pi Health : " + Notice, priority=pi_state_priority)
+    Queue.SendMessage(
+        "Pi Health : " + Notice, priority=pi_state_priority, category="pi_state"
+    )
     console.info("Pi Health : " + Notice)
 
 
@@ -231,10 +255,18 @@ def SendNotice(Message, **kwargs):
             log.error("Unable to authenticate app ID")
             return False
 
-        # userids is a list of one or more Pushover user/group keys so that
-        # notifications can be sent to more than one person
+        category = kwargs.get("category", None)
+
+        # userids always receives every message. extra_userids is a second,
+        # optional group of recipients (e.g. a family member) who only want
+        # a subset of notification categories, controlled by the
+        # extra_notify_* settings
+        Recipients = list(userids)
+        if category == None or extra_notify_categories.get(category, True):
+            Recipients += extra_userids
+
         AllSuccessful = True
-        for SingleUserID in userids:
+        for SingleUserID in Recipients:
             try:
                 user = app.get_user(SingleUserID)
 
@@ -272,6 +304,16 @@ def SendNotice(Message, **kwargs):
         log.error("Send Notice Error: " + GetErrorLine() + ": " + str(e1))
         console.error("Send Notice Error: " + str(e1))
         return False
+
+
+# ----------  ParseUserIDs --------------------------------------------------------
+def ParseUserIDs(value):
+    # Pushover user/group keys may be separated by spaces and/or commas
+    if value == None:
+        return []
+    return [
+        SingleUserID for SingleUserID in value.replace(",", " ").split() if len(SingleUserID)
+    ]
 
 
 # ----------  GetPriorityFromConf -----------------------------------------------
@@ -319,16 +361,35 @@ if __name__ == "__main__":
         )
 
         appid = config.ReadValue("appid", default=None)
-        userid = config.ReadValue("userid", default=None)
-        # Support one or more Pushover user/group keys, separated by spaces
-        # and/or commas, so notifications can be sent to multiple people
-        userids = []
-        if userid != None:
-            userids = [
-                SingleUserID
-                for SingleUserID in userid.replace(",", " ").split()
-                if len(SingleUserID)
-            ]
+        # userid supports one or more Pushover user/group keys, separated by
+        # spaces and/or commas, so notifications can be sent to multiple people
+        userids = ParseUserIDs(config.ReadValue("userid", default=None))
+
+        # extra_userid is an optional second group of recipients (e.g. a
+        # family member) who should only receive a subset of notification
+        # categories, controlled by the extra_notify_* settings below
+        extra_userids = ParseUserIDs(config.ReadValue("extra_userid", default=None))
+        extra_notify_categories = {
+            "error": config.ReadValue(
+                "extra_notify_error", return_type=bool, default=True
+            ),
+            "warn": config.ReadValue(
+                "extra_notify_warn", return_type=bool, default=True
+            ),
+            "info": config.ReadValue(
+                "extra_notify_info", return_type=bool, default=True
+            ),
+            "outage": config.ReadValue(
+                "extra_notify_outage", return_type=bool, default=True
+            ),
+            "sw_update": config.ReadValue(
+                "extra_notify_sw_update", return_type=bool, default=True
+            ),
+            "pi_state": config.ReadValue(
+                "extra_notify_pi_state", return_type=bool, default=True
+            ),
+        }
+
         pushsound = config.ReadValue("pushsound", default="updown")
         pushsound = pushsound.lower()
 
