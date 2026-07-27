@@ -769,8 +769,13 @@ def command(command):
         # original string
         commandResponse = ProcessCommand(command)
         try:
-            # Set Content-Type to application/json
-            return jsonify(json.loads(commandResponse))
+            # Validate it is JSON and set Content-Type to application/json.
+            # Return the original string as-is (not re-serialized via
+            # jsonify/json.dumps) so key order set by the command handler
+            # (e.g. sort_keys=False responses) is preserved; jsonify()
+            # sorts keys alphabetically by default and would destroy it.
+            json.loads(commandResponse)
+            return Response(commandResponse, mimetype="application/json")
         except Exception as e1:
             return commandResponse
     if not session.get("logged_in"):
@@ -778,7 +783,8 @@ def command(command):
     else:
         commandResponse = ProcessCommand(command)
         try:
-            return jsonify(json.loads(commandResponse))
+            json.loads(commandResponse)
+            return Response(commandResponse, mimetype="application/json")
         except Exception as e1:
             return commandResponse
 
