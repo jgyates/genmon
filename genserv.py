@@ -3649,18 +3649,17 @@ def ReadAdvancedSettingsFromFile():
             GENMON_SECTION,
             "additional_modbus_timeout",
         ]
-        if ControllerType == "custom":
-            ConfigSettings["modbus_between_frame_delay"] = [
-                "float",
-                "Modbus Betweeen Frame Delay (sec)",
-                8,
-                "0.0",
-                "",
-                "number",
-                GENMON_CONFIG,
-                GENMON_SECTION,
-                "modbus_between_frame_delay",
-            ]
+        ConfigSettings["modbus_between_frame_delay"] = [
+            "float",
+            "Modbus Betweeen Frame Delay (sec)",
+            8,
+            "0.0",
+            "",
+            "number",
+            GENMON_CONFIG,
+            GENMON_SECTION,
+            "modbus_between_frame_delay",
+        ]
         # Depricated, no longer needed
         #ConfigSettings["use_modbus_fc4"] = [
         #    "boolean",
