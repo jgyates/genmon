@@ -276,6 +276,7 @@ class Evolution(GeneratorController):
             "07d0": [20,0],  # Power Zone 200
             "07e5": [2, 0],  # Power Zone 200
             "07ed": [2, 0],  # Power Zone 200 
+            "1f75": [2, 0],  # Power Zone 200
         }
 
         # registers that need updating more frequently than others to make things more responsive
