@@ -54,6 +54,11 @@ SERVICE_LOG_END_REG = (
 SERIAL_NUM_REG = 0x01F4
 SERIAL_NUM_REG_LENGTH = 5
 
+# Identifier register PowerZone 200
+IDENTITY_REG = 0x07d0
+IDENTITY_REG_LENGTH = 10
+
+
 NEXUS_ALARM_LOG_STARTING_REG = 0x064
 NEXUS_ALARM_LOG_STRIDE = 4
 NEXUS_ALARM_LOG_END_REG = (
@@ -273,7 +278,6 @@ class Evolution(GeneratorController):
             "05f5": [2, 0],  # Evo AC   Current 2
             "05f6": [2, 0],  # Evo AC   Current Cal 1
             "05f7": [2, 0],  # Evo AC   Current Cal 1
-            "07d0": [20,0],  # Power Zone 200
             "07e5": [2, 0],  # Power Zone 200
             "07ed": [2, 0],  # Power Zone 200 
             "1f75": [2, 0],  # Power Zone 200
@@ -1451,10 +1455,19 @@ class Evolution(GeneratorController):
         # check that we have the serial number, if we do not then retry
         RegStr = "%04x" % SERIAL_NUM_REG
         Value = self.GetRegisterValueFromList(RegStr)  # Serial Number Register
-        if len(Value) != 20:
+        if len(Value) != 10:
             self.ModBus.ProcessTransaction(
                 "%04x" % SERIAL_NUM_REG, SERIAL_NUM_REG_LENGTH
             )
+
+        if self.PowerZone200:
+            # check that we have the identity, if we do not then retry
+            RegStr = "%04x" % IDENTITY_REG
+            Value = self.GetRegisterValueFromList(RegStr)  # identity Register
+            if len(Value) != 20:
+                self.ModBus.ProcessTransaction(
+                    "%04x" % IDENTITY_REG, IDENTITY_REG_LENGTH
+                )
 
     # -------------Evolution:UpdateLogRegistersAsMaster--------------------------
     def UpdateLogRegistersAsMaster(self):
