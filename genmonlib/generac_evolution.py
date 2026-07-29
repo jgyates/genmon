@@ -1455,7 +1455,7 @@ class Evolution(GeneratorController):
         # check that we have the serial number, if we do not then retry
         RegStr = "%04x" % SERIAL_NUM_REG
         Value = self.GetRegisterValueFromList(RegStr)  # Serial Number Register
-        if len(Value) != 10:
+        if len(Value) != 20:
             self.ModBus.ProcessTransaction(
                 "%04x" % SERIAL_NUM_REG, SERIAL_NUM_REG_LENGTH
             )
@@ -1464,7 +1464,8 @@ class Evolution(GeneratorController):
             # check that we have the identity, if we do not then retry
             RegStr = "%04x" % IDENTITY_REG
             Value = self.GetRegisterValueFromList(RegStr)  # identity Register
-            if len(Value) != 20:
+            if len(Value) != 40:
+                self.LogDebug(f"READ IDENTITY: {len(Value), {Value}}")
                 self.ModBus.ProcessTransaction(
                     "%04x" % IDENTITY_REG, IDENTITY_REG_LENGTH
                 )
@@ -2142,6 +2143,13 @@ class Evolution(GeneratorController):
                     % (Register, Value)
                 )
                 ValidationOK = False
+        elif int(Register, 16) == IDENTITY_REG:
+            if len(Value) != 40:
+                self.LogError(
+                    "Validation Error: Invalid register length (Identity) %s %s"
+                    % (Register, Value)
+                )
+                ValidationOK = False
         else:
             self.LogError(
                 "Validation Error: Invalid register or length (Unkown) %s %s"
@@ -2179,6 +2187,8 @@ class Evolution(GeneratorController):
         ):
             return True
         elif int(Register, 16) == SERIAL_NUM_REG:
+            return True
+        elif int(Register, 16) == IDENTITY_REG:
             return True
         return False
 
@@ -2289,6 +2299,11 @@ class Evolution(GeneratorController):
                 RegList.append({Register: Value})
 
             Register = "%04x" % SERIAL_NUM_REG
+            Value = self.GetRegisterValueFromList(Register)
+            if len(Value) != 0:
+                RegList.append({Register: Value})
+
+            Register = "%04x" % IDENTITY_REG
             Value = self.GetRegisterValueFromList(Register)
             if len(Value) != 0:
                 RegList.append({Register: Value})
