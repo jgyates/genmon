@@ -238,6 +238,7 @@ class Evolution(GeneratorController):
             "0212": [2, 0],  # Unknown status data
             "0213": [2, 0],  # Wifi Signal Strength RSSI (Evo2)
             "004c": [2, 0],  # Unknown register data
+            "0234": [2, 0],  # PowerZone 200
             "0235": [2, 0],  # Gain (EvoLC)
             "0236": [2, 0],  # Two Wire Start (EvoAC)
             "0237": [2, 0],  # Set Voltage (Evo LC)
@@ -272,6 +273,9 @@ class Evolution(GeneratorController):
             "05f5": [2, 0],  # Evo AC   Current 2
             "05f6": [2, 0],  # Evo AC   Current Cal 1
             "05f7": [2, 0],  # Evo AC   Current Cal 1
+            "07d0": [20,0],  # Power Zone 200
+            "07e5": [2, 0],  # Power Zone 200
+            "07ed": [2, 0],  # Power Zone 200 
         }
 
         # registers that need updating more frequently than others to make things more responsive
