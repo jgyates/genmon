@@ -1421,7 +1421,7 @@ class GeneratorController(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in DisplayRegisters: " + str(e1))
 
-    # ------------ Evolution:GetMessageText ------------------------------------
+    # ------------ GeneratorController:GetMessageText ------------------------------------
     def GetMessageText(self):
         try:
             msgtext = self.DisplayStatus()
@@ -3203,7 +3203,7 @@ class GeneratorController(MySupport):
             self.LogErrorLine("Error in GetEstimatedFuelInTank: " + str(e1))
             return DefaultReturn
 
-    # ------------ Evolution:GetFuelSensor --------------------------------------
+    # ------------ GeneratorController:GetFuelSensor ---------------------------
     def GetFuelSensor(self, ReturnInt=False):
         return None
 
@@ -3649,7 +3649,7 @@ class GeneratorController(MySupport):
             return None
         return None
 
-    # ------------ Evolution:ConvertExternalData --------------------------------
+    # ------------ GeneratorController:ConvertExternalData ---------------------
     def ConvertExternalData(self, request="current", voltage=None, ReturnFloat=False):
 
         try:
@@ -3780,7 +3780,7 @@ class GeneratorController(MySupport):
             self.LogErrorLine("Error in ConvertExternalData: " + str(e1))
             return None
 
-    # ------------ Evolution:ReturnFormat ---------------------------------------
+    # ------------ GeneratorController:ReturnFormat ----------------------------
     def ReturnFormat(sefl, value, units, ReturnFloat):
 
         if ReturnFloat:
