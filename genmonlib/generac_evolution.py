@@ -1465,7 +1465,6 @@ class Evolution(GeneratorController):
             RegStr = "%04x" % IDENTITY_REG
             Value = self.GetRegisterValueFromList(RegStr)  # identity Register
             if len(Value) != 40:
-                self.LogDebug(f"READ IDENTITY: {len(Value), {Value}}")
                 self.ModBus.ProcessTransaction(
                     "%04x" % IDENTITY_REG, IDENTITY_REG_LENGTH
                 )
