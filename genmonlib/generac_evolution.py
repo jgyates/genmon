@@ -278,9 +278,14 @@ class Evolution(GeneratorController):
             "05f5": [2, 0],  # Evo AC   Current 2
             "05f6": [2, 0],  # Evo AC   Current Cal 1
             "05f7": [2, 0],  # Evo AC   Current Cal 1
-            "07e5": [2, 0],  # Power Zone 200
-            "07ed": [2, 0],  # Power Zone 200 
-            "1f75": [2, 0],  # Power Zone 200
+            "1f72": [2, 0],  # Power Zone 200 L1 Volts
+            "1f73": [2, 0],  # Power Zone 200 L2 Volts
+            "1f74": [2, 0],  # Power Zone 200 L3 Volts
+            "1f75": [2, 0],  # Power Zone 200 L1 Amps, divide by 100
+            "1f76": [2, 0],  # Power Zone 200 L2 Amps, divide by 100
+            "1f77": [2, 0],  # Power Zone 200 L3 Amps, divide by 100
+            "1f7b": [2, 0],  # Power Zone 200 Power Factor, divide by 100
+            "1f7c": [4, 0],  # Power Zone 200 totak kw hours
         }
 
         # registers that need updating more frequently than others to make things more responsive
@@ -484,7 +489,7 @@ class Evolution(GeneratorController):
                 )
                 self.TileList.append(Tile)
 
-                if self.EvolutionController and not self.LiquidCooled and not self.bDisablePowerLog and not self.PowerPact and not self.PowerZone200:
+                if self.EvolutionController and not self.LiquidCooled and not self.bDisablePowerLog and not self.PowerPact:
                     NominalLegCurrent = ((float(self.NominalKW) * 1000) / 2 ) / (self.NominalLineVolts / 2)
                     # Setup gauges for EvoAC internal CTs
                     Tile = MyTile(
@@ -3969,7 +3974,7 @@ class Evolution(GeneratorController):
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x001b0000):
                     return "Running Remote Transfer"  # Power Zone 200
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00180000):
-                            return "Running - Transfer Switch Active"  # Power Zone 200
+                            return "Stop Initiated"  # Power Zone 200
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00090000):
             return "Stopped with Inhibit Active"
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00080000):
@@ -4355,7 +4360,21 @@ class Evolution(GeneratorController):
                 # only EvoAC will return two legs
                 return DefaultReturn
 
-            if self.EvolutionController and self.LiquidCooled:
+            if self.PowerZone200:
+                Value = self.GetRegisterValueFromList("1f75")  # L1 Amps
+                Value2 = self.GetRegisterValueFromList("1f76")  # L2 Amps
+                if len(Value) and len(Value2):
+                    CurrentLeg1 = float(Value, 16) / 100.0
+                    CurrentLeg2 = float(Value2, 16) / 100.0
+                    if leg == "ct1":
+                        CurrentFloat = round(float(CurrentLeg1),2)
+                    elif leg == "ct2":
+                        CurrentFloat = round(float(CurrentLeg2),2)
+                    else:
+                        CurrentFloat = round(CurrentLeg1 + CurrentLeg2,2)
+                else:
+                    CurrentFloat = 0.0
+            elif self.EvolutionController and self.LiquidCooled:
                 Value = self.GetRegisterValueFromList("0058")  # Hall Effect Sensor
                 DebugInfo += Value
                 if len(Value):
@@ -5600,8 +5619,6 @@ class Evolution(GeneratorController):
         if not self.EvolutionController:  # Not supported by Nexus at this time
             return False
         if self.PowerPact:
-            return False
-        if self.PowerZone200:
             return False
         
         if (

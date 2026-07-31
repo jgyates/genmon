@@ -203,6 +203,14 @@ show_hours_activation=Enable to show Time Since Activation as hours, disable to 
 0009=Utility Voltage
 05f1=Last Alarm Code (Evo)
 01f4=Serial Number
+1f72=Power Zone 200 L1 Volts
+1f73=Power Zone 200 L2 Volts
+1f74=Power Zone 200 L3 Volts
+1f75=Power Zone 200 L1 Amps, divide by 100
+1f76=Power Zone 200 L2 Amps, divide by 100
+1f77=Power Zone 200 L3 Amps, divide by 100
+1f7b=Power Zone 200 Power Factor
+1f7c=Power Zone 200 Totak kw hours
 
 [h_100]
 0080=Input 1
