@@ -350,7 +350,7 @@ show_hours_activation=Enable to show Time Since Activation as hours, disable to 
 0ebf=External Switch SW Version
 0ec0=External Switch Selected
 
-[powerzone]
+[powerzone_pro]
 0000 = RA Status 0
 0001 = RA Status 1
 0002 = RA Status 2
