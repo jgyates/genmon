@@ -3227,7 +3227,7 @@ class Evolution(GeneratorController):
             0x25: "VSCF Warning",
             0x26: "USB Warning",
             0x27: "Modbus Comms Failure Warning",
-            0x28: "Switched off",
+            0x28: "Switched Off",
             0x29: "Running-Manual",
             0x2a: "Stopped-Auto",
             0x2b: "Running-Utility Lost",
@@ -3235,6 +3235,16 @@ class Evolution(GeneratorController):
             0x2d: "Running-Radio Start",
             0x2e: "Running-Exercise",
             0x2f: "Stopped-Alarm",
+            0x30: "WIRING ERROR",  # Alarm code 2099
+            0x31: "Over Voltage",
+            0x32: "Under Voltage",
+            0x33: "Overload Remove Load",
+            0x34: "Low Volts Remove Load",
+            0x35: "Stepper Over Current",
+            0x36: "Fuse Problem",
+            0x39: "Loss of Speed Signal",
+            0x3A: "Loss of Serial Link ",
+            0x3B: "VSCF Alarm",
             0x3c: "Service B performed",
             0x3d: "Service A performed",
             0x3e: "Battery Inspected",
@@ -3456,7 +3466,10 @@ class Evolution(GeneratorController):
         else:
             DecoderLookup[NEXUS_ALARM_LOG_STARTING_REG] = NexusLCAlarmLogDecoder
 
-        DecoderLookup[START_LOG_STARTING_REG] = StartLogDecoder
+        if self.PowerZone200:
+            DecoderLookup[START_LOG_STARTING_REG] = self.MergeDicts(StartLogDecoder, AlarmLogDecoder_EvoLC)
+        else:
+            DecoderLookup[START_LOG_STARTING_REG] = StartLogDecoder
 
         if LogBase == NEXUS_ALARM_LOG_STARTING_REG and self.EvolutionController:
             self.LogError("Error in ParseLog: Invalid Base Register %X", LogBase)
