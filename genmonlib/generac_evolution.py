@@ -3151,7 +3151,8 @@ class Evolution(GeneratorController):
             0x2F: "Stopped - Alarm",        # Start / Stop Log
             # Stopped Alarm
             # PowerZone200
-            0x7f: "Ran with Transfer",
+            0x7f: "Ran with Outage",
+            0x80: "Ran with Remote Transfer",
             0x81: "Off - Utility Returned",
             0x82: "Enter Service Mode",
         }
@@ -3974,7 +3975,7 @@ class Evolution(GeneratorController):
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x001b0000):
                     return "Running Remote Transfer"  # Power Zone 200
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00180000):
-                            return "Stop Initiated"  # Power Zone 200
+                            return "Running - Utility Loss"  # Power Zone 200
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00090000):
             return "Stopped with Inhibit Active"
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00080000):
