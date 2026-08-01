@@ -617,14 +617,7 @@ class GeneratorController(MySupport):
             return
         time.sleep(0.25)
 
-        if (
-            not self.ControllerSelected == None
-            or not len(self.ControllerSelected)
-            or self.ControllerSelected == "generac_evo_nexus"
-        ):
-            MaxReg = 0x400
-        else:
-            MaxReg = 0x2000
+        MaxReg = 0x3000
         self.InitCompleteEvent.wait()
 
         if self.IsStopping:
@@ -683,7 +676,7 @@ class GeneratorController(MySupport):
                                 self.GetEngineState(),
                             )
                         )
-                        RegistersUnderTest[Register] = Value  # update the value
+                        RegistersUnderTest[Register] = NewValue  # update the value
 
                 msgbody = "\n"
                 try:
