@@ -206,11 +206,20 @@ show_hours_activation=Enable to show Time Since Activation as hours, disable to 
 1f72=Power Zone 200 L1 Volts
 1f73=Power Zone 200 L2 Volts
 1f74=Power Zone 200 L3 Volts
-1f75=Power Zone 200 L1 Amps, divide by 100
-1f76=Power Zone 200 L2 Amps, divide by 100
-1f77=Power Zone 200 L3 Amps, divide by 100
+1f75=Power Zone 200 L1 Amps
+1f76=Power Zone 200 L2 Amps
+1f77=Power Zone 200 L3 Amps
 1f7b=Power Zone 200 Power Factor
 1f7c=Power Zone 200 Totak kw hours
+1fa4=Power Zone 200 Utility volts L1
+1fa5=Power Zone 200 Utility volts L2
+1fa6=Power Zone 200 Utility volts L2
+2134=Power Zone 200 Real Power kW
+2135=Power Zone 200 Reactive Power kW
+2136=Power Zone 200 Apparant Power kW
+2137=Power Zone 200 Last Run Minutes (duration of the last generator run in minutes)
+2138=Power Zone 200 Last Run kWH (last generator run in kWH)
+2166=Power Zone 200 Transfer switch active = 1
 
 [h_100]
 0080=Input 1

@@ -278,6 +278,8 @@ class Evolution(GeneratorController):
             "05f5": [2, 0],  # Evo AC   Current 2
             "05f6": [2, 0],  # Evo AC   Current Cal 1
             "05f7": [2, 0],  # Evo AC   Current Cal 1
+            "07e6": [2, 0],  # Firmware Build Major
+            "07e7": [2, 0],  # Firmware Build Minor
             "1f72": [2, 0],  # Power Zone 200 L1 Volts
             "1f73": [2, 0],  # Power Zone 200 L2 Volts
             "1f74": [2, 0],  # Power Zone 200 L3 Volts
@@ -286,6 +288,15 @@ class Evolution(GeneratorController):
             "1f77": [2, 0],  # Power Zone 200 L3 Amps, divide by 100
             "1f7b": [2, 0],  # Power Zone 200 Power Factor, divide by 100
             "1f7c": [4, 0],  # Power Zone 200 totak kw hours
+            "1fa4": [2, 0],  # Power Zone 200 Utility volts L1
+            "1fa5": [2, 0],  # Power Zone 200 Utility volts L2
+            "1fa6": [2, 0],  # Power Zone 200 Utility volts L2
+            "2134": [2, 0],  # Power Zone 200 Real Power kW
+            "2135": [2, 0],  # Power Zone 200 Reactive Power kW
+            "2136": [2, 0],  # Power Zone 200 Apparant Power kW
+            "2137": [2, 0],  # Power Zone 200 Last Run Minutes (duration of the last generator run in minutes)
+            "2138": [2, 0],  # Power Zone 200 Last Run kWH (last generator run in kWH)
+            "2166": [2, 0],  # Power Zone 200 Transfer switch active = 1
         }
 
         # registers that need updating more frequently than others to make things more responsive
@@ -3596,6 +3607,9 @@ class Evolution(GeneratorController):
     # ------------ Evolution:GetTransferStatus ----------------------------------
     def GetTransferStatus(self):
 
+        if self.PowerZone200:
+            return self.GetParameterBit("2166", 0x01, OnLabel="Generator", OffLabel="Utility")
+
         if not self.EvolutionController:
             return ""  # Nexus
 
@@ -4325,7 +4339,16 @@ class Evolution(GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in CheckExternalCTData: " + str(e1))
             return DefaultReturn
-    # ------------ Evolution:GetCurrentOutput -----------------------------------
+
+    # ------------ Evolution:IsThreePhase --------------------------------------
+    def IsThreePhase(self):
+        try:
+            if int(self.Phase) == 3:
+                return True
+        except:
+            return False
+        return False
+    # ------------ Evolution:GetCurrentOutput ----------------------------------
     def GetCurrentOutput(self, ReturnFloat=False, force_sensor = False, leg = None):
         # leg is None, "ct1" or "ct2"
 
@@ -4584,6 +4607,12 @@ class Evolution(GeneratorController):
         ):
             return DefaultReturn
 
+        if self.PowerZone200:
+            if ReturnFloat:
+                return round(self.GetParameter("2134", ReturnFloat=ReturnFloat, Divider=10.0, Label="kW"),2)
+            else:
+                return self.GetParameter("2134", ReturnFloat=ReturnFloat, Divider=10.0, Label="kW")
+        
         ReturnValue = self.CheckExternalCTData(request="power", ReturnFloat=ReturnFloat)
         if ReturnValue != None:
             return ReturnValue
@@ -5196,6 +5225,8 @@ class Evolution(GeneratorController):
                     if self.EngineDisplacement == "2.3 L" or self.EngineDisplacement == "2.4 L":
                         Outage["Outage"].append({"Preheat Time": self.UnitsOut(self.GetPreheatTime(), type=int, NoString=JSONNum)})
 
+            if self.PowerZone200:
+                Outage["Outage"].append({"Last Run Minutes": self.ValueOut(self.GetParameter("2137", ReturnInt= True), "min", JSONNum)})
 
             Outage["Outage"].append({"Outage Log": self.DisplayOutageHistory(JSONNum=JSONNum)})
 
@@ -5281,18 +5312,32 @@ class Evolution(GeneratorController):
                         )
                     }
                 )
+            if self.PowerZone200:
+                Engine.append({"Output Voltage L1": self.ValueOut(
+                        self.GetParameter("1f72", ReturnInt=True), "V", JSONNum)})
+                Engine.append({"Output Voltage L2": self.ValueOut(
+                        self.GetParameter("1f73", ReturnInt=True), "V", JSONNum)})
+                if self.IsThreePhase():
+                    Engine.append({"Output Voltage L3": self.ValueOut(
+                            self.GetParameter("1f74", ReturnInt=True), "V", JSONNum)})
 
             if self.PowerMeterIsSupported():
                 Engine.append({"Output Current": self.ValueOut(self.GetCurrentOutput(ReturnFloat=True), "A", JSONNum)})
                 if self.EvolutionController and not self.LiquidCooled and not self.bDisablePowerLog:
                     Engine.append({"Current L1": self.ValueOut(self.GetCurrentOutput(ReturnFloat=True, force_sensor=False, leg = "ct1"), "A", JSONNum)})
                     Engine.append({"Current L2": self.ValueOut(self.GetCurrentOutput(ReturnFloat=True, force_sensor=False, leg = "ct2"), "A", JSONNum)})
-
+                    if self.IsThreePhase() and self.PowerZone200:
+                        Engine.append({"Current L3": self.ValueOut(
+                                        self.GetParameter("1f77", ReturnFloat=True, Divider=100), "V", JSONNum)})
                 if self.UseExternalCTData and self.LiquidCooled and self.EvolutionController:
                     # show the internal Hall sensor if external CTs are used. If no external CTs are present, then this is shown with "Output Current"
                     Engine.append({"Hall Effect Sensor": self.ValueOut(self.GetCurrentOutput(ReturnFloat=True, force_sensor=True), "A", JSONNum)})
 
                 Engine.append({"Output Power (Single Phase)": self.ValueOut(self.GetPowerOutput(ReturnFloat=True), "kW", JSONNum)})
+
+            if self.PowerZone200:
+                Engine.append({"Power Factor": self.ValueOut(
+                        self.GetParameter("1f7b", ReturnFloat=True, Divider=100), "", JSONNum)})
 
             Engine.append(
                 {
@@ -5305,16 +5350,20 @@ class Evolution(GeneratorController):
             if self.bDisplayExperimentalData:
                 Engine.append({"Experimental Sensors": self.DisplayExperimentalSensors()})
 
-            if self.EvolutionController and self.LiquidCooled:
+            if self.EvolutionController and self.LiquidCooled or self.PowerZone200:
                 Line.append({"Transfer Switch State": self.GetTransferStatus()})
 
-            Line.append(
-                {
-                    "Utility Voltage": self.ValueOut(
-                        self.GetUtilityVoltage(ReturnInt=True), "V", JSONNum
-                    )
-                }
-            )
+            Line.append({"Utility Voltage": self.ValueOut(
+                    self.GetUtilityVoltage(ReturnInt=True), "V", JSONNum)})
+
+            if self.PowerZone200:
+                Line.append({"Utility Voltage L1": self.ValueOut(
+                        self.GetParameter("1fa4", ReturnInt=True), "V", JSONNum)})
+                Line.append({"Utility Voltage L2": self.ValueOut(
+                        self.GetParameter("1fa5", ReturnInt=True), "V", JSONNum)})
+                if self.IsThreePhase():
+                    Line.append({"Utility Voltage L3": self.ValueOut(
+                            self.GetParameter("1fa6", ReturnInt=True), "V", JSONNum)})
             #
             Line.append(
                 {
