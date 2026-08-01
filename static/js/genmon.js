@@ -824,40 +824,62 @@ var UI = {
     }
   },
 
-  /** Recursively render nested JSON as collapsible KV sections */
+  /** Recursively render nested JSON as collapsible KV sections.
+   *  Uses headings + expandable buttons for sections, <dl> for key/value
+   *  rows, and <ul> for plain lists — so AT can navigate without run-on text. */
   renderJson: function(data, depth) {
-    if (!data || typeof data !== 'object') return '<span>' + esc(String(data)) + '</span>';
+    if (data == null || typeof data !== 'object') return '<span>' + esc(String(data)) + '</span>';
     depth = depth || 0;
+    /* Detailed Status is h2; nested sections start at h3 */
+    var hl = Math.min(3 + depth, 6);
     var h = '';
     if (Array.isArray(data)) {
-      for (var i = 0; i < data.length; i++) {
+      var hasObj = false;
+      for (var ai = 0; ai < data.length; ai++) {
+        if (data[ai] && typeof data[ai] === 'object') { hasObj = true; break; }
+      }
+      if (!hasObj) {
+        h += '<ul class="status-list" role="list">';
+        for (var i = 0; i < data.length; i++) {
+          h += '<li class="kv-row" role="listitem"><span class="kv-val">' +
+            esc(data[i] != null ? data[i] : '') + '</span></li>';
+        }
+        return h + '</ul>';
+      }
+      for (i = 0; i < data.length; i++) {
         var item = data[i];
         if (item && typeof item === 'object') {
           h += UI.renderJson(item, depth);
         } else {
-          h += '<div class="kv-row"><span class="kv-val">' + esc(item!=null?item:'') + '</span></div>';
+          h += '<div class="kv-row"><span class="kv-val">' + esc(item != null ? item : '') + '</span></div>';
         }
       }
       return h;
     }
+    var pending = '';
+    function flushScalars() {
+      if (!pending) return;
+      h += '<dl class="status-dl">' + pending + '</dl>';
+      pending = '';
+    }
     for (var key in data) {
       if (!data.hasOwnProperty(key)) continue;
       var v = data[key];
-      if (v && typeof v === 'object' && !Array.isArray(v)) {
+      if (v && typeof v === 'object') {
+        flushScalars();
         h += '<div class="status-section">' +
-          '<div class="status-section-title open">' + esc(key) + '</div>' +
+          '<h' + hl + ' class="status-section-hdr">' +
+          '<button type="button" class="status-section-title open" aria-expanded="true">' +
+          esc(key) + '</button></h' + hl + '>' +
           '<div class="status-kv">' +
-          UI.renderJson(v, depth+1) + '</div></div>';
-      } else if (Array.isArray(v)) {
-        h += '<div class="status-section">' +
-          '<div class="status-section-title open">' + esc(key) + '</div>' +
-          '<div class="status-kv">' +
-          UI.renderJson(v, depth+1) + '</div></div>';
+          UI.renderJson(v, depth + 1) + '</div></div>';
       } else {
-        h += '<div class="kv-row"><span class="kv-key">' + esc(key) +
-          '</span><span class="kv-val">' + esc(v!=null?v:'') + '</span></div>';
+        pending += '<div class="kv-row">' +
+          '<dt class="kv-key">' + esc(key) + '</dt>' +
+          '<dd class="kv-val">' + esc(v != null ? v : '') + '</dd></div>';
       }
     }
+    flushScalars();
     return h;
   },
 
@@ -1002,7 +1024,10 @@ var UI = {
   /** Bind section-title click toggle globally inside $container */
   bindSectionToggles: function($c) {
     $c.off('click.sect', '.status-section-title').on('click.sect', '.status-section-title', function() {
-      $(this).toggleClass('open').next('.status-kv').slideToggle(200);
+      var $btn = $(this);
+      var open = !$btn.hasClass('open');
+      $btn.toggleClass('open', open).attr('aria-expanded', open ? 'true' : 'false');
+      $btn.closest('.status-section').children('.status-kv').slideToggle(200);
     });
   },
 
@@ -1021,8 +1046,9 @@ var UI = {
     $c.find('.status-section-title').each(function() {
       var key = $(this).text().trim();
       if (key in map) {
-        $(this).toggleClass('open', map[key]);
-        $(this).next('.status-kv').toggle(map[key]);
+        var isOpen = !!map[key];
+        $(this).toggleClass('open', isOpen).attr('aria-expanded', isOpen ? 'true' : 'false');
+        $(this).closest('.status-section').children('.status-kv').toggle(isOpen);
       }
     });
   },
@@ -2629,8 +2655,8 @@ var Pages = {
       $p.find('.status-section-title').each(function() {
         var key = $(this).text().trim();
         var shouldOpen = (key in saved) ? saved[key] : true;
-        $(this).toggleClass('open', shouldOpen);
-        $(this).next('.status-kv').toggle(shouldOpen);
+        $(this).toggleClass('open', shouldOpen).attr('aria-expanded', shouldOpen ? 'true' : 'false');
+        $(this).closest('.status-section').children('.status-kv').toggle(shouldOpen);
       });
       UI.bindSectionToggles($p);
     },
@@ -3555,7 +3581,9 @@ var Pages = {
         var ic = secIcons[logName] || icon('logs');
         var count = Array.isArray(entries) ? entries.length : 0;
         var secId = 'logs-h-' + String(logName).toLowerCase().replace(/[^a-z0-9]+/g, '-');
-        h += '<section class="card mb-2" aria-labelledby="' + secId + '">' +
+        /* Use div+h2 (not labelled <section>) so AT gets one list without
+           region enter/exit between every entry — same pattern as dashboard tiles. */
+        h += '<div class="card mb-2">' +
           '<h2 class="card-header" id="' + secId + '">' +
           ic + ' ' + esc(logName);
         if (count) {
@@ -3564,20 +3592,22 @@ var Pages = {
         }
         h += '</h2><div class="card-body">';
         if (Array.isArray(entries) && entries.length) {
-          h += '<ul class="logs-list">';
+          /* role="list" restores list semantics when list-style is removed (WebKit) */
+          h += '<ul class="logs-list" role="list" aria-labelledby="' + secId + '">';
           entries.forEach(function(e) {
             var parts = Pages.logs._splitLogEntry(e);
-            h += '<li class="logs-entry">';
+            /* Inner flex wrapper — display:flex on <li> can break list continuity in AT */
+            h += '<li class="logs-entry" role="listitem"><div class="logs-entry-row">';
             if (parts.time) {
               h += '<time class="logs-entry-time">' + esc(parts.time) + '</time> ';
             }
-            h += '<span class="logs-entry-msg">' + esc(parts.msg || e) + '</span></li>';
+            h += '<span class="logs-entry-msg">' + esc(parts.msg || e) + '</span></div></li>';
           });
           h += '</ul>';
         } else {
           h += '<div class="text-muted">No entries.</div>';
         }
-        h += '</div></section>';
+        h += '</div></div>';
       }
       $('#logs-data').html(h || '<div class="text-muted text-center">No log data.</div>');
     },
