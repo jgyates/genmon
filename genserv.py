@@ -1103,6 +1103,7 @@ def SendTestEmail(query_string):
         use_ssl = parameters["use_ssl"] in (True, "true", "True", "1", 1)
         tls_disable = parameters["tls_disable"] in (True, "true", "True", "1", 1)
         smtpauth_disable = parameters["smtpauth_disable"] in (True, "true", "True", "1", 1)
+        use_html = parameters.get("use_html", False) in (True, "true", "True", "1", 1)
 
     except Exception as e1:
         LogErrorLine("Error parsing parameters in SendTestEmail: " + str(e1))
@@ -1121,6 +1122,7 @@ def SendTestEmail(query_string):
             use_ssl=use_ssl,
             tls_disable=tls_disable,
             smtpauth_disable=smtpauth_disable,
+            use_html=use_html,
         )
         return jsonify({"message": ReturnMessage})
     except Exception as e1:
@@ -5031,6 +5033,17 @@ def ReadSettingsFromFile():
         MAIL_CONFIG,
         MAIL_SECTION,
         "tls_disable",
+    ]
+    ConfigSettings["use_html"] = [
+        "boolean",
+        "Use HTML Email Format",
+        310,
+        False,
+        "",
+        "",
+        MAIL_CONFIG,
+        MAIL_SECTION,
+        "use_html",
     ]
     ConfigSettings["smtpauth_disable"] = [
         "boolean",
