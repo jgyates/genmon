@@ -3979,6 +3979,8 @@ class Evolution(GeneratorController):
             self.StartupDelayActiveTime = datetime.datetime.now()
             return "Startup Delay Timer Activated"
 
+        if self.BitIsEqual(RegVal, 0x001F0000, 0x00170000):
+                    return "Service Mode"   # Power Zone 200
         if self.BitIsEqual(RegVal, 0x001F0000, 0x00040000):
             return "Exercising"
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00090000):
@@ -4416,6 +4418,7 @@ class Evolution(GeneratorController):
                         CurrentFloat = round(CurrentLeg1 + CurrentLeg2,2)
                 else:
                     CurrentFloat = 0.0
+                CurrentOutput = CurrentFloat
             elif self.EvolutionController and self.LiquidCooled:
                 Value = self.GetRegisterValueFromList("0058")  # Hall Effect Sensor
                 DebugInfo += Value
