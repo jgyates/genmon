@@ -14,8 +14,8 @@ All notable changes to this project will be documented in this file.
 - New add on for Otodata Bluetooth propane tank sensor, Thanks @bdwilson
 - Update to change the web app cache priority that may fix some networks with slow loading web pages
 - New add on for Hubitat Elevation hub, Thanks @bdwilson
-- Initial updates for PowerZone 200. Note: a special cable is required. (Thanks @LSGONE, @BillyEll, @skipfire and @gm58)
-- Initial support for Basler DGC-2020HD Controller
+- Support for PowerZone 200. Note: a special cable is required. (Thanks @LSGONE, @BillyEll, @skipfire and @gm58)
+- Support for Basler DGC-2020HD Controller
 - Added start / transfer command for PowerZone 200 (Thanks @LSGONE and @BillyEll)
 - Updates to correct web UI cache issue (thanks @MichaelB2018)
 - Updates to improve compatibility with screen readers (thanks @skipfire)
