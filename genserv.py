@@ -86,6 +86,15 @@ import re
 # -------------------------------------------------------------------------------
 app = Flask(__name__, static_url_path="")
 
+# Enable gzip compression when flask-compress is available; big bandwidth win
+# for slow/remote clients. Silently skipped if the package is not installed.
+try:
+    from flask_compress import Compress
+
+    Compress(app)
+except Exception:
+    pass
+
 # this allows the flask support to be extended on a per site basis but sill allow for
 # updates via the main github repository. If genservex.py exists, load it
 if os.path.isfile(
@@ -280,16 +289,55 @@ def logout():
 
 
 # -------------------------------------------------------------------------------
+# Extensions treated as long-lived static assets that browsers may cache.
+STATIC_ASSET_EXTENSIONS = (
+    "css", "js", "png", "jpg", "jpeg", "gif", "svg", "ico",
+    "woff", "woff2", "ttf", "webmanifest",
+)
+
+
+def _is_static_asset_request(path):
+    # sw.js must always revalidate so service-worker updates propagate quickly.
+    if path == "/sw.js":
+        return False
+    ext = path.rsplit(".", 1)[-1].lower() if "." in path else ""
+    return ext in STATIC_ASSET_EXTENSIONS
+
+
+@app.context_processor
+def inject_asset_helpers():
+    # asset_ver() returns the file mtime so templates can append ?v=<mtime>,
+    # busting the browser cache automatically whenever an asset is updated.
+    def asset_ver(rel_path):
+        try:
+            full = os.path.join(app.static_folder, rel_path.lstrip("/"))
+            return str(int(os.path.getmtime(full)))
+        except Exception:
+            return "1"
+
+    return dict(asset_ver=asset_ver)
+
+
+# -------------------------------------------------------------------------------
 @app.after_request
 def add_header(r):
     """
-    Force cache header and add security headers
+    Set cache headers (long-lived for versioned static assets, no-store for
+    everything else) and add security headers.
     """
-    r.headers[
-        "Cache-Control"
-    ] = "no-cache, no-store, must-revalidate, public, max-age=0"
-    r.headers["Pragma"] = "no-cache"
-    r.headers["Expires"] = "0"
+    if _is_static_asset_request(request.path):
+        # Versioned assets (referenced with ?v=<mtime>) can be cached forever;
+        # unversioned assets get a short cache so updates still propagate.
+        if request.args.get("v"):
+            r.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        else:
+            r.headers["Cache-Control"] = "public, max-age=3600"
+    else:
+        r.headers[
+            "Cache-Control"
+        ] = "no-cache, no-store, must-revalidate, public, max-age=0"
+        r.headers["Pragma"] = "no-cache"
+        r.headers["Expires"] = "0"
 
     # --- security headers ---
     r.headers["X-Content-Type-Options"] = "nosniff"
@@ -3124,7 +3172,7 @@ def GetAddOns():
         )
         AddOnCfg["genotodata"]["title"] = "Otodata TM6030 Propane Tank Sensor"
         AddOnCfg["genotodata"]["description"] = Description
-        AddOnCfg["genotodata"]["icon"] = "Genmon"
+        AddOnCfg["genotodata"]["icon"] = "otodata"
         AddOnCfg["genotodata"]["url"] = (
             "https://github.com/jgyates/genmon/wiki/"
             "1----Software-Overview#genotodatapy-optional"

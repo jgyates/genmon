@@ -1,6 +1,7 @@
-const CACHE_NAME = 'genmon-v3';
+const CACHE_NAME = 'genmon-v4';
+// Core assets kept for offline use only. Navigation/HTML is intentionally NOT
+// listed here so login/auth pages are never served stale from the cache.
 const SHELL_ASSETS = [
-  '/',
   '/css/genmon.css',
   '/js/genmon.js',
   '/js/addon-icons.js',
@@ -15,6 +16,7 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(SHELL_ASSETS))
       .then(() => self.skipWaiting())
+      .catch(() => self.skipWaiting())
   );
 });
 
@@ -27,29 +29,26 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
+  const req = event.request;
+  if (req.method !== 'GET') return;
 
-  const url = new URL(event.request.url);
+  // Never intercept navigations/documents: HTML must always come from the
+  // network so login and auth state are never served stale from the cache.
+  if (req.mode === 'navigate' || req.destination === 'document') return;
 
-  // API calls and dynamic content: network only, never cache
-  if (url.pathname.startsWith('/cmd/') || url.pathname.startsWith('/api/')) {
-    return;
-  }
+  const url = new URL(req.url);
+  // API calls and dynamic content: network only, never cache.
+  if (url.pathname.startsWith('/cmd/') || url.pathname.startsWith('/api/')) return;
 
-  // Cache-first with background refresh (stale-while-revalidate) for static
-  // assets: serve the cached copy immediately so a flaky/slow network fetch can
-  // never leave the page unstyled, while still updating the cache in the
-  // background for the next load.
+  // Network-first for static assets: always try a fresh copy, and fall back to
+  // the cache only when the network is unavailable (offline resilience).
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      const networkFetch = fetch(event.request).then(response => {
-        if (response && response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        }
-        return response;
-      }).catch(() => cached);
-      return cached || networkFetch;
-    })
+    fetch(req).then(response => {
+      if (response && response.ok) {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
+      }
+      return response;
+    }).catch(() => caches.match(req))
   );
 });

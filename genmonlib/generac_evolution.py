@@ -111,6 +111,7 @@ class Evolution(GeneratorController):
             False  # Flag to let the heartbeat thread know there is a problem
         )
         self.LastAlarmValue = 0xFF  # Last Value of the Alarm / Status Register
+        self.LastSwitchMode = "Auto"
         self.bUseLegacyWrite = False  # Nexus will set this to True
         self.bEnhancedExerciseFrequency = (
             False  # True if controller supports biweekly and monthly exercise times
@@ -4078,6 +4079,15 @@ class Evolution(GeneratorController):
             RegVal = self.FilterReg0001(RegVal)
         else:
             RegVal = Reg0001Value
+        
+        if self.PowerZone200:
+            if self.BitIsEqual(RegVal, 0x001F0000, 0x00000000):
+                        self.LastSwitchMode = "Auto"
+            elif self.BitIsEqual(RegVal, 0x001F0000, 0x000F0000):
+                        self.LastSwitchMode = "Off"
+            elif self.BitIsEqual(RegVal, 0x001F0000, 0x00170000):
+                        self.LastSwitchMode = "Service Mode"
+            return self.LastSwitchMode
 
         if self.BitIsEqual(RegVal, 0x0FFFF, 0x00):
             return "Auto"
@@ -5247,7 +5257,7 @@ class Evolution(GeneratorController):
                         Outage["Outage"].append({"Preheat Time": self.UnitsOut(self.GetPreheatTime(), type=int, NoString=JSONNum)})
 
             if self.PowerZone200:
-                Outage["Outage"].append({"Last Run Minutes": self.ValueOut(self.GetParameter("2137", ReturnInt= True), "min", JSONNum)})
+                Outage["Outage"].append({"Elapsed Run Minutes for Current Run": self.ValueOut(self.GetParameter("2137", ReturnInt= True), "min", JSONNum)})
 
             Outage["Outage"].append({"Outage Log": self.DisplayOutageHistory(JSONNum=JSONNum)})
 

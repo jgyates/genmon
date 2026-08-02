@@ -3,7 +3,8 @@
          {
             "information": "This file is used for the buttons on an Power Zone 200 controller",
             "onewordcommand" : "pzremotestop",
-            "title" : "Stop an existing remote command",
+            "title" : "Stop Generator",
+            "tooltip": "Stop and existing remote start command.",
             "command_sequence" : [
                                  {
                                     "reg": "0003",
@@ -14,10 +15,44 @@
          {
             "onewordcommand" : "pzremoteexercise",
             "title" : "Start Exercise Cycle",
+            "tooltip": "Start the generator internal exercise cycle.",
             "command_sequence" : [
                                  {
                                     "reg": "0003",
                                     "value": "001b"
+                                 }
+                                 ]
+         },
+         {
+            "onewordcommand" : "pzauto",
+            "title" : "Select Auto Mode",
+            "tooltip": "Put the generator in Auto mode.",
+            "command_sequence" : [
+                                 {
+                                    "reg": "0003",
+                                    "value": "000f"
+                                 }
+                                 ]
+         },
+         {
+            "onewordcommand" : "pzmanual",
+            "title" : "Select Manual Mode",
+            "tooltip": "Put the generator in Manual mode.",
+            "command_sequence" : [
+                                 {
+                                    "reg": "0003",
+                                    "value": "000e"
+                                 }
+                                 ]
+         },
+         {
+            "onewordcommand" : "pzoff",
+            "tooltip": "Put the generator in Off mode.",
+            "title" : "Select Off Mode",
+            "command_sequence" : [
+                                 {
+                                    "reg": "0003",
+                                    "value": "0010"
                                  }
                                  ]
          },
@@ -52,36 +87,6 @@
                                       "tooltip": "The duration of the exercise cycle. This must be a whole number between 12 and 60 minutes."
                                    }
                                  ]
-        },
-        {
-            "onewordcommand" : "pzauto",
-            "title" : "Select Auto Mode",
-            "command_sequence" : [
-                                 {
-                                    "reg": "0003",
-                                    "value": "000f"
-                                 }
-                                 ]
-         },
-         {
-            "onewordcommand" : "pzmanual",
-            "title" : "Select Manual Mode",
-            "command_sequence" : [
-                                 {
-                                    "reg": "0003",
-                                    "value": "000e"
-                                 }
-                                 ]
-         },
-         {
-            "onewordcommand" : "pzoff",
-            "title" : "Select Off Mode",
-            "command_sequence" : [
-                                 {
-                                    "reg": "0003",
-                                    "value": "0010"
-                                 }
-                                 ]
-         }
+        }
     ]
 }

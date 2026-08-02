@@ -7,14 +7,25 @@
     <meta http-equiv="expires" content="0">
     <meta http-equiv="pragma" content="no-cache">
     <title>Genmon</title>
-    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="manifest" href="manifest.webmanifest?v={{ asset_ver('manifest.webmanifest') }}">
     <meta name="theme-color" content="#090e1a">
-    <link rel="icon" href="favicon.ico">
-    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" href="favicon.ico?v={{ asset_ver('favicon.ico') }}">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v={{ asset_ver('icons/apple-touch-icon.png') }}">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="stylesheet" href="css/genmon.css">
-    <script src="js/system-theme.js"></script>
+    <script>
+    // Re-inject the stylesheet if it fails to load (flaky/low-bandwidth links),
+    // so the dashboard is never left unstyled after login.
+    window.__cssRetry = function (el) {
+        var n = parseInt(el.dataset.tries || '0', 10);
+        if (n >= 3) return;
+        el.dataset.tries = n + 1;
+        var base = el.getAttribute('href').split('?')[0];
+        setTimeout(function () { el.setAttribute('href', base + '?r=' + Date.now()); }, 600);
+    };
+    </script>
+    <link rel="stylesheet" href="css/genmon.css?v={{ asset_ver('css/genmon.css') }}" onerror="__cssRetry(this)">
+    <script src="js/system-theme.js?v={{ asset_ver('js/system-theme.js') }}"></script>
 </head>
 <body>
     <!-- Loading overlay -->
@@ -122,12 +133,12 @@
     <div id="modal-overlay" class="modal-overlay hidden"></div>
 
     <!-- Scripts -->
-    <script src="js/jquery-4.0.0.min.js"></script>
-    <script src="js/jquery.qrcode.min.js"></script>
-    <script src="js/chart.min.js"></script>
-    <script src="js/gauges.js"></script>
-    <script src="js/genmon.js"></script>
-    <script defer src="js/addon-icons.js"></script>
+    <script src="js/jquery-4.0.0.min.js?v={{ asset_ver('js/jquery-4.0.0.min.js') }}"></script>
+    <script src="js/jquery.qrcode.min.js?v={{ asset_ver('js/jquery.qrcode.min.js') }}"></script>
+    <script src="js/chart.min.js?v={{ asset_ver('js/chart.min.js') }}"></script>
+    <script src="js/gauges.js?v={{ asset_ver('js/gauges.js') }}"></script>
+    <script src="js/genmon.js?v={{ asset_ver('js/genmon.js') }}"></script>
+    <script defer src="js/addon-icons.js?v={{ asset_ver('js/addon-icons.js') }}"></script>
     <!-- Register SW only in installed PWA mode to avoid stale-cache issues in browsers.
          In normal browser sessions, unregister any prior SW so users get fresh files. -->
     <script>

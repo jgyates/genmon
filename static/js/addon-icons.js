@@ -243,6 +243,15 @@ d.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="p
 <symbol id="adn-voipms" viewBox="0 0 51.8 41.4">
 <path fill="#e1382d" d="M37.8 0a12.2 12.2 0 0 0-10.3 5.6L16.3 23c-2 3.1-6.6 3.6-8.4 2l8.7 13.7a6.1 6.1 0 0 0 8 2c1-.5 1.8-1.2 2.3-2L52 0Z"/><path fill="#444" d="m0 12.8 4.8 7.5s2 2.8 5.2 2.8c3.3 0 5.1-2.8 5.1-2.8l4.9-7.5z"/>
 </symbol>
+<symbol id="adn-otodata" viewBox="0 0 120 120">
+<g fill="#F5821F">
+<g font-family="'Courier New',monospace" font-weight="700" font-size="10" text-anchor="middle">
+<text x="49" y="26">0</text><text x="49" y="38">1</text><text x="49" y="50">0</text><text x="49" y="62">0</text>
+<text x="66" y="26">1</text><text x="66" y="38">0</text><text x="66" y="50">1</text><text x="66" y="62">0</text>
+</g>
+<text x="60" y="98" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-style="italic" font-weight="800" font-size="30" letter-spacing="1" textLength="112" lengthAdjust="spacingAndGlyphs">OTODATA</text>
+</g>
+</symbol>
 </svg>`;
 document.body.insertBefore(d.firstChild,document.body.firstChild);
 })();
