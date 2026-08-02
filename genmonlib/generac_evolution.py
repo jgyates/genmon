@@ -297,6 +297,11 @@ class Evolution(GeneratorController):
             "2137": [2, 0],  # Power Zone 200 Last Run Minutes (duration of the last generator run in minutes)
             "2138": [2, 0],  # Power Zone 200 Last Run kWH (last generator run in kWH)
             "2166": [2, 0],  # Power Zone 200 Transfer switch active = 1
+            "0608": [2, 0],  # Power Zone 200 Engine intake/throttle temperature, deg F
+            "060c": [2, 0],  # Power Zone 200 Engine percent torque (engine load), %
+            "0613": [2, 0],  # Power Zone 200 Fuel pressure, cranking
+            "0614": [2, 0],  # Power Zone 200 Fuel pressure, running
+            "2008": [2, 0],  # Power Zone 200 Oil level
         }
 
         # registers that need updating more frequently than others to make things more responsive
@@ -4401,8 +4406,8 @@ class Evolution(GeneratorController):
                 Value = self.GetRegisterValueFromList("1f75")  # L1 Amps
                 Value2 = self.GetRegisterValueFromList("1f76")  # L2 Amps
                 if len(Value) and len(Value2):
-                    CurrentLeg1 = float(Value, 16) / 100.0
-                    CurrentLeg2 = float(Value2, 16) / 100.0
+                    CurrentLeg1 = int(Value, 16) / 100.0
+                    CurrentLeg2 = int(Value2, 16) / 100.0
                     if leg == "ct1":
                         CurrentFloat = round(float(CurrentLeg1),2)
                     elif leg == "ct2":
@@ -5351,6 +5356,16 @@ class Evolution(GeneratorController):
             if self.PowerZone200:
                 Engine.append({"Power Factor": self.ValueOut(
                         self.GetParameter("1f7b", ReturnFloat=True, Divider=100), "", JSONNum)})
+                Engine.append({"Engine Load": self.ValueOut(
+                        self.GetParameter("060c", ReturnInt=True), "%", JSONNum)})
+                Engine.append({"Intake Temperature": self.ValueOut(
+                        self.GetParameter("0608", ReturnInt=True), "F", JSONNum)})
+                Engine.append({"Oil Level": self.ValueOut(
+                        self.GetParameter("2008", ReturnInt=True), "", JSONNum)})
+                Engine.append({"Fuel Pressure (Cranking)": self.ValueOut(
+                        self.GetParameter("0613", ReturnInt=True), "", JSONNum)})
+                Engine.append({"Fuel Pressure (Running)": self.ValueOut(
+                        self.GetParameter("0614", ReturnInt=True), "", JSONNum)})
 
             Engine.append(
                 {
