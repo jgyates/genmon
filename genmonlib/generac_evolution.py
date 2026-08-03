@@ -3170,8 +3170,8 @@ class Evolution(GeneratorController):
             # PowerZone200
             0x7f: "Ran with Outage",
             0x80: "Ran with Remote Transfer",
-            0x81: "Off - Utility Returned",
-            0x82: "Enter Service Mode",
+            0x81: "Enter Service Mode",
+            0x82: "Off - Utility Returned"
         }
 
         # This should be the same for all Evo models , Not sure about service C, this may be a Nexus thing
@@ -3800,6 +3800,9 @@ class Evolution(GeneratorController):
                 0x6F67,
                 0x6538,
                 0x6538,
+                # NOTE: 0x0017000 is not a state but a latching toggle 
+                # that can be signaled while in off or auto mode
+                0x00170000,     
             ]
 
             if not self.Reg0001IsValid(regvalue):
@@ -3980,8 +3983,6 @@ class Evolution(GeneratorController):
             self.StartupDelayActiveTime = datetime.datetime.now()
             return "Startup Delay Timer Activated"
 
-        if self.BitIsEqual(RegVal, 0x001F0000, 0x00170000):
-                    return "Service Mode"   # Power Zone 200
         if self.BitIsEqual(RegVal, 0x001F0000, 0x00040000):
             return "Exercising"
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00090000):
@@ -4085,8 +4086,6 @@ class Evolution(GeneratorController):
                         self.LastSwitchMode = "Auto"
             elif self.BitIsEqual(RegVal, 0x001F0000, 0x000F0000):
                         self.LastSwitchMode = "Off"
-            elif self.BitIsEqual(RegVal, 0x001F0000, 0x00170000):
-                        self.LastSwitchMode = "Service Mode"
             return self.LastSwitchMode
 
         if self.BitIsEqual(RegVal, 0x0FFFF, 0x00):
