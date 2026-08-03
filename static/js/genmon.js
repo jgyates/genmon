@@ -301,6 +301,7 @@ var API = {
 var Modal = {
   _$ov: null,
   _cb: null,
+  _prevFocus: null,
   /** Mark a string as pre-escaped HTML so Modal.show() won't double-escape it */
   html: function(s) { return {_trusted: true, _html: s}; },
   init: function() { this._$ov = $('#modal-overlay'); },
@@ -310,10 +311,13 @@ var Modal = {
       bh += '<button class="btn ' + (b.cls||'btn-outline') + '" data-action="' +
             esc(b.action||'close') + '">' + esc(b.text) + '</button>';
     });
+    this._prevFocus = document.activeElement;
+    var titleId = 'modal-title';
     this._$ov.html(
-      '<div class="modal"><div class="modal-header">' + esc(title) +
-      '<button class="modal-close" data-action="close">&times;</button></div>' +
-      '<div class="modal-body">' + (body._trusted ? body._html : esc(body)) + '</div>' +
+      '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="' + titleId + '">' +
+      '<div class="modal-header"><span id="' + titleId + '">' + esc(title) + '</span>' +
+      '<button type="button" class="modal-close" data-action="close" aria-label="Close">&times;</button></div>' +
+      '<div class="modal-body" tabindex="-1">' + (body._trusted ? body._html : esc(body)) + '</div>' +
       (bh ? '<div class="modal-footer">' + bh + '</div>' : '') +
       '</div>'
     ).removeClass('hidden');
@@ -323,10 +327,23 @@ var Modal = {
       if (a === 'close') self.close();
       else if (self._cb) self._cb(a, self._$ov.find('.modal'));
     });
+    /* Focus modal body — reliable AT start point (text nodes are not focusable) */
+    var bodyEl = this._$ov.find('.modal-body')[0];
+    setTimeout(function() {
+      if (bodyEl && typeof bodyEl.focus === 'function') bodyEl.focus();
+    }, 0);
     return this;
   },
   onAction: function(fn) { this._cb = fn; return this; },
-  close: function() { this._$ov.addClass('hidden').html(''); this._cb = null; },
+  close: function() {
+    this._$ov.addClass('hidden').html('');
+    this._cb = null;
+    var el = this._prevFocus;
+    this._prevFocus = null;
+    if (el && typeof el.focus === 'function' && document.contains(el)) {
+      try { el.focus(); } catch (e) { /* ignore */ }
+    }
+  },
   alert: function(t, m) {
     this.show(t, Modal.html('<p>' + (m && m._trusted ? m._html : esc(m)) + '</p>'), [{text:'OK',cls:'btn-primary',action:'close'}]);
   },

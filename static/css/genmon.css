@@ -1506,6 +1506,10 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .modal-close:hover { background: var(--bg-3); color: var(--text-0); }
 .modal-body { padding: 18px; max-height: 60vh; overflow-y: auto; }
+.modal-body:focus { outline: none; }
+.modal-body:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: -2px;
+}
 .modal-footer {
   display: flex; gap: 8px; justify-content: flex-end;
   padding: 12px 18px; border-top: 1px solid var(--border);
