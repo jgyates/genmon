@@ -3171,7 +3171,7 @@ class Evolution(GeneratorController):
             0x7f: "Ran with Outage",
             0x80: "Ran with Remote Transfer",
             0x81: "Enter Service Mode",
-            0x82: "Off - Utility Returned"
+            0x82: "Exit Servie Mode"
         }
 
         # This should be the same for all Evo models , Not sure about service C, this may be a Nexus thing
