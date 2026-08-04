@@ -1085,13 +1085,55 @@ class Evolution(GeneratorController):
         return "Unknown"
 
     # ---------------------------------------------------------------------------
+    # Browser like user agent. Generac's web site is behind bot protection that
+    # rejects requests that do not look like they come from a browser.
+    GeneracUserAgent = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    )
+
+    # ---------------------------------------------------------------------------
+    def GeneracWebRequest(self, Method, Path, Body=""):
+        # Perform a single request to Generac's web site. A trailing slash on the
+        # path and a minimal set of headers are required, otherwise the request is
+        # rejected by the site's bot protection. Returns (status, decoded body).
+        conn = None
+        try:
+            conn = HTTPSConnection("www.generac.com", 443, timeout=25)
+            headers = {"User-Agent": self.GeneracUserAgent}
+            if Method == "POST":
+                headers["Content-Type"] = "application/json"
+            conn.request(Method, Path, Body, headers=headers)
+            response = conn.getresponse()
+            status = response.status
+            if sys.version_info[0] < 3:
+                data = response.read()  # Python 2.x
+            else:
+                encoding = response.info().get_param("charset", "utf8")  # Python 3.x
+                data = response.read().decode(encoding, "replace")
+            return status, data
+        finally:
+            if conn != None:
+                conn.close()
+
+    # ---------------------------------------------------------------------------
+    def IsGeneracBotChallenge(self, Status, Data):
+        # Detect when the site returned a bot protection / challenge response
+        # instead of the requested content.
+        if Status == None or (Status >= 300 and Status < 400) or Status in [403, 429]:
+            return True
+        if Data != None and (
+            "_Incapsula_Resource" in Data or "Incapsula incident" in Data
+        ):
+            return True
+        return False
+
+    # ---------------------------------------------------------------------------
     def LookUpSNInfo(self, SkipKW=False, NoLookUp=False):
 
         if NoLookUp:
             return False
 
-        productId = None
-        ModelNumber = None
         ReturnKW = "Unknown"
         ReturnModel = "Unknown"
 
@@ -1117,137 +1159,109 @@ class Evolution(GeneratorController):
             self.LogError(
                 "Looking up model info on internet using SN: " + str(SerialNumber)
             )
-            myregex = re.compile("<.*?>")
 
+            # Generac retired the old GeneracSelfHelpWebService.asmx web service.
+            # The current site validates the serial number and returns the model
+            # number plus a product description (which contains the kW rating)
+            # from the ProductLookupPage/BuildManualList endpoint.
+
+            # strip anything that is not alphanumeric from the serial number
+            QuerySerial = re.sub(r"[^0-9A-Za-z]", "", SerialNumber)
+
+            # Step 1: validate the serial number. This also returns the zero
+            # padded serial number that the manual lookup expects.
+            SerialCandidates = []
             try:
-                conn = HTTPSConnection("www.generac.com", 443, timeout=25)
-                conn.request(
+                Status, Data = self.GeneracWebRequest(
                     "GET",
-                    "/GeneracCorporate/WebServices/GeneracSelfHelpWebService.asmx/GetSearchResults?query="
-                    + SerialNumber,
-                    "",
-                    headers={
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/17.17134"
-                    },
+                    "/api/productsapi/ValidateSerialNumber/?SerialNumber=" + QuerySerial,
                 )
-                r1 = conn.getresponse()
-            except Exception as e1:
-                conn.close()
-                self.LogErrorLine("Error in LookUpSNInfo (request 1): " + str(e1))
-                return False, ReturnModel, ReturnKW
-
-            try:
-                myresponse1 = ""
-                if sys.version_info[0] < 3:
-                    data1 = r1.read()  # Python 2.x
+                if self.IsGeneracBotChallenge(Status, Data):
+                    self.LogError(
+                        "Error in LookUpSNInfo: serial number validation blocked by the Generac web site (bot protection)."
+                    )
                 else:
-                    encoding = r1.info().get_param("charset", "utf8")  # Python 3.x
-                    data1 = r1.read().decode(encoding)
-                data2 = re.sub(myregex, "", data1)
-                myresponse1 = json.loads(data2)
-                ModelNumber = myresponse1["SerialNumber"]["ModelNumber"]
-
-                if ModelNumber == None:
-                    ModelNumber = myresponse1["ManualModelNumber"]
-
-                if ModelNumber == None or not len(ModelNumber):
-                    self.LogError("Error in LookUpSNInfo: Model (response1)")
-                    conn.close()
-                    return False, ReturnModel, ReturnKW
-
-                self.LogError("Found: Model: %s" % str(ModelNumber))
-                ReturnModel = ModelNumber
-
-            except Exception as e1:
-                self.LogErrorLine("Error in LookUpSNInfo (parse request 1): " + str(e1))
-                self.LogError("Response: " + str(myresponse1))
-                conn.close()
-                return False, ReturnModel, ReturnKW
-
-            try:
-                productId = myresponse1["Results"][0]["Id"]
+                    Validation = json.loads(Data).get("serialNumberValidation", None)
+                    if Validation != None and Validation.get("serialNumber", None):
+                        SerialCandidates.append(str(Validation["serialNumber"]))
             except Exception as e1:
                 self.LogErrorLine(
-                    "Notice: product ID not found online. Using serial number to complete lookup."
+                    "Notice in LookUpSNInfo: unable to validate serial number: " + str(e1)
                 )
-                productId = SerialNumber
+
+            # fall back to the raw serial number only if validation did not
+            # return one
+            if not len(SerialCandidates):
+                SerialCandidates.append(QuerySerial)
+
+            # Step 2: look up the model number and description using the serial
+            ManualHTML = None
+            SawChallenge = False
+            SawCleanResponse = False
+            for Candidate in SerialCandidates:
+                try:
+                    Status, Data = self.GeneracWebRequest(
+                        "POST",
+                        "/ProductLookupPage/BuildManualList/",
+                        Body=json.dumps(
+                            {
+                                "serialNbr": Candidate,
+                                "sourceApplication": "Residential",
+                                "languageId": "",
+                            }
+                        ),
+                    )
+                except Exception as e1:
+                    self.LogErrorLine(
+                        "Error in LookUpSNInfo (model lookup request): " + str(e1)
+                    )
+                    continue
+
+                if self.IsGeneracBotChallenge(Status, Data):
+                    SawChallenge = True
+                    continue
+
+                if Data != None and "Model Number:" in Data:
+                    ManualHTML = Data
+                    break
+
+                SawCleanResponse = True
+
+            if ManualHTML == None:
+                if SawCleanResponse or not SawChallenge:
+                    self.LogError(
+                        "Error in LookUpSNInfo: model info not found on the Generac web site for serial number "
+                        + str(SerialNumber)
+                    )
+                else:
+                    self.LogError(
+                        "Error in LookUpSNInfo: model lookup blocked by the Generac web site (bot protection)."
+                    )
+                return False, ReturnModel, ReturnKW
+
+            # parse the model number from the returned HTML
+            ModelMatch = re.search(r"Model Number:\s*</b>\s*([^<\r\n]+)", ManualHTML)
+            if ModelMatch:
+                ReturnModel = ModelMatch.group(1).strip()
+
+            if ReturnModel == "Unknown" or not len(ReturnModel):
+                self.LogError("Error in LookUpSNInfo: Model number not found in response")
+                return False, ReturnModel, ReturnKW
+
+            self.LogError("Found: Model: %s" % str(ReturnModel))
 
             if SkipKW:
                 return True, ReturnModel, ReturnKW
 
-            try:
-                if productId == SerialNumber:
-                    conn.request(
-                        "GET",
-                        "/service-support/product-support-lookup/product-manuals?modelNo="
-                        + productId,
-                        "",
-                        headers={
-                            "User-Agent": "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)"
-                        },
-                    )
-                else:
-                    conn.request(
-                        "GET",
-                        "/GeneracCorporate/WebServices/GeneracSelfHelpWebService.asmx/GetProductById?productId="
-                        + productId,
-                        "",
-                        headers={
-                            "User-Agent": "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)"
-                        },
-                    )
-                r1 = conn.getresponse()
-
-                if sys.version_info[0] < 3:
-                    data1 = r1.read()  # Python 2.x
-                else:
-                    encoding = r1.info().get_param("charset", "utf8")  # Python 3.x
-                    data1 = r1.read().decode(encoding)
-
-                conn.close()
-                data2 = re.sub(myregex, "", data1)
-            except Exception as e1:
-                self.LogErrorLine(
-                    "Error in LookUpSNInfo (parse request 2, product ID): " + str(e1)
+            # parse the kW rating from the product description (e.g. "OBS 22KW ...")
+            DescMatch = re.search(r"Description:\s*</b>\s*([^<\r\n]+)", ManualHTML)
+            if DescMatch:
+                KWMatch = re.search(
+                    r"(\d+(?:\.\d+)?)\s*KW", DescMatch.group(1), re.IGNORECASE
                 )
-
-            try:
-                if productId == SerialNumber:
-                    # within the formatted HTML we are looking for something like this :   "Manuals: 17KW/990 HNYWL+200A SE"
-                    ListData = re.split("<div", data1)  #
-                    for Count in range(len(ListData)):
-                        if "Manuals:" in ListData[Count]:
-                            KWStr = re.findall(r"(\d+)KW", ListData[Count])[0]
-                            if len(KWStr) and KWStr.isdigit():
-                                ReturnKW = KWStr
-
-                else:
-                    myresponse2 = json.loads(data2)
-
-                    kWRating = myresponse2["Attributes"][0]["Value"]
-
-                    if "kw" in kWRating.lower():
-                        kWRating = self.removeAlpha(kWRating)
-                    elif "watts" in kWRating.lower():
-                        kWRating = self.removeAlpha(kWRating)
-                        kWRating = str(int(kWRating) / 1000)
-                    else:
-                        if int(kWRating) < 1000:
-                            kWRating = str(int(kWRating))
-                        else:
-                            kWRating = str(int(kWRating) / 1000)
-
-                    ReturnKW = kWRating
-
-                    if not len(kWRating):
-                        self.LogError("Error in LookUpSNInfo: KW")
-                        return False, ReturnModel, ReturnKW
-
-                    self.LogError("Found: KW: %skW" % str(kWRating))
-
-            except Exception as e1:
-                self.LogErrorLine("Error in LookUpSNInfo: (parse KW)" + str(e1))
-                return False, ReturnModel, ReturnKW
+                if KWMatch:
+                    ReturnKW = KWMatch.group(1)
+                    self.LogError("Found: KW: %skW" % str(ReturnKW))
 
             return True, ReturnModel, ReturnKW
         except Exception as e1:
@@ -2536,8 +2550,7 @@ class Evolution(GeneratorController):
                 return  # nothing new to report, return
 
             if (
-                self.Evolution2
-                and self.IgnoreUnknown
+                self.Evolution2 or self.PowerZone200
                 and not self.Reg0001IsValid(RegVal)
             ):
                 return
@@ -2589,11 +2602,10 @@ class Evolution(GeneratorController):
             
             msgbody += "\nIP Address: " + self.GetNetworkIp()
 
-            # if option enabled and evo 2.0 detected and result invalid, do not end email.
+            # if evo 2.0 or pz200 detected and result invalid, do not end email.
             sendMessage = True
             if (
-                self.Evolution2
-                and self.IgnoreUnknown
+                self.Evolution2 or self.PowerZone200
                 and not self.Reg0001IsValid(RegVal)
             ):
                 sendMessage = False
@@ -3746,7 +3758,7 @@ class Evolution(GeneratorController):
     # ------------ Evolution:Reg0001IsValid -------------------------------------
     def Reg0001IsValid(self, regvalue):
 
-        if regvalue & 0xFFF0FFC0:
+        if regvalue & 0xFFE0FFC0:
             return False
         return True
 
@@ -3784,6 +3796,14 @@ class Evolution(GeneratorController):
 
         try:
 
+            if self.PowerZone200:
+                # NOTE: 0x0017000 is not a state but a latching toggle for 
+                # Power Zone 200 only that can be signaled while in off 
+                # or auto mode
+                0x00170000,     
+                if regvalue == 0x00170000:
+                    return self.LastAlarmValue
+
             if not self.Evolution2:
                 return regvalue
 
@@ -3799,10 +3819,7 @@ class Evolution(GeneratorController):
                 0x6F670000,
                 0x6F67,
                 0x6538,
-                0x6538,
-                # NOTE: 0x0017000 is not a state but a latching toggle 
-                # that can be signaled while in off or auto mode
-                0x00170000,     
+                0x6538
             ]
 
             if not self.Reg0001IsValid(regvalue):
@@ -4909,12 +4926,12 @@ class Evolution(GeneratorController):
         RegVal = self.FilterReg0001(RegVal)
 
         # service A due alarm?
-        if self.BitIsEqual(RegVal, 0xFFF0FFFF, 0x0000001F):
+        if self.BitIsEqual(RegVal, 0x0000003F, 0x0000001F):
             # is the Service Due A Alarm Active?
             return True
 
         # service B due alarm?
-        if self.BitIsEqual(RegVal, 0xFFF0FFFF, 0x00000020):
+        if self.BitIsEqual(RegVal, 0x0000003F, 0x00000020):
             # is the Service Due B Alarm Active?
             return True
         if AlarmOnly:
