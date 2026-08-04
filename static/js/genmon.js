@@ -308,7 +308,7 @@ var Modal = {
   show: function(title, body, buttons) {
     var bh = '';
     if (buttons) buttons.forEach(function(b) {
-      bh += '<button class="btn ' + (b.cls||'btn-outline') + '" data-action="' +
+      bh += '<button type="button" class="btn ' + (b.cls||'btn-outline') + '" data-action="' +
             esc(b.action||'close') + '">' + esc(b.text) + '</button>';
     });
     this._prevFocus = document.activeElement;
@@ -316,7 +316,8 @@ var Modal = {
     this._$ov.html(
       '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="' + titleId + '">' +
       '<div class="modal-header"><span id="' + titleId + '">' + esc(title) + '</span>' +
-      '<button type="button" class="modal-close" data-action="close" aria-label="Close">&times;</button></div>' +
+      '<button type="button" class="modal-close" data-action="close" aria-label="Close ' +
+      esc(title) + '">&times;</button></div>' +
       '<div class="modal-body" tabindex="-1">' + (body._trusted ? body._html : esc(body)) + '</div>' +
       (bh ? '<div class="modal-footer">' + bh + '</div>' : '') +
       '</div>'
@@ -2711,6 +2712,16 @@ var Pages = {
       });
       UI.bindSectionToggles($p);
     },
+    /* Reference "now" for charts. Log timestamps are written in the monitor
+     * (Pi) wall-clock and parsed as browser-local, so anchor the axis window to
+     * the monitor's current time. Otherwise a browser in a different timezone
+     * than the generator shifts the data off the window. Falls back to the
+     * browser clock until monitor time is known. */
+    _chartNow: function() {
+      var snap = this._interpolate(this._monitorSnap);
+      if (snap && snap.date && !isNaN(snap.date.getTime())) return snap.date;
+      return new Date();
+    },
     _initChart: function() {
       var ctx = document.getElementById('pwr-chart');
       if (!ctx || !window.Chart) return;
@@ -2807,7 +2818,7 @@ var Pages = {
     _loadChart: function(mins) {
       var data = S.chartRawData;
       if (!S.chart || !data) return;
-      var now = new Date();
+      var now = this._chartNow();
       var cutoff = new Date(now.getTime() - mins * 60000);
       var points = [];
       for (var i = 0; i < data.length; i++) {
@@ -2968,7 +2979,7 @@ var Pages = {
       var entry = this._tempCharts[sensorName];
       if (!entry || !entry.chart) return;
       if (!parsed) { this._fetchTempChartData(sensorName, mins); return; }
-      var now = new Date();
+      var now = this._chartNow();
       var cutoff = new Date(now.getTime() - mins * 60000);
       var points = [];
       for (var i = 0; i < parsed.length; i++) {
@@ -3232,22 +3243,24 @@ var Pages = {
       var h = '<div class="page-title">' + icon('maintenance') + ' Maintenance</div>';
 
       /* ── Generator Control ── */
-      if (info.RemoteCommands) {
+      if (info.RemoteCommands || info.RemoteButtons || info.ResetAlarms || info.AckAlarms) {
         h += '<div class="card mb-2"><div class="card-header">' + icon('power') + ' Generator Control</div><div class="card-body">';
         h += '<div id="sw-state" class="maint-switch-state mb-2">' +
           '<span class="kv-key">Current Switch Position</span> ' +
           '<span class="maint-sw-badge">' + esc(S.switchState) + '</span></div>';
 
         /* Generator actions */
-        h += '<div class="maint-cmd-section">' +
-          '<div class="maint-cmd-label">Generator Actions</div>' +
-          '<p class="form-hint" style="margin:0 0 8px">Start or stop the generator. Starting with transfer powers your house from the generator.</p>' +
-          '<div class="btn-group flex-wrap">';
-        if (info.RemoteTransfer)
-          h += '<button class="btn btn-success btn-sm" data-cmd="starttransfer">'+btnIcon('play')+' Start + Transfer</button>';
-        h += '<button class="btn btn-primary btn-sm" data-cmd="start">'+btnIcon('play')+' Start (No Transfer)</button>' +
-          '<button class="btn btn-danger btn-sm" data-cmd="stop">'+btnIcon('stop')+' Stop Generator</button>' +
-          '</div></div>';
+        if (info.RemoteCommands) {
+          h += '<div class="maint-cmd-section">' +
+            '<div class="maint-cmd-label">Generator Actions</div>' +
+            '<p class="form-hint" style="margin:0 0 8px">Start or stop the generator. Starting with transfer powers your house from the generator.</p>' +
+            '<div class="btn-group flex-wrap">';
+          if (info.RemoteTransfer)
+            h += '<button class="btn btn-success btn-sm" data-cmd="starttransfer">'+btnIcon('play')+' Start + Transfer</button>';
+          h += '<button class="btn btn-primary btn-sm" data-cmd="start">'+btnIcon('play')+' Start (No Transfer)</button>' +
+            '<button class="btn btn-danger btn-sm" data-cmd="stop">'+btnIcon('stop')+' Stop Generator</button>' +
+            '</div></div>';
+        }
 
         /* Switch position */
         if (info.RemoteButtons) {
@@ -3316,16 +3329,29 @@ var Pages = {
       if (info.buttons && info.buttons.length) {
         h += '<div class="card mb-2"><div class="card-header">' + icon('cpu') + ' Custom Commands</div><div class="card-body">';
         info.buttons.forEach(function(b, idx) {
-          var hasInputs = b.command_sequence && b.command_sequence.some(function(c){ return !!c.input_title; });
-          h += '<div class="custom-cmd-row mb-2">';
+          var inputs = (b.command_sequence || []).filter(function(c){ return !!c.input_title; });
+          var hasInputs = inputs.length > 0;
+          h += '<div class="custom-cmd-group mb-2">';
+          h += '<div class="custom-cmd-row">';
           h += '<button class="btn btn-outline btn-sm custom-btn" data-bi="'+idx+'">' + esc(b.title) + '</button>';
           if (hasInputs) {
             b.command_sequence.forEach(function(c, ci) {
               if (!c.input_title) return;
               h += ' <input type="text" class="input input-sm custom-cmd-input" id="cmd-input-'+idx+'-'+ci+'"' +
                 ' placeholder="' + esc(c.input_title) + '"' +
-                (c.tooltip ? ' title="' + esc(c.tooltip) + '"' : '') +
                 ' style="width:140px;display:inline-block">';
+            });
+          }
+          h += '</div>';
+          /* Tooltips shown inline (like the Settings page) instead of as hover popups.
+             A button-level tooltip (same level as onewordcommand) describes the whole
+             command; each command_sequence input may also define its own tooltip. */
+          if (b.tooltip) h += '<div class="form-hint">' + esc(b.tooltip) + '</div>';
+          if (hasInputs) {
+            b.command_sequence.forEach(function(c) {
+              if (!c.input_title || !c.tooltip) return;
+              var prefix = inputs.length > 1 ? esc(c.input_title) + ': ' : '';
+              h += '<div class="form-hint">' + prefix + esc(c.tooltip) + '</div>';
             });
           }
           h += '</div>';
@@ -3942,6 +3968,7 @@ var Pages = {
                   if (!item.hasOwnProperty(k)) continue;
                   var v = item[k];
                   if (v && typeof v === 'object') {
+                    /* nested sub-section */
                     flushRows();
                     body += '<div class="mon-subsec"><div class="mon-subsec-title">' + esc(k) + '</div>' +
                       Pages.monitor._renderObj(v) + '</div>';
@@ -6353,7 +6380,8 @@ var Pages = {
     _showChangelog: function(){
       var url = 'https://raw.githubusercontent.com/jgyates/genmon/master/changelog.md';
       Modal.show('Changelog', Modal.html(
-        '<div class="changelog-body" style="padding:8px;font-size:.85rem;color:var(--text-1)">' +
+        '<div class="changelog-body" role="region" aria-label="Changelog" ' +
+        'style="padding:8px;font-size:.85rem;color:var(--text-1)">' +
         '<div class="text-muted text-center">Loading changelog…</div></div>'), []);
       $.get(url).done(function(md){
         var html = md

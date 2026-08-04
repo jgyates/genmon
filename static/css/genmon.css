@@ -1345,7 +1345,9 @@ input, select, textarea { font: inherit; color: inherit; }
 .btn-icon { width: 34px; height: 34px; padding: 0; }
 .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
 .btn-ico { flex-shrink: 0; vertical-align: middle; }
+.custom-cmd-group:last-child { margin-bottom: 0; }
 .custom-cmd-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.custom-cmd-group .form-hint { margin-top: 4px; }
 .custom-cmd-input { font-size: .85rem; }
 
 /* ---------- Forms ------------------------------------------- */
