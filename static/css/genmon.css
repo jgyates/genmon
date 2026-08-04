@@ -1279,8 +1279,14 @@ input, select, textarea { font: inherit; color: inherit; }
 .status-section-title.open::before { transform: rotate(90deg); }
 .status-kv { padding-left: 16px; }
 .status-dl { margin: 0; }
-.status-list {
+.status-list,
+.status-kv-group {
   list-style: none; margin: 0; padding: 0;
+}
+.logs-entry-group { margin: 0; }
+.logs-entry-group .logs-entry {
+  margin: 0;
+  display: block;
 }
 .kv-row {
   padding: 3px 0; font-size: .88rem;
