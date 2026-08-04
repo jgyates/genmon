@@ -1168,9 +1168,14 @@ class Evolution(GeneratorController):
             # strip anything that is not alphanumeric from the serial number
             QuerySerial = re.sub(r"[^0-9A-Za-z]", "", SerialNumber)
 
-            # Step 1: validate the serial number. This also returns the zero
-            # padded serial number that the manual lookup expects.
-            SerialCandidates = []
+            # The manual lookup (BuildManualList) expects the serial number
+            # exactly as it appears on the unit label (the same value the
+            # website's own form submits). Try that raw serial number first.
+            SerialCandidates = [QuerySerial]
+
+            # Step 1: validate the serial number. This returns a zero padded
+            # variant of the serial number which we keep as a fallback in case
+            # the raw form is not recognized.
             try:
                 Status, Data = self.GeneracWebRequest(
                     "GET",
@@ -1178,12 +1183,14 @@ class Evolution(GeneratorController):
                 )
                 if self.IsGeneracBotChallenge(Status, Data):
                     self.LogError(
-                        "Error in LookUpSNInfo: serial number validation blocked by the Generac web site (bot protection)."
+                        "Notice in LookUpSNInfo: serial number validation blocked by the Generac web site (bot protection)."
                     )
                 else:
                     Validation = json.loads(Data).get("serialNumberValidation", None)
                     if Validation != None and Validation.get("serialNumber", None):
-                        SerialCandidates.append(str(Validation["serialNumber"]))
+                        Padded = str(Validation["serialNumber"])
+                        if Padded not in SerialCandidates:
+                            SerialCandidates.append(Padded)
             except Exception as e1:
                 self.LogErrorLine(
                     "Notice in LookUpSNInfo: unable to validate serial number: " + str(e1)
@@ -1238,6 +1245,11 @@ class Evolution(GeneratorController):
                         "Error in LookUpSNInfo: model lookup blocked by the Generac web site (bot protection)."
                     )
                 return False, ReturnModel, ReturnKW
+
+            # the site separates the labels and values with non-breaking spaces.
+            # Normalize them to regular spaces so parsing works the same on both
+            # Python 2 (bytes, UTF-8 "\xc2\xa0") and Python 3 (str, "\xa0").
+            ManualHTML = ManualHTML.replace("\xc2\xa0", " ").replace("\xa0", " ")
 
             # parse the model number from the returned HTML
             ModelMatch = re.search(r"Model Number:\s*</b>\s*([^<\r\n]+)", ManualHTML)
