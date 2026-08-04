@@ -1283,8 +1283,11 @@ input, select, textarea { font: inherit; color: inherit; }
   list-style: none; margin: 0; padding: 0;
 }
 .kv-row {
-  display: flex; padding: 3px 0; font-size: .88rem;
+  padding: 3px 0; font-size: .88rem;
   border-bottom: 1px solid var(--border);
+}
+.kv-row-inner {
+  display: flex; flex-wrap: wrap;
 }
 .kv-row:last-child { border-bottom: none; }
 [data-theme~="dark"] .kv-row {
@@ -2398,7 +2401,7 @@ input, select, textarea { font: inherit; color: inherit; }
   .tile-xl { grid-column: span 2; }
   .tile-chart { min-height: 200px; }
   .cal-heatmap-svg { min-width: 0; }
-  .kv-row { flex-direction: column; }
+  .kv-row-inner { flex-direction: column; }
   .kv-key { min-width: 0; margin-bottom: 1px; font-size: .78rem; }
   .form-row { flex-direction: column; }
   .reg-grid { grid-template-columns: repeat(2, 1fr); }
