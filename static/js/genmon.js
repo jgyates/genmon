@@ -301,6 +301,7 @@ var API = {
 var Modal = {
   _$ov: null,
   _cb: null,
+  _prevFocus: null,
   /** Mark a string as pre-escaped HTML so Modal.show() won't double-escape it */
   html: function(s) { return {_trusted: true, _html: s}; },
   init: function() { this._$ov = $('#modal-overlay'); },
@@ -310,12 +311,14 @@ var Modal = {
       bh += '<button type="button" class="btn ' + (b.cls||'btn-outline') + '" data-action="' +
             esc(b.action||'close') + '">' + esc(b.text) + '</button>';
     });
+    this._prevFocus = document.activeElement;
+    var titleId = 'modal-title';
     this._$ov.html(
-      '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">' +
-      '<div class="modal-header"><span id="modal-title">' + esc(title) + '</span>' +
+      '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="' + titleId + '">' +
+      '<div class="modal-header"><span id="' + titleId + '">' + esc(title) + '</span>' +
       '<button type="button" class="modal-close" data-action="close" aria-label="Close ' +
       esc(title) + '">&times;</button></div>' +
-      '<div class="modal-body">' + (body._trusted ? body._html : esc(body)) + '</div>' +
+      '<div class="modal-body" tabindex="-1">' + (body._trusted ? body._html : esc(body)) + '</div>' +
       (bh ? '<div class="modal-footer">' + bh + '</div>' : '') +
       '</div>'
     ).removeClass('hidden');
@@ -325,10 +328,23 @@ var Modal = {
       if (a === 'close') self.close();
       else if (self._cb) self._cb(a, self._$ov.find('.modal'));
     });
+    /* Focus modal body — reliable AT start point (text nodes are not focusable) */
+    var bodyEl = this._$ov.find('.modal-body')[0];
+    setTimeout(function() {
+      if (bodyEl && typeof bodyEl.focus === 'function') bodyEl.focus();
+    }, 0);
     return this;
   },
   onAction: function(fn) { this._cb = fn; return this; },
-  close: function() { this._$ov.addClass('hidden').html(''); this._cb = null; },
+  close: function() {
+    this._$ov.addClass('hidden').html('');
+    this._cb = null;
+    var el = this._prevFocus;
+    this._prevFocus = null;
+    if (el && typeof el.focus === 'function' && document.contains(el)) {
+      try { el.focus(); } catch (e) { /* ignore */ }
+    }
+  },
   alert: function(t, m) {
     this.show(t, Modal.html('<p>' + (m && m._trusted ? m._html : esc(m)) + '</p>'), [{text:'OK',cls:'btn-primary',action:'close'}]);
   },
@@ -826,21 +842,35 @@ var UI = {
     }
   },
 
-  /** One accessible key/value row (definition term + description). */
+  /** One accessible key/value row as a list item (label: value). */
   kvRow: function(key, val, valCls) {
-    return '<div class="kv-row">' +
-      '<dt class="kv-key">' + esc(key) + '</dt>' +
-      '<dd class="kv-val' + (valCls || '') + '">' +
-      esc(val != null && val !== '' ? val : '--') + '</dd></div>';
+    return '<li class="kv-row" role="listitem"><div class="kv-row-inner">' +
+      '<span class="kv-key">' + esc(key) + '</span>' +
+      '<span class="sr-only">: </span>' +
+      '<span class="kv-val' + (valCls || '') + '">' +
+      esc(val != null && val !== '' ? val : '--') + '</span></div></li>';
   },
-  /** Wrap kv rows in a single definition list so AT separates labels from values. */
-  kvDl: function(rowsHtml) {
-    return rowsHtml ? '<dl class="status-dl">' + rowsHtml + '</dl>' : '';
+  /** Wrap kv rows in a single list — never one &lt;ul&gt; per row. */
+  kvList: function(rowsHtml) {
+    return rowsHtml ? '<ul class="status-list" role="list">' + rowsHtml + '</ul>' : '';
+  },
+  /** True when every array item is a plain object with only scalar values (genmon [{k:v},…]). */
+  _isFlatKvArray: function(arr) {
+    if (!Array.isArray(arr) || !arr.length) return false;
+    for (var i = 0; i < arr.length; i++) {
+      var it = arr[i];
+      if (!it || typeof it !== 'object' || Array.isArray(it)) return false;
+      for (var k in it) {
+        if (!it.hasOwnProperty(k)) continue;
+        if (it[k] != null && typeof it[k] === 'object') return false;
+      }
+    }
+    return true;
   },
 
   /** Recursively render nested JSON as collapsible KV sections.
-   *  Uses headings + expandable buttons for sections, <dl> for key/value
-   *  rows, and <ul> for plain lists — so AT can navigate without run-on text. */
+   *  Uses headings + expandable buttons for sections, one list for key/value
+   *  rows or plain string arrays — so AT can navigate without run-on text. */
   renderJson: function(data, depth) {
     if (data == null || typeof data !== 'object') return '<span>' + esc(String(data)) + '</span>';
     depth = depth || 0;
@@ -860,6 +890,16 @@ var UI = {
         }
         return h + '</ul>';
       }
+      /* Genmon shape: [{Key: Val}, {Key2: Val2}] → one list, not N one-item lists */
+      if (UI._isFlatKvArray(data)) {
+        var flatRows = '';
+        for (i = 0; i < data.length; i++) {
+          for (var fk in data[i]) {
+            if (data[i].hasOwnProperty(fk)) flatRows += UI.kvRow(fk, data[i][fk]);
+          }
+        }
+        return UI.kvList(flatRows);
+      }
       for (i = 0; i < data.length; i++) {
         var item = data[i];
         if (item && typeof item === 'object') {
@@ -873,7 +913,7 @@ var UI = {
     var pending = '';
     function flushScalars() {
       if (!pending) return;
-      h += '<dl class="status-dl">' + pending + '</dl>';
+      h += UI.kvList(pending);
       pending = '';
     }
     for (var key in data) {
@@ -888,9 +928,7 @@ var UI = {
           '<div class="status-kv">' +
           UI.renderJson(v, depth + 1) + '</div></div>';
       } else {
-        pending += '<div class="kv-row">' +
-          '<dt class="kv-key">' + esc(key) + '</dt>' +
-          '<dd class="kv-val">' + esc(v != null ? v : '') + '</dd></div>';
+        pending += UI.kvRow(key, v);
       }
     }
     flushScalars();
@@ -3455,7 +3493,7 @@ var Pages = {
         flat.forEach(function(f) {
           flatRows += UI.kvRow(f.key, f.val);
         });
-        h += UI.kvDl(flatRows) + '</div></div>';
+        h += UI.kvList(flatRows) + '</div></div>';
       }
       var exHtml = '';
       function _collectExKv(items) {
@@ -3494,9 +3532,9 @@ var Pages = {
             }
           });
         }
-        h += UI.kvDl(subRows) + '</div></div>';
+        h += UI.kvList(subRows) + '</div></div>';
       });
-      if (exHtml) $('#ex-data').html(UI.kvDl(exHtml));
+      if (exHtml) $('#ex-data').html(UI.kvList(exHtml));
       $('#maint-data').html(h);
     },
     update: function(data) {
@@ -3551,7 +3589,7 @@ var Pages = {
           if (kl === 'system in outage') cls = (String(f.val).toLowerCase() === 'yes') ? ' mon-val-warn' : ' mon-val-ok';
           flatRows += UI.kvRow(f.key, f.val, cls);
         });
-        h += UI.kvDl(flatRows) + '</div></div>';
+        h += UI.kvList(flatRows) + '</div></div>';
       }
       subs.forEach(function(s) {
         var ic = secIcons[s.name] || '';
@@ -3578,7 +3616,7 @@ var Pages = {
           });
           h += '</ul>';
         }
-        h += UI.kvDl(kvRows);
+        h += UI.kvList(kvRows);
         h += '</div></div>';
       });
       $('#outage-data').html(h || '<div class="text-muted text-center">No outage data.</div>');
@@ -3922,7 +3960,7 @@ var Pages = {
           if (Array.isArray(items)) {
             var rows = '', body = '';
             function flushRows() {
-              if (rows) { body += UI.kvDl(rows); rows = ''; }
+              if (rows) { body += UI.kvList(rows); rows = ''; }
             }
             items.forEach(function(item) {
               if (item && typeof item === 'object') {
@@ -3935,7 +3973,7 @@ var Pages = {
                     body += '<div class="mon-subsec"><div class="mon-subsec-title">' + esc(k) + '</div>' +
                       Pages.monitor._renderObj(v) + '</div>';
                   } else {
-                    rows += Pages.monitor._kvRow(k, v);
+                    rows += Pages.monitor._kvProp(k, v);
                   }
                 }
               }
@@ -3943,7 +3981,6 @@ var Pages = {
             flushRows();
             h += body;
           } else if (items && typeof items === 'object') {
-            /* External Data: object with named sub-sections */
             h += '<div class="ext-data-grid">';
             for (var edKey in items) {
               if (!items.hasOwnProperty(edKey)) continue;
@@ -3961,7 +3998,7 @@ var Pages = {
     _renderObj: function(obj) {
       var h = '', pending = '';
       function flush() {
-        if (pending) { h += UI.kvDl(pending); pending = ''; }
+        if (pending) { h += UI.kvList(pending); pending = ''; }
       }
       if (Array.isArray(obj)) {
         obj.forEach(function(item) {
@@ -3974,11 +4011,11 @@ var Pages = {
                 h += '<div class="ext-data-nested"><div class="ext-data-nested-hdr">' + esc(k) + '</div>' +
                   Pages.monitor._renderObj(v) + '</div>';
               } else {
-                pending += Pages.monitor._kvRow(k, v);
+                pending += Pages.monitor._kvProp(k, v);
               }
             }
           } else {
-            pending += Pages.monitor._kvRow('#' + obj.indexOf(item), item);
+            pending += Pages.monitor._kvProp('#' + obj.indexOf(item), item);
           }
         });
       } else if (obj && typeof obj === 'object') {
@@ -3990,17 +4027,16 @@ var Pages = {
             h += '<div class="ext-data-nested"><div class="ext-data-nested-hdr">' + esc(k) + '</div>' +
               Pages.monitor._renderObj(v) + '</div>';
           } else {
-            pending += Pages.monitor._kvRow(k, v);
+            pending += Pages.monitor._kvProp(k, v);
           }
         }
       }
       flush();
       return h;
     },
-    _kvRow: function(k, v) {
+    _kvProp: function(k, v) {
       var val = (v != null) ? String(v) : '--';
       var cls = '';
-      /* highlight certain values */
       var kl = k.toLowerCase();
       if (kl.indexOf('error') >= 0 || kl.indexOf('exception') >= 0 || kl.indexOf('invalid') >= 0) {
         var num = parseFloat(val);
@@ -6087,7 +6123,7 @@ var Pages = {
       ].forEach(function(f){
         if (f[1]) softRows += UI.kvRow(f[0], f[1]);
       });
-      h += UI.kvDl(softRows);
+      h += UI.kvList(softRows);
       h += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">' +
         '<button class="btn btn-outline btn-sm" id="a-changelog">'+btnIcon('logs')+' View Changelog</button>';
       if (S.writeAccess || !info.LoginActive)
@@ -6105,7 +6141,7 @@ var Pages = {
       ].forEach(function(f){
         genRows += UI.kvRow(f[0], f[1] || '--');
       });
-      h += UI.kvDl(genRows) + '</div></div>';
+      h += UI.kvList(genRows) + '</div></div>';
 
       /* --- Request Help card --- */
       h += '<div class="card mb-2"><div class="card-header">' + icon('mail') + ' Request Help</div><div class="card-body">' +
