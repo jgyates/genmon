@@ -1,6 +1,15 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 2.0.02 -2026-08-04
+- New add on for Hubitat Elevation hub, Thanks @bdwilson
+- Support for PowerZone 200. Note: a special cable is required. (Thanks @LSGONE, @BillyEll, @skipfire and @gm58)
+- Support for Basler DGC-2020HD Controller
+- Added start / transfer command for PowerZone 200 (Thanks @LSGONE and @BillyEll)
+- Updates to correct web UI cache issue (thanks @MichaelB2018)
+- Updates to improve compatibility with screen readers (thanks @skipfire)
+- Corrected serial number look up (thanks @MichaelB2018)
+
 ## 2.0.01 -2026-05-18
 - Various bug fixes and typo corrections
 - Added per module dependancy checking that should help with quicker updates when new modules are added. Thanks @klinquist
@@ -13,13 +22,6 @@ All notable changes to this project will be documented in this file.
 - Performance improvement for temperature graphs, Thanks @MichaelB2018
 - New add on for Otodata Bluetooth propane tank sensor, Thanks @bdwilson
 - Update to change the web app cache priority that may fix some networks with slow loading web pages
-- New add on for Hubitat Elevation hub, Thanks @bdwilson
-- Support for PowerZone 200. Note: a special cable is required. (Thanks @LSGONE, @BillyEll, @skipfire and @gm58)
-- Support for Basler DGC-2020HD Controller
-- Added start / transfer command for PowerZone 200 (Thanks @LSGONE and @BillyEll)
-- Updates to correct web UI cache issue (thanks @MichaelB2018)
-- Updates to improve compatibility with screen readers (thanks @skipfire)
-- Corrected serail number look up (thanks @MichaelB2018)
 
 ## 2.0.00 -2026-04-05
 - Major update to UI Thanks @MichaelB2018
