@@ -1095,26 +1095,72 @@ class Evolution(GeneratorController):
     # ---------------------------------------------------------------------------
     def GeneracWebRequest(self, Method, Path, Body=""):
         # Perform a single request to Generac's web site. A trailing slash on the
-        # path and a minimal set of headers are required, otherwise the request is
-        # rejected by the site's bot protection. Returns (status, decoded body).
+        # path and a minimal set of browser like headers are required, otherwise
+        # the request is rejected by the site's bot protection. Cookies set by
+        # earlier responses are replayed, which some IP addresses need in order to
+        # pass the Imperva/Incapsula bot protection. Returns (status, decoded body).
         conn = None
         try:
             conn = HTTPSConnection("www.generac.com", 443, timeout=25)
-            headers = {"User-Agent": self.GeneracUserAgent}
+            headers = {
+                "User-Agent": self.GeneracUserAgent,
+                "Accept": "*/*",
+                "Accept-Language": "en-US,en;q=0.9",
+            }
             if Method == "POST":
                 headers["Content-Type"] = "application/json"
+            Cookies = getattr(self, "GeneracCookies", None)
+            if Cookies:
+                headers["Cookie"] = "; ".join(
+                    [Name + "=" + Value for Name, Value in Cookies.items()]
+                )
             conn.request(Method, Path, Body, headers=headers)
             response = conn.getresponse()
             status = response.status
+            self.StoreGeneracCookies(response)
+            RawData = response.read()
             if sys.version_info[0] < 3:
-                data = response.read()  # Python 2.x
+                data = RawData  # Python 2.x
             else:
-                encoding = response.info().get_param("charset", "utf8")  # Python 3.x
-                data = response.read().decode(encoding, "replace")
+                # response.info() is deprecated; read the charset from the header
+                ContentType = response.getheader("Content-Type", "") or ""
+                encoding = "utf8"
+                if "charset=" in ContentType.lower():
+                    encoding = (
+                        ContentType.lower().split("charset=")[1].split(";")[0].strip()
+                        or "utf8"
+                    )
+                data = RawData.decode(encoding, "replace")
             return status, data
         finally:
             if conn != None:
                 conn.close()
+
+    # ---------------------------------------------------------------------------
+    def StoreGeneracCookies(self, response):
+        # Collect any cookies the site sets so they can be replayed on later
+        # requests (needed to pass Incapsula bot protection from some IPs).
+        try:
+            if sys.version_info[0] < 3:
+                SetCookies = response.msg.getheaders("set-cookie")
+            else:
+                SetCookies = response.headers.get_all("Set-Cookie") or []
+            if not SetCookies:
+                return
+            Cookies = getattr(self, "GeneracCookies", None)
+            if Cookies == None:
+                Cookies = {}
+            for Header in SetCookies:
+                Pair = Header.split(";", 1)[0].strip()
+                if "=" in Pair:
+                    Name, Value = Pair.split("=", 1)
+                    Name = Name.strip()
+                    if Name:
+                        Cookies[Name] = Value.strip()
+            self.GeneracCookies = Cookies
+        except Exception:
+            pass
+
 
     # ---------------------------------------------------------------------------
     def IsGeneracBotChallenge(self, Status, Data):
@@ -1167,6 +1213,16 @@ class Evolution(GeneratorController):
 
             # strip anything that is not alphanumeric from the serial number
             QuerySerial = re.sub(r"[^0-9A-Za-z]", "", SerialNumber)
+
+            # Prime the session by loading the product info page first. This
+            # picks up the Incapsula cookies a browser would have, which some IP
+            # addresses need before the api endpoints will answer.
+            try:
+                self.GeneracWebRequest("GET", "/support/product-info-user-manuals/")
+            except Exception as e1:
+                self.LogErrorLine(
+                    "Notice in LookUpSNInfo: unable to prime session: " + str(e1)
+                )
 
             # The manual lookup (BuildManualList) expects the serial number
             # exactly as it appears on the unit label (the same value the

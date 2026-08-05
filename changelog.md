@@ -19,7 +19,7 @@ All notable changes to this project will be documented in this file.
 - Added start / transfer command for PowerZone 200 (Thanks @LSGONE and @BillyEll)
 - Updates to correct web UI cache issue (thanks @MichaelB2018)
 - Updates to improve compatibility with screen readers (thanks @skipfire)
-
+- Corrected serail number look up (thanks @MichaelB2018)
 
 ## 2.0.00 -2026-04-05
 - Major update to UI Thanks @MichaelB2018
