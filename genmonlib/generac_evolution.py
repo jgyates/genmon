@@ -2618,7 +2618,7 @@ class Evolution(GeneratorController):
                 return  # nothing new to report, return
 
             if (
-                self.Evolution2 or self.PowerZone200
+                (self.Evolution2 or self.PowerZone200)
                 and not self.Reg0001IsValid(RegVal)
             ):
                 return
@@ -2673,7 +2673,7 @@ class Evolution(GeneratorController):
             # if evo 2.0 or pz200 detected and result invalid, do not end email.
             sendMessage = True
             if (
-                self.Evolution2 or self.PowerZone200
+                (self.Evolution2 or self.PowerZone200)
                 and not self.Reg0001IsValid(RegVal)
             ):
                 sendMessage = False
@@ -3251,7 +3251,7 @@ class Evolution(GeneratorController):
             0x7f: "Ran with Outage",
             0x80: "Ran with Remote Transfer",
             0x81: "Enter Service Mode",
-            0x82: "Exit Servie Mode"
+            0x82: "Exit Service Mode"
         }
 
         # This should be the same for all Evo models , Not sure about service C, this may be a Nexus thing
@@ -3868,7 +3868,6 @@ class Evolution(GeneratorController):
                 # NOTE: 0x0017000 is not a state but a latching toggle for 
                 # Power Zone 200 only that can be signaled while in off 
                 # or auto mode
-                0x00170000,     
                 if regvalue == 0x00170000:
                     return self.LastAlarmValue
 
