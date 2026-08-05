@@ -162,7 +162,7 @@ class MyMQTT(MyCommon):
                     sys.exit(1)
             if self.exclude_gauge != None and len(self.exclude_gauge):
                 for exclude in self.exclude_gauge:
-                    if not exclude.lower() in self.labels:
+                    if not exclude in self.labels:
                         self.LogError("Invalid gague in exclude gauge list: " + str(exclude))
             if len(self.topics) != len(self.types):
                 self.LogError("Number of topics does not equal the number of types. " + str(len(self.topics)) +", " + str(len(self.types)))

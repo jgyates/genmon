@@ -173,7 +173,7 @@ class MyCommon(object):
                 return_value = float(return_value)
             return return_value
         except Exception as e1:
-             self.LogErrorLine("Error in MyMQTT:ConvertToNumber: " + str(e1) + ": " + str(value))
+             self.LogErrorLine("Error in ConvertToNumber: " + str(e1) + ": " + str(value))
              return 0
     # ------------ MyCommon::MergeDicts -----------------------------------------
     def MergeDicts(self, x, y):
