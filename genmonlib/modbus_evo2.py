@@ -180,6 +180,7 @@ class ModbusEvo2(ModbusProtocol):
                 Data.insert(0, self.MBUS_EVO2_CMD_PREFIX)
                 Data.insert(1, self.MBUS_EVO2_CMD_1)
                 self._PWT(self.ModbusEncapsulationRegister, len(Data) / 2, Data)
+                self.DelayBetweenFrames()
             except Exception as e1:
                 self.LogErrorLine("Error (1) SendUnlockSequence: " + str(e1))
 
@@ -196,6 +197,7 @@ class ModbusEvo2(ModbusProtocol):
                 Data.insert(0, self.MBUS_EVO2_CMD_PREFIX)
                 Data.insert(1, self.MBUS_EVO2_CMD_2)
                 self._PWT(self.ModbusEncapsulationRegister, len(Data) / 2, Data)
+                self.DelayBetweenFrames()
             except Exception as e1:
                 self.LogErrorLine("Error (2) SendUnlockSequence: " + str(e1))
             try:
@@ -214,6 +216,7 @@ class ModbusEvo2(ModbusProtocol):
                     Data,
                     min_response_override=6,
                 )
+                self.DelayBetweenFrames()
 
             except Exception as e1:
                 self.LogErrorLine("Error (3) SendUnlockSequence: " + str(e1))

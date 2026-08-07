@@ -380,7 +380,7 @@ class Evolution(GeneratorController):
             self.ModBus.ProcessTransaction(
                 "%04x" % SERIAL_NUM_REG, SERIAL_NUM_REG_LENGTH
             )
-
+            self.DelayBetweenFrames()
             self.DetectController()
 
             if self.EvolutionController:
@@ -392,10 +392,11 @@ class Evolution(GeneratorController):
                     "%04x" % NEXUS_ALARM_LOG_STARTING_REG, NEXUS_ALARM_LOG_STRIDE
                 )
 
+            self.DelayBetweenFrames()
             self.ModBus.ProcessTransaction(
                 "%04x" % START_LOG_STARTING_REG, START_LOG_STRIDE
             )
-
+            self.DelayBetweenFrames()
             if self.EvolutionController:
                 self.ModBus.ProcessTransaction(
                     "%04x" % SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE
@@ -407,7 +408,7 @@ class Evolution(GeneratorController):
                 self.ModBus.ProcessTransaction(
                     PrimeReg, int(PrimeInfo[self.REGLEN] // 2)
                 )
-
+                self.DelayBetweenFrames()
             for Reg, Info in self.BaseRegisters.items():
                 if self.IsStopping:
                     break
@@ -415,7 +416,7 @@ class Evolution(GeneratorController):
                 # but modbus makes register request in word increments so the request needs to
                 # in word multiples, not bytes
                 self.ModBus.ProcessTransaction(Reg, int(Info[self.REGLEN] // 2))
-
+                self.DelayBetweenFrames()
             # check for model specific info in read from conf file, if not there then add some defaults
             if not self.IsStopping:
                 self.CheckModelSpecificInfo(NoLookUp=self.Simulation)
@@ -1342,7 +1343,7 @@ class Evolution(GeneratorController):
         UnknownController = False
         # issue modbus read
         self.ModBus.ProcessTransaction("0000", 1)
-
+        self.DelayBetweenFrames()
         # read register from cached list.
         Value = self.GetRegisterValueFromList("0000")
         if len(Value) != 4:
@@ -1527,6 +1528,7 @@ class Evolution(GeneratorController):
                     self.ModBus.ProcessTransaction(
                         PrimeReg, int(PrimeInfo[self.REGLEN] // 2)
                     )
+                    self.DelayBetweenFrames()
                     if self.IsStopping:
                         return
                     if (
@@ -1554,6 +1556,7 @@ class Evolution(GeneratorController):
             # but modbus makes register request in word increments so the request needs to
             # in word multiples, not bytes
             self.ModBus.ProcessTransaction(Reg, int(Info[self.REGLEN] // 2))
+            self.DelayBetweenFrames()
             counter += 1
 
         # check that we have the serial number, if we do not then retry
@@ -1563,6 +1566,7 @@ class Evolution(GeneratorController):
             self.ModBus.ProcessTransaction(
                 "%04x" % SERIAL_NUM_REG, SERIAL_NUM_REG_LENGTH
             )
+            self.DelayBetweenFrames()
 
         if self.PowerZone200:
             # check that we have the identity, if we do not then retry
@@ -1582,6 +1586,7 @@ class Evolution(GeneratorController):
         ):
             RegStr = "%04x" % Register
             self.ModBus.ProcessTransaction(RegStr, START_LOG_STRIDE)
+            self.DelayBetweenFrames()
             if self.IsStopping:
                 return
 
@@ -1592,6 +1597,7 @@ class Evolution(GeneratorController):
             ):
                 RegStr = "%04x" % Register
                 self.ModBus.ProcessTransaction(RegStr, SERVICE_LOG_STRIDE)
+                self.DelayBetweenFrames()
                 if self.IsStopping:
                     return
             # Alarm Log
@@ -1600,6 +1606,7 @@ class Evolution(GeneratorController):
             ):
                 RegStr = "%04x" % Register
                 self.ModBus.ProcessTransaction(RegStr, ALARM_LOG_STRIDE)
+                self.DelayBetweenFrames()
                 if self.IsStopping:
                     return
         else:
@@ -1609,6 +1616,7 @@ class Evolution(GeneratorController):
             ):
                 RegStr = "%04x" % Register
                 self.ModBus.ProcessTransaction(RegStr, NEXUS_ALARM_LOG_STRIDE)
+                self.DelayBetweenFrames()
                 if self.IsStopping:
                     return
 
@@ -1764,6 +1772,7 @@ class Evolution(GeneratorController):
                     Data.append(LowByte)  # Value for indexed register (Low byte)
 
                     self.ModBus.ProcessWriteTransaction("0004", len(Data) // 2, Data)
+                    self.DelayBetweenFrames()
 
                 LowByte = register & 0x00FF
                 HighByte = register >> 8
@@ -1772,6 +1781,7 @@ class Evolution(GeneratorController):
                 Data.append(LowByte)  # indexed register to be written (Low byte)
 
                 self.ModBus.ProcessWriteTransaction("0003", len(Data) // 2, Data)
+                self.DelayBetweenFrames()
         except Exception as e1:
             self.LogErrorLine("Error in WriteIndexedRegister: " + str(e1))
 
@@ -1939,12 +1949,14 @@ class Evolution(GeneratorController):
                     )
                     return msgbody
                 self.ModBus.ProcessWriteTransaction("002d", len(Data) // 2, Data)
+                self.DelayBetweenFrames()
 
             Data = []
             Data.append(0x00)  #
             Data.append(Day)  # Day
 
             self.ModBus.ProcessWriteTransaction("002e", len(Data) // 2, Data)
+            self.DelayBetweenFrames()
 
             #
             Data = []
@@ -1952,6 +1964,7 @@ class Evolution(GeneratorController):
             Data.append(Minute)  #
 
             self.ModBus.ProcessWriteTransaction("002c", len(Data) // 2, Data)
+            self.DelayBetweenFrames()
 
         return "Set Exercise Time Command sent"
 
@@ -2126,6 +2139,7 @@ class Evolution(GeneratorController):
         Data.append(0x00)
         Data.append(ModeValue)
         self.ModBus.ProcessWriteTransaction("002f", len(Data) // 2, Data)
+        self.DelayBetweenFrames()
 
         return "Set Quiet Mode Command sent"
 
@@ -2153,6 +2167,7 @@ class Evolution(GeneratorController):
         Data.append(0)  # 0010
         Data.append(d.year - 2000)
         self.ModBus.ProcessWriteTransaction("000e", len(Data) // 2, Data)
+        self.DelayBetweenFrames()
 
     # ------------ Evolution:GetRegisterLength ----------------------------------
     def GetRegisterLength(self, Register):
@@ -3692,6 +3707,7 @@ class Evolution(GeneratorController):
                 self.ModBus.ProcessTransaction(
                     "%04x" % SERIAL_NUM_REG, SERIAL_NUM_REG_LENGTH
                 )
+                self.DelayBetweenFrames()
             return ""
 
         # all nexus and evolution models should have all "f" for values.

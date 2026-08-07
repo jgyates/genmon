@@ -73,6 +73,8 @@ def TestAllAddresses():
             for Reg in range(startregister, endregister):
                 RegStr = "%04x" % Reg
                 modbus.ProcessTransaction(RegStr, 1)
+                if DelayMS > 0:
+                    time.sleep(DelayMS / 1000.0)
 
         DisplayComErrors(modbus)
     except Exception as e1:
