@@ -3702,7 +3702,7 @@ def ReadAdvancedSettingsFromFile():
 
         ConfigSettings["modbus_between_frame_delay"] = [
             "float",
-            "Modbus Betweeen Frame Delay (sec)",
+            "Modbus Between Frame Delay (sec)",
             8,
             "0.0",
             "",
