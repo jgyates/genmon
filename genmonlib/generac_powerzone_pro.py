@@ -957,6 +957,7 @@ class PowerZonePro(GeneratorController):
                     self.ModBus.ProcessTransaction(
                         RegisterList[REGISTER], RegisterList[LENGTH] // 2
                     )
+                    self.DelayBetweenFrames()
                     if (
                         localSyncError != self.ModBus.ComSyncError
                         or localTimeoutCount != self.ModBus.ComTimoutError
@@ -986,6 +987,7 @@ class PowerZonePro(GeneratorController):
                     self.ModBus.ProcessTransaction(
                         RegisterList[REGISTER], RegisterList[LENGTH] // 2
                     )
+                    self.DelayBetweenFrames()
                     if (
                         localSyncError != self.ModBus.ComSyncError
                         or localTimeoutCount != self.ModBus.ComTimoutError
