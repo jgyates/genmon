@@ -842,18 +842,17 @@ var UI = {
     }
   },
 
-  /** One accessible key/value row (label: value). No list roles —
-   *  list enter/exit announcements are too noisy for dense status pages. */
+  /** One accessible key/value row as a list item (label: value). */
   kvRow: function(key, val, valCls) {
-    return '<div class="kv-row"><div class="kv-row-inner">' +
+    return '<li class="kv-row" role="listitem"><div class="kv-row-inner">' +
       '<span class="kv-key">' + esc(key) + '</span>' +
       '<span class="sr-only">: </span>' +
       '<span class="kv-val' + (valCls || '') + '">' +
-      esc(val != null && val !== '' ? val : '--') + '</span></div></div>';
+      esc(val != null && val !== '' ? val : '--') + '</span></div></li>';
   },
-  /** Group of kv rows — plain container, same visual spacing as before. */
+  /** Wrap kv rows in a single list — never one &lt;ul&gt; per row. */
   kvList: function(rowsHtml) {
-    return rowsHtml ? '<div class="status-kv-group">' + rowsHtml + '</div>' : '';
+    return rowsHtml ? '<ul class="status-list" role="list">' + rowsHtml + '</ul>' : '';
   },
   /** True when every array item is a plain object with only scalar values (genmon [{k:v},…]). */
   _isFlatKvArray: function(arr) {
@@ -870,8 +869,8 @@ var UI = {
   },
 
   /** Recursively render nested JSON as collapsible KV sections.
-   *  Uses headings + expandable buttons for sections; key/value and string
-   *  arrays use block rows (not lists) so AT does not announce list boundaries. */
+   *  Uses headings + expandable buttons for sections, one list for key/value
+   *  rows or plain string arrays — so AT can navigate without run-on text. */
   renderJson: function(data, depth) {
     if (data == null || typeof data !== 'object') return '<span>' + esc(String(data)) + '</span>';
     depth = depth || 0;
@@ -884,14 +883,14 @@ var UI = {
         if (data[ai] && typeof data[ai] === 'object') { hasObj = true; break; }
       }
       if (!hasObj) {
-        h += '<div class="status-kv-group">';
+        h += '<ul class="status-list" role="list">';
         for (var i = 0; i < data.length; i++) {
-          h += '<div class="kv-row"><span class="kv-val">' +
-            esc(data[i] != null ? data[i] : '') + '</span></div>';
+          h += '<li class="kv-row" role="listitem"><span class="kv-val">' +
+            esc(data[i] != null ? data[i] : '') + '</span></li>';
         }
-        return h + '</div>';
+        return h + '</ul>';
       }
-      /* Genmon shape: [{Key: Val}, {Key2: Val2}] → one group, not N wrappers */
+      /* Genmon shape: [{Key: Val}, {Key2: Val2}] → one list, not N one-item lists */
       if (UI._isFlatKvArray(data)) {
         var flatRows = '';
         for (i = 0; i < data.length; i++) {
@@ -3551,7 +3550,7 @@ var Pages = {
   outage: {
     cmd: 'outage_json',
     render: function($c) {
-      $c.html('<h1 class="page-title">'+icon('outage')+' Outage Log</h1>' +
+      $c.html('<div class="page-title">'+icon('outage')+' Outage Log</div>' +
         '<div id="outage-data"><div class="text-muted text-center">Loading…</div></div>');
       API.get('outage_json').done(function(d){ Pages.outage.update(d); });
     },
@@ -3563,7 +3562,7 @@ var Pages = {
         return;
       }
       var secIcons = {
-        'Outage Log': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
+        'Outage Log': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
           '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
       };
       var flat = [], subs = [];
@@ -3582,7 +3581,7 @@ var Pages = {
       });
       var h = '';
       if (flat.length) {
-        h += '<div class="card mb-2"><h2 class="card-header">' + icon('outage') + ' Outage Status</h2><div class="card-body">';
+        h += '<div class="card mb-2"><div class="card-header">' + icon('outage') + ' Outage Status</div><div class="card-body">';
         var flatRows = '';
         flat.forEach(function(f) {
           var cls = '';
@@ -3594,7 +3593,8 @@ var Pages = {
       }
       subs.forEach(function(s) {
         var ic = secIcons[s.name] || '';
-        h += '<div class="card mb-2"><h2 class="card-header">' + ic + ' ' + esc(s.name) + '</h2><div class="card-body">';
+        var secId = 'outage-h-' + String(s.name).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        h += '<div class="card mb-2"><h2 class="card-header" id="' + secId + '">' + ic + ' ' + esc(s.name) + '</h2><div class="card-body">';
         var items = Array.isArray(s.items) ? s.items : [s.items];
         var strItems = [], kvRows = '';
         items.forEach(function(item) {
@@ -3608,13 +3608,13 @@ var Pages = {
           }
         });
         if (strItems.length) {
-          /* Block rows — not a list — so AT does not announce enter/exit list */
-          h += '<div class="logs-entry-group">';
+          /* One list for log lines — same pattern as Logs / dashboard tiles */
+          h += '<ul class="logs-list" role="list" aria-labelledby="' + secId + '">';
           strItems.forEach(function(line) {
-            h += '<p class="logs-entry"><span class="logs-entry-msg">' +
-              esc(line) + '</span></p>';
+            h += '<li class="logs-entry" role="listitem"><span class="logs-entry-msg">' +
+              esc(line) + '</span></li>';
           });
-          h += '</div>';
+          h += '</ul>';
         }
         h += UI.kvList(kvRows);
         h += '</div></div>';
