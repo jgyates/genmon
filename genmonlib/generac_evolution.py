@@ -3343,7 +3343,7 @@ class Evolution(GeneratorController):
             0x34: "Low Volts Remove Load",
             0x35: "Stepper Over Current",
             0x36: "Fuse Problem",
-            # 0x37: "Unknown",                          # Power Zone 200
+            0x37: "Ready to Run",                       # Power Zone 200
             0x38: "Internal Exercise Cycle Skipped",    # Power Zone 200
             0x39: "Loss of Speed Signal",
             0x3A: "Loss of Serial Link ",

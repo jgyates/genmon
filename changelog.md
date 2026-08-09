@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Updates to correct web UI cache issue (thanks @MichaelB2018)
 - Updates to improve compatibility with screen readers (thanks @skipfire)
 - Corrected serial number look up (thanks @MichaelB2018)
+- Update to add new gague type for Wifi and adjusted the signal strength dBm to percent conversion (thanks @MichaelB2018)
 
 ## 2.0.01 -2026-05-18
 - Various bug fixes and typo corrections
