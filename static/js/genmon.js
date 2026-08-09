@@ -79,6 +79,57 @@ function statusKey(bs) {
 }
 
 /* ============================================================
+   WiFi signal strength conversion + dial configuration
+   ============================================================
+   There is NO universal standard for turning a WiFi RSSI (dBm) into a
+   "signal quality" percentage. Vendors disagree on what 0% and 100% mean,
+   so every dBm<->% mapping is an approximation. We standardise on the linear
+   mapping used by Microsoft's Native WiFi API (the wlanSignalQuality field),
+   because it is the most widely referenced and what Windows itself reports:
+
+       quality% = 2 * (dBm + 100)   (clamped to 0..100)
+       dBm      = quality% / 2 - 100
+
+   i.e.  -50 dBm (or stronger) => 100%,  -100 dBm (or weaker) => 0%,
+   and every 0.5 dBm ~= 1%. Example: -75 dBm reads 50%.
+
+   References:
+     - Microsoft Native WiFi wlanSignalQuality (WLAN_SIGNAL_QUALITY).
+     - https://stackoverflow.com/questions/15797920 (percent<->dBm).
+
+   History / rationale (see github discussion #1504):
+     Earlier genmon builds scaled -30 dBm=100% / -90 dBm=0%. That had no cited
+     source and made mid-range signals look weaker than users expected
+     (a -75 dBm showed 25%). The -50/-100 scale is the de-facto standard, so
+     we adopt it here and document it so the choice can be defended later.
+
+   Note: genmon.py reports whatever the WiFi driver supplies — dBm for the
+   built-in Raspberry Pi adapter, a percentage for many USB adapters. The tile
+   converts between the two so both readouts (and the dial needle) are shown
+   consistently regardless of what the driver reports. */
+var WifiSignal = {
+  DBM_AT_100: -50,   /* dBm at (or above) which quality is 100% */
+  DBM_AT_0: -100,    /* dBm at (or below) which quality is 0% */
+  dbmToPct: function(dbm) {
+    return Math.round(Math.max(0, Math.min(100, 2 * (dbm + 100))));
+  },
+  pctToDbm: function(pct) {
+    return Math.round(pct / 2 - 100);
+  },
+  /* Scientific dial scale (dBm) with red->green colour zones. The scale runs
+     to -30 dBm so strong real-world signals (which sit around -30..-45) still
+     move the needle even though anything >= -50 dBm is already 100%. */
+  DIAL_MIN: -90,
+  DIAL_MAX: -30,
+  DIAL_LABELS: [-90, -70, -50, -30],
+  DIAL_ZONES: [
+    { from: -90, to: -70, color: '#F44336' },  /* poor  */
+    { from: -70, to: -60, color: '#FF9800' },  /* fair  */
+    { from: -60, to: -30, color: '#4CAF50' }   /* good  */
+  ]
+};
+
+/* ============================================================
    STORE  (server-backed persistence via genmon.conf ui_prefs)
    ============================================================ */
 var Store = {
@@ -301,7 +352,6 @@ var API = {
 var Modal = {
   _$ov: null,
   _cb: null,
-  _prevFocus: null,
   /** Mark a string as pre-escaped HTML so Modal.show() won't double-escape it */
   html: function(s) { return {_trusted: true, _html: s}; },
   init: function() { this._$ov = $('#modal-overlay'); },
@@ -311,14 +361,12 @@ var Modal = {
       bh += '<button type="button" class="btn ' + (b.cls||'btn-outline') + '" data-action="' +
             esc(b.action||'close') + '">' + esc(b.text) + '</button>';
     });
-    this._prevFocus = document.activeElement;
-    var titleId = 'modal-title';
     this._$ov.html(
-      '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="' + titleId + '">' +
-      '<div class="modal-header"><span id="' + titleId + '">' + esc(title) + '</span>' +
+      '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">' +
+      '<div class="modal-header"><span id="modal-title">' + esc(title) + '</span>' +
       '<button type="button" class="modal-close" data-action="close" aria-label="Close ' +
       esc(title) + '">&times;</button></div>' +
-      '<div class="modal-body" tabindex="-1">' + (body._trusted ? body._html : esc(body)) + '</div>' +
+      '<div class="modal-body">' + (body._trusted ? body._html : esc(body)) + '</div>' +
       (bh ? '<div class="modal-footer">' + bh + '</div>' : '') +
       '</div>'
     ).removeClass('hidden');
@@ -328,23 +376,10 @@ var Modal = {
       if (a === 'close') self.close();
       else if (self._cb) self._cb(a, self._$ov.find('.modal'));
     });
-    /* Focus modal body — reliable AT start point (text nodes are not focusable) */
-    var bodyEl = this._$ov.find('.modal-body')[0];
-    setTimeout(function() {
-      if (bodyEl && typeof bodyEl.focus === 'function') bodyEl.focus();
-    }, 0);
     return this;
   },
   onAction: function(fn) { this._cb = fn; return this; },
-  close: function() {
-    this._$ov.addClass('hidden').html('');
-    this._cb = null;
-    var el = this._prevFocus;
-    this._prevFocus = null;
-    if (el && typeof el.focus === 'function' && document.contains(el)) {
-      try { el.focus(); } catch (e) { /* ignore */ }
-    }
-  },
+  close: function() { this._$ov.addClass('hidden').html(''); this._cb = null; },
   alert: function(t, m) {
     this.show(t, Modal.html('<p>' + (m && m._trusted ? m._html : esc(m)) + '</p>'), [{text:'OK',cls:'btn-primary',action:'close'}]);
   },
@@ -842,35 +877,21 @@ var UI = {
     }
   },
 
-  /** One accessible key/value row as a list item (label: value). */
+  /** One accessible key/value row (definition term + description). */
   kvRow: function(key, val, valCls) {
-    return '<li class="kv-row" role="listitem"><div class="kv-row-inner">' +
-      '<span class="kv-key">' + esc(key) + '</span>' +
-      '<span class="sr-only">: </span>' +
-      '<span class="kv-val' + (valCls || '') + '">' +
-      esc(val != null && val !== '' ? val : '--') + '</span></div></li>';
+    return '<div class="kv-row">' +
+      '<dt class="kv-key">' + esc(key) + '</dt>' +
+      '<dd class="kv-val' + (valCls || '') + '">' +
+      esc(val != null && val !== '' ? val : '--') + '</dd></div>';
   },
-  /** Wrap kv rows in a single list — never one &lt;ul&gt; per row. */
-  kvList: function(rowsHtml) {
-    return rowsHtml ? '<ul class="status-list" role="list">' + rowsHtml + '</ul>' : '';
-  },
-  /** True when every array item is a plain object with only scalar values (genmon [{k:v},…]). */
-  _isFlatKvArray: function(arr) {
-    if (!Array.isArray(arr) || !arr.length) return false;
-    for (var i = 0; i < arr.length; i++) {
-      var it = arr[i];
-      if (!it || typeof it !== 'object' || Array.isArray(it)) return false;
-      for (var k in it) {
-        if (!it.hasOwnProperty(k)) continue;
-        if (it[k] != null && typeof it[k] === 'object') return false;
-      }
-    }
-    return true;
+  /** Wrap kv rows in a single definition list so AT separates labels from values. */
+  kvDl: function(rowsHtml) {
+    return rowsHtml ? '<dl class="status-dl">' + rowsHtml + '</dl>' : '';
   },
 
   /** Recursively render nested JSON as collapsible KV sections.
-   *  Uses headings + expandable buttons for sections, one list for key/value
-   *  rows or plain string arrays — so AT can navigate without run-on text. */
+   *  Uses headings + expandable buttons for sections, <dl> for key/value
+   *  rows, and <ul> for plain lists — so AT can navigate without run-on text. */
   renderJson: function(data, depth) {
     if (data == null || typeof data !== 'object') return '<span>' + esc(String(data)) + '</span>';
     depth = depth || 0;
@@ -890,16 +911,6 @@ var UI = {
         }
         return h + '</ul>';
       }
-      /* Genmon shape: [{Key: Val}, {Key2: Val2}] → one list, not N one-item lists */
-      if (UI._isFlatKvArray(data)) {
-        var flatRows = '';
-        for (i = 0; i < data.length; i++) {
-          for (var fk in data[i]) {
-            if (data[i].hasOwnProperty(fk)) flatRows += UI.kvRow(fk, data[i][fk]);
-          }
-        }
-        return UI.kvList(flatRows);
-      }
       for (i = 0; i < data.length; i++) {
         var item = data[i];
         if (item && typeof item === 'object') {
@@ -913,7 +924,7 @@ var UI = {
     var pending = '';
     function flushScalars() {
       if (!pending) return;
-      h += UI.kvList(pending);
+      h += '<dl class="status-dl">' + pending + '</dl>';
       pending = '';
     }
     for (var key in data) {
@@ -928,7 +939,9 @@ var UI = {
           '<div class="status-kv">' +
           UI.renderJson(v, depth + 1) + '</div></div>';
       } else {
-        pending += UI.kvRow(key, v);
+        pending += '<div class="kv-row">' +
+          '<dt class="kv-key">' + esc(key) + '</dt>' +
+          '<dd class="kv-val">' + esc(v != null ? v : '') + '</dd></div>';
       }
     }
     flushScalars();
@@ -1120,7 +1133,7 @@ var UI = {
     /* WiFi signal strength (dBm, positive number means -N dBm) */
     if (ind.wifi) {
       var dbm = ind.wifi;  /* e.g. 42 means -42 dBm */
-      var wPct = Math.round(Math.max(0, Math.min(100, (-dbm + 90) / 60 * 100)));
+      var wPct = WifiSignal.dbmToPct(-dbm);
       var bars = dbm <= 30 ? 4 : dbm <= 50 ? 3 : dbm <= 65 ? 2 : 1;
       var wc = bars >= 3 ? 'ind-ok' : bars === 2 ? 'ind-warn' : 'ind-bad';
       parts.push(
@@ -1383,7 +1396,7 @@ var Pages = {
         continue;
       }
       if (fixed === 'wifibar') {
-        self._updateWifi(key, tiles[i]);
+        self._updateWifi(key, i, tiles[i]);
         continue;
       }
 
@@ -1805,6 +1818,12 @@ var Pages = {
         $btn.addClass('active');
         Store.setGaugeType(key, gtype);
         $tile.attr('data-gtype', gtype);
+        /* WiFi tile: Bars <-> Dial is a pure CSS view swap (the dial gauge is
+           already built into #gw-idx by _initGauge), so just refresh values. */
+        if (gtype === 'wifibar' || gtype === 'wifidial') {
+          if (S._lastGaugeTiles) self._updateGauges(S._lastGaugeTiles);
+          return;
+        }
         /* Enforce size constraints per gauge type */
         if (gtype === 'radial') {
           $tile.removeClass('tile-sm tile-lg').addClass('tile-md').data('size', 'md');
@@ -2258,16 +2277,32 @@ var Pages = {
         '<div class="thermo-unit" id="thermo-unit-' + idx + '">&deg;C</div></div>';
     },
 
-    /* --- WiFi signal tile — classic WiFi fan icon --- */
+    /* --- WiFi signal tile — bars view (default) or scientific dBm dial --- */
+    /* Returns the stored view preference for the WiFi tile: 'wifidial' or 'wifibar' (default). */
+    _wifiGtype: function(idx) {
+      return Store.getGaugeType(idx) === 'wifidial' ? 'wifidial' : 'wifibar';
+    },
+    /* Bars vs Dial picker shown in the WiFi tile's edit controls */
+    _wifiPickerHtml: function(idx) {
+      var cur = Pages.status._wifiGtype(idx);
+      return '<div class="tile-edit-controls" style="display:none" aria-hidden="true">' +
+        '<div class="tile-ctrl-row gauge-type-picker">' +
+        '<span class="tile-ctrl-label">Style</span>' +
+        '<button type="button" class="gauge-pick-btn wide' + (cur === 'wifibar' ? ' active' : '') + '" data-gtype="wifibar" title="Signal bars" tabindex="-1">Bars</button>' +
+        '<button type="button" class="gauge-pick-btn wide' + (cur === 'wifidial' ? ' active' : '') + '" data-gtype="wifidial" title="Scientific dBm dial" tabindex="-1">Dial</button>' +
+        '</div></div>';
+    },
     _wifiTileHtml: function(idx, t, sub) {
       var isPct = sub === 'wifipercent';
-      return '<div class="tile tile-md tile-wifi" role="listitem" data-tile="' + idx + '" data-size="md" data-gtype="wifibar" ' +
+      var gtype = Pages.status._wifiGtype(idx);
+      return '<div class="tile tile-md tile-wifi" role="listitem" data-tile="' + idx + '" data-size="md" data-gtype="' + gtype + '" ' +
         'data-wifi-pct="' + (isPct ? '1' : '0') + '" draggable="false">' +
         '<button type="button" class="tile-hide-btn" title="Hide tile" tabindex="-1" aria-hidden="true">&times;</button>' +
         '<div class="tile-drag-handle" title="Drag to reorder" aria-hidden="true">' + icon('status') + '</div>' +
-        '<div class="tile-edit-controls" style="display:none" aria-hidden="true"></div>' +
+        Pages.status._wifiPickerHtml(idx) +
         '<h2 class="tile-title">' + esc(t.title) + '</h2>' +
-        '<div class="wifi-wrap" id="gw-' + idx + '" aria-hidden="true">' +
+        /* Bars view */
+        '<div class="wifi-wrap wifi-view-bars" aria-hidden="true">' +
           '<svg class="wifi-svg" viewBox="0 0 24 24" focusable="false" aria-hidden="true">' +
             '<path id="wifi-a3-'+idx+'" class="wifi-arc wifi-arc-dim" d="M1.42 9a16.02 16.02 0 0121.16 0" fill="none" stroke-width="2.2" stroke-linecap="round"/>' +
             '<path id="wifi-a2-'+idx+'" class="wifi-arc wifi-arc-dim" d="M5 12.55a11 11 0 0114 0" fill="none" stroke-width="2.2" stroke-linecap="round"/>' +
@@ -2275,6 +2310,8 @@ var Pages = {
             '<circle id="wifi-dot-'+idx+'" class="wifi-dot wifi-arc-dim" cx="12" cy="20" r="1.4"/>' +
           '</svg>' +
         '</div>' +
+        /* Dial view (radial gauge injected into #gw-idx by _initGauge) */
+        '<div class="tile-gauge wifi-view-dial" id="gw-' + idx + '" aria-hidden="true"></div>' +
         '<div class="wifi-pct" id="wifi-pct-' + idx + '">--%</div>' +
         '<div class="wifi-dbm" id="wifi-dbm-' + idx + '">-- dBm</div></div>';
     },
@@ -2332,6 +2369,17 @@ var Pages = {
       if (!$w.length || !gt) return;
       var self = Pages.status;
       var sub = (gt.subtype||gt.type||'').toLowerCase();
+      /* WiFi tile: always build the dBm dial into #gw-idx (hidden by CSS in
+         bars mode) so switching Bars<->Dial is an instant view swap. */
+      if (self._FIXED_GAUGES[sub] === 'wifibar') {
+        $w.empty();
+        S.gauges[gaugeIdx] = new GenmonGauge($w[0], {
+          min: WifiSignal.DIAL_MIN, max: WifiSignal.DIAL_MAX,
+          labels: WifiSignal.DIAL_LABELS, zones: WifiSignal.DIAL_ZONES,
+          divisions: 6, subdivisions: 2, title: '', units: 'dBm'
+        });
+        return;
+      }
       /* Fixed gauges are rendered by _tileHtml — skip standard init */
       if (self._FIXED_GAUGES[sub]) return;
       var fuel = /fuel/i.test(gt.type||'') || /fuel/i.test(gt.title||'');
@@ -2590,19 +2638,21 @@ var Pages = {
       $('#thermo-unit-'+domIdx).text(unit);
     },
 
-    /* --- WiFi signal update --- */
-    _updateWifi: function(domIdx, t) {
+    /* --- WiFi signal update (drives both the bars view and the dBm dial) --- */
+    _updateWifi: function(domIdx, gaugeIdx, t) {
       var $tile = $('[data-tile="'+domIdx+'"]');
       if (!$tile.length) return;
       var isPct = $tile.attr('data-wifi-pct') === '1';
       var raw = parseFloat(t.value) || 0;
       var dbm, pct;
       if (isPct) {
+        /* Driver reported a percentage — derive an approximate dBm for the dial. */
         pct = Math.round(Math.max(0, Math.min(100, raw)));
-        dbm = Math.round(-30 - (100 - pct) * 0.6);
+        dbm = WifiSignal.pctToDbm(pct);
       } else {
+        /* Driver reported dBm (positive magnitude, e.g. 42 => -42 dBm). */
         dbm = -Math.abs(raw);
-        pct = Math.round(Math.max(0, Math.min(100, (dbm + 90) / 60 * 100)));
+        pct = WifiSignal.dbmToPct(dbm);
       }
       var arcs = pct >= 66 ? 3 : pct >= 33 ? 2 : pct > 0 ? 1 : 0;
       /* Single color: red(0) → yellow(60) → green(120) mapped to 0-100% */
@@ -2619,6 +2669,9 @@ var Pages = {
       if (arcs > 0) { $dot.attr('fill', col); } else { $dot.removeAttr('fill'); }
       $('#wifi-pct-'+domIdx).text(pct + '%');
       $('#wifi-dbm-'+domIdx).text(dbm + ' dBm');
+      /* Dial view: move the needle and show dBm in the LCD */
+      var g = (gaugeIdx != null) ? S.gauges[gaugeIdx] : null;
+      if (g && g.set) { g.set(dbm); if (g.setLabel) g.setLabel(dbm + ''); }
     },
 
     /* --- Weather tile helpers --- */
@@ -3493,7 +3546,7 @@ var Pages = {
         flat.forEach(function(f) {
           flatRows += UI.kvRow(f.key, f.val);
         });
-        h += UI.kvList(flatRows) + '</div></div>';
+        h += UI.kvDl(flatRows) + '</div></div>';
       }
       var exHtml = '';
       function _collectExKv(items) {
@@ -3532,9 +3585,9 @@ var Pages = {
             }
           });
         }
-        h += UI.kvList(subRows) + '</div></div>';
+        h += UI.kvDl(subRows) + '</div></div>';
       });
-      if (exHtml) $('#ex-data').html(UI.kvList(exHtml));
+      if (exHtml) $('#ex-data').html(UI.kvDl(exHtml));
       $('#maint-data').html(h);
     },
     update: function(data) {
@@ -3589,7 +3642,7 @@ var Pages = {
           if (kl === 'system in outage') cls = (String(f.val).toLowerCase() === 'yes') ? ' mon-val-warn' : ' mon-val-ok';
           flatRows += UI.kvRow(f.key, f.val, cls);
         });
-        h += UI.kvList(flatRows) + '</div></div>';
+        h += UI.kvDl(flatRows) + '</div></div>';
       }
       subs.forEach(function(s) {
         var ic = secIcons[s.name] || '';
@@ -3616,7 +3669,7 @@ var Pages = {
           });
           h += '</ul>';
         }
-        h += UI.kvList(kvRows);
+        h += UI.kvDl(kvRows);
         h += '</div></div>';
       });
       $('#outage-data').html(h || '<div class="text-muted text-center">No outage data.</div>');
@@ -3960,7 +4013,7 @@ var Pages = {
           if (Array.isArray(items)) {
             var rows = '', body = '';
             function flushRows() {
-              if (rows) { body += UI.kvList(rows); rows = ''; }
+              if (rows) { body += UI.kvDl(rows); rows = ''; }
             }
             items.forEach(function(item) {
               if (item && typeof item === 'object') {
@@ -3973,7 +4026,7 @@ var Pages = {
                     body += '<div class="mon-subsec"><div class="mon-subsec-title">' + esc(k) + '</div>' +
                       Pages.monitor._renderObj(v) + '</div>';
                   } else {
-                    rows += Pages.monitor._kvProp(k, v);
+                    rows += Pages.monitor._kvRow(k, v);
                   }
                 }
               }
@@ -3981,6 +4034,7 @@ var Pages = {
             flushRows();
             h += body;
           } else if (items && typeof items === 'object') {
+            /* External Data: object with named sub-sections */
             h += '<div class="ext-data-grid">';
             for (var edKey in items) {
               if (!items.hasOwnProperty(edKey)) continue;
@@ -3998,7 +4052,7 @@ var Pages = {
     _renderObj: function(obj) {
       var h = '', pending = '';
       function flush() {
-        if (pending) { h += UI.kvList(pending); pending = ''; }
+        if (pending) { h += UI.kvDl(pending); pending = ''; }
       }
       if (Array.isArray(obj)) {
         obj.forEach(function(item) {
@@ -4011,11 +4065,11 @@ var Pages = {
                 h += '<div class="ext-data-nested"><div class="ext-data-nested-hdr">' + esc(k) + '</div>' +
                   Pages.monitor._renderObj(v) + '</div>';
               } else {
-                pending += Pages.monitor._kvProp(k, v);
+                pending += Pages.monitor._kvRow(k, v);
               }
             }
           } else {
-            pending += Pages.monitor._kvProp('#' + obj.indexOf(item), item);
+            pending += Pages.monitor._kvRow('#' + obj.indexOf(item), item);
           }
         });
       } else if (obj && typeof obj === 'object') {
@@ -4027,16 +4081,17 @@ var Pages = {
             h += '<div class="ext-data-nested"><div class="ext-data-nested-hdr">' + esc(k) + '</div>' +
               Pages.monitor._renderObj(v) + '</div>';
           } else {
-            pending += Pages.monitor._kvProp(k, v);
+            pending += Pages.monitor._kvRow(k, v);
           }
         }
       }
       flush();
       return h;
     },
-    _kvProp: function(k, v) {
+    _kvRow: function(k, v) {
       var val = (v != null) ? String(v) : '--';
       var cls = '';
+      /* highlight certain values */
       var kl = k.toLowerCase();
       if (kl.indexOf('error') >= 0 || kl.indexOf('exception') >= 0 || kl.indexOf('invalid') >= 0) {
         var num = parseFloat(val);
@@ -6123,7 +6178,7 @@ var Pages = {
       ].forEach(function(f){
         if (f[1]) softRows += UI.kvRow(f[0], f[1]);
       });
-      h += UI.kvList(softRows);
+      h += UI.kvDl(softRows);
       h += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">' +
         '<button class="btn btn-outline btn-sm" id="a-changelog">'+btnIcon('logs')+' View Changelog</button>';
       if (S.writeAccess || !info.LoginActive)
@@ -6141,7 +6196,7 @@ var Pages = {
       ].forEach(function(f){
         genRows += UI.kvRow(f[0], f[1] || '--');
       });
-      h += UI.kvList(genRows) + '</div></div>';
+      h += UI.kvDl(genRows) + '</div></div>';
 
       /* --- Request Help card --- */
       h += '<div class="card mb-2"><div class="card-header">' + icon('mail') + ' Request Help</div><div class="card-body">' +

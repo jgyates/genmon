@@ -1014,6 +1014,16 @@ input, select, textarea { font: inherit; color: inherit; }
 .wifi-pct { font-size: 1.3rem; font-weight: 700; line-height: 1.1; }
 .wifi-dbm { font-size: .65rem; color: var(--text-2); margin-bottom: 2px; }
 
+/* WiFi tile: swap between the bars view (default) and the scientific dBm dial */
+.tile-wifi .wifi-view-dial { display: none; }
+.tile-wifi[data-gtype="wifidial"] .wifi-view-bars { display: none; }
+.tile-wifi[data-gtype="wifidial"] .wifi-view-dial { display: flex; padding: 2px 0; }
+.tile-wifi[data-gtype="wifidial"] .wifi-dbm { display: none; }  /* dial LCD already shows dBm */
+/* Wider Bars/Dial picker buttons (text instead of a glyph) */
+.gauge-pick-btn.wide {
+  width: auto; padding: 0 7px; font-size: .58rem; text-transform: none;
+}
+
 /* --- Tile edit controls (visible in edit mode) --- */
 .tile-edit-controls {
   position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
@@ -1283,11 +1293,8 @@ input, select, textarea { font: inherit; color: inherit; }
   list-style: none; margin: 0; padding: 0;
 }
 .kv-row {
-  padding: 3px 0; font-size: .88rem;
+  display: flex; padding: 3px 0; font-size: .88rem;
   border-bottom: 1px solid var(--border);
-}
-.kv-row-inner {
-  display: flex; flex-wrap: wrap;
 }
 .kv-row:last-child { border-bottom: none; }
 [data-theme~="dark"] .kv-row {
@@ -1511,10 +1518,6 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .modal-close:hover { background: var(--bg-3); color: var(--text-0); }
 .modal-body { padding: 18px; max-height: 60vh; overflow-y: auto; }
-.modal-body:focus { outline: none; }
-.modal-body:focus-visible {
-  outline: 2px solid var(--accent); outline-offset: -2px;
-}
 .modal-footer {
   display: flex; gap: 8px; justify-content: flex-end;
   padding: 12px 18px; border-top: 1px solid var(--border);
@@ -2403,7 +2406,7 @@ input, select, textarea { font: inherit; color: inherit; }
   .tile-xl { grid-column: span 2; }
   .tile-chart { min-height: 200px; }
   .cal-heatmap-svg { min-width: 0; }
-  .kv-row-inner { flex-direction: column; }
+  .kv-row { flex-direction: column; }
   .kv-key { min-width: 0; margin-bottom: 1px; font-size: .78rem; }
   .form-row { flex-direction: column; }
   .reg-grid { grid-template-columns: repeat(2, 1fr); }
