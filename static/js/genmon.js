@@ -126,7 +126,21 @@ var WifiSignal = {
     { from: -90, to: -70, color: '#F44336' },  /* poor  */
     { from: -70, to: -60, color: '#FF9800' },  /* fair  */
     { from: -60, to: -30, color: '#4CAF50' }   /* good  */
-  ]
+  ],
+  /* Signal quality zone for a given dBm. Boundaries match DIAL_ZONES so the
+     header status-bar icon and the tile dial always agree on colour. */
+  zoneForDbm: function(dbm) {
+    if (dbm >= -60) return 'good';
+    if (dbm >= -70) return 'fair';
+    return 'poor';
+  },
+  /* Fan-icon fill level (1..4) using the same dBm boundaries as the zones. */
+  barsForDbm: function(dbm) {
+    if (dbm >= -50) return 4;
+    if (dbm >= -60) return 3;
+    if (dbm >= -70) return 2;
+    return 1;
+  }
 };
 
 /* ============================================================
@@ -1134,8 +1148,9 @@ var UI = {
     if (ind.wifi) {
       var dbm = ind.wifi;  /* e.g. 42 means -42 dBm */
       var wPct = WifiSignal.dbmToPct(-dbm);
-      var bars = dbm <= 30 ? 4 : dbm <= 50 ? 3 : dbm <= 65 ? 2 : 1;
-      var wc = bars >= 3 ? 'ind-ok' : bars === 2 ? 'ind-warn' : 'ind-bad';
+      var bars = WifiSignal.barsForDbm(-dbm);
+      var zone = WifiSignal.zoneForDbm(-dbm);
+      var wc = zone === 'good' ? 'ind-ok' : zone === 'fair' ? 'ind-warn' : 'ind-bad';
       parts.push(
         '<div class="hdr-ind '+wc+'" title="WiFi: -'+dbm+' dBm ('+wPct+'%)">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
