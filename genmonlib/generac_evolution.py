@@ -1890,7 +1890,7 @@ class Evolution(GeneratorController):
             return self.AltSetGeneratorExerciseTime(CmdString)
         
         # extract time of day and day of week from command string
-        # format is day:hour:min  Monday:15:00
+        # format is day,hour,min  Monday,15,00
         msgbody = "Invalid command syntax for command setexercise"
         try:
 
