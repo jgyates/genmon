@@ -1877,7 +1877,7 @@ class Evolution(GeneratorController):
     # ----------  Evolution:SetGeneratorExerciseTime-----------------------------
     def SetGeneratorExerciseTime(self, CmdString):
 
-        if not self.bUseLegacyWrite and self.EvolutionController and not self.Evolution2:
+        if not self.bUseLegacyWrite and self.EvolutionController and not self.Evolution2 and not self.PowerZone200:
             # set legacy write for Evo1 with Firmware lower than V1.10
             FWVersion = self.GetFirmwareVersion()
             self.LogDebug("Check Legacy Write: %s" % FWVersion)
