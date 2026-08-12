@@ -268,8 +268,8 @@ class Evolution(GeneratorController):
             "0248": [2, 0],  #  Unknown (EvoLC)
             "0249": [2, 0],  #  Unknown (EvoLC)
             "024a": [2, 0],  #  Unknown (EvoLC)
-            "0255": [2, 0],  #  Unknown
-            "0256": [2, 0],  #  Unknown
+            "0255": [2, 0],  #  return to utility delay (Power Zone 200)
+            "0256": [2, 0],  #  cool down delay (Power Zone 200)
             "0258": [2, 0],  #  Unknown (EvoLC, NexusLC) Some type of setting
             "025a": [2, 0],  #  Unknown (EvoLC)
             "005c": [2, 0],  # Unknown , possible model reg on EvoLC
@@ -2884,6 +2884,21 @@ class Evolution(GeneratorController):
                     }
                 )
 
+            if self.PowerZone200:
+                ControllerSettings.append(
+                    {
+                        "Return to Utility Delay": self.ValueOut(
+                            self.GetParameter("0255", ReturnInt=True), "sec", JSONNum
+                        )
+                    }
+                )
+                ControllerSettings.append(
+                    {
+                        "Cool Down Time": self.ValueOut(
+                            self.GetParameter("0256", ReturnInt=True), "sec", JSONNum
+                        )
+                    }
+                )
             if not self.SmartSwitch:
                 Exercise = []
                 Exercise.append({"Exercise Time": self.GetExerciseTime()})
