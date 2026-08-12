@@ -268,7 +268,8 @@ class Evolution(GeneratorController):
             "0248": [2, 0],  #  Unknown (EvoLC)
             "0249": [2, 0],  #  Unknown (EvoLC)
             "024a": [2, 0],  #  Unknown (EvoLC)
-            "0255": [2, 0],  #  Unknown (EvoLC)
+            "0255": [2, 0],  #  Unknown
+            "0256": [2, 0],  #  Unknown
             "0258": [2, 0],  #  Unknown (EvoLC, NexusLC) Some type of setting
             "025a": [2, 0],  #  Unknown (EvoLC)
             "005c": [2, 0],  # Unknown , possible model reg on EvoLC
