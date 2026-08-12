@@ -529,6 +529,18 @@ class MySupport(MyCommon):
             self.LogErrorLine("Error in ReadCSVFile: " + FileName + " : " + str(e1))
             return []
 
+    #-------------------------KohlerRDCProtocol:InternetActive------------------
+    def InternetActive(self):
+        try:
+            socket.setdefaulttimeout(3)
+            socket.create_connection(("8.8.8.8", 53), timeout=3).close()
+            return True
+        except OSError:
+            return False
+        except Exception as e1:
+            self.LogErrorLine(f"Error in InternetActive: {e1}")
+            return False
+    
     # ------------ MySupport::GetWANIp-------------------------------------------
     def GetWANIp(self):
 

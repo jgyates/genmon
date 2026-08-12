@@ -87,6 +87,34 @@
                                       "tooltip": "The duration of the exercise cycle. This must be a whole number between 12 and 60 minutes."
                                    }
                                  ]
+        },
+        {
+            "onewordcommand" : "returntoutilitydelay",
+            "title" : "Return to Utility Delay",
+            "command_sequence" : [
+                                   {
+                                      "reg": "0255",
+                                      "input_title": "Seconds",
+                                      "type": "int",
+                                      "length": 2,
+                                      "bounds_regex":"^(?:1[5-9]|[2-9]\\d|[1-9]\\d{2}|1[0-4]\\d{2}|1500)$",
+                                      "tooltip": "The duration in seconds to delay the return to utility once power has been restored. This must be a whole number between 15 and 1500 seconds."
+                                   }
+                                 ]
+        },
+        {
+            "onewordcommand" : "cooldowntime",
+            "title" : "Cool Down Time",
+            "command_sequence" : [
+                                   {
+                                      "reg": "0256",
+                                      "input_title": "Seconds",
+                                      "type": "int",
+                                      "length": 2,
+                                      "bounds_regex":"^(?:[6-9]\\d|[12]\\d\\d|300)$",
+                                      "tooltip": "The duration in seconds run the generator after the load has been removed. This must be a whole number between 60 and 300 seconds."
+                                   }
+                                 ]
         }
     ]
 }
