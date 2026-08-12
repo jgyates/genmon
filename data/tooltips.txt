@@ -49,6 +49,7 @@ http_user_ro = Sets the username of the limited rights user. Leave blank to disa
 http_pass_ro = Sets the password of the limited rights user. Leave blank to disable. 'Use Secure Web Settings' and full rights user must be enabled to use this feature.
 http_port = HTTP port to be used by the web server.
 https_port = Port to override the secure web server port (https). The default value is 443.
+allow_iframe = SECURITY RISK - keep this OFF unless you understand the risks. Off (default, recommended) blocks all iframe embedding for the web interface, which protects against clickjacking. Turning it On lets ANY website embed the genmon web page in an iframe, which can be abused to trick you into clicking controls. Only enable it if you are embedding genmon in your own trusted dashboard (e.g. Home Assistant) on a network you control.
 favicon = favicon for website. This is an optional parameter and default is "favicon.ico". This may not work in older browsers
 system_theme = Use the browser-provided light/dark theme setting in the UI, and remove the manual theme switcher. This may not work in older brwsers
 usemfa = Use Multi-Factor Authentication. You must use a Multi-Factor Authenticator app like Google Authenticator or Authy to use this feature. If enabled, MFA will apply to both normal and limited rights login.

@@ -61,6 +61,9 @@
     .btn-passkey:hover { background:var(--input-bg); border-color:var(--accent); }
     .btn-passkey svg { width:20px; height:20px; fill:currentColor; }
     .passkey-error { text-align:center; color:#f05252; font-size:.85rem; margin-top:.5rem; }
+    .pk-signing { display:none; align-items:center; justify-content:center; gap:10px; margin-top:1rem; color:var(--text-muted); font-size:.9rem; }
+    .pk-spin { display:inline-block; width:18px; height:18px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:pkspin .7s linear infinite; }
+    @keyframes pkspin { to { transform:rotate(360deg); } }
   </style>
   <script src="js/system-theme.js"></script>
 </head>
@@ -104,12 +107,14 @@
       Sign in with Passkey
     </button>
     <div class="passkey-error" id="pk-error"></div>
+    <div class="pk-signing" id="pk-signing"><span class="pk-spin"></span> Signing in&hellip;</div>
     <script>
     function _b64toAB(b64){var s=atob(b64.replace(/-/g,'+').replace(/_/g,'/'));var a=new Uint8Array(s.length);for(var i=0;i<s.length;i++)a[i]=s.charCodeAt(i);return a.buffer;}
     function _ABtob64(buf){var s='';var a=new Uint8Array(buf);for(var i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
     function passkeyLogin(btn){
       btn.disabled=true;
       var err=document.getElementById('pk-error');
+      var signing=document.getElementById('pk-signing');
       err.textContent='';
       fetch('/passkey/login/begin',{method:'POST'}).then(function(r){return r.json()}).then(function(opts){
         if(opts.error){err.textContent=opts.error;btn.disabled=false;return Promise.reject();}
@@ -118,6 +123,10 @@
         return navigator.credentials.get({publicKey:opts});
       }).then(function(cred){
         if(!cred)return;
+        /* Passkey accepted; server verification + redirect can take a moment,
+           so show immediate feedback until the app's own loader takes over. */
+        btn.style.display='none';
+        signing.style.display='flex';
         var body=JSON.stringify({
           id:cred.id,
           rawId:_ABtob64(cred.rawId),
@@ -133,9 +142,11 @@
       }).then(function(r){if(r)return r.json()}).then(function(d){
         if(!d)return;
         if(d.status==='ok'){window.location.href='/';}
-        else{err.textContent=d.error||'Verification failed';btn.disabled=false;}
+        else{err.textContent=d.error||'Verification failed';signing.style.display='none';btn.style.display='flex';btn.disabled=false;}
       })['catch'](function(e){
         if(e)err.textContent=e.message||'Passkey authentication cancelled';
+        signing.style.display='none';
+        btn.style.display='flex';
         btn.disabled=false;
       });
     }

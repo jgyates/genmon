@@ -4446,6 +4446,7 @@ var Pages = {
       usehttps:'security', usemfa:'security', mfa_url:'security', mfa_enrolled:'security', email_configured:'security',
       remember_me_days:'security', mfa_trust_days:'security', mfa_trust_extend:'security',
       cert_mode:'security', cert_info:'security', certfile:'security', keyfile:'security',
+      allow_iframe:'security',
       port:'comms', use_serial_tcp:'comms', serial_tcp_address:'comms',
       serial_tcp_port:'comms', modbus_tcp:'comms', serial_tcp_keepalive:'comms',
       disableweather:'weather', minimumweatherinfo:'weather', metricweather:'system',
@@ -4608,6 +4609,8 @@ var Pages = {
           (buckets[c.id] || []).forEach(function(s) { secMap[s.key] = s; });
           /* Port field */
           if (secMap['http_port']) h += UI.formField('http_port', secMap['http_port'].def, secMap['http_port'].def[3]);
+          /* iframe embedding toggle (applies over http and https) */
+          if (secMap['allow_iframe']) h += UI.formField('allow_iframe', secMap['allow_iframe'].def, secMap['allow_iframe'].def[3]);
           /* Master toggle: usehttps */
           if (secMap['usehttps']) h += UI.formField('usehttps', secMap['usehttps'].def, secMap['usehttps'].def[3]);
           h += '<div class="set-url-warn" id="sec-url-warn" style="display:none">' +

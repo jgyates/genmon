@@ -125,6 +125,8 @@ bMfaTrustExtend = False
 LastOTPSendTime = None
 bUseSecureHTTP = False
 CertMode = "selfsigned"  # selfsigned | localca | custom
+# When True, allow the web UI to be embedded in an iframe from any site
+bAllowIframe = False
 SSLContext = None
 HTTPPort = 8000
 OldHTTPPort = None
@@ -341,16 +343,23 @@ def add_header(r):
 
     # --- security headers ---
     r.headers["X-Content-Type-Options"] = "nosniff"
-    r.headers["X-Frame-Options"] = "DENY"
     r.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     r.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    # Framing is blocked by default. When embedding is allowed, drop
+    # X-Frame-Options (its ALLOW-FROM is deprecated) and open CSP
+    # frame-ancestors so the page can load inside an iframe.
+    if bAllowIframe:
+        frame_ancestors = "*"
+    else:
+        frame_ancestors = "'none'"
+        r.headers["X-Frame-Options"] = "DENY"
     r.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
         "script-src 'self' 'unsafe-inline'; "
         "style-src 'self' 'unsafe-inline'; "
         "img-src 'self' data:; "
         "connect-src 'self' https://raw.githubusercontent.com; "
-        "frame-ancestors 'none'"
+        "frame-ancestors " + frame_ancestors
     )
 
     # When HTTPS is off, tell browsers to stop forcing HTTPS (clears cached HSTS)
@@ -4849,6 +4858,17 @@ def ReadSettingsFromFile():
         GENMON_SECTION,
         "http_port",
     ]
+    ConfigSettings["allow_iframe"] = [
+        "boolean",
+        "Allow Embedding in an iframe",
+        216,
+        False,
+        "",
+        "",
+        GENMON_CONFIG,
+        GENMON_SECTION,
+        "allow_iframe",
+    ]
     ConfigSettings["favicon"] = [
         "string",
         "FavIcon",
@@ -6101,6 +6121,7 @@ def LoadConfig():
     global bMfaEnrolled
     global SecretMFAKey
     global bUseSecureHTTP
+    global bAllowIframe
     global LdapServer
     global LdapBase
     global DomainNetbios
@@ -6180,6 +6201,12 @@ def LoadConfig():
         if not bUseSecureHTTP:
             # dont use MFA unless HTTPS is enabled
             bUseMFA = False
+
+        # Allow iframe embedding from any origin. Default False keeps framing
+        # blocked (X-Frame-Options DENY + CSP frame-ancestors 'none').
+        bAllowIframe = ConfigFiles[GENMON_CONFIG].ReadValue(
+            "allow_iframe", return_type=bool, default=False
+        )
 
         ListenIPAddress = ConfigFiles[GENMON_CONFIG].ReadValue("flask_listen_ip_address", default="0.0.0.0")
         
