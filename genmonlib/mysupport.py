@@ -182,7 +182,7 @@ class MySupport(MyCommon):
                 MyThreadObj.Stop()
                 MyThreadObj.WaitForThreadToEnd()
         except Exception as e1:
-            self.LogError("Error in KillThread ( " + Name + "): " + str(e1))
+            self.LogError(f"Error in KillThread ({Name}): " + str(e1))
             return
 
     # ---------------------MySupport::StartAllThreads----------------------------
