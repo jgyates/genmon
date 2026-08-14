@@ -58,6 +58,12 @@ SERIAL_NUM_REG_LENGTH = 5
 IDENTITY_REG = 0x07d0
 IDENTITY_REG_LENGTH = 10
 
+# Power Zone 200 Alarm registers
+POWER_ZONE_200_ALARM_REG = 0x21CA 
+POWER_ZONE_200_ALARM_LENGTH = 40
+# Power Zone 200 Warning registers
+POWER_ZONE_200_WARNING_REG = 0x2199
+POWER_ZONE_200_WARNING_LENGTH = 21
 
 NEXUS_ALARM_LOG_STARTING_REG = 0x064
 NEXUS_ALARM_LOG_STRIDE = 4
@@ -1585,6 +1591,20 @@ class Evolution(GeneratorController):
 
     # -------------Evolution:UpdateLogRegistersAsMaster--------------------------
     def UpdateLogRegistersAsMaster(self):
+
+        if self.PowerZone200:
+            for Register in range(POWER_ZONE_200_ALARM_REG,POWER_ZONE_200_ALARM_LENGTH):
+                RegStr = "%04x" % Register
+                self.ModBus.ProcessTransaction(RegStr)
+                self.DelayBetweenFrames()
+                if self.IsStopping:
+                    return
+            for Register in range(POWER_ZONE_200_WARNING_REG,POWER_ZONE_200_WARNING_LENGTH):
+                RegStr = "%04x" % Register
+                self.ModBus.ProcessTransaction(RegStr)
+                self.DelayBetweenFrames()
+                if self.IsStopping:
+                    return
 
         # Start / Stop Log
         for Register in self.LogRange(
@@ -3787,6 +3807,9 @@ class Evolution(GeneratorController):
     ##------------ Evolution:GetAlarmState -------------------------------------
     def GetAlarmState(self):
 
+        if self.PowerZone200:
+            return self.GetAlarmStatePowerZone200()
+
         strSwitch = self.GetSwitchState()
 
         if len(strSwitch) == 0 or not "alarm" in strSwitch.lower():
@@ -3876,6 +3899,102 @@ class Evolution(GeneratorController):
                 self.LogDebug(f"Unabled to get error code for {Value}")
         return outString
 
+    # ------------ Evolution:GetAlarmStatePowerZone200 -------------------------
+    def GetAlarmStatePowerZone200(self):
+
+        if not self.PowerZone200:
+            return ""
+        if not self.SystemInAlarm():
+            return ""
+        
+        PowerZone200_Alarms = {
+            "2198": "Warning - BATTERY VOLT LOW",
+            "2199": "Warning - BATTERY PROBLEM",
+            "219a": "Warning - BATTERY CHARGER PROBLEM",
+            "219b": "Warning - BATTERY CHARGER AC MISSING",
+            "219c": "Warning - LID OPEN",
+            "219d": "Warning - SPI FLASH ABUSE",
+            "219e": "Warning - WIFI NO COMMS",
+            "219f": "Warning - EEPROM ABUSE",
+            "21a0": "Warning - RUPTURED BASIN",
+            "21a1": "Warning - LOW FUEL LEVEL",
+            "21a2": "Warning - HIGH COOLANT TEMP",
+            "21a3": "Warning - LOW COOLANT TEMP",
+            "21a4": "Warning - LOW OIL PRESSURE WARNING",
+            "21a5": "Warning - CRC MISMATCH",
+            "21a6": "Warning - HIGH FUEL LEVEL",
+            "21a7": "Warning - EXTERNAL CHARGER FAILURE",
+            "21a8": "Warning - BATTERY SYSTEM CONFIG ERROR",
+            "21a9": "Warning - EXTERNAL WARNING 1",
+            "21aa": "Warning - EXTERNAL WARNING 2",
+            "21ab": "Warning - FLUID BASIN OVERFILL",
+            "21ac": "Warning - FLUID BASIN MISSING",
+            "21ca": "Alarm - INTERNAL FAULT",
+            "21cb": "Alarm - EMERGENCY STOP",
+            "21cc": "Alarm - CAN ERROR",
+            "21cd": "Alarm - UNDERSPEED",
+            "21ce": "Alarm - UNDERVOLTAGE",
+            "21cf": "Alarm - OVERVOLTAGE",
+            "21d0": "Alarm - OVERSPEED",
+            "21d1": "Alarm - OVERCRANK",
+            "21d2": "Alarm - NO CRANK",
+            "21d3": "Alarm - OVERLOAD",
+            "21d4": "Alarm - HIGH COOLANT TEMP",
+            "21d5": "Alarm - HIGH OIL TEMP",
+            "21d6": "Alarm - LOW OIL PRESSURE",
+            "21d7": "Alarm - LOW COOLANT LEVEL",
+            "21d8": "Alarm - LOW OIL LEVEL",
+            "21d9": "Alarm - BOSCH ACTUATOR POSITION",
+            "21da": "Alarm - XFER SWITCH POSITION ERROR",
+            "21db": "Alarm - MISWIRE",
+            "21dc": "Alarm - TRANSFER CIRCUIT FAILED",
+            "21dd": "Alarm - 3 WIRE SWITCH POSITION ERROR",
+            "21de": "Alarm - KEYPAD MISSING",
+            "21df": "Alarm - DUALITY RUNNING RPM SENSOR LOSS",
+            "21e0": "Alarm - LOW FUEL LEVEL",
+            "21e1": "Alarm - BATTERY VOLT VERY LOW",
+            "21e2": "Alarm - INVALID VCODE CONFIG",
+            "21e3": "Alarm - MISSING CONFIG VCODE",
+            "21e4": "Alarm - MISSING CONFIG PARAM",
+            "21e5": "Alarm - MISSING CONFIG EXERCISE",
+            "21e6": "Alarm - MISSING CONFIG FUEL TYPE",
+            "21e7": "Alarm - DUIO EXTERNAL ALARM 1",
+            "21e8": "Alarm - DUIO EXTERNAL ALARM 2",
+            "21e9": "Alarm - DUIO EXTERNAL ALARM 3",
+            "21ea": "Alarm - GROUND FAULT",
+            "21eb": "Alarm - OVERLOAD FIELD CURRENT",
+            "21ec": "Alarm - OVERLOAD 300 PERCENT",
+            "21ed": "Alarm - DUIO 1 LOSS OF COMM",
+            "21ee": "Alarm - DUIO 2 LOSS OF COMM",
+            "21ef": "Alarm - DUIO 3 LOSS OF COMM",
+            "21f0": "Alarm - DUIO 4 LOSS OF COMM",
+            "21f1": "Alarm - Auxiliary Shutdown"
+        }
+        try:
+            alarm_list = []
+
+            for Register in range(POWER_ZONE_200_ALARM_REG,POWER_ZONE_200_ALARM_LENGTH):
+                RegStr = "%04x" % Register
+                Value = self.GetRegisterValueFromList(RegStr)
+                if len(Value) != 4:
+                    return ""
+                RegVal = int(Value, 16)
+                if RegVal != 0:
+                    alarm_list.append(PowerZone200_Alarms.get(RegVal, "UNKNOWN ALARM: %04x" % RegVal))
+
+            for Register in range(POWER_ZONE_200_WARNING_REG,POWER_ZONE_200_WARNING_LENGTH):
+                RegStr = "%04x" % Register
+                Value = self.GetRegisterValueFromList(RegStr)
+                if len(Value) != 4:
+                    return ""
+                RegVal = int(Value, 16)
+                if RegVal != 0:
+                    alarm_list.append(PowerZone200_Alarms.get(RegVal, "UNKNOWN ALARM: %04x" % RegVal))
+            return ", ".join(alarm_list)
+
+        except Exception as e1:
+            self.LogErrorLine(f"Error in GetAlarmStatePowerZone200: {e1}")
+            return ""
     # ------------ Evolution:Reg0001IsValid -------------------------------------
     def Reg0001IsValid(self, regvalue):
 
