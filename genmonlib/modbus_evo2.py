@@ -98,7 +98,7 @@ class ModbusEvo2(ModbusProtocol):
                 b"\xC7\x39\x70\xD5\xFC\xCA\x43\x0C\x8E\xCD\xEA\x54\xAF\x88\xA3\x67",
             ]
 
-            self.LogDebug("KeySize = " + str(len(self.key[0])))
+            #self.LogDebug("KeySize = " + str(len(self.key[0])))
             self.crypto = MyCrypto(
                 log=self.log, console=self.console, key=self.key[0], iv=self.iv
             )

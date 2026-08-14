@@ -1593,15 +1593,15 @@ class Evolution(GeneratorController):
     def UpdateLogRegistersAsMaster(self):
 
         if self.PowerZone200:
-            for Register in range(POWER_ZONE_200_ALARM_REG,POWER_ZONE_200_ALARM_LENGTH):
+            for Register in range(POWER_ZONE_200_ALARM_REG,POWER_ZONE_200_ALARM_REG + POWER_ZONE_200_ALARM_LENGTH):
                 RegStr = "%04x" % Register
-                self.ModBus.ProcessTransaction(RegStr)
+                self.ModBus.ProcessTransaction(RegStr, 1)
                 self.DelayBetweenFrames()
                 if self.IsStopping:
                     return
-            for Register in range(POWER_ZONE_200_WARNING_REG,POWER_ZONE_200_WARNING_LENGTH):
+            for Register in range(POWER_ZONE_200_WARNING_REG,POWER_ZONE_200_WARNING_REG + POWER_ZONE_200_WARNING_LENGTH):
                 RegStr = "%04x" % Register
-                self.ModBus.ProcessTransaction(RegStr)
+                self.ModBus.ProcessTransaction(RegStr, 1)
                 self.DelayBetweenFrames()
                 if self.IsStopping:
                     return
@@ -2228,6 +2228,7 @@ class Evolution(GeneratorController):
     def ValidateRegister(self, Register, Value):
 
         ValidationOK = True
+        RegisterInt = int(Register, 16)
         # validate the length of the data against the size of the register
         RegLength = self.GetRegisterLength(Register)
         if RegLength:  # if this is a base register
@@ -2241,8 +2242,8 @@ class Evolution(GeneratorController):
                 ValidationOK = False
         # appears to be Start/Stop Log or service log
         elif (
-            int(Register, 16) >= SERVICE_LOG_STARTING_REG
-            and int(Register, 16) <= SERVICE_LOG_END_REG
+            RegisterInt >= SERVICE_LOG_STARTING_REG
+            and RegisterInt <= SERVICE_LOG_END_REG
         ):
             if len(Value) != 16:
                 self.LogError(
@@ -2251,8 +2252,8 @@ class Evolution(GeneratorController):
                 )
                 ValidationOK = False
         elif (
-            int(Register, 16) >= START_LOG_STARTING_REG
-            and int(Register, 16) <= START_LOG_END_REG
+            RegisterInt >= START_LOG_STARTING_REG
+            and RegisterInt <= START_LOG_END_REG
         ):
             if len(Value) != 16:
                 self.LogError(
@@ -2261,8 +2262,8 @@ class Evolution(GeneratorController):
                 )
                 ValidationOK = False
         elif (
-            int(Register, 16) >= ALARM_LOG_STARTING_REG
-            and int(Register, 16) <= ALARM_LOG_END_REG
+            RegisterInt >= ALARM_LOG_STARTING_REG
+            and RegisterInt <= ALARM_LOG_END_REG
         ):
             if len(Value) != 20:  #
                 self.LogError(
@@ -2271,8 +2272,8 @@ class Evolution(GeneratorController):
                 )
                 ValidationOK = False
         elif (
-            int(Register, 16) >= NEXUS_ALARM_LOG_STARTING_REG
-            and int(Register, 16) <= NEXUS_ALARM_LOG_END_REG
+            RegisterInt >= NEXUS_ALARM_LOG_STARTING_REG
+            and RegisterInt <= NEXUS_ALARM_LOG_END_REG
         ):
             if len(Value) != 16:  # Nexus alarm reg is 16 chars, no alarm codes
                 self.LogError(
@@ -2280,20 +2281,39 @@ class Evolution(GeneratorController):
                     % (Register, Value)
                 )
                 ValidationOK = False
-        elif int(Register, 16) == SERIAL_NUM_REG:
+        elif RegisterInt == SERIAL_NUM_REG:
             if len(Value) != 20:
                 self.LogError(
                     "Validation Error: Invalid register length (Model) %s %s"
                     % (Register, Value)
                 )
                 ValidationOK = False
-        elif int(Register, 16) == IDENTITY_REG:
+        elif RegisterInt == IDENTITY_REG:
             if len(Value) != 40:
                 self.LogError(
                     "Validation Error: Invalid register length (Identity) %s %s"
                     % (Register, Value)
                 )
                 ValidationOK = False
+        elif self.PowerZone200:
+            if (RegisterInt >= POWER_ZONE_200_ALARM_REG 
+                and RegisterInt < (POWER_ZONE_200_ALARM_REG + POWER_ZONE_200_ALARM_LENGTH)):
+                if len(Value) != 4:
+                    self.LogError(
+                        "Validation Error: Invalid register length (PZ200 Alarm) %s %s"
+                        % (Register, Value)
+                    )
+                    ValidationOK = False
+            # Power Zone 200 Warning registers
+            if (RegisterInt >= POWER_ZONE_200_WARNING_REG 
+                and RegisterInt < (POWER_ZONE_200_WARNING_REG + POWER_ZONE_200_WARNING_LENGTH)):
+                if len(Value) != 4:
+                    self.LogError(
+                        "Validation Error: Invalid register length (PZ200 Warning) %s %s"
+                        % (Register, Value)
+                    )
+                    ValidationOK = False
+
         else:
             self.LogError(
                 "Validation Error: Invalid register or length (Unkown) %s %s"
@@ -2306,33 +2326,43 @@ class Evolution(GeneratorController):
     # ------------ Evolution:RegisterIsLog --------------------------------------
     def RegisterIsLog(self, Register):
 
+        RegisterInt = int(Register, 16)
         ## Is this a log register
+        if self.PowerZone200:
+            # Power Zone 200 Alarm registers
+            if (RegisterInt >= POWER_ZONE_200_ALARM_REG 
+                and RegisterInt < (POWER_ZONE_200_ALARM_REG + POWER_ZONE_200_ALARM_LENGTH)):
+                return True
+            # Power Zone 200 Warning registers
+            if (RegisterInt >= POWER_ZONE_200_WARNING_REG 
+                            and RegisterInt < (POWER_ZONE_200_WARNING_REG + POWER_ZONE_200_WARNING_LENGTH)):
+                            return True
         if (
-            int(Register, 16) >= SERVICE_LOG_STARTING_REG
-            and int(Register, 16) <= SERVICE_LOG_END_REG
+            RegisterInt >= SERVICE_LOG_STARTING_REG
+            and RegisterInt <= SERVICE_LOG_END_REG
             and self.EvolutionController
         ):
             return True
         elif (
-            int(Register, 16) >= START_LOG_STARTING_REG
-            and int(Register, 16) <= START_LOG_END_REG
+            RegisterInt >= START_LOG_STARTING_REG
+            and RegisterInt <= START_LOG_END_REG
         ):
             return True
         elif (
-            int(Register, 16) >= ALARM_LOG_STARTING_REG
-            and int(Register, 16) <= ALARM_LOG_END_REG
+            RegisterInt >= ALARM_LOG_STARTING_REG
+            and RegisterInt <= ALARM_LOG_END_REG
             and self.EvolutionController
         ):
             return True
         elif (
-            int(Register, 16) >= NEXUS_ALARM_LOG_STARTING_REG
-            and int(Register, 16) <= NEXUS_ALARM_LOG_END_REG
+            RegisterInt >= NEXUS_ALARM_LOG_STARTING_REG
+            and RegisterInt <= NEXUS_ALARM_LOG_END_REG
             and (not self.EvolutionController)
         ):
             return True
-        elif int(Register, 16) == SERIAL_NUM_REG:
+        elif RegisterInt == SERIAL_NUM_REG:
             return True
-        elif int(Register, 16) == IDENTITY_REG:
+        elif RegisterInt == IDENTITY_REG:
             return True
         return False
 
@@ -3188,6 +3218,18 @@ class Evolution(GeneratorController):
                 )
                 LogDict = self.MergeDicts(LogDict, LogOutput)
 
+            if self.PowerZone200 and RawOutput:
+                PowerZoneAlarmRegs = {}
+                for Register in range(POWER_ZONE_200_ALARM_REG,POWER_ZONE_200_ALARM_REG+POWER_ZONE_200_ALARM_LENGTH):
+                    RegStr = "%04x" % Register
+                    Value = self.GetRegisterValueFromList(RegStr)
+                    PowerZoneAlarmRegs[RegStr] = Value
+                for Register in range(POWER_ZONE_200_WARNING_REG,POWER_ZONE_200_WARNING_REG+POWER_ZONE_200_WARNING_LENGTH):
+                    RegStr = "%04x" % Register
+                    Value = self.GetRegisterValueFromList(RegStr)
+                    PowerZoneAlarmRegs[RegStr] = Value
+                LogDict = self.MergeDicts(LogDict, PowerZoneAlarmRegs)
+
             RetValue["Logs"] = LogDict
 
             UnknownFound = False
@@ -3973,23 +4015,24 @@ class Evolution(GeneratorController):
         try:
             alarm_list = []
 
-            for Register in range(POWER_ZONE_200_ALARM_REG,POWER_ZONE_200_ALARM_LENGTH):
+            for Register in range(POWER_ZONE_200_ALARM_REG, POWER_ZONE_200_ALARM_REG+POWER_ZONE_200_ALARM_LENGTH):
                 RegStr = "%04x" % Register
                 Value = self.GetRegisterValueFromList(RegStr)
                 if len(Value) != 4:
                     return ""
                 RegVal = int(Value, 16)
                 if RegVal != 0:
-                    alarm_list.append(PowerZone200_Alarms.get(RegVal, "UNKNOWN ALARM: %04x" % RegVal))
+                    alarm_list.append(PowerZone200_Alarms.get(RegStr, f"UNKNOWN ALARM: {RegStr}:{RegVal:04x}"))
 
-            for Register in range(POWER_ZONE_200_WARNING_REG,POWER_ZONE_200_WARNING_LENGTH):
+            for Register in range(POWER_ZONE_200_WARNING_REG,POWER_ZONE_200_WARNING_REG+POWER_ZONE_200_WARNING_LENGTH):
                 RegStr = "%04x" % Register
                 Value = self.GetRegisterValueFromList(RegStr)
                 if len(Value) != 4:
                     return ""
                 RegVal = int(Value, 16)
                 if RegVal != 0:
-                    alarm_list.append(PowerZone200_Alarms.get(RegVal, "UNKNOWN ALARM: %04x" % RegVal))
+                    alarm_list.append(PowerZone200_Alarms.get(RegStr, f"UNKNOWN WARNING: {RegStr}:{RegVal:04x}"))
+            self.LogDebug(f"{alarm_list}")
             return ", ".join(alarm_list)
 
         except Exception as e1:
