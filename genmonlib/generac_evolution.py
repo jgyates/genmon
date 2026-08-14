@@ -4032,7 +4032,7 @@ class Evolution(GeneratorController):
                 RegVal = int(Value, 16)
                 if RegVal != 0:
                     alarm_list.append(PowerZone200_Alarms.get(RegStr, f"UNKNOWN WARNING: {RegStr}:{RegVal:04x}"))
-            self.LogDebug(f"{alarm_list}")
+
             return ", ".join(alarm_list)
 
         except Exception as e1:
