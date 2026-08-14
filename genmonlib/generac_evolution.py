@@ -3794,7 +3794,7 @@ class Evolution(GeneratorController):
             RegVal = int(Value, 16)
             if self.BitIsEqual(RegVal, 0x0001, 0x0001):
                 return True
-
+            return False
         AlarmState = self.GetAlarmState()
 
         if len(AlarmState):
@@ -3904,8 +3904,8 @@ class Evolution(GeneratorController):
 
         if not self.PowerZone200:
             return ""
-        #if not self.SystemInAlarm():
-        #    return ""
+        if not self.SystemInAlarm():
+            return ""
         
         PowerZone200_Alarms = {
             "2198": "Warning - BATTERY VOLT LOW",
