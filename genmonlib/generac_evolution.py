@@ -281,6 +281,10 @@ class Evolution(GeneratorController):
             "05f5": [2, 0],  # Evo AC   Current 2
             "05f6": [2, 0],  # Evo AC   Current Cal 1
             "05f7": [2, 0],  # Evo AC   Current Cal 1
+            "0637": [2, 0],  # Power Zone 200 Alarm is active if non zero
+            "0638": [2, 0],  # Power Zone 200 Warning is active if non zero
+            "0639": [2, 0],  # Power Zone 200 Maintenance is active if non zero
+            "063a": [2, 0],  # Power Zone 200 single phase if non zero
             "07e6": [2, 0],  # Firmware Build Major
             "07e7": [2, 0],  # Firmware Build Minor
             "1f72": [2, 0],  # Power Zone 200 L1 Volts
@@ -3757,6 +3761,20 @@ class Evolution(GeneratorController):
     ##------------ Evolution:SystemInAlarm -------------------------------------
     def SystemInAlarm(self):
 
+        if self.PowerZone200:
+            Value = self.GetRegisterValueFromList("0637")   # Is alarm active?
+            if len(Value) != 4:
+                return False
+            RegVal = int(Value, 16)
+            if self.BitIsEqual(RegVal, 0x0001, 0x0001):
+                return True
+            Value = self.GetRegisterValueFromList("0638")   # Is alarm active?
+            if len(Value) != 4:
+                return False
+            RegVal = int(Value, 16)
+            if self.BitIsEqual(RegVal, 0x0001, 0x0001):
+                return True
+
         AlarmState = self.GetAlarmState()
 
         if len(AlarmState):
@@ -5017,6 +5035,17 @@ class Evolution(GeneratorController):
 
     # ------------ Evolution:ServiceIsDue ---------------------------------------
     def ServiceIsDue(self, AlarmOnly=False):
+
+        if self.PowerZone200:
+            Value = self.GetRegisterValueFromList("0639")
+            if len(Value) != 4:
+                return False
+            RegVal = int(Value, 16)
+            if self.BitIsEqual(RegVal, 0x0001, 0x0001):
+                # is Maintenance due
+                return True
+            else:
+                return False
 
         # get Hours until next service
         Value = self.GetRegisterValueFromList("0001")

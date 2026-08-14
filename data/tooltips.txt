@@ -205,6 +205,12 @@ show_hours_activation=Enable to show Time Since Activation as hours, disable to 
 0009=Utility Voltage
 05f1=Last Alarm Code (Evo)
 01f4=Serial Number
+0637=Power Zone 200 Alarm active flag
+0638=Power Zone 200 Warning active flag
+0639=Power Zone 200 Maintenance active flag
+063a=Power Zone 200 Single phase flag
+07e6=Firmware Build Major
+07e7=Firmware Build Minor
 1f72=Power Zone 200 L1 Volts
 1f73=Power Zone 200 L2 Volts
 1f74=Power Zone 200 L3 Volts
@@ -222,11 +228,11 @@ show_hours_activation=Enable to show Time Since Activation as hours, disable to 
 2137=Power Zone 200 Last Run Minutes (duration of the last generator run in minutes)
 2138=Power Zone 200 Last Run kWH (last generator run in kWH)
 2166=Power Zone 200 Transfer switch active = 1
-0608=Power Zone 200 Engine intake/throttle temperature (provisional)
-060c=Power Zone 200 Engine percent torque / engine load (provisional)
-0613=Power Zone 200 Fuel pressure, cranking (provisional)
-0614=Power Zone 200 Fuel pressure, running (provisional)
-2008=Power Zone 200 Oil level (provisional)
+0608=Power Zone 200 Engine intake/throttle temperature
+060c=Power Zone 200 Engine percent torque / engine load
+0613=Power Zone 200 Fuel pressure, cranking
+0614=Power Zone 200 Fuel pressure, running
+2008=Power Zone 200 Oil level
 
 [h_100]
 0080=Input 1

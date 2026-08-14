@@ -524,8 +524,11 @@
       if (maj) {
         var lv = o.min + frac * (o.max - o.min);
         var lr = AR + 20;
+        /* Anchor the extreme left/right labels inward so multi-digit
+           values are not clipped by the viewBox edges */
+        var lanchor = cs < -0.99 ? 'start' : (cs > 0.99 ? 'end' : 'middle');
         var lt = svgEl('text', {x:ACX+lr*cs, y:ACY+lr*sn+1,
-          'text-anchor':'middle', 'dominant-baseline':'middle',
+          'text-anchor':lanchor, 'dominant-baseline':'middle',
           fill:'var(--gauge-label-fill)', 'font-size':'10',
           'font-family':'system-ui, sans-serif', 'font-weight':'500'});
         lt.textContent = Math.round(lv * 10) / 10;
