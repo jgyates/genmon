@@ -1181,7 +1181,7 @@ var UI = {
       }
       var tc = t < warnAt ? 'ind-ok' : t < badAt ? 'ind-warn' : 'ind-bad';
       parts.push(
-        '<div class="hdr-ind '+tc+'" title="CPU: '+t+'\u00B0C">' +
+        '<div class="hdr-ind '+tc+'" title="CPU: '+t+'\u00B0">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
         '<path d="M14 14.76V3.5a2.5 2.5 0 00-5 0v11.26a4.5 4.5 0 105 0z"/>' +
         '<circle cx="11.5" cy="17.5" r="2" fill="currentColor" stroke="none" opacity=".5"/>' +
