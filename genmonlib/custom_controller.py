@@ -2512,7 +2512,7 @@ class CustomController(GeneratorController):
             elif SwitchState.lower() == "inactive" or EngineStatus.lower() == "inactive" or GeneratorStatus.lower() == "inactive":
                 return "READY"
             else:
-                if self.InitComplete:
+                if self.InitComplete and self.ModBus.RxPacketCount != 0:
                     message = (
                         "Unknown Base State: "
                         + str(EngineStatus)
