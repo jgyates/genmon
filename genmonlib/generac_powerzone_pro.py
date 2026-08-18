@@ -583,27 +583,8 @@ class PowerZonePro(GeneratorController):
     def GetConfig(self):
 
         try:
-            self.VoltageConfig = self.config.ReadValue(
-                "voltageconfiguration", default="277/480"
-            )
-            self.NominalBatteryVolts = int(
-                self.config.ReadValue("nominalbattery", return_type=int, default=24)
-            )
             self.HTSTransferSwitch = self.config.ReadValue(
                 "hts_transfer_switch", return_type=bool, default=False
-            )
-            self.FuelUnits = self.config.ReadValue("fuel_units", default="gal")
-            self.FuelHalfRate = self.config.ReadValue(
-                "half_rate", return_type=float, default=0.0
-            )
-            self.FuelFullRate = self.config.ReadValue(
-                "full_rate", return_type=float, default=0.0
-            )
-            self.UseFuelSensor = self.config.ReadValue(
-                "usesensorforfuelgauge", return_type=bool, default=True
-            )
-            self.UseCalculatedPower = self.config.ReadValue(
-                "usecalculatedpower", return_type=bool, default=False
             )
 
         except Exception as e1:

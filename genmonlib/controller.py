@@ -176,8 +176,20 @@ class GeneratorController(MySupport):
                 self.FuelFullRate = self.config.ReadValue(
                     "full_rate", return_type=float, default=0.0
                 )
+                self.UseFuelSensor = self.config.ReadValue(
+                    "usesensorforfuelgauge", return_type=bool, default=True
+                )
+                self.UseCalculatedPower = self.config.ReadValue(
+                    "usecalculatedpower", return_type=bool, default=False
+                )
                 self.UseExternalCTData = self.config.ReadValue(
                     "use_external_power_data", return_type=bool, default=False
+                )
+                self.NominalBatteryVolts = int(
+                    self.config.ReadValue("nominalbattery", return_type=int, default=24)
+                )
+                self.VoltageConfig = self.config.ReadValue(
+                    "voltageconfiguration", default="277/480"
                 )
                 # for gentankutil
                 self.UseExternalFuelData = self.config.ReadValue(
@@ -1328,7 +1340,7 @@ class GeneratorController(MySupport):
             StartInfo["Controller"] = "Generic Controller Name"
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             StartInfo["Sensors"] = self.GetSensorNames()
-            StartInfo["NominalBatteryVolts"] = "12"
+            StartInfo["NominalBatteryVolts"] = self.NominalBatteryVolts
             StartInfo["UtilityVoltageDisplayed"] = True
             StartInfo["RemoteCommands"] = True
             StartInfo["RemoteButtons"] = False

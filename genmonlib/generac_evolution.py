@@ -5924,9 +5924,6 @@ class Evolution(GeneratorController):
                 self.CurrentOffset = self.config.ReadValue(
                     "currentoffset", return_type=float, default=None, NoLog=True
                 )
-                self.UseFuelSensor = self.config.ReadValue(
-                    "usesensorforfuelgauge", return_type=bool, default=True
-                )
                 self.IgnoreUnknown = self.config.ReadValue(
                     "ignore_unknown", return_type=bool, default=True
                 )

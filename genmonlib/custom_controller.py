@@ -143,25 +143,7 @@ class CustomController(GeneratorController):
             self.AlternateFileProtocol = self.config.ReadValue(
                 "alternatefileprotocol", return_type=bool, default=True
             )
-            self.VoltageConfig = self.config.ReadValue(
-                "voltageconfiguration", default="277/480"
-            )
-            self.NominalBatteryVolts = int(
-                self.config.ReadValue("nominalbattery", return_type=int, default=12)
-            )
-            self.FuelUnits = self.config.ReadValue("fuel_units", default="gal")
-            self.FuelHalfRate = self.config.ReadValue(
-                "half_rate", return_type=float, default=0.0
-            )
-            self.FuelFullRate = self.config.ReadValue(
-                "full_rate", return_type=float, default=0.0
-            )
-            self.UseFuelSensor = self.config.ReadValue(
-                "usesensorforfuelgauge", return_type=bool, default=True
-            )
-            self.UseCalculatedPower = self.config.ReadValue(
-                "usecalculatedpower", return_type=bool, default=False
-            )
+
             # used for controllers that use serial comms other than 9600, N, 8, 1
             # NOTE: This is only for custom controllers
             if self.config.HasOption("serial_baud_rate"):
