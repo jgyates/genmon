@@ -999,6 +999,7 @@ class Loader(MySupport):
                 "genexercise",
                 "genemail2sms",
                 "gentankutil",
+                "genneevo",
                 "gencentriconnect",
                 "gentankdiy",
                 "genalexa",
@@ -1015,6 +1016,12 @@ class Loader(MySupport):
                 "genhomeassistant",
                 "genhalink",
             ]
+            entries_to_add = ["genslack", "gencallmebot", "genexercise", 
+                              "genemail2sms","gencentriconnect","genhomeassistant",
+                              "genhalink", "gentankutil", "genneevo", "genalexa",
+                              "gensnmp", "gentemp", "gentankdiy", "gengpioledblink",
+                              "gencthat", "genmopeka", "genotodata", "genhubitat",
+                              "gensms_voip", "genmqttin", "gencustomgpio"]
             for entry in ValidSections:
                 if not entry in Sections:
                     if entry == "genmon" or entry == "genserv":
@@ -1022,183 +1029,16 @@ class Loader(MySupport):
                             "Warning: Missing entry: " + entry + " , file corruption. "
                         )
                         return False
-                    if entry == "genslack":
+                    elif entry in entries_to_add:
                         self.LogError(
-                            "Warning: Missing entry: " + entry + " , adding entry"
+                            f"Warning: Missing entry: {entry}, adding entry"
                         )
                         self.AddEntry(
                             section=entry,
-                            module="genslack.py",
-                            conffile="genslack.conf",
+                            module=f"{entry}.py",
+                            conffile=f"{entry}.conf",
                         )
-                    if entry == "gencallmebot":
-                        self.LogError(
-                            "Warning: Missing entry: " + entry + " , adding entry"
-                        )
-                        self.AddEntry(
-                            section=entry,
-                            module="gencallmebot.py",
-                            conffile="gencallmebot.conf",
-                        )
-                    if entry == "genexercise":
-                        self.LogError(
-                            "Warning: Missing entry: " + entry + " , adding entry"
-                        )
-                        self.AddEntry(
-                            section=entry,
-                            module="genexercise.py",
-                            conffile="genexercise.conf",
-                        )
-                    if entry == "genemail2sms":
-                        self.LogError(
-                            "Warning: Missing entry: " + entry + " , adding entry"
-                        )
-                        self.AddEntry(
-                            section=entry,
-                            module="genemail2sms.py",
-                            conffile="genemail2sms.conf",
-                        )
-                    if entry == "gencentriconnect":
-                        self.LogError(
-                            "Warning: Missing entry: " + entry + " , adding entry"
-                        )
-                        self.AddEntry(
-                            section=entry,
-                            module="gencentriconnect.py",
-                            conffile="gencentriconnect.conf",
-                        )
-                    if entry == "genhomeassistant":
-                        self.LogError(
-                            "Warning: Missing entry: " + entry + " , adding entry"
-                        )
-                        self.AddEntry(
-                            section=entry,
-                            module="genhomeassistant.py",
-                            conffile="genhomeassistant.conf",
-                        )
-                    if entry == "genhalink":
-                        self.LogError(
-                            "Warning: Missing entry: " + entry + " , adding entry"
-                        )
-                        self.AddEntry(
-                            section=entry,
-                            module="genhalink.py",
-                            conffile="genhalink.conf",
-                        )
-                    if entry == "gentankutil":
-                        self.LogError(
-                            "Warning: Missing entry: " + entry + " , adding entry"
-                        )
-                        self.AddEntry(
-                            section=entry,
-                            module="gentankutil.py",
-                            conffile="gentankutil.conf",
-                        )
-                    if entry == "genalexa":
-                        self.LogError(
-                            "Warning: Missing entry: " + entry + " , adding entry"
-                        )
-                        self.AddEntry(
-                            section=entry,
-                            module="genalexa.py",
-                            conffile="genalexa.conf",
-                        )
-                    if entry == "gensnmp":
-                        self.LogError(
-                            "Warning: Missing entry: " + entry + " , adding entry"
-                        )
-                        self.AddEntry(
-                            section=entry, module="gensnmp.py", conffile="gensnmp.conf"
-                        )
-                    if entry == "gentemp":
-                        self.LogError(
-                            "Warning: Missing entry: " + entry + " , adding entry"
-                        )
-                        self.AddEntry(
-                            section=entry, module="gentemp.py", conffile="gentemp.conf"
-                        )
-                    if entry == "gentankdiy":
-                        self.LogError(
-                            "Warning: Missing entry: " + entry + " , adding entry"
-                        )
-                        self.AddEntry(
-                            section=entry,
-                            module="gentankdiy.py",
-                            conffile="gentankdiy.conf",
-                        )
-                    if entry == "gengpioledblink":
-                        self.LogError(
-                            "Warning: Missing entry: " + entry + " , adding entry"
-                        )
-                        self.AddEntry(
-                            section=entry,
-                            module="gengpioledblink.py",
-                            conffile="gengpioledblink.conf",
-                        )
-                    if entry == "gencthat":
-                        self.LogError(
-                            "Warning: Missing entry: " + entry + " , adding entry"
-                        )
-                        self.AddEntry(
-                            section=entry,
-                            module="gencthat.py",
-                            conffile="gencthat.conf",
-                        )
-                    if entry == "genmopeka":
-                        self.LogError(
-                            "Warning: Missing entry: " + entry + " , adding entry"
-                        )
-                        self.AddEntry(
-                            section=entry,
-                            module="genmopeka.py",
-                            conffile="genmopeka.conf",
-                        )
-                    if entry == "genotodata":
-                        self.LogError(
-                            "Warning: Missing entry: " + entry + " , adding entry"
-                        )
-                        self.AddEntry(
-                            section=entry,
-                            module="genotodata.py",
-                            conffile="genotodata.conf",
-                        )
-                    if entry == "genhubitat":
-                        self.LogError(
-                            "Warning: Missing entry: " + entry + " , adding entry"
-                        )
-                        self.AddEntry(
-                            section=entry,
-                            module="genhubitat.py",
-                            conffile="genhubitat.conf",
-                        )
-                    if entry == "gensms_voip":
-                        self.LogError(
-                            "Warning: Missing entry: " + entry + " , adding entry"
-                        )
-                        self.AddEntry(
-                            section=entry,
-                            module="gensms_voip.py",
-                            conffile="gensms_voip.conf",
-                        )
-                    if entry == "genmqttin":
-                        self.LogError(
-                            "Warning: Missing entry: " + entry + " , adding entry"
-                        )
-                        self.AddEntry(
-                            section=entry,
-                            module="genmqttin.py",
-                            conffile="genmqttin.conf",
-                        )
-                    if entry == "gencustomgpio":
-                        self.LogError(
-                            "Warning: Missing entry: " + entry + " , adding entry"
-                        )
-                        self.AddEntry(
-                            section=entry,
-                            module="gencustomgpio.py",
-                            conffile="gencustomgpio.conf",
-                        )
-                    if entry == "genloader":
+                    elif entry == "genloader":
                         self.LogError("Adding entry: " + entry)
                         self.config.WriteSection(entry)
                     else:

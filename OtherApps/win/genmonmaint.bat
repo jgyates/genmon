@@ -262,6 +262,7 @@ REM ----------------------------------------------------------------------------
     copy %log_path%gencentriconnect.log ./genmon_logs
     copy %log_path%genhomeassistant.log ./genmon_logs
     copy %log_path%gentankutil.log ./genmon_logs
+    copy %log_path%genneevo.log ./genmon_logs
     copy %log_path%genalexa.log ./genmon_logs
     copy %log_path%gensnmp.log ./genmon_logs
     copy %log_path%gentemp.log ./genmon_logs

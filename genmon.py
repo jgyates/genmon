@@ -667,6 +667,7 @@ class Monitor(MySupport):
                 "genhomeassistant.log",
                 "genhalink.log",
                 "gentankutil.log",
+                "genneevo.log",
                 "genalexa.log",
                 "gensnmp.log",
                 "gentemp.log",
