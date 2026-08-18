@@ -4085,6 +4085,8 @@ class Evolution(GeneratorController):
                 # or auto mode
                 if regvalue == 0x00170000:
                     return self.LastAlarmValue
+                if self.BitIsEqual(regvalue, 0x001F0000, 0x00170000):
+                    return self.LastAlarmValue
 
             if not self.Evolution2:
                 return regvalue
