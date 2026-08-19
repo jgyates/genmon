@@ -62,7 +62,7 @@ IDENTITY_REG_LENGTH = 10
 POWER_ZONE_200_ALARM_REG = 0x21CA 
 POWER_ZONE_200_ALARM_LENGTH = 40
 # Power Zone 200 Warning registers
-POWER_ZONE_200_WARNING_REG = 0x2199
+POWER_ZONE_200_WARNING_REG = 0x2198
 POWER_ZONE_200_WARNING_LENGTH = 21
 
 NEXUS_ALARM_LOG_STARTING_REG = 0x064
@@ -4019,7 +4019,7 @@ class Evolution(GeneratorController):
                 RegStr = "%04x" % Register
                 Value = self.GetRegisterValueFromList(RegStr)
                 if len(Value) != 4:
-                    return ""
+                    continue
                 RegVal = int(Value, 16)
                 if RegVal != 0:
                     alarm_list.append(PowerZone200_Alarms.get(RegStr, f"UNKNOWN ALARM: {RegStr}:{RegVal:04x}"))
@@ -4028,7 +4028,7 @@ class Evolution(GeneratorController):
                 RegStr = "%04x" % Register
                 Value = self.GetRegisterValueFromList(RegStr)
                 if len(Value) != 4:
-                    return ""
+                    continue
                 RegVal = int(Value, 16)
                 if RegVal != 0:
                     alarm_list.append(PowerZone200_Alarms.get(RegStr, f"UNKNOWN WARNING: {RegStr}:{RegVal:04x}"))
