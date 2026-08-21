@@ -4323,9 +4323,9 @@ class Evolution(GeneratorController):
             else:
                 return "Running"
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x001b0000):
-                    return "Running Remote Transfer"  # Power Zone 200
+            return "Running Remote Transfer"  # Power Zone 200
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00180000):
-                            return "Running - Transfer Switch Activated"  # Power Zone 200
+            return "Running - Transfer Switch Activated"  # Power Zone 200
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00090000):
             return "Stopped with Inhibit Active"
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00080000):
