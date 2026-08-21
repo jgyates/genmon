@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Corrected serial number look up (thanks @MichaelB2018)
 - Update to add new gague type for Wifi and adjusted the signal strength dBm to percent conversion (thanks @MichaelB2018)
 - Added Nee-vo tank monitor add on (thanks @@momoz)
+- Update for better alarm handing on Power Zone 200
 
 ## 2.0.01 -2026-05-18
 - Various bug fixes and typo corrections
