@@ -4040,12 +4040,13 @@ class Evolution(GeneratorController):
                 RegVal = int(Value, 16)
                 if RegVal != 0:
                     alarm_list.append(PowerZone200_Alarms.get(RegStr, f"UNKNOWN WARNING: {RegStr}:{RegVal:04x}"))
-            self.LogDebug(f"{alarm_list}")
+            if len(alarm_list) == 0:
+                return "Unknown Alarm"
             return ", ".join(alarm_list)
 
         except Exception as e1:
             self.LogErrorLine(f"Error in GetAlarmStatePowerZone200: {e1}")
-            return ""
+            return "Unknown Alarm"
     # ------------ Evolution:Reg0001IsValid -------------------------------------
     def Reg0001IsValid(self, regvalue):
 
@@ -4324,7 +4325,7 @@ class Evolution(GeneratorController):
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x001b0000):
                     return "Running Remote Transfer"  # Power Zone 200
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00180000):
-                            return "Running - Utility Loss"  # Power Zone 200
+                            return "Running - Transfer Switch Activated"  # Power Zone 200
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00090000):
             return "Stopped with Inhibit Active"
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00080000):
