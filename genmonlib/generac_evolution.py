@@ -3949,7 +3949,6 @@ class Evolution(GeneratorController):
         if not self.SystemInAlarm():
             return ""
 
-        self.LogDebug(f"PZ Alarm")
         PowerZone200_Alarms = {
             "2198": "Warning - BATTERY VOLT LOW",
             "2199": "Warning - BATTERY PROBLEM",
