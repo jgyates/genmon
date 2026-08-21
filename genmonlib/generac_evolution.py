@@ -3731,7 +3731,7 @@ class Evolution(GeneratorController):
                     # returning unknown here is OK since ParseLogEntry will look up a code also
                     return "Warning Code Unknown: %d" % int(ErrorCode, 16)
                 else:
-                    # This can occur if the controller was power cycled and not alarms have occurred since power applied
+                    # This can occur if the controller was power cycled and no alarms have occurred since power applied
                     return "Error Code 0000: No alarms occured since controller has been power cycled.\n"
 
             with open(self.AlarmFile, "r") as AlarmFile:  # opens file
@@ -3948,7 +3948,8 @@ class Evolution(GeneratorController):
             return ""
         if not self.SystemInAlarm():
             return ""
-        
+
+        self.LogDebug(f"PZ Alarm")
         PowerZone200_Alarms = {
             "2198": "Warning - BATTERY VOLT LOW",
             "2199": "Warning - BATTERY PROBLEM",
@@ -4014,7 +4015,14 @@ class Evolution(GeneratorController):
         }
         try:
             alarm_list = []
-
+            # there are alarm flag registers and the lower word of registers 0001 contains an E-Code.
+            # check the E-Code first
+            Value = self.GetRegisterValueFromList("0001")
+            if len(Value) == 8:
+                AlarmStr = self.GetAlarmInfo(Value[-4:], ReturnNameOnly=True)
+                if not "unknown" in AlarmStr.lower():
+                    alarm_list.append(AlarmStr)
+            # now check the flag registers
             for Register in range(POWER_ZONE_200_ALARM_REG, POWER_ZONE_200_ALARM_REG+POWER_ZONE_200_ALARM_LENGTH):
                 RegStr = "%04x" % Register
                 Value = self.GetRegisterValueFromList(RegStr)
@@ -4032,7 +4040,7 @@ class Evolution(GeneratorController):
                 RegVal = int(Value, 16)
                 if RegVal != 0:
                     alarm_list.append(PowerZone200_Alarms.get(RegStr, f"UNKNOWN WARNING: {RegStr}:{RegVal:04x}"))
-
+            self.LogDebug(f"{alarm_list}")
             return ", ".join(alarm_list)
 
         except Exception as e1:
@@ -4041,7 +4049,11 @@ class Evolution(GeneratorController):
     # ------------ Evolution:Reg0001IsValid -------------------------------------
     def Reg0001IsValid(self, regvalue):
 
-        if regvalue & 0xFFE0FFC0:
+        if self.PowerZone200:
+            # low word returns e-code on PZ200
+            if regvalue & 0xffe00000:
+                return False
+        elif regvalue & 0xFFE0FFC0:
             return False
         return True
 
