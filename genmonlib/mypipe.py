@@ -148,7 +148,8 @@ class MyPipe(MySupport):
         deletefile=False,
         msgtype="error",
         onlyonce=False,
-        oncedaily=False
+        oncedaily=False,
+        force_text=False
     ):
 
         if self.Simulation:
@@ -163,6 +164,7 @@ class MyPipe(MySupport):
             MessageDict["msgtype"] = msgtype
             MessageDict["onlyonce"] = onlyonce
             MessageDict["oncedaily"] = oncedaily
+            MessageDict["force_text"] = force_text
 
             if MessageDict["onlyonce"]:
                 Subject = self.OneTimeMessages.get(MessageDict["subjectstr"], None)

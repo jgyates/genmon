@@ -681,7 +681,7 @@ class MyMail(MySupport):
     # ------------ MyMail.sendEmailDirectMIME -----------------------------------
     # send email, bypass queue
     def sendEmailDirectMIME(
-        self, msgtype, subjectstr, msgstr, recipient=None, files=None, deletefile=False
+        self, msgtype, subjectstr, msgstr, recipient=None, files=None, deletefile=False, force_text = False
     ):
 
         try:
@@ -701,7 +701,7 @@ class MyMail(MySupport):
             except:
                 parent = MIMEMultipart('mixed')
 
-            if self.UseHTML:
+            if self.UseHTML and not force_text:
                 subtype = 'alternative'
             else:
                 subtype = 'mixed'
@@ -746,7 +746,7 @@ class MyMail(MySupport):
                     "Date: " + dtstamp + "\r\n"
                     + msgstr
             )
-            if self.UseHTML:
+            if self.UseHTML and not force_text:
                 html_message = MyMail.ConvertTextToHTML(body)
 
             if sys.version_info[0] < 3:  # PYTHON 2
@@ -760,7 +760,7 @@ class MyMail(MySupport):
                             body, "plain", _charset="utf-8", policy=email.policy.SMTP
                         )
                     )
-                    if self.UseHTML:
+                    if self.UseHTML and not force_text:
                         msg.attach(
                             MIMEText(
                                 html_message, "html", _charset="utf-8", policy=email.policy.SMTP
@@ -871,6 +871,7 @@ class MyMail(MySupport):
                             EmailItems[3],
                             EmailItems[4],
                             EmailItems[5],
+                            EmailItems[6]
                         )
                     ):
                         self.LogError(
@@ -908,6 +909,7 @@ class MyMail(MySupport):
         files=None,
         deletefile=False,
         msgtype="error",
+        force_text = False
     ):
 
         if not self.DisableEmail:  # if all email disabled, do not queue
@@ -915,5 +917,5 @@ class MyMail(MySupport):
                 self.SMTPServer != "" and not self.DisableSMTP
             ):  # if only sending is disabled, do not queue
                 self.EmailSendQueue.insert(
-                    0, [msgtype, subjectstr, msgstr, recipient, files, deletefile]
+                    0, [msgtype, subjectstr, msgstr, recipient, files, deletefile, force_text]
                 )

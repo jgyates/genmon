@@ -497,6 +497,7 @@ class Monitor(MySupport):
                         recipient=self.MaintainerAddress,
                         files=self.GetLogFileNames(),
                         msgtype="error",
+                        force_text=True
                     )
                 # delete unsent Messages
                 if os.path.isfile(self.FeedbackLogFile):
@@ -537,6 +538,7 @@ class Monitor(MySupport):
                 files=MessageDict["files"],
                 deletefile=MessageDict["deletefile"],
                 msgtype=MessageDict["msgtype"],
+                force_text=MessageDict["force_text"]
             )
 
         except Exception as e1:
@@ -583,6 +585,7 @@ class Monitor(MySupport):
                         recipient=self.MaintainerAddress,
                         files=self.GetLogFileNames(),
                         msgtype="error",
+                        force_text=True
                     )
 
                 self.FeedbackMessages[Reason] = msgbody
@@ -736,6 +739,7 @@ class Monitor(MySupport):
                 recipient=self.MaintainerAddress,
                 files=LogList,
                 msgtype="error",
+                force_text=True
             )
             return "Log files submitted"
         except Exception as e1:
