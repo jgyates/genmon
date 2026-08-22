@@ -287,8 +287,6 @@ class Evolution(GeneratorController):
             "05f5": [2, 0],  # Evo AC   Current 2
             "05f6": [2, 0],  # Evo AC   Current Cal 1
             "05f7": [2, 0],  # Evo AC   Current Cal 1
-            "0637": [2, 0],  # Power Zone 200 Alarm is active if non zero
-            "0638": [2, 0],  # Power Zone 200 Warning is active if non zero
             "0639": [2, 0],  # Power Zone 200 Maintenance is active if non zero
             "063a": [2, 0],  # Power Zone 200 single phase if non zero
             "07e6": [2, 0],  # Firmware Build Major
@@ -331,6 +329,8 @@ class Evolution(GeneratorController):
             "0052": [2, 0],  # Evo LC Inputs
             "0009": [2, 0],  # Utility voltage
             "05f1": [2, 0],  # Last Alarm Code
+            "0637": [2, 0],  # Power Zone 200 Alarm is active if non zero
+            "0638": [2, 0],  # Power Zone 200 Warning is active if non zero
         }  
 
         self.REGLEN = 0
