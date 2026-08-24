@@ -54,11 +54,6 @@ class Loader(MySupport):
         self.Upgrade = False
         self.version = None
 
-        if sys.version_info[0] < 3:
-            self.pipProgram = "pip2"
-        else:
-            self.pipProgram = "pip3"
-
         self.ConfigFilePath = ConfigFilePath
 
         self.ConfigFileName = "genloader.conf"
@@ -91,6 +86,13 @@ class Loader(MySupport):
         self.console = SetupLogger("genloader_console", log_file="", stream=True)
 
         try:
+            if sys.version_info < (3, 9):
+                self.LogError(f"ERROR: Python version 3.9 or higher required.")
+
+            if sys.version_info[0] < 3:
+                self.pipProgram = "pip2"
+            else:
+                self.pipProgram = "pip3"
             self.CachedConfig = {}
 
             if not os.path.isdir(self.ConfigFilePath):
