@@ -8,9 +8,11 @@ pyopenssl
 twilio
 chump
 paho-mqtt
-pysnmp==5.1.0
+# pysnmp is fixed at this version to support python 3.9. pysnmp 7.1.22 is the last version to support  python 3.9 
+pysnmp==7.1.21
 ldap3
-pyasn1==0.4.8
+# pysan1 is fixed at 0.6.1 due to pysnmp 7.1.21 requiring pyasn1 < 0.6.1
+pyasn1==0.6.1
 pyotp
 webauthn>=2.0
 psutil
