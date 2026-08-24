@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Added Nee-vo tank monitor add on (thanks @@momoz)
 - Update for better alarm handing on Power Zone 200
 - Minor update to feedback email so they are always sent as plain text
+- Updated gensnmp to support pysnmp version 7.1.21 (the last version to support python 3.9)
 
 ## 2.0.01 -2026-05-18
 - Various bug fixes and typo corrections

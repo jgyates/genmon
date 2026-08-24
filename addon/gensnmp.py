@@ -48,12 +48,13 @@ try:
     import bisect
     import time
 
-    from pyasn1.codec.ber import decoder, encoder
-    from pysnmp.carrier.asyncore.dgram import udp, udp6, unix
-    from pysnmp.carrier.asyncore.dispatch import AsyncoreDispatcher
+    from pysnmp.carrier.asyncio.dispatch import AsyncioDispatcher
+    from pysnmp.carrier.asyncio.dgram import udp, udp6
+    from pyasn1.codec.ber import encoder, decoder
     from pysnmp.proto import api
     from pysnmp.proto.rfc1902 import ObjectIdentifier, TimeTicks
     from pysnmp.proto.rfc1902 import *
+    
 except Exception as e1:
     print("Error loading pysnmp! :" + str(e1))
     sys.exit(2)
@@ -108,18 +109,18 @@ class MyOID(MySupport):
 
         try:
             if self.return_type == str:
-                return api.protoModules[protoVer].OctetString(self.value)
+                return api.PROTOCOL_MODULES[protoVer].OctetString(str(self.value))
             elif self.return_type == int:
-                return api.protoModules[protoVer].Integer(self.value)
+                return api.PROTOCOL_MODULES[protoVer].Integer(self.value)
             elif self.return_type == ObjectIdentifier:
-                return api.protoModules[protoVer].ObjectIdentifier(self.value)
+                return api.PROTOCOL_MODULES[protoVer].ObjectIdentifier(self.value)
             elif self.return_type == TimeTicks:
-                return api.protoModules[protoVer].TimeTicks(
+                return api.PROTOCOL_MODULES[protoVer].TimeTicks(
                     (time.time() - self.birthday) * 100
                 )
             else:
                 self.LogError("Invalid type in MyOID: " + str(self.return_type))
-                return api.protoModules[protoVer].Integer(self.value)
+                return api.PROTOCOL_MODULES[protoVer].Integer(self.value)
         except Exception as e1:
             self.LogError("Error: " + str(self.keywords) + ": " + str(self.value))
             self.LogErrorLine("Error in MyOid __call__: " + str(e1))
@@ -498,20 +499,16 @@ class GenSNMP(MySupport):
             for mibVar in self.mibData:
                 self.mibDataIdx[mibVar.name] = mibVar
 
-            self.transportDispatcher = AsyncoreDispatcher()
-            self.transportDispatcher.registerRecvCbFun(self.SnmpCallbackFunction)
-
+            self.transportDispatcher = AsyncioDispatcher()
+            self.transportDispatcher.register_recv_callback(self.SnmpCallbackFunction)
             # UDP/IPv4
-            self.transportDispatcher.registerTransport(
-                udp.domainName,
-                udp.UdpSocketTransport().openServerMode(("0.0.0.0", self.snmpport)),
+            self.transportDispatcher.register_transport(
+                udp.DOMAIN_NAME, udp.UdpAsyncioTransport().open_server_mode(("0.0.0.0", self.snmpport))
             )
-
-            # UDP/IPv6
             try:
-                self.transportDispatcher.registerTransport(
-                    udp6.domainName,
-                    udp6.Udp6SocketTransport().openServerMode(("::", self.snmpport)),
+                # UDP/IPv6
+                self.transportDispatcher.register_transport(
+                    udp6.DOMAIN_NAME, udp6.Udp6AsyncioTransport().open_server_mode(("::1", self.snmpport))
                 )
             except:
                 self.LogError("Warning IPv6 is disabled")
@@ -575,11 +572,11 @@ class GenSNMP(MySupport):
         try:
             if self.transportDispatcher != None:
                 self.transportDispatcher.jobFinished(1)
-                self.transportDispatcher.unregisterRecvCbFun(recvId=None)
-                self.transportDispatcher.unregisterTransport(udp.domainName)
+                self.transportDispatcher.unregister_recv_callback(recvId=None)
+                self.transportDispatcher.unregister_transport(udp.domainName)
                 if self.IPv6:
-                    self.transportDispatcher.unregisterTransport(udp6.domainName)
-                self.transportDispatcher.closeDispatcher()
+                    self.transportDispatcher.unregister_transport(udp6.domainName)
+                self.transportDispatcher.close_dispatcher()
                 self.LogDebug("Dispatcher Closed")
                 self.transportDispatcher = None
         except Exception as e1:
@@ -591,21 +588,24 @@ class GenSNMP(MySupport):
     ):
         while wholeMsg:
             try:
+
                 msgVer = api.decodeMessageVersion(wholeMsg)
-                if msgVer in api.protoModules:
-                    pMod = api.protoModules[msgVer]
+                if msgVer in api.PROTOCOL_MODULES:
+                    pMod = api.PROTOCOL_MODULES[msgVer]
                 else:
-                    self.LogError("Unsupported SNMP version %s" % msgVer)
+                    print("Unsupported SNMP version %s" % msgVer)
                     return
                 reqMsg, wholeMsg = decoder.decode(
                     wholeMsg,
                     asn1Spec=pMod.Message(),
                 )
-                rspMsg = pMod.apiMessage.getResponse(reqMsg)
-                rspPDU = pMod.apiMessage.getPDU(rspMsg)
-                reqPDU = pMod.apiMessage.getPDU(reqMsg)
-                Community = pMod.apiMessage.getCommunity(reqMsg)
-                if Community != OctetString(self.community.strip()):
+
+                rspMsg = pMod.apiMessage.get_response(reqMsg)
+                rspPDU = pMod.apiMessage.get_pdu(rspMsg)
+                reqPDU = pMod.apiMessage.get_pdu(reqMsg)
+                Community = pMod.apiMessage.get_community(reqMsg)
+
+                if Community != OctetString(str(self.community.strip())):
                     self.LogError(
                         "Invalid community string: <"
                         + Community
@@ -621,7 +621,7 @@ class GenSNMP(MySupport):
                 # GETNEXT PDU
                 if reqPDU.isSameTypeWith(pMod.GetNextRequestPDU()):
                     # Produce response var-binds
-                    for oid, val in pMod.apiPDU.getVarBinds(reqPDU):
+                    for oid, val in pMod.apiPDU.get_varbinds(reqPDU):
                         errorIndex = errorIndex + 1
                         # Search next OID to report
                         nextIdx = bisect.bisect(self.mibData, oid)
@@ -629,7 +629,7 @@ class GenSNMP(MySupport):
                             # Out of MIB
                             varBinds.append((oid, val))
                             pendingErrors.append(
-                                (pMod.apiPDU.setEndOfMibError, errorIndex)
+                                (pMod.apiPDU.set_end_of_mib_error, errorIndex)
                             )
                         else:
                             # Report value if OID is found
@@ -640,7 +640,7 @@ class GenSNMP(MySupport):
                                 )
                             )
                 elif reqPDU.isSameTypeWith(pMod.GetRequestPDU()):
-                    for oid, val in pMod.apiPDU.getVarBinds(reqPDU):
+                    for oid, val in pMod.apiPDU.get_varbinds(reqPDU):
                         # print("Oid: " + str(oid))
                         if oid in self.mibDataIdx:
                             varBinds.append(
@@ -650,17 +650,17 @@ class GenSNMP(MySupport):
                             # No such instance
                             varBinds.append((oid, val))
                             pendingErrors.append(
-                                (pMod.apiPDU.setNoSuchInstanceError, errorIndex)
+                                (pMod.apiPDU.set_no_such_instance_error, errorIndex)
                             )
                             break
                 else:
                     # Report unsupported request type
-                    pMod.apiPDU.setErrorStatus(rspPDU, "genErr")
-                pMod.apiPDU.setVarBinds(rspPDU, varBinds)
+                    pMod.apiPDU.set_error_status(rspPDU, "genErr")
+                pMod.apiPDU.set_varbinds(rspPDU, varBinds)
                 # Commit possible error indices to response PDU
                 for f, i in pendingErrors:
                     f(rspPDU, i)
-                transportDispatcher.sendMessage(
+                transportDispatcher.send_message(
                     encoder.encode(rspMsg), transportDomain, transportAddress
                 )
             except Exception as e1:

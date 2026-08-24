@@ -252,7 +252,8 @@ class Loader(MySupport):
                 {
                     "modules": ["gensnmp"],
                     "dependencies": [
-                        self.LibraryDependency("pysnmp", Version="5.1.0"),
+                        self.LibraryDependency("pysnmp", Version="7.1.21"),
+                        self.LibraryDependency("pyasn1", Version="0.6.1")
                     ],
                 },
                 {
@@ -474,7 +475,7 @@ class Loader(MySupport):
                         ErrorOccured = True
                     if Module["import"] == "ldap3":
                         # This will correct and issue with the ldap3 modbule not being recogonized in LibrayIsInstalled
-                        self.InstallLibrary("pyasn1", update=True)
+                        self.InstallLibrary("pyasn1", version="0.6.1", update=True)
 
             return not ErrorOccured
         except Exception as e1:
