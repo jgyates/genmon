@@ -462,7 +462,7 @@ class Loader(MySupport):
 
                 if not self.ShouldCheckLibrary(Module):
                     continue
-                if not self.LibraryIsInstalled(Module["import"]):
+                if not self.LibraryIsInstalled(Module["import"], Module["version"]):
                     self.LogInfo(
                         "Warning: required library "
                         + Module["install"]
@@ -755,12 +755,25 @@ class Loader(MySupport):
             return None
 
     # ---------------------------------------------------------------------------
-    def LibraryIsInstalled(self, libraryname):
+    def LibraryIsInstalled(self, libraryname, version = None):
 
         try:
             import importlib
 
             my_module = importlib.import_module(libraryname)
+
+            if version != None:
+                try:
+                    version_installed = tuple(int(x) for x in my_module.__version__.split('.'))
+                except Exception as e1:
+                    # probably no version exported in this library
+                    self.LogErrorLine(f"Error in LibraryIsInstalled, failure getting version: {libraryname}, version: {version}")
+                    return True
+                version_needed = tuple(int(x) for x in version.split('.'))
+                if version_installed < version_needed:
+                    self.LogError(f"Need update on {libraryname} from {version_installed} to {version_needed}")
+                    return False
+                
             return True
         except Exception as e1:
             return False
