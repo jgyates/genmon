@@ -9,7 +9,7 @@
 # MODIFICATIONS:
 # -------------------------------------------------------------------------------
 
-
+# based on https://github.com/lextudio/pysnmp/blob/main/examples/v1arch/asyncio/agent/cmdrsp/implementing-scalar-mib-objects-over-ipv4-and-ipv6.py
 import json
 import os
 import signal
