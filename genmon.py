@@ -683,7 +683,8 @@ class Monitor(MySupport):
             ]
             DataFilesToSend = [
                 "update.txt",        # time stamp of software update
-                "restore.txt"
+                "restore.txt",
+                "aux_alarmlog.json"
             ]
             # Files in /var/log
             for File in FilesToSend:
