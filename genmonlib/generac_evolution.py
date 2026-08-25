@@ -2708,9 +2708,8 @@ class Evolution(GeneratorController):
             if len(self.UserURL):
                 msgbody += "For additional information : " + self.UserURL + "\n"
 
-            if (
-                self.SystemInAlarm()
-            ):  # Update Alarm Status global flag, returns True if system in alarm
+            if self.SystemInAlarm():  
+                # Update Alarm Status global flag, returns True if system in alarm
 
                 msgsubject += "Generator Alert at " + self.SiteName + ": "
                 AlarmState = self.GetAlarmState()
@@ -2731,6 +2730,22 @@ class Evolution(GeneratorController):
                 msgbody += "NOTE: This message is a notice that the state of the generator has changed. The system is not in alarm.\n"
 
             msgbody += self.GetMessageText(Reg0001Value=RegVal)
+
+            if self.UseAuxAlarmLog:
+                alarm_state = self.GetAlarmState()
+                if self.PowerZone200:
+                    e_code = f"{RegVal & 0x0000FFFF:04}"
+                    alarm_state = f"{alarm_state}, Alarm Code: {e_code}"
+                elif self.EvolutionController:
+                    last_alarm_value = self.GetRegisterValueFromList("05f1")  # get last error code
+                    if len(last_alarm_value) == 4:
+                        last_alarm_code = int(last_alarm_value, 16)
+                        e_code = f"{last_alarm_code:04}"
+                        alarm_state = f"{alarm_state}, Alarm Code: {e_code}"
+                # or Evo/Nexus the alarm notifications are sent differently than the other controllers
+                # due to Evo2 register 0001 oddities so NotifyAlarmCommon does not send the messages for
+                # evo/nexus
+                self.NotifyAlarmCommon(msgbody = None, alarm_details = alarm_state)
 
             if self.SystemInAlarm():
                 msgbody += self.printToString(
@@ -3202,12 +3217,21 @@ class Evolution(GeneratorController):
                 [SERVICELOG, SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE],
                 [STARTSTOPLOG, START_LOG_STARTING_REG, START_LOG_STRIDE],
             ]
+            PowerZone200Log = [
+                [SERVICELOG, SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE],
+                [STARTSTOPLOG, START_LOG_STARTING_REG, START_LOG_STRIDE],
+            ]
             NexusLog = [
                 [ALARMLOG, NEXUS_ALARM_LOG_STARTING_REG, NEXUS_ALARM_LOG_STRIDE],
                 [STARTSTOPLOG, START_LOG_STARTING_REG, START_LOG_STRIDE],
             ]
 
-            LogParams = EvolutionLog if self.EvolutionController else NexusLog
+            if self.PowerZone200:
+                LogParams = PowerZone200Log
+            elif self.EvolutionController:
+                LogParams = EvolutionLog
+            else:
+                LogParams = NexusLog
 
             RetValue = collections.OrderedDict()
             LogDict = collections.OrderedDict()
@@ -3218,6 +3242,13 @@ class Evolution(GeneratorController):
                 )
                 LogDict = self.MergeDicts(LogDict, LogOutput)
 
+            if self.UseAuxAlarmLog and not RawOutput:
+                alarm_list = self.ReadAuxAlarm()
+                if len(alarm_list) and AllLogs == False:
+                    alarm_list = alarm_list[0]
+                AuxAlarmLog = {"Auxiliary Alarm Log": alarm_list}
+                LogDict = self.MergeDicts(LogDict, AuxAlarmLog)
+            
             if self.PowerZone200 and RawOutput:
                 PowerZoneAlarmRegs = {}
                 for Register in range(POWER_ZONE_200_ALARM_REG,POWER_ZONE_200_ALARM_REG+POWER_ZONE_200_ALARM_LENGTH):
@@ -3252,7 +3283,7 @@ class Evolution(GeneratorController):
                     "Logs", FullLogs=True, Always=True, Message="Unknown Entries in Log"
                 )
         except Exception as e1:
-            self.LogErrorLine("Error in DisplayLogs: " + str(e1))
+            self.LogErrorLine(f"Error in DisplayLogs: {e1}, AllLogs: {AllLogs}, DictOut: {DictOut}, RawOutput: {RawOutput}")
 
         if not DictOut:
             return self.printToString(self.ProcessDispatch(RetValue, ""))

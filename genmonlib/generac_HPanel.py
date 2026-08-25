@@ -1105,7 +1105,6 @@ class HPanel(GeneratorController):
 
         self.AltTimeSet = True
         self.LastEngineState = ""
-        self.CurrentAlarmState = False
         self.VoltageConfig = None
         self.AlarmAccessLock = (
             threading.RLock()
@@ -1867,28 +1866,38 @@ class HPanel(GeneratorController):
                 self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype=MessageType)
 
             # Check for Alarms
-            if self.SystemInAlarm():
-                if not self.CurrentAlarmState:
-                    msgsubject = "Generator Notice: ALARM Active at " + self.SiteName
-                    if not status_included:
-                        msgbody += self.GetMessageText()
-                        msgbody += "\nIP Address: " + self.GetNetworkIp()
-                    self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype="warn")
-            else:
-                if self.CurrentAlarmState:
-                    msgsubject = "Generator Notice: ALARM Clear at " + self.SiteName
-                    if not status_included:
-                        msgbody += self.GetMessageText()
-                        msgbody += "\nIP Address: " + self.GetNetworkIp()
-                    self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype="warn")
-
-            self.CurrentAlarmState = self.SystemInAlarm()
+            self.NotifyAlarmCommon(msgbody=msgbody, status_included=status_included, alarm_details = self.GetAlarmState(ReturnList = False))
 
         except Exception as e1:
             self.LogErrorLine("Error in CheckForAlarms: " + str(e1))
 
         return
 
+    # ------------ PowerZonePro:GetAlarmState ----------------------------------
+    def GetAlarmState(self, ReturnList = True):
+        try:
+
+            OutputList = [
+                            self.Reg.OUTPUT_1[REGISTER],
+                            self.Reg.OUTPUT_2[REGISTER],
+                            self.Reg.OUTPUT_3[REGISTER],
+                            self.Reg.OUTPUT_4[REGISTER],
+                            self.Reg.OUTPUT_5[REGISTER],
+                            self.Reg.OUTPUT_6[REGISTER],
+                            self.Reg.OUTPUT_7[REGISTER],
+                            self.Reg.OUTPUT_8[REGISTER],
+                        ]
+            if self.SystemInAlarm():
+                alarm_list = self.GetCondition(RegList=OutputList, type="alarms")
+                if not ReturnList:
+                    return ", ".join(alarm_list) 
+                return alarm_list
+            if ReturnList:
+                return []
+            return ""
+        except Exception as e1:
+            self.LogErrorLine(f"Error in GetAlarmState: " + str(e1))
+            return ""
     # ------------ HPanel:RegisterIsFileRecord ------------------------------
     def RegisterIsFileRecord(self, Register):
 
@@ -2334,6 +2343,11 @@ class HPanel(GeneratorController):
 
             LogList = [{"Alarm Log": LocalAlarm}, {"Run Log": LocalEvent}]
 
+            if self.UseAuxAlarmLog and not RawOutput:
+                alarm_list = self.ReadAuxAlarm()
+                if len(alarm_list) and AllLogs == False:
+                    alarm_list = alarm_list[0]
+                LogList.append({"Auxiliary Alarm Log": alarm_list})
             RetValue["Logs"] = LogList
 
         except Exception as e1:
@@ -2766,20 +2780,10 @@ class HPanel(GeneratorController):
                 }
             )
 
-            OutputList = [
-                self.Reg.OUTPUT_1[REGISTER],
-                self.Reg.OUTPUT_2[REGISTER],
-                self.Reg.OUTPUT_3[REGISTER],
-                self.Reg.OUTPUT_4[REGISTER],
-                self.Reg.OUTPUT_5[REGISTER],
-                self.Reg.OUTPUT_6[REGISTER],
-                self.Reg.OUTPUT_7[REGISTER],
-                self.Reg.OUTPUT_8[REGISTER],
-            ]
             if self.SystemInAlarm():
-                AlarmList = self.GetCondition(RegList=OutputList, type="alarms")
-                if len(AlarmList):
-                    Alarms.append({"Alarm List": AlarmList})
+                alarm_list = self.GetAlarmState(ReturnList = True)
+                if len(alarm_list):
+                    Alarms.append({"Alarm List": alarm_list})
 
             if not self.SmartSwitch or self.HTSTransferSwitch:
                 if not self.SmartSwitch:

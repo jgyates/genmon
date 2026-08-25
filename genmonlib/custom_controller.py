@@ -53,7 +53,6 @@ class CustomController(GeneratorController):
         )
 
         self.LastEngineState = ""
-        self.CurrentAlarmState = False
         self.VoltageConfig = None
         self.AlarmAccessLock = (
             threading.RLock()
@@ -857,22 +856,8 @@ class CustomController(GeneratorController):
                 self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype=MessageType)
 
             # Check for Alarms
-            if self.SystemInAlarm():
-                if not self.CurrentAlarmState:
-                    msgsubject = "Generator Notice: ALARM Active at " + self.SiteName
-                    if not status_included:
-                        msgbody += self.GetMessageText()
-                        msgbody += "\nIP Address: " + self.GetNetworkIp()
-                    self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype="warn")
-            else:
-                if self.CurrentAlarmState:
-                    msgsubject = "Generator Notice: ALARM Clear at " + self.SiteName
-                    if not status_included:
-                        msgbody += self.GetMessageText()
-                        msgbody += "\nIP Address: " + self.GetNetworkIp()
-                    self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype="warn")
-
-            self.CurrentAlarmState = self.SystemInAlarm()
+            self.NotifyAlarmCommon(msgbody = msgbody, status_included=status_included, alarm_details = self.GetAlarmState(ReturnList = False))
+            
 
         except Exception as e1:
             self.LogErrorLine("Error in CheckForAlarms: " + str(e1))
@@ -1115,7 +1100,7 @@ class CustomController(GeneratorController):
 
                 ShowStatus = "status" in self.controllerimport.keys()
                 ShowMaintenance = "maintenance" in self.controllerimport.keys()
-                ShowLogs = "logs" in self.controllerimport.keys()
+                ShowLogs = "logs" in self.controllerimport.keys() or self.UseAuxAlarmLog
 
                 StartInfo["pages"] = {
                     "status": ShowStatus,
@@ -1197,20 +1182,30 @@ class CustomController(GeneratorController):
         #       Dict[Logs] =  {"Alarm Log" : [Log Entry1, LogEntry2, ...]},
         #                     {"Start Stop Log" : [Log Entry3, Log Entry 4, ...]}...
 
-        Logs = collections.OrderedDict()
-        LogDict = collections.OrderedDict()
+        Logs = {}
+        LogDict = {}
         Logs["Logs"] = LogDict
         try:
-            if not "logs" in self.controllerimport.keys():
+            if not "logs" in self.controllerimport.keys() and not self.UseAuxAlarmLog:
+                self.LogDebug(f"Logs disabled")
+                # no log support
                 if not DictOut:
                     return self.printToString(self.ProcessDispatch(Logs, ""))
-            
-            for logitems in self.controllerimport["logs"]:
-                title, value = self.GetDisplayEntry(logitems)
-                if value != None:
-                    LogDict[title] = value
                 else:
-                    break
+                    return {}
+
+            if "logs" in self.controllerimport.keys():
+                for logitems in self.controllerimport["logs"]:
+                    title, value = self.GetDisplayEntry(logitems)
+                    if value != None:
+                        LogDict[title] = value
+                    else:
+                        break
+            if self.UseAuxAlarmLog and not RawOutput:
+                alarm_list = self.ReadAuxAlarm()
+                if len(alarm_list) and AllLogs == False:
+                    alarm_list = alarm_list[0]
+                LogDict["Auxiliary Alarm Log"] =  alarm_list
 
         except Exception as e1:
             self.LogErrorLine("Error in DisplayLogs: " + str(e1))
@@ -1300,9 +1295,8 @@ class CustomController(GeneratorController):
                 Status["Status"].append({"Alarm State": "System In Alarm"})
                 #activealarms = self.GetDisplayList(self.controllerimport, "alarm_conditions")
                 #Status["Status"].append(activealarms[0]
-                alarm_list = self.GetExtendedDisplayString(self.controllerimport, "alarm_conditions", ReturnList=True)
-                if len(self.ignore_alarms):
-                    alarm_list = list(filter(lambda x: x not in self.ignore_alarms, alarm_list))
+                alarm_list = self.GetAlarmState(ReturnList = True)
+
                 Status["Status"].append(
                     {
                         
@@ -1329,6 +1323,21 @@ class CustomController(GeneratorController):
 
         return Status
 
+    # ----------  GeneratorController::SetGeneratorTimeDate----------------------
+    def GetAlarmState(self, ReturnList = True):
+        try:
+            alarm_list = self.GetExtendedDisplayString(self.controllerimport, "alarm_conditions", ReturnList=True)
+            if len(self.ignore_alarms):
+                alarm_list = list(filter(lambda x: x not in self.ignore_alarms, alarm_list))
+            if not ReturnList:
+                return ", ".join(alarm_list)
+            return alarm_list
+        except Exception as e1:
+            self.LogErrorLine(f"Error in DisplayStatus: {e1}")
+            if ReturnList:
+                []
+            else:
+                ""
     # ----------  GeneratorController::SetGeneratorTimeDate----------------------
     # set generator time to system time
     def SetGeneratorTimeDate(self):

@@ -78,9 +78,13 @@ class GeneratorController(MySupport):
         self.NotChanged = 0  # stats for registers
         self.Changed = 0  # stats for registers
         self.TotalChanged = 0.0  # ratio of changed ragisters
-        self.MaintLog = os.path.join(ConfigFilePath, "maintlog.json")
+        self.MaintLogFileName = os.path.join(ConfigFilePath, "maintlog.json")
         self.MaintLogList = []
         self.MaintLock = threading.RLock()
+        self.AuxAlarmLogFileName = os.path.join(ConfigFilePath, "aux_alarmlog.json")
+        self.AuxAlarmLog = []
+        self.AuxAlarmLock = threading.RLock()
+        self.CurrentAlarmState = False
         self.OutageLog = os.path.join(ConfigFilePath, "outage.txt")
         self.MinimumOutageDuration = 0
         self.PowerLogMaxSize = 15.0  # 15 MB max size
@@ -297,6 +301,9 @@ class GeneratorController(MySupport):
                     "alternate_date_format", return_type=bool, default=False
                 )
 
+                self.UseAuxAlarmLog = self.config.ReadValue(
+                    "use_aux_alarm_log", return_type=bool, default=False
+                )
                 self.ImportButtonFileList = []
                 self.ImportedButtons = []
                 ImportButtonsFiles = config.ReadValue("import_buttons",default=None)
@@ -1419,14 +1426,14 @@ class GeneratorController(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in DisplayOutage: " + str(e1))
 
-    # ------------ GeneratorController::DisplayRegisters ------------------------
+    # ------------ GeneratorController::DisplayRegisters -----------------------
     def DisplayRegisters(self, AllRegs=False, DictOut=False):
         try:
             pass
         except Exception as e1:
             self.LogErrorLine("Error in DisplayRegisters: " + str(e1))
 
-    # ------------ GeneratorController:GetMessageText ------------------------------------
+    # ------------ GeneratorController:GetMessageText --------------------------
     def GetMessageText(self):
         try:
             msgtext = self.DisplayStatus()
@@ -1436,7 +1443,32 @@ class GeneratorController(MySupport):
             self.LogErrorLine("Error in GetMessageText: " + str(e1))
             return ""
 
-    # ----------  GeneratorController::SetGeneratorTimeDate----------------------
+    # ----------  GeneratorController::NotifyAlarmCommon------------------------
+    def NotifyAlarmCommon(self, msgbody = None, status_included = False, alarm_details = "Unknown Alarm"):
+        try:
+            if self.SystemInAlarm():
+                if not self.CurrentAlarmState:
+                    self.AddAuxAlarmEntry(alarm_details)
+                    if not msgbody == None:
+                        msgsubject = "Generator Notice: ALARM Active at " + self.SiteName
+                        if not status_included:
+                            msgbody += self.GetMessageText()
+                            msgbody += "\nIP Address: " + self.GetNetworkIp()
+                        self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype="warn")
+            else:
+                if self.CurrentAlarmState:
+                    if not msgbody == None:
+                        msgsubject = "Generator Notice: ALARM Clear at " + self.SiteName
+                        if not status_included:
+                            msgbody += self.GetMessageText()
+                            msgbody += "\nIP Address: " + self.GetNetworkIp()
+                        self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype="warn")
+
+            self.CurrentAlarmState = self.SystemInAlarm()
+        except Exception as e1:
+            self.LogErrorLine(f"Error in NotifyAlarmCommon: {e1}")
+
+    # ----------  GeneratorController::SetGeneratorTimeDate---------------------
     # set generator time to system time
     def SetGeneratorTimeDate(self):
 
@@ -3392,7 +3424,7 @@ class GeneratorController(MySupport):
         # for 60 kw and below diesle generators KW * 8.5%  = Fuel per hour
         try:
             if self.FuelHalfRate == 0 or self.FuelFullRate == 0:
-                self.LogDebug("ERROR: Fuel Half Rate or Full Rate is zero: Half: " + str(self.FuelHalfRate) + "Full: " + str(self.FuelFullRate) )
+                self.LogDebug(f"ERROR: Fuel Half Rate or Full Rate is zero: Half: {self.FuelHalfRate}, Full: {self.FuelFullRate}")
                 return None
 
             return [
@@ -3817,9 +3849,10 @@ class GeneratorController(MySupport):
                 if not self.ValidateMaintLogEntry(Entry):
                     return "Invalid maintenance log entry"
                 self.MaintLogList.append(Entry)
-                with open(self.MaintLog, "w") as outfile:
-                    json.dump(self.MaintLogList, outfile, sort_keys=True, indent=4)  
-                    outfile.flush()
+                with self.MaintLock:
+                    with open(self.MaintLogFileName, "w") as outfile:
+                        json.dump(self.MaintLogList, outfile, sort_keys=True, indent=4)  
+                        outfile.flush()
             except Exception as e1:
                 self.LogErrorLine("Error in AddEntryToMaintLog: " + str(e1))
                 return "Invalid input for Maintenance Log entry (2)."
@@ -3895,14 +3928,6 @@ class GeneratorController(MySupport):
             return False
 
         return True
-    # ----------  GeneratorController::GetRegisterLabels------------------------
-    def GetRegisterLabels(self):
-        # return JSON of dict with registers and text descriptions
-        try:
-            return "{}"     # this is the default, no labels
-        except Exception as e1:
-            self.LogErrorLine("Error in GetRegisterLabels: " + str(e1))
-        return "{}"
 
     # ----------  GeneratorController::GetMaintLogJSON--------------------------
     def GetMaintLogJSON(self):
@@ -3910,11 +3935,12 @@ class GeneratorController(MySupport):
         try:
             if len(self.MaintLogList):
                 return json.dumps(self.MaintLogList)
-            if os.path.isfile(self.MaintLog):
+            if os.path.isfile(self.MaintLogFileName):
                 try:
-                    with open(self.MaintLog) as infile:
-                        self.MaintLogList = json.load(infile)
-                        return json.dumps(self.MaintLogList)
+                    with self.MaintLock:
+                        with open(self.MaintLogFileName) as infile:
+                            self.MaintLogList = json.load(infile)
+                            return json.dumps(self.MaintLogList)
                 except Exception as e1:
                     self.LogErrorLine("Error in GetMaintLogJSON: " + str(e1))
         except Exception as e1:
@@ -3927,11 +3953,12 @@ class GeneratorController(MySupport):
         try:
             if len(self.MaintLogList):
                 return self.MaintLogList
-            if os.path.isfile(self.MaintLog):
+            if os.path.isfile(self.MaintLogFileName):
                 try:
-                    with open(self.MaintLog) as infile:
-                        self.MaintLogList = json.load(infile)
-                        return self.MaintLogList
+                    with self.MaintLock:
+                        with open(self.MaintLogFileName) as infile:
+                            self.MaintLogList = json.load(infile)
+                            return self.MaintLogList
                 except Exception as e1:
                     self.LogErrorLine("Error in GetMaintLogDict: " + str(e1))
                     return []
@@ -3940,27 +3967,28 @@ class GeneratorController(MySupport):
 
         return []
 
-    # ----------  GeneratorController::UpdateMaintLog----------------------------
+    # ----------  GeneratorController::SaveMaintLog-----------------------------
     def SaveMaintLog(self, NewLog):
         try:
             self.MaintLogList = NewLog
-            with open(self.MaintLog, "w") as outfile:
-                json.dump(
-                    self.MaintLogList, outfile, sort_keys=True, indent=4
-                )  # , ensure_ascii = False)
-                outfile.flush()
+            with self.MaintLock:
+                with open(self.MaintLogFileName, "w") as outfile:
+                    json.dump(
+                        self.MaintLogList, outfile, sort_keys=True, indent=4
+                    )  # , ensure_ascii = False)
+                    outfile.flush()
 
         except Exception as e1:
             self.LogErrorLine("Error in SaveMaintLog: " + str(e1))
             return "Error in SaveMaintLog: " + str(e1)
 
-    # ----------  GeneratorController::ClearMaintLog-------------------------------
+    # ----------  GeneratorController::ClearMaintLog----------------------------
     def ClearMaintLog(self):
         try:
-            if len(self.MaintLog) and os.path.isfile(self.MaintLog):
+            if len(self.MaintLogFileName) and os.path.isfile(self.MaintLogFileName):
                 try:
                     with self.MaintLock:
-                        os.remove(self.MaintLog)
+                        os.remove(self.MaintLogFileName)
                 except:
                     pass
 
@@ -4045,6 +4073,93 @@ class GeneratorController(MySupport):
             return "Error in DeleteMaintLogRow: " + str(e1)
         return "OK"
 
+    # ----------  GeneratorController::ReadAuxAlarm------------------------------
+    def ReadAuxAlarm(self):
+        try:
+            if not self.UseAuxAlarmLog:
+                return []
+            if len(self.AuxAlarmLog):
+                return self.AuxAlarmLog
+            if os.path.isfile(self.AuxAlarmLogFileName):
+                try:
+                    with self.AuxAlarmLock:
+                        with open(self.AuxAlarmLogFileName) as infile:
+                            self.AuxAlarmLog = json.load(infile)
+                            return self.AuxAlarmLog
+                except Exception as e1:
+                    self.LogErrorLine("Error in ReadAuxAlarm: " + str(e1))
+                    return []
+        except Exception as e1:
+            self.LogErrorLine("Error in ReadAuxAlarm (2): " + str(e1))
+
+        return []
+
+    # ----------  GeneratorController::AddAuxAlarmEntry-------------------------
+    def AddAuxAlarmEntry(self, *args):
+        try:
+            if not self.UseAuxAlarmLog:
+                return False
+
+            entry  = ", ".join(args)
+
+            if len(self.AuxAlarmLog) == 0:
+                self.ReadAuxAlarm()
+            if self.bAlternateDateFormat:
+                date_string = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            else:
+                date_string = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")
+            self.AuxAlarmLog.append(f"{date_string} {entry}")
+            self.SaveAuxAlarmLog()
+            return True
+        except Exception as e1:
+            self.LogErrorLine(f"Error in AddAuxAlarmEntry: {e1}, {entry}")
+            return False
+
+    # ----------  GeneratorController::SaveAuxAlarmLog--------------------------
+    def SaveAuxAlarmLog(self):
+        try:
+            if not self.UseAuxAlarmLog:
+                return False
+            with self.AuxAlarmLock:
+                # this will create the file if not there
+                with open(self.AuxAlarmLogFileName, "w") as outfile:
+                    json.dump(
+                        self.AuxAlarmLog, outfile, sort_keys=True, indent=4
+                    )  # , ensure_ascii = False)
+                    outfile.flush()
+
+        except Exception as e1:
+            self.LogErrorLine("Error in SaveAuxAlarmLog: " + str(e1))
+            return "Error in SaveAuxAlarmLog: " + str(e1)
+
+    # ----------  GeneratorController::ClearAuxAlarmLog-------------------------
+    def ClearAuxAlarmLog(self):
+        try:
+            if not self.UseAuxAlarmLog:
+                return False
+            if len(self.AuxAlarmLogFileName) and os.path.isfile(self.AuxAlarmLogFileName):
+                try:
+                    with self.AuxAlarmLock:
+                        os.remove(self.AuxAlarmLogFileName)
+                except:
+                    pass
+
+            self.AuxAlarmLog = {}
+
+            return "Aux alarm log cleared"
+        except Exception as e1:
+            self.LogErrorLine("Error in  ClearAuxAlarmLog: " + str(e1))
+            return "Error in  ClearAuxAlarmLog: " + str(e1)
+        return "OK"
+    
+    # ----------  GeneratorController::GetRegisterLabels------------------------
+    def GetRegisterLabels(self):
+        # return JSON of dict with registers and text descriptions
+        try:
+            return "{}"     # this is the default, no labels
+        except Exception as e1:
+            self.LogErrorLine("Error in GetRegisterLabels: " + str(e1))
+        return "{}"
 
     # ----------  GeneratorController::Close-------------------------------------
     def Close(self):

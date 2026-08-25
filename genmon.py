@@ -897,6 +897,7 @@ class Monitor(MySupport):
                     True,
                 ],  # Do not do command.lower() since this input is JSON
                 "clear_maint_log": [self.Controller.ClearMaintLog, (), True],
+                "clear_aux_alarm_log": [self.Controller.ClearAuxAlarmLog, (), True],
                 "getsitename": [self.GetSiteName, (), True],
                 "getbase": [
                     self.Controller.GetBaseStatus,

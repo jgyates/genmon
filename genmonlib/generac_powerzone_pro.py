@@ -505,7 +505,6 @@ class PowerZonePro(GeneratorController):
         )
 
         self.LastEngineState = ""
-        self.CurrentAlarmState = False
         self.VoltageConfig = None
         self.AlarmAccessLock = (
             threading.RLock()
@@ -1121,28 +1120,40 @@ class PowerZonePro(GeneratorController):
                 self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype=MessageType)
 
             # Check for Alarms
-            if self.SystemInAlarm():
-                if not self.CurrentAlarmState:
-                    msgsubject = "Generator Notice: ALARM Active at " + self.SiteName
-                    if not status_included:
-                        msgbody += self.GetMessageText()
-                        msgbody += "\nIP Address: " + self.GetNetworkIp()
-                    self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype="warn")
-            else:
-                if self.CurrentAlarmState:
-                    msgsubject = "Generator Notice: ALARM Clear at " + self.SiteName
-                    if not status_included:
-                        msgbody += self.GetMessageText()
-                        msgbody += "\nIP Address: " + self.GetNetworkIp()
-                    self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype="warn")
-
-            self.CurrentAlarmState = self.SystemInAlarm()
+            self.NotifyAlarmCommon(msgbody=msgbody, status_included=status_included, alarm_details = self.GetAlarmState(ReturnList = False))
 
         except Exception as e1:
             self.LogErrorLine("Error in CheckForAlarms: " + str(e1))
 
         return
+    # ------------ PowerZonePro:GetAlarmState ----------------------------------
+    def GetAlarmState(self, ReturnList = True):
+        try:
 
+            OutputList = [
+                            self.Reg.RA_STATUS_0[REGISTER],
+                            self.Reg.RA_STATUS_1[REGISTER],
+                            self.Reg.RA_STATUS_2[REGISTER],
+                            self.Reg.RA_STATUS_3[REGISTER],
+                            self.Reg.RA_STATUS_4[REGISTER],
+                            self.Reg.RA_STATUS_5[REGISTER],
+                            self.Reg.RA_STATUS_6[REGISTER],
+                            self.Reg.RA_STATUS_7[REGISTER],
+                            self.Reg.RA_STATUS_8[REGISTER],
+                            self.Reg.RA_STATUS_9[REGISTER],
+                        ]
+            if self.SystemInAlarm():
+                alarm_list = self.GetCondition(RegList=OutputList, type="alarms")
+                if not ReturnList:
+                    return ", ".join(alarm_list) 
+                return alarm_list
+            if ReturnList:
+                return []
+            return ""
+        except Exception as e1:
+            self.LogErrorLine(f"Error in GetAlarmState: " + str(e1))
+            return ""
+    
     # ------------ PowerZonePro:RegisterIsFileRecord -------------------------------
     def RegisterIsFileRecord(self, Register, Value):
 
@@ -1545,7 +1556,7 @@ class PowerZonePro(GeneratorController):
                     "status": True,
                     "maint": True,
                     "outage": False,
-                    "logs": False,
+                    "logs": self.UseAuxAlarmLog,
                     "monitor": True,
                     "maintlog": True,
                     "notifications": True,
@@ -1671,8 +1682,14 @@ class PowerZonePro(GeneratorController):
                             continue
                         LocalEvent.append(LogEntry)
 
-            LogList = [{"Alarm Log": LocalAlarm}, {"Run Log": LocalEvent}]
-
+            # for now we will not show the other logs since we have not been able to decode them
+            #LogList = [{"Alarm Log": LocalAlarm}, {"Run Log": LocalEvent}]
+            LogList = []
+            if self.UseAuxAlarmLog and not RawOutput:
+                alarm_list = self.ReadAuxAlarm()
+                if len(alarm_list) and AllLogs == False:
+                    alarm_list = alarm_list[0]
+                LogList.append({"Auxiliary Alarm Log": alarm_list})
             RetValue["Logs"] = LogList
 
         except Exception as e1:
@@ -2207,22 +2224,10 @@ class PowerZonePro(GeneratorController):
                 }
             )
 
-            OutputList = [
-                self.Reg.RA_STATUS_0[REGISTER],
-                self.Reg.RA_STATUS_1[REGISTER],
-                self.Reg.RA_STATUS_2[REGISTER],
-                self.Reg.RA_STATUS_3[REGISTER],
-                self.Reg.RA_STATUS_4[REGISTER],
-                self.Reg.RA_STATUS_5[REGISTER],
-                self.Reg.RA_STATUS_6[REGISTER],
-                self.Reg.RA_STATUS_7[REGISTER],
-                self.Reg.RA_STATUS_8[REGISTER],
-                self.Reg.RA_STATUS_9[REGISTER],
-            ]
             if self.SystemInAlarm():
-                AlarmList = self.GetCondition(RegList=OutputList, type="alarms")
-                if len(AlarmList):
-                    Alarms.append({"Alarm List": AlarmList})
+                alarm_list = self.GetAlarmState(ReturnList=True)
+                if len(alarm_list):
+                    Alarms.append({"Alarm List": alarm_list})
 
             if self.HTSTransferSwitch:
                 Line.append(

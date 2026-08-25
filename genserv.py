@@ -886,6 +886,7 @@ def ProcessCommand(command):
             "get_maint_log_json",
             "add_maint_log",
             "clear_maint_log",
+            "clear_aux_alarm_log",
             "delete_row_maint_log",
             "edit_row_maint_log",
             "support_data_json",
@@ -3944,7 +3945,17 @@ def ReadAdvancedSettingsFromFile():
             GENMON_SECTION,
             "alternate_date_format",
         ]
-
+        ConfigSettings["use_aux_alarm_log"] = [
+            "boolean",
+            "Use Auxiliary Alarm Log",
+            27,
+            False,
+            "",
+            0,
+            GENMON_CONFIG,
+            GENMON_SECTION,
+            "use_aux_alarm_log",
+        ]
         # These settings are not displayed as the auto-detect controller will set these
         # these are only to be used to override the auto-detect
         # ConfigSettings["liquidcooled"] = ['boolean', 'Force Controller Type (cooling)', 30, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "liquidcooled"]
