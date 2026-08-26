@@ -3950,7 +3950,21 @@ class Evolution(GeneratorController):
             0x4e: "Battery Potential / Power Input 1",  # Evo4.5L
             0x4f: "Engine Oil Temperature 1",           # Evo4.5L
             0x50: "Engine Fuel Shutoff 1 Control",      # Evo4.5L
-            0x72: "No Rotation Warning"   # Evo 2.0  validated
+            # EvoLC 4.5L
+            0x5C: "Engine Fuel Shutoff 2 Control",
+            0x5C: "Engine Fuel Shutoff 2 Control",
+            0x51: "Engine Position Sensor",
+            0x52: "Engine Timing Sensor",
+            0x53: "O2 Sensor",
+            0x54: "Engine Knock 1",
+            0x55: "Engine Ignition Coil #1",
+            0x56: "Engine Ignition Coil #2",
+            0x57: "Engine Ignition Coil #3",
+            0x58: "Engine Ignition Coil #4",
+            0x59: "Engine Fuel Valve 1 Position",
+            0x5A: "Engine Charge Air Cooler 1 Bypass",
+            0x5B: "Engine Speed",
+            0x72: "No Rotation Warning",   # Evo 2.0  validated
             # 0x74 : "Controller Lost Connection to Server"    # Evolution 2.0 not validated
         }
 

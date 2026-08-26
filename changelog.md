@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - Minor update to feedback email so they are always sent as plain text
 - Updated gensnmp to support pysnmp version 7.1.21 (the last version to support python 3.9)
 - Added support for an auxiliary alam log (see Advanced Settings to enable) and the Known Issues wiki for more info
+- Updated alarm codes for EvoLC 4.5L
 
 ## 2.0.01 -2026-05-18
 - Various bug fixes and typo corrections
