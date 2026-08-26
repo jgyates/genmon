@@ -693,7 +693,7 @@ def do_admin_login():
         CheckFailedLogin()
         return _render_login()
     else:
-        LogError(f"Unknown login error: user: {request.form["username"]}")
+        LogError(f"Unknown login error: user: {request.form['username']}")
         LogError(f"admin ok: {admin_user_ok}, admin pass ok: {admin_pass_ok}, ro user: {ro_user_ok}, ro pass: {ro_pass_ok}")
         return _render_login()
 
