@@ -3265,6 +3265,9 @@ class Evolution(GeneratorController):
 
             UnknownFound = False
             for Key, Entries in RetValue["Logs"].items():
+                if "Auxiliary Alarm Log" in Key:
+                    # don't check aux alarm log for unknown values
+                    continue
                 if not AllLogs:
                     if "unknown" in Entries.lower():
                         UnknownFound = True
