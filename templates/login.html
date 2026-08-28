@@ -39,6 +39,16 @@
       border-radius: 8px; outline: none; transition: border-color .2s;
     }
     .field input:focus { border-color: var(--accent); }
+    .pw-wrap { position: relative; }
+    .pw-wrap input { padding-right: 44px; }
+    .pw-toggle {
+      position: absolute; top: 50%; right: 5px; transform: translateY(-50%);
+      display: flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px; padding: 0; border: none; border-radius: 6px;
+      background: transparent; color: var(--text-muted); cursor: pointer; transition: color .2s;
+    }
+    .pw-toggle:hover, .pw-toggle:focus { color: var(--text); }
+    .pw-toggle svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
     .btn {
       display: block; width: 100%; padding: 11px; margin-top: 1.25rem;
       font-size: .95rem; font-weight: 600; font-family: var(--font);
@@ -73,7 +83,7 @@
   <div class="card"><p class="msg">You're logged in already!</p></div>
 {% else %}
   <div class="card">
-    <svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2919 660" role="img" aria-label="Genmon">
+    <svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2919 660" width="160" height="36" role="img" aria-label="Genmon">
       <path class="g-letter" d="M508 267l0 271c-37,19 -74,33 -109,43 -36,9 -70,14 -104,14 -84,0 -155,-28 -211,-84 -56,-56 -84,-127 -84,-212 0,-87 28,-158 85,-214 57,-57 129,-85 216,-85 33,0 64,4 94,14 30,8 58,22 86,40l-15 140c-26,-26 -51,-45 -77,-58 -26,-12 -53,-18 -81,-18 -50,0 -91,17 -124,50 -33,34 -49,76 -49,126 0,53 16,96 47,129 32,34 73,51 123,51 11,0 23,-2 35,-3 12,-3 24,-5 37,-9l0 -81 -106 0 0 -114 237 0z"/>
       <path class="g-text" d="M695 371l151 -4 0 -6c0,-18 -7,-33 -20,-45 -12,-11 -29,-17 -48,-17 -22,0 -40,6 -55,19 -14,12 -23,30 -28,53zm230 82l-13 107c-24,11 -47,19 -70,25 -23,5 -46,8 -69,8 -58,0 -104,-17 -140,-50 -35,-33 -53,-77 -53,-130 0,-56 19,-103 58,-141 39,-39 86,-58 141,-58 48,0 87,14 117,42 30,29 46,65 46,110 0,6 -1,17 -2,33l0 2 -11 16 -236 6c2,23 11,43 29,57 18,15 40,22 67,22 19,0 40,-4 63,-12 23,-9 48,-21 73,-37z"/>
       <path class="g-text" d="M1132 577l-121 0 0 -347 111 0 0 58c19,-23 38,-40 59,-51 21,-11 44,-16 68,-16 37,0 64,10 83,31 19,21 29,52 29,92l0 233 -120 0 0 -199c0,-18 -4,-32 -11,-41 -7,-9 -18,-14 -33,-14 -21,0 -37,7 -48,21 -12,14 -17,35 -17,62l0 171z"/>
@@ -90,7 +100,13 @@
       </div>
       <div class="field">
         <label for="password">Password</label>
-        <input type="password" id="password" name="password" autocomplete="current-password" required>
+        <div class="pw-wrap">
+          <input type="password" id="password" name="password" autocomplete="current-password" required>
+          <button type="button" class="pw-toggle" id="pw-toggle" aria-label="Show password" aria-pressed="false" title="Show password">
+            <svg id="pw-icon-show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg id="pw-icon-hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
+        </div>
       </div>
       {% if remember_me_enabled %}
       <div class="remember">
@@ -100,6 +116,25 @@
       {% endif %}
       <button class="btn" type="submit">Log In</button>
     </form>
+    <script>
+    (function(){
+      var btn = document.getElementById('pw-toggle');
+      var pw = document.getElementById('password');
+      if (!btn || !pw) return;
+      btn.addEventListener('click', function(){
+        var show = pw.type === 'password';
+        pw.type = show ? 'text' : 'password';
+        document.getElementById('pw-icon-show').style.display = show ? 'none' : '';
+        document.getElementById('pw-icon-hide').style.display = show ? '' : 'none';
+        btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+        btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+        btn.setAttribute('title', show ? 'Hide password' : 'Show password');
+        pw.focus();
+        /* Keep the caret at the end after the type swap */
+        var v = pw.value; pw.value = ''; pw.value = v;
+      });
+    })();
+    </script>
     {% if has_passkeys %}
     <div class="divider">or</div>
     <button type="button" class="btn-passkey" id="passkey-login-btn" onclick="passkeyLogin(this)">
