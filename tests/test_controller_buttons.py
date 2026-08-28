@@ -11,8 +11,10 @@
 # -------------------------------------------------------------------------------
 
 import inspect
+import json
 import os
 import sys
+import threading
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -57,6 +59,31 @@ class ButtonTestController(GeneratorController):
 
     def LogErrorLine(self, Message):
         self.Errors.append(Message)
+
+    def LogDebug(self, Message):
+        pass
+
+
+class CommandButtonTestController(ButtonTestController):
+    """Controller that can exercise SetCommandButton / ExecuteRemoteCommand."""
+
+    def __init__(self, buttons=ButtonTestController.NOT_SET, import_file_list=ButtonTestController.NOT_SET, imported_buttons=ButtonTestController.NOT_SET):
+        super(CommandButtonTestController, self).__init__(
+            buttons=buttons,
+            import_file_list=import_file_list,
+            imported_buttons=imported_buttons,
+        )
+
+        class _ModBus(object):
+            def __init__(self):
+                self.CommAccessLock = threading.RLock()
+
+        self.ModBus = _ModBus()
+        self.ExecutedSequences = []
+
+    def ExecuteCommandSequence(self, command_sequence):
+        self.ExecutedSequences.append(command_sequence)
+        return "The command was sent to the controller."
 
 
 def MakeController(buttons=None, import_file_list=None):
@@ -210,6 +237,57 @@ class TestButtonsUninitialized(unittest.TestCase):
             assignment = "self." + name + " = []"
             self.assertIn(assignment, source)
             self.assertLess(source.index(assignment), config_check, name)
+
+
+class TestExecuteRemoteCommand(unittest.TestCase):
+    def test_imported_script_button_without_value(self):
+        # the web UI sends the stored command_sequence; script entries have
+        # only reg and reg_type, matching example_button.json
+        controller = CommandButtonTestController(
+            buttons=[], import_file_list=[IMPORT_FILE], imported_buttons=[]
+        )
+        payload = [
+            {
+                "onewordcommand": IMPORT_BUTTON_NAME,
+                "command_sequence": [
+                    {"reg": "example_button.py", "reg_type": "script"}
+                ],
+            }
+        ]
+
+        result = controller.SetCommandButton(
+            "set_button_command=" + json.dumps(payload)
+        )
+
+        self.assertEqual(result, "The command was sent to the controller.")
+        self.assertEqual(len(controller.ExecutedSequences), 1)
+        self.assertEqual(
+            controller.ExecutedSequences[0][0]["reg"], "example_button.py"
+        )
+        self.assertEqual(controller.Errors, [])
+
+    def test_register_button_with_value_still_executes(self):
+        controller = CommandButtonTestController(
+            buttons=[dict(BUILT_IN_BUTTON)],
+            import_file_list=[],
+            imported_buttons=[],
+        )
+        payload = [
+            {
+                "onewordcommand": "builtinbutton",
+                "command_sequence": [
+                    {"reg": "0001", "reg_type": "holding", "value": "0001"}
+                ],
+            }
+        ]
+
+        result = controller.SetCommandButton(
+            "set_button_command=" + json.dumps(payload)
+        )
+
+        self.assertEqual(result, "The command was sent to the controller.")
+        self.assertEqual(len(controller.ExecutedSequences), 1)
+        self.assertEqual(controller.Errors, [])
 
 
 if __name__ == "__main__":

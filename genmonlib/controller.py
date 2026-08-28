@@ -1172,6 +1172,9 @@ class GeneratorController(MySupport):
                             else:
                                 self.LogError("Error in ExecuteRemoteCommand, unsupported type: " + str(ui_cmd))
                                 return "Error in ExecuteRemoteCommand, unsupported type"
+                        elif "reg_type" in gm_cmd.keys() and isinstance(gm_cmd["reg_type"], str) and gm_cmd["reg_type"].lower() == "script" and "reg" in gm_cmd.keys():
+                            # script commands use "reg" as the script filename; they have no register value
+                            continue
                         elif not "reg" in gm_cmd.keys() or not "value" in gm_cmd.keys():
                             self.LogError("Error in ExecuteRemoteCommand, invalid command in sequence: " + str(selected_command))
                             self.LogDebug(str(button_command))
