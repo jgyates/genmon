@@ -1,0 +1,34 @@
+{
+  "buttons": [
+    {
+      "onewordcommand": "remote_start",
+      "title": "Start Generator",
+      "command_sequence": [
+        {
+          "reg_type": "script",
+          "reg": "start_generator.py"
+        }
+      ]
+    },
+    {
+      "onewordcommand": "remote_stop",
+      "title": "Stop Generator",
+      "command_sequence": [
+        {
+          "reg_type": "script",
+          "reg": "stop_generator.py"
+        }
+      ]
+    },
+    {
+      "onewordcommand": "remote_transfer",
+      "title": "Start + Transfer",
+      "command_sequence": [
+        {
+          "reg_type": "script",
+          "reg": "start_transfer.py"
+        }
+      ]
+    }
+  ]
+}
