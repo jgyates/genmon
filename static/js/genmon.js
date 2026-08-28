@@ -793,6 +793,8 @@ var Poll = {
               ind.wifi = Math.abs(parseFloat(tt.value)) || 0;
             } else if (sub === 'temperature' && /cpu/i.test(tt.title||'') && tt.value) {
               ind.cpuTemp = parseFloat(tt.value) || 0;
+              var um = String(tt.text||'').match(/([CF])\s*$/i);
+              if (um) ind.cpuTempUnits = um[1].toUpperCase();
             }
           }
         }
@@ -1165,27 +1167,36 @@ var UI = {
     /* CPU temperature */
     if (ind.cpuTemp) {
       var t = ind.cpuTemp;
-      /* Derive thresholds from the CPU tile's colorzones if available */
-      var warnAt = 80, badAt = 85;
+      /* Derive thresholds and units from the CPU tile's config if available */
+      var warnAt = 80, badAt = 85, zonesFound = false;
+      var tUnit = (ind.cpuTempUnits || '').toUpperCase();
       if (S.tileConfig) {
         for (var ci = 0; ci < S.tileConfig.length; ci++) {
           var ct = S.tileConfig[ci];
           if (ct && (ct.subtype||'').toLowerCase() === 'temperature' &&
-              /cpu/i.test(ct.title||'') && ct.colorzones && ct.colorzones.length >= 2) {
-            /* zones: [GREEN 0-nominal, YELLOW nominal-mid, RED mid-max] */
-            warnAt = ct.colorzones[0].max;
-            badAt = ct.colorzones[1].max;
+              /cpu/i.test(ct.title||'')) {
+            var cu = String(ct.units||'').match(/[CF]/i);
+            if (cu) tUnit = cu[0].toUpperCase();
+            if (ct.colorzones && ct.colorzones.length >= 2) {
+              /* zones: [GREEN 0-nominal, YELLOW nominal-mid, RED mid-max] */
+              warnAt = ct.colorzones[0].max;
+              badAt = ct.colorzones[1].max;
+              zonesFound = true;
+            }
             break;
           }
         }
       }
+      /* Fallback thresholds are Celsius, so swap in Fahrenheit equivalents */
+      if (!zonesFound && tUnit === 'F') { warnAt = 176; badAt = 185; }
+      var tDeg = '\u00B0' + tUnit;
       var tc = t < warnAt ? 'ind-ok' : t < badAt ? 'ind-warn' : 'ind-bad';
       parts.push(
-        '<div class="hdr-ind '+tc+'" title="CPU: '+t+'\u00B0">' +
+        '<div class="hdr-ind '+tc+'" title="CPU: '+t+tDeg+'">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
         '<path d="M14 14.76V3.5a2.5 2.5 0 00-5 0v11.26a4.5 4.5 0 105 0z"/>' +
         '<circle cx="11.5" cy="17.5" r="2" fill="currentColor" stroke="none" opacity=".5"/>' +
-        '</svg><span class="ind-val">'+t+'\u00B0</span></div>');
+        '</svg><span class="ind-val">'+t+tDeg+'</span></div>');
     }
 
     /* Packets per second */
