@@ -145,6 +145,8 @@ class GeneratorController(MySupport):
         self.LastOutageDuration = self.OutageStartTime - self.OutageStartTime
         self.OutageNoticeDelay = 0
         self.Buttons = []   # UI command buttons (loaded after controller ID, if any)
+        self.ImportButtonFileList = []   # button files imported via "import_buttons" in the conf file
+        self.ImportedButtons = []        # buttons loaded from the files in self.ImportButtonFileList
 
         try:
 
@@ -978,9 +980,12 @@ class GeneratorController(MySupport):
     def GetButtons(self, singlebuttonname = None):
         try:
 
-            if len(self.Buttons) < 1:
+            button_list = getattr(self, "Buttons", None)
+            # imported buttons (import_buttons in the conf file) can be present
+            # even if this controller has no built in buttons, so only return
+            # early if there are neither
+            if not button_list and not getattr(self, "ImportButtonFileList", None):
                 return []
-            button_list = self.Buttons
             button_list = self.GetButtonsCommon(button_list, singlebuttonname=singlebuttonname)
             return button_list
         except Exception as e1:
@@ -988,10 +993,10 @@ class GeneratorController(MySupport):
             return []
     # ----------  Controller::LoadButtonsFromFile-------------------------------
     def LoadButtonsFromFile(self):
+        ImportedButtons = []
         try:
-            if self.ImportButtonFileList == None or len(self.ImportButtonFileList) == 0:
-                return []
-            ImportedButtons = []
+            if not getattr(self, "ImportButtonFileList", None):
+                return ImportedButtons
 
             for FileName in self.ImportButtonFileList:
                 ConfigFileName = os.path.join(
@@ -1021,10 +1026,10 @@ class GeneratorController(MySupport):
     # ----------  Controller::GetButtonsCommon----------------------------------
     def GetButtonsCommon(self, button_list, singlebuttonname = None):
         try:
-            if len(self.ImportButtonFileList) == 0 and button_list == None:
+            if not getattr(self, "ImportButtonFileList", None) and button_list == None:
                 return []
 
-            if not len(self.ImportedButtons):
+            if not getattr(self, "ImportedButtons", None):
                 self.ImportedButtons = self.LoadButtonsFromFile()
 
                 # combine lists only on first (and only) import
