@@ -117,11 +117,35 @@ class TestGetButtons(unittest.TestCase):
         self.assertEqual(first, ["builtinbutton", IMPORT_BUTTON_NAME])
         self.assertEqual(first, second)
 
+    def test_imported_buttons_only_stable_across_calls(self):
+        # Evolution air-cooled leaves self.Buttons empty. The first
+        # start_info_json (genserv startup) must not starve later calls
+        # (browser page load) of the imported buttons.
+        controller = MakeController(buttons=[], import_file_list=[IMPORT_FILE])
+
+        first = ButtonNames(controller.GetButtons())
+        second = ButtonNames(controller.GetButtons())
+
+        self.assertEqual(first, [IMPORT_BUTTON_NAME])
+        self.assertEqual(first, second)
+        self.assertEqual(controller.Buttons, [])
+
     def test_single_button_lookup_of_imported_button(self):
         # SetCommandButton() looks up a single button by name, an imported
         # button must be found for a controller with no built in buttons
         controller = MakeController(buttons=[], import_file_list=[IMPORT_FILE])
 
+        button = controller.GetButtons(singlebuttonname=IMPORT_BUTTON_NAME)
+
+        self.assertTrue(isinstance(button, dict))
+        self.assertEqual(button["onewordcommand"], IMPORT_BUTTON_NAME)
+
+    def test_single_imported_button_lookup_after_list_fetch(self):
+        # start_info_json loads the full list first; a later click must still
+        # find the imported button by name
+        controller = MakeController(buttons=[], import_file_list=[IMPORT_FILE])
+
+        self.assertEqual(ButtonNames(controller.GetButtons()), [IMPORT_BUTTON_NAME])
         button = controller.GetButtons(singlebuttonname=IMPORT_BUTTON_NAME)
 
         self.assertTrue(isinstance(button, dict))

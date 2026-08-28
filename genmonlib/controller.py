@@ -1031,12 +1031,16 @@ class GeneratorController(MySupport):
 
             if not getattr(self, "ImportedButtons", None):
                 self.ImportedButtons = self.LoadButtonsFromFile()
-
-                # combine lists only on first (and only) import
-                if button_list == None or len(button_list) == 0:
-                    button_list = self.ImportedButtons
-                else:
+                # append imported buttons onto a non-empty built-in list only
+                # once so later calls do not duplicate them
+                if button_list:
                     button_list.extend(self.ImportedButtons)
+
+            # controllers with no built-in buttons leave self.Buttons empty;
+            # imported buttons live on self.ImportedButtons and must still be
+            # returned on every call (start_info_json is fetched more than once)
+            if not button_list:
+                button_list = getattr(self, "ImportedButtons", None) or []
 
             if not isinstance(button_list, list):
                 self.LogError("Error in GetButtonsCommon: invalid input or data: "+ str(type(button_list)))
