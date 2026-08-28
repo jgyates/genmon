@@ -17,6 +17,9 @@ All notable changes to this project will be documented in this file.
 - Added support for an auxiliary alam log (see Advanced Settings to enable) and the Known Issues wiki for more info
 - Updated alarm codes for EvoLC 4.5L
 - Added the ability to unhide the password when logging in (thanks @MichaleB2018)
+- Fixed imported buttons (import_buttons) not appearing on the Maintenance page for controllers without built-in buttons (thanks @mattgraham)
+- Allow script-type imported command buttons to execute without a register value
+- Added example generator start / stop / transfer imported command buttons
 
 ## 2.0.01 -2026-05-18
 - Various bug fixes and typo corrections

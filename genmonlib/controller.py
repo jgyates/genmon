@@ -145,6 +145,8 @@ class GeneratorController(MySupport):
         self.LastOutageDuration = self.OutageStartTime - self.OutageStartTime
         self.OutageNoticeDelay = 0
         self.Buttons = []   # UI command buttons (loaded after controller ID, if any)
+        self.ImportButtonFileList = []   # button files imported via "import_buttons" in the conf file
+        self.ImportedButtons = []        # buttons loaded from the files in self.ImportButtonFileList
 
         try:
 
@@ -978,9 +980,12 @@ class GeneratorController(MySupport):
     def GetButtons(self, singlebuttonname = None):
         try:
 
-            if len(self.Buttons) < 1:
+            button_list = getattr(self, "Buttons", None)
+            # imported buttons (import_buttons in the conf file) can be present
+            # even if this controller has no built in buttons, so only return
+            # early if there are neither
+            if not button_list and not getattr(self, "ImportButtonFileList", None):
                 return []
-            button_list = self.Buttons
             button_list = self.GetButtonsCommon(button_list, singlebuttonname=singlebuttonname)
             return button_list
         except Exception as e1:
@@ -988,10 +993,10 @@ class GeneratorController(MySupport):
             return []
     # ----------  Controller::LoadButtonsFromFile-------------------------------
     def LoadButtonsFromFile(self):
+        ImportedButtons = []
         try:
-            if self.ImportButtonFileList == None or len(self.ImportButtonFileList) == 0:
-                return []
-            ImportedButtons = []
+            if not getattr(self, "ImportButtonFileList", None):
+                return ImportedButtons
 
             for FileName in self.ImportButtonFileList:
                 ConfigFileName = os.path.join(
@@ -1021,17 +1026,21 @@ class GeneratorController(MySupport):
     # ----------  Controller::GetButtonsCommon----------------------------------
     def GetButtonsCommon(self, button_list, singlebuttonname = None):
         try:
-            if len(self.ImportButtonFileList) == 0 and button_list == None:
+            if not getattr(self, "ImportButtonFileList", None) and button_list == None:
                 return []
 
-            if not len(self.ImportedButtons):
+            if not getattr(self, "ImportedButtons", None):
                 self.ImportedButtons = self.LoadButtonsFromFile()
-
-                # combine lists only on first (and only) import
-                if button_list == None or len(button_list) == 0:
-                    button_list = self.ImportedButtons
-                else:
+                # append imported buttons onto a non-empty built-in list only
+                # once so later calls do not duplicate them
+                if button_list:
                     button_list.extend(self.ImportedButtons)
+
+            # controllers with no built-in buttons leave self.Buttons empty;
+            # imported buttons live on self.ImportedButtons and must still be
+            # returned on every call (start_info_json is fetched more than once)
+            if not button_list:
+                button_list = getattr(self, "ImportedButtons", None) or []
 
             if not isinstance(button_list, list):
                 self.LogError("Error in GetButtonsCommon: invalid input or data: "+ str(type(button_list)))
@@ -1163,6 +1172,9 @@ class GeneratorController(MySupport):
                             else:
                                 self.LogError("Error in ExecuteRemoteCommand, unsupported type: " + str(ui_cmd))
                                 return "Error in ExecuteRemoteCommand, unsupported type"
+                        elif "reg_type" in gm_cmd.keys() and isinstance(gm_cmd["reg_type"], str) and gm_cmd["reg_type"].lower() == "script" and "reg" in gm_cmd.keys():
+                            # script commands use "reg" as the script filename; they have no register value
+                            continue
                         elif not "reg" in gm_cmd.keys() or not "value" in gm_cmd.keys():
                             self.LogError("Error in ExecuteRemoteCommand, invalid command in sequence: " + str(selected_command))
                             self.LogDebug(str(button_command))
