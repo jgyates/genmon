@@ -4248,7 +4248,7 @@ var Pages = {
         '<input class="form-input input-with-icon" type="datetime-local" id="j-date"></div></div>' +
         '<div class="form-group"><label class="form-label">Type</label>' +
         '<select class="form-select" id="j-type"><option>Maintenance</option><option>Repair</option>' +
-        '<option>Check</option><option>Observation</option></select></div>' +
+        '<option>Check</option><option>Observation</option><option>Note</option></select></div>' +
         '<div class="form-group"><label class="form-label">Engine Hours</label>' +
         '<input class="form-input" type="number" id="j-hours" min="0" step="0.1" placeholder="0"></div></div>' +
         '<div class="form-group"><label class="form-label">Comment</label>' +
@@ -4410,7 +4410,7 @@ var Pages = {
         '<input class="form-input input-with-icon" type="datetime-local" id="je-date" value="'+esc(dtVal)+'"></div></div>' +
         '<div class="form-group"><label class="form-label">Type</label>' +
         '<select class="form-select" id="je-type">' +
-        ['Maintenance','Repair','Check','Observation'].map(function(t){
+        ['Maintenance','Repair','Check','Observation','Note'].map(function(t){
           return '<option'+(t===e.type?' selected':'')+'>'+t+'</option>';
         }).join('') + '</select></div>' +
         '<div class="form-group"><label class="form-label">Engine Hours</label>' +

@@ -3911,6 +3911,7 @@ class GeneratorController(MySupport):
                 "check",
                 "repair",
                 "observation",
+                "note"
             ]:
                 self.LogError(
                     "Error in ValidateMaintLogEntry: Invalid type: "
