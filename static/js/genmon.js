@@ -4294,7 +4294,9 @@ var Pages = {
         var entry = {
           date: String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0')+'/'+
                 d.getFullYear()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'),
-          type: $('#j-type').val(), hours: parseFloat($('#j-hours').val()) || 0, comment: $('#j-cmt').val()
+          type: $('#j-type').val(), hours: parseFloat($('#j-hours').val()) || 0,
+          /* backend flattens real newlines, so encode them as <br> */
+          comment: $('#j-cmt').val().replace(/\r\n|\r|\n/g, '<br>')
         };
         API.set('add_maint_log', JSON.stringify(entry)).done(function() {
           $('#j-cmt').val('');
@@ -4340,7 +4342,8 @@ var Pages = {
       if (q) {
         indices = indices.filter(function(i) {
           var e = all[i];
-          var text = ((e.date||'')+' '+(e.type||'')+' '+(e.comment||'')).toLowerCase();
+          var text = ((e.date||'')+' '+(e.type||'')+' '+
+            (e.comment||'').replace(/<br\s*\/?>/gi, ' ')).toLowerCase();
           return text.indexOf(q) >= 0;
         });
       }
@@ -4364,11 +4367,11 @@ var Pages = {
       var h = '';
       indices.forEach(function(i) {
         var e = all[i];
-        var cmt = (e.comment||'').replace(/<br>/g, ' ');
+        var cmt = esc((e.comment||'').replace(/<br\s*\/?>/gi, '\n')).replace(/\r\n|\r|\n/g, '<br>');
         var hrs = e.hours ? ' &middot; ' + esc(String(e.hours)) + ' hrs' : '';
         h += '<div class="journal-entry">' +
           '<div class="journal-date">'+esc(e.date)+'</div>' +
-          '<div class="journal-text"><strong>'+esc(e.type)+'</strong>' + hrs + '<br>'+esc(cmt)+'</div>' +
+          '<div class="journal-text"><strong>'+esc(e.type)+'</strong>' + hrs + '<br>'+cmt+'</div>' +
           '<div class="journal-actions">' +
           '<button class="btn btn-sm btn-outline j-edit" data-idx="'+i+'" title="Edit">' +
           '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
@@ -4404,7 +4407,7 @@ var Pages = {
       var calIcon = '<svg class="cal-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
         '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/>' +
         '<line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
-      var cmt = (e.comment||'').replace(/<br>/g, '\n');
+      var cmt = (e.comment||'').replace(/<br\s*\/?>/gi, '\n');
       var body = '<div class="form-group"><label class="form-label">Date</label>' +
         '<div class="input-icon-wrap">' + calIcon +
         '<input class="form-input input-with-icon" type="datetime-local" id="je-date" value="'+esc(dtVal)+'"></div></div>' +
@@ -4429,7 +4432,7 @@ var Pages = {
                 d.getFullYear()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'),
           type: $('#je-type').val(),
           hours: parseFloat($('#je-hours').val()) || 0,
-          comment: $('#je-cmt').val().replace(/\n/g, '<br>')
+          comment: $('#je-cmt').val().replace(/\r\n|\r|\n/g, '<br>')
         };
         var obj = {}; obj[String(idx)] = entry;
         var payload = JSON.stringify(obj);

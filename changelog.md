@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - Allow script-type imported command buttons to execute without a register value
 - Added example generator start / stop / transfer imported command buttons
 - Added 'Note' category to the service journal
+- Updated service journal to preserve line breaks (thanks @MichaelB2018)
 
 ## 2.0.01 -2026-05-18
 - Various bug fixes and typo corrections
