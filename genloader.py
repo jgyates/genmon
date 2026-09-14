@@ -244,7 +244,6 @@ class Loader(MySupport):
                 self.LibraryDependency("serial", "pyserial"),  # Serial
                 self.LibraryDependency("crcmod"),  # Modbus CRC
                 self.LibraryDependency("pyowm"),  # Open Weather API
-                self.LibraryDependency("pytz"),  # Time zone support
                 self.LibraryDependency("pyotp", Version="2.3.0"),  # 2FA support
                 self.LibraryDependency("psutil"),  # process utilities
                 self.LibraryDependency("OpenSSL", "pyopenssl"),  # SSL
@@ -769,7 +768,7 @@ class Loader(MySupport):
                     version_installed = tuple(int(x) for x in my_module.__version__.split('.'))
                 except Exception as e1:
                     # probably no version exported in this library
-                    self.LogErrorLine(f"Error in LibraryIsInstalled, failure getting version: {libraryname}, version: {version}")
+                    #self.LogErrorLine(f"Error in LibraryIsInstalled, failure getting version: {libraryname}, version: {version}: {e1}")
                     return True
                 version_needed = tuple(int(x) for x in version.split('.'))
                 if version_installed < version_needed:

@@ -4,7 +4,6 @@ configparser
 pyserial
 crcmod
 pyowm
-pytz
 pyopenssl
 twilio
 chump
