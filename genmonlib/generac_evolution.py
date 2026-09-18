@@ -54,6 +54,15 @@ SERVICE_LOG_END_REG = (
 SERIAL_NUM_REG = 0x01F4
 SERIAL_NUM_REG_LENGTH = 5
 
+#0x2AF8, stride 0x80, 10 slots.
+PZ200_LOG_STARTING_REG = 0x2af8
+PZ200_LOG_DEPTH = 10
+PZ200_LOG_STRIDE = 0x80
+PZ200_LOG_REG_LENGTH = 5
+PZ200_LOG_END_REG = (
+    PZ200_LOG_STARTING_REG + (PZ200_LOG_STRIDE * PZ200_LOG_DEPTH)
+) - PZ200_LOG_STRIDE
+
 # Identifier register PowerZone 200
 IDENTITY_REG = 0x07d0
 IDENTITY_REG_LENGTH = 10
@@ -1605,6 +1614,14 @@ class Evolution(GeneratorController):
                 self.DelayBetweenFrames()
                 if self.IsStopping:
                     return
+            for Register in self.LogRange(
+                PZ200_LOG_STARTING_REG, PZ200_LOG_DEPTH, PZ200_LOG_STRIDE
+            ):
+                RegStr = "%04x" % Register
+                self.ModBus.ProcessTransaction(RegStr, PZ200_LOG_REG_LENGTH)
+                self.DelayBetweenFrames()
+                if self.IsStopping:
+                    return
 
         # Start / Stop Log
         for Register in self.LogRange(
@@ -2245,7 +2262,7 @@ class Evolution(GeneratorController):
             RegisterInt >= SERVICE_LOG_STARTING_REG
             and RegisterInt <= SERVICE_LOG_END_REG
         ):
-            if len(Value) != 16:
+            if len(Value) != (SERVICE_LOG_STRIDE*4):
                 self.LogError(
                     "Validation Error: Invalid register length (Service) %s %s"
                     % (Register, Value)
@@ -2255,7 +2272,7 @@ class Evolution(GeneratorController):
             RegisterInt >= START_LOG_STARTING_REG
             and RegisterInt <= START_LOG_END_REG
         ):
-            if len(Value) != 16:
+            if len(Value) != (START_LOG_STRIDE*4):
                 self.LogError(
                     "Validation Error: Invalid register length (Start) %s %s"
                     % (Register, Value)
@@ -2265,7 +2282,7 @@ class Evolution(GeneratorController):
             RegisterInt >= ALARM_LOG_STARTING_REG
             and RegisterInt <= ALARM_LOG_END_REG
         ):
-            if len(Value) != 20:  #
+            if len(Value) != (ALARM_LOG_STRIDE*4):  #
                 self.LogError(
                     "Validation Error: Invalid register length (Alarm) %s %s"
                     % (Register, Value)
@@ -2275,21 +2292,21 @@ class Evolution(GeneratorController):
             RegisterInt >= NEXUS_ALARM_LOG_STARTING_REG
             and RegisterInt <= NEXUS_ALARM_LOG_END_REG
         ):
-            if len(Value) != 16:  # Nexus alarm reg is 16 chars, no alarm codes
+            if len(Value) != (NEXUS_ALARM_LOG_STRIDE*4):  # Nexus alarm reg is 16 chars, no alarm codes
                 self.LogError(
                     "Validation Error: Invalid register length (Nexus Alarm) %s %s"
                     % (Register, Value)
                 )
                 ValidationOK = False
         elif RegisterInt == SERIAL_NUM_REG:
-            if len(Value) != 20:
+            if len(Value) != (SERIAL_NUM_REG_LENGTH *4):
                 self.LogError(
                     "Validation Error: Invalid register length (Model) %s %s"
                     % (Register, Value)
                 )
                 ValidationOK = False
         elif RegisterInt == IDENTITY_REG:
-            if len(Value) != 40:
+            if len(Value) != (IDENTITY_REG_LENGTH*4):
                 self.LogError(
                     "Validation Error: Invalid register length (Identity) %s %s"
                     % (Register, Value)
@@ -2310,6 +2327,16 @@ class Evolution(GeneratorController):
                 if len(Value) != 4:
                     self.LogError(
                         "Validation Error: Invalid register length (PZ200 Warning) %s %s"
+                        % (Register, Value)
+                    )
+                    ValidationOK = False
+            if (
+                RegisterInt >= PZ200_LOG_STARTING_REG
+                and RegisterInt <= PZ200_LOG_END_REG
+                ):
+                if len(Value) != PZ200_LOG_REG_LENGTH*4:  #
+                    self.LogError(
+                        "Validation Error: Invalid register length (PZ Log) %s %s"
                         % (Register, Value)
                     )
                     ValidationOK = False
@@ -2336,7 +2363,13 @@ class Evolution(GeneratorController):
             # Power Zone 200 Warning registers
             if (RegisterInt >= POWER_ZONE_200_WARNING_REG 
                             and RegisterInt < (POWER_ZONE_200_WARNING_REG + POWER_ZONE_200_WARNING_LENGTH)):
-                            return True
+                return True
+            # PZ200 Log registers
+            if (
+                RegisterInt >= PZ200_LOG_STARTING_REG
+                and RegisterInt <= PZ200_LOG_END_REG
+            ):
+                return True
         if (
             RegisterInt >= SERVICE_LOG_STARTING_REG
             and RegisterInt <= SERVICE_LOG_END_REG
@@ -3248,7 +3281,8 @@ class Evolution(GeneratorController):
                     alarm_list = alarm_list[0]
                 AuxAlarmLog = {"Auxiliary Alarm Log": alarm_list}
                 LogDict = self.MergeDicts(LogDict, AuxAlarmLog)
-            
+
+            # These registes are not parsed to display strings but are returned in the raw register dump
             if self.PowerZone200 and RawOutput:
                 PowerZoneAlarmRegs = {}
                 for Register in range(POWER_ZONE_200_ALARM_REG,POWER_ZONE_200_ALARM_REG+POWER_ZONE_200_ALARM_LENGTH):
@@ -3256,6 +3290,10 @@ class Evolution(GeneratorController):
                     Value = self.GetRegisterValueFromList(RegStr)
                     PowerZoneAlarmRegs[RegStr] = Value
                 for Register in range(POWER_ZONE_200_WARNING_REG,POWER_ZONE_200_WARNING_REG+POWER_ZONE_200_WARNING_LENGTH):
+                    RegStr = "%04x" % Register
+                    Value = self.GetRegisterValueFromList(RegStr)
+                    PowerZoneAlarmRegs[RegStr] = Value
+                for Register in self.LogRange(PZ200_LOG_STARTING_REG, PZ200_LOG_DEPTH, PZ200_LOG_STRIDE):
                     RegStr = "%04x" % Register
                     Value = self.GetRegisterValueFromList(RegStr)
                     PowerZoneAlarmRegs[RegStr] = Value
