@@ -607,8 +607,64 @@ class GenHubitat(MySupport):
             if not self.IncludeMonitorStats:
                 self.LogDebug("Filtering monitor stats from state")
                 state.pop("Monitor", None)
+            self._apply_blacklist(state)
         except Exception as e1:
             self.LogErrorLine("Error in _filter_state: " + str(e1))
+
+    def _is_blacklisted(self, path, exempt_keywords=None):
+        """True if a single path matches a blacklist keyword.
+
+        exempt_keywords ignores specific blacklist entries for this check.
+        Used for the CPU Temperature value, which is written under a Tiles/
+        path that the default "Tiles" entry would otherwise match even
+        though it is deliberately kept.
+        """
+        if not self.BlackList:
+            return False
+        exempt = set(k.lower() for k in (exempt_keywords or []))
+        lowered = path.lower()
+        return any(
+            bl.lower() in lowered
+            for bl in self.BlackList
+            if bl.lower() not in exempt
+        )
+
+    def _apply_blacklist(self, state):
+        """Remove any state path matching a blacklist keyword, in place."""
+        if not self.BlackList:
+            return
+        removed = self._prune_blacklisted(state)
+        if removed:
+            self.LogDebug("Filtering %d blacklisted path(s) from state" % removed)
+
+    def _prune_blacklisted(self, node, prefix=""):
+        """Recursively delete blacklisted keys, returning how many were cut.
+
+        Prunes at the highest matching node so excluding a section drops the
+        whole subtree in one step, and walks lists (e.g. gui_status/tiles)
+        as well as dicts. Paths are built the same way _flatten_state builds
+        them, including treating genmon _num_json dicts as leaves, so a
+        keyword matches exactly what a user sees in the data.
+        """
+        removed = 0
+        if isinstance(node, dict):
+            for key in list(node.keys()):
+                path = (prefix + "/" + key) if prefix else key
+                if self._is_blacklisted(path):
+                    del node[key]
+                    removed += 1
+                elif not self._is_num_json(node[key]):
+                    removed += self._prune_blacklisted(node[key], path)
+        elif isinstance(node, list):
+            for item in node:
+                removed += self._prune_blacklisted(item, prefix)
+        return removed
+
+    # Path CPU temperature is injected at, matching base.json's entity
+    # definition. Also used for the blacklist check in _inject_cpu_temp.
+    CPU_TEMP_PATH = "Tiles/CPU Temp/value"
+    # Parent path the locally-computed platform metrics are injected under.
+    PLATFORM_STATS_PATH = "Monitor/Platform Stats"
 
     def _inject_cpu_temp(self, state):
         """Extract CPU temperature from gui_status and inject into the
@@ -621,6 +677,13 @@ class GenHubitat(MySupport):
         backwards compatibility, and the value is normalized to include the
         degree symbol so Home Assistant's temperature device_class accepts it.
         """
+        if not self.IncludeMonitorStats:
+            return
+        # "tiles" is exempt: this value is deliberately kept despite living
+        # under a Tiles/ path that the default blacklist entry matches. A
+        # keyword naming the field itself (e.g. "CPU Temp") still excludes it.
+        if self._is_blacklisted(self.CPU_TEMP_PATH, exempt_keywords=["tiles"]):
+            return
         try:
             gui = state.get("gui_status", {})
             temp_str = None
@@ -648,11 +711,11 @@ class GenHubitat(MySupport):
                     temp_str = "%.1f °C" % float(cpu_temp)
 
             if temp_str is not None:
-                if "Tiles" not in state:
-                    state["Tiles"] = {}
-                if "CPU Temp" not in state["Tiles"]:
-                    state["Tiles"]["CPU Temp"] = {}
-                state["Tiles"]["CPU Temp"]["value"] = temp_str
+                node = state
+                parts = self.CPU_TEMP_PATH.split("/")
+                for part in parts[:-1]:
+                    node = node.setdefault(part, {})
+                node[parts[-1]] = temp_str
                 self.LogDebug("Injected CPU temp: " + temp_str)
         except Exception as e1:
             self.LogErrorLine("Error in _inject_cpu_temp: " + str(e1))
@@ -663,6 +726,8 @@ class GenHubitat(MySupport):
         Reads /proc/meminfo and os.statvfs on the Pi. If any call fails the
         metric is silently omitted. Values are cached for 60 seconds.
         """
+        if not self.IncludeMonitorStats:
+            return
         try:
             if not MyPlatform.IsOSLinux():
                 return
@@ -705,17 +770,29 @@ class GenHubitat(MySupport):
                 self._cached_resource_info = resources
                 self._last_resource_check_time = now
 
-            if resources:
+            # Blacklist is applied per metric here rather than by re-walking
+            # the whole state afterwards: these are computed locally, so they
+            # don't exist yet when _filter_state() runs.
+            allowed = {
+                key: value
+                for key, value in resources.items()
+                if not self._is_blacklisted(
+                    self.PLATFORM_STATS_PATH + "/" + key
+                )
+            }
+            if allowed:
                 monitor = state.setdefault("Monitor", {})
                 pstats = monitor.setdefault("Platform Stats", {})
-                pstats.update(resources)
+                pstats.update(allowed)
 
             # Compute WiFi signal percent from dBm (same formula as web UI)
             try:
                 monitor = state.get("Monitor", {})
                 pstats = monitor.get("Platform Stats", {})
                 raw_dbm = pstats.get("WLAN Signal Level", "")
-                if raw_dbm:
+                if raw_dbm and not self._is_blacklisted(
+                    self.PLATFORM_STATS_PATH + "/WLAN Signal Percent"
+                ):
                     dbm = float(str(raw_dbm).replace("dBm", "").strip())
                     pct = max(0, min(100, round((dbm + 90) / 60 * 100)))
                     pstats["WLAN Signal Percent"] = str(pct) + "%"
