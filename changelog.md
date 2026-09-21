@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - Added 'Note' category to the service journal
 - Updated service journal to preserve line breaks (thanks @MichaelB2018)
 - remove pytz from requirements as it is no longer needed
+- Performance improvements to genhubitat. thanks @bdwilson
 
 ## 2.0.01 -2026-05-18
 - Various bug fixes and typo corrections
