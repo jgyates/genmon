@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 - Updated service journal to preserve line breaks (thanks @MichaelB2018)
 - remove pytz from requirements as it is no longer needed
 - Performance improvements to genhubitat. thanks @bdwilson
+- added remote alarm reset for Power Zone 200. thanks @@karl-pizzolatto for the data and testing
 
 ## 2.0.01 -2026-05-18
 - Various bug fixes and typo corrections
