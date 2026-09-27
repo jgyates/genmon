@@ -3206,7 +3206,7 @@ class Evolution(GeneratorController):
         return True, outstring
 
     # ------------ Evolution:GetLogs --------------------------------------------
-    def GetLogs(self, Title, StartReg, Stride, AllLogs=False, RawOutput=False):
+    def GetLogs(self, Title, StartReg, Stride, Depth=LOG_DEPTH, AllLogs=False, RawOutput=False):
 
         # The output will be a Python Dictionary with a key (Title) and
         # the entry will be a list of strings (or one string if not AllLogs,
@@ -3217,7 +3217,7 @@ class Evolution(GeneratorController):
         Title = Title.replace(":", "")
 
         if AllLogs:
-            for Register in self.LogRange(StartReg, LOG_DEPTH, Stride):
+            for Register in self.LogRange(StartReg, Depth, Stride):
                 bSuccess, LogEntry = self.GetOneLogEntry(Register, StartReg, RawOutput)
                 if not bSuccess or len(LogEntry) == 0:
                     break
@@ -3246,17 +3246,18 @@ class Evolution(GeneratorController):
             STARTSTOPLOG = "Run Log:"
 
             EvolutionLog = [
-                [ALARMLOG, ALARM_LOG_STARTING_REG, ALARM_LOG_STRIDE],
-                [SERVICELOG, SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE],
-                [STARTSTOPLOG, START_LOG_STARTING_REG, START_LOG_STRIDE],
+                [ALARMLOG, ALARM_LOG_STARTING_REG, ALARM_LOG_STRIDE, LOG_DEPTH],
+                [SERVICELOG, SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE, LOG_DEPTH],
+                [STARTSTOPLOG, START_LOG_STARTING_REG, START_LOG_STRIDE, LOG_DEPTH],
             ]
             PowerZone200Log = [
-                [SERVICELOG, SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE],
-                [STARTSTOPLOG, START_LOG_STARTING_REG, START_LOG_STRIDE],
+                [SERVICELOG, SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE, LOG_DEPTH],
+                [STARTSTOPLOG, START_LOG_STARTING_REG, START_LOG_STRIDE, LOG_DEPTH],
+                [ALARMLOG, PZ200_LOG_STARTING_REG, PZ200_LOG_STRIDE, PZ200_LOG_DEPTH]
             ]
             NexusLog = [
-                [ALARMLOG, NEXUS_ALARM_LOG_STARTING_REG, NEXUS_ALARM_LOG_STRIDE],
-                [STARTSTOPLOG, START_LOG_STARTING_REG, START_LOG_STRIDE],
+                [ALARMLOG, NEXUS_ALARM_LOG_STARTING_REG, NEXUS_ALARM_LOG_STRIDE, LOG_DEPTH],
+                [STARTSTOPLOG, START_LOG_STARTING_REG, START_LOG_STRIDE, LOG_DEPTH],
             ]
 
             if self.PowerZone200:
@@ -3271,7 +3272,7 @@ class Evolution(GeneratorController):
 
             for Params in LogParams:
                 LogOutput = self.GetLogs(
-                    Params[0], Params[1], Params[2], AllLogs, RawOutput
+                    Params[0], Params[1], Params[2], Depth=Params[3],AllLogs=AllLogs, RawOutput=RawOutput
                 )
                 LogDict = self.MergeDicts(LogDict, LogOutput)
 
@@ -3293,10 +3294,10 @@ class Evolution(GeneratorController):
                     RegStr = "%04x" % Register
                     Value = self.GetRegisterValueFromList(RegStr)
                     PowerZoneAlarmRegs[RegStr] = Value
-                for Register in self.LogRange(PZ200_LOG_STARTING_REG, PZ200_LOG_DEPTH, PZ200_LOG_STRIDE):
-                    RegStr = "%04x" % Register
-                    Value = self.GetRegisterValueFromList(RegStr)
-                    PowerZoneAlarmRegs[RegStr] = Value
+                #for Register in self.LogRange(PZ200_LOG_STARTING_REG, PZ200_LOG_DEPTH, PZ200_LOG_STRIDE):
+                #    RegStr = "%04x" % Register
+                #    Value = self.GetRegisterValueFromList(RegStr)
+                #    PowerZoneAlarmRegs[RegStr] = Value
                 LogDict = self.MergeDicts(LogDict, PowerZoneAlarmRegs)
 
             RetValue["Logs"] = LogDict
@@ -3391,6 +3392,99 @@ class Evolution(GeneratorController):
 
         return Month, Day, Year, Hour, Min, Seconds, LogCode
 
+    # ----------  Evolution:ParsePZ200AlarmEntry--------------------------------
+    # PZ200 alarm logs entries are 20 chars log
+    #   CCAAMMHHBBSSYYDDXXX
+    #     CC   = code  (Unknow value, possibly a code for displaying a string value)
+    #     AA   = Action
+    #     MM   = Minutes
+    #     HH   = Hours
+    #     BB   = Month
+    #     SS   = Seconds
+    #     YY   = two digit year
+    #     DD   = Day of Month 
+    #     XXXX = E-Code
+    # ---------------------------------------------------------------------------
+    def ParsePZ200AlarmEntry(self, Value, LogBase = None):
+        try:
+            if len(Value) < 20:
+                self.LogError("Error in  ParsePZ200AlarmEntry length check (20)")
+                return ""
+
+            Month = int(Value[8:10], 16)
+            if Month == 0 or Month > 12:  # validate month
+                # This is the normal return path for an empty log entry
+                return ""
+
+            DisplayCode = int(Value[0:2], 16)
+            ActionCode = int(Value[2:4], 16)
+            if ActionCode == 0x80:
+                ActionStr = "Alarm Activated"
+            elif ActionCode == 0x00:
+                ActionStr = "Alarm Cleared"
+            else:
+                ActionStr = f"Unknown {ActionCode:#02x}"
+
+            DisplayStr = f"{DisplayCode:#02x}"
+
+            Min = int(Value[4:6], 16)
+            if Min > 59:  # validate minute
+                self.LogError("Error in  ParsePZ200AlarmEntry minutes check")
+                return ""
+
+            Hour = int(Value[6:8], 16)
+            if Hour > 23:  # validate hour
+                self.LogError("Error in  ParsePZ200AlarmEntry hours check")
+                return ""
+
+            # Seconds
+            Seconds = int(Value[10:12], 16)
+            if Seconds > 59:
+                self.LogError("Error in  ParsePZ200AlarmEntry seconds check")
+                return ""
+
+            Day = int(Value[14:16], 16)
+            if Day == 0 or Day > 31:  # validate day
+                self.LogError("Error in  ParsePZ200AlarmEntry day check")
+                return ""
+
+            Year = int(Value[12:14], 16)  # year
+            # this will attempt to find a description for the log entry based on the info in ALARMS.txt
+            # get alarm code
+            AlarmCode = int(Value[16:20], 16)
+
+            # TODO Handle DisplayStr?
+            AlarmStr = self.GetAlarmInfo(Value[16:20], ReturnNameOnly=True, FromLog=True)
+            if "unknown" in AlarmStr.lower():
+                AlarmStr = f"UNKNOWN ALARM: {AlarmCode}"
+            
+            if self.bAlternateDateFormat:
+                    RetStr = "%02d/%02d/%02d %02d:%02d:%02d %s: %s" % (
+                    Day,
+                    Month,
+                    Year,
+                    Hour,
+                    Min,
+                    Seconds,
+                    ActionStr,
+                    AlarmStr
+                )
+            else:
+                RetStr = "%02d/%02d/%02d %02d:%02d:%02d %s: %s" % (
+                    Month,
+                    Day,
+                    Year,
+                    Hour,
+                    Min,
+                    Seconds,
+                    ActionStr,
+                    AlarmStr
+                )
+            RetStr += ": Alarm Code: %04d" % AlarmCode
+            return RetStr
+        except Exception as e1:
+            self.LogErrorLine(f"Error parsing PZ200 alarm log: {e1}")
+            return ""
     # ----------  Evolution:ParseLogEntry----------------------------------------
     #  Log Entries are in one of two formats, 16 (On off Log, Service Log) or
     #   20 chars (Alarm Log)
@@ -3407,6 +3501,10 @@ class Evolution(GeneratorController):
     # ---------------------------------------------------------------------------
     def ParseLogEntry(self, Value, LogBase=None):
         # This should be the same for all models
+
+        if LogBase == PZ200_LOG_STARTING_REG:
+            return self.ParsePZ200AlarmEntry(Value, LogBase)
+
         StartLogDecoder = {
             0x28: "Switched Off",  # Start / Stop Log
             0x29: "Running - Manual",  # Start / Stop Log

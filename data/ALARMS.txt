@@ -135,10 +135,11 @@
 3003!ALARM!ECU Faulted!ECU Faulted!ECU Faulted
 
 # Power Zone 200
+2070!ALARM!Missing Keypad!Missing Keypad!No further description
 3104!ALARM!Engine Throttle Valve 1 Position!Engine Throttle Valve 1 Position!Engine Throttle Valve 1 Position
 3204!ALARM!Engine Fuel Delivery Pressure!Engine Fuel Delivery Pressure!Engine Fuel Delivery Pressure
 3404!ALARM!Engine Intake Manifold #1 Pressure!Engine Intake Manifold #1!Pressure|Engine Intake Manifold #1
-4904!ALARM!Engine Fuel Valve 1 Position!Engine Fuel Valve 1 Position
+4904!ALARM!Engine Fuel Valve 1 Position!Engine Fuel Valve 1 Position!No further description
 4101!ALARM!Engine Position Sensor!Engine Position Sensor!Engine Position Sensor!Engine Position Sensor
 5101!ALARM!Engine Speed Low!Engine Speed Low!No further description
 

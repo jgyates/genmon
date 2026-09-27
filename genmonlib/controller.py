@@ -306,6 +306,9 @@ class GeneratorController(MySupport):
                 self.UseAuxAlarmLog = self.config.ReadValue(
                     "use_aux_alarm_log", return_type=bool, default=False
                 )
+                self.MaxAuxAlarmLogEntries = self.config.ReadValue(
+                                    "max_aux_alarm_log_entries", return_type=int, default=50
+                                )
                 self.ImportButtonFileList = []
                 self.ImportedButtons = []
                 ImportButtonsFiles = config.ReadValue("import_buttons",default=None)
@@ -4122,6 +4125,8 @@ class GeneratorController(MySupport):
             else:
                 date_string = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")
             self.AuxAlarmLog.append(f"{date_string} {entry}")
+            if len(self.AuxAlarmLog) > self.MaxAuxAlarmLogEntries:
+                self.AuxLarmLog = self.AuxAlarmLog[-int(self.self.MaxAuxAlarmLogEntries):]
             self.SaveAuxAlarmLog()
             return True
         except Exception as e1:
