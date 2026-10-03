@@ -469,8 +469,8 @@ class GenHALink(MySupport):
                 if eid == "start_exercise" and not exercise_ok:
                     self.LogDebug("Filtered out 'start_exercise' (ExerciseControls=False)")
                     continue
-                if eid == "set_time" and not settime_ok:
-                    self.LogDebug("Filtered out 'set_time' (SetGenTime=False)")
+                if eid == "set_generator_time" and not settime_ok:
+                    self.LogDebug("Filtered out 'set_generator_time' (SetGenTime=False)")
                     continue
                 filtered.append(entity)
             result[category] = filtered
