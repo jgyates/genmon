@@ -1080,6 +1080,7 @@ class CustomController(GeneratorController):
             StartInfo["Actual"] = self.GetController(Actual=True)
             StartInfo["UtilityVoltage"] = False
             StartInfo["RemoteCommands"] = False  # Remote Start/ Stop/ StartTransfer
+            StartInfo["RemoteExercise"] = False
             StartInfo["ResetAlarms"] = False
             StartInfo["AckAlarms"] = False
             StartInfo["RemoteTransfer"] = False  # Remote start and transfer command

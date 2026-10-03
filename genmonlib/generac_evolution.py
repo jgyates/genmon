@@ -6018,6 +6018,7 @@ class Evolution(GeneratorController):
             StartInfo["FuelConsumption"] = self.FuelConsumptionSupported()
             StartInfo["UtilityVoltage"] = True
             StartInfo["RemoteCommands"] = not self.SmartSwitch  and not self.PowerZone200 # Start and Stop
+            StartInfo["RemoteExercise"] = True
             StartInfo["ResetAlarms"] = EvoLC or Evo2 or self.PowerZone200
             StartInfo["AckAlarms"] = False
             StartInfo["RemoteTransfer"] = not self.SmartSwitch  and not self.PowerZone200 # Start / Transfer

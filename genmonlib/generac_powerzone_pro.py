@@ -1535,6 +1535,7 @@ class PowerZonePro(GeneratorController):
             StartInfo["Controller"] = self.GetController()
             StartInfo["UtilityVoltage"] = False
             StartInfo["RemoteCommands"] = True  # Remote Start/ Stop/ StartTransfer
+            StartInfo["RemoteExercise"] = False
             StartInfo["ResetAlarms"] = False
             StartInfo["AckAlarms"] = True
             StartInfo["RemoteTransfer"] = self.HTSTransferSwitch  # Remote start and transfer command
