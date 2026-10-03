@@ -364,7 +364,14 @@
     }
   ],
   "binary_sensors": [],
-  "buttons": [],
+  "buttons": [
+    {
+      "entity_id": "set_generator_time",
+      "name": "Set Generator Time",
+      "command": "settime",
+      "icon": "mdi:clock-edit"
+    }
+  ],
   "switches": [
     {
       "entity_id": "quiet_mode",
@@ -379,12 +386,6 @@
         "evolution",
         "nexus"
       ]
-    },
-    {
-      "entity_id": "set_time",
-      "name": "Set Generator Time",
-      "command": "settime",
-      "icon": "mdi:clock-edit"
     }
   ],
   "selects": [
