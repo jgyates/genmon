@@ -6023,7 +6023,7 @@ class Evolution(GeneratorController):
             StartInfo["RemoteTransfer"] = not self.SmartSwitch  and not self.PowerZone200 # Start / Transfer
             StartInfo["RemoteButtons"] = self.RemoteButtonsSupported()  # On, Off , Auto
             StartInfo["ExerciseControls"] = not self.SmartSwitch
-            StartInfo["WriteQuietMode"] = EvoLC or Evo2
+            StartInfo["WriteQuietMode"] = EvoLC
             StartInfo["Firmware"] = self.GetFirmwareVersion()
             StartInfo["Hardware"] = self.GetHardwareVersion()
             StartInfo["import_config_file"] = None
