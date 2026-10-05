@@ -505,7 +505,6 @@ class PowerZonePro(GeneratorController):
         )
 
         self.LastEngineState = ""
-        self.VoltageConfig = None
         self.AlarmAccessLock = (
             threading.RLock()
         )  # lock to synchronize access to the logs

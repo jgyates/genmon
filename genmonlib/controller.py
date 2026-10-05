@@ -123,6 +123,7 @@ class GeneratorController(MySupport):
         self.NominalFreq = "Unknown"
         self.NominalRPM = "Unknown"
         self.NominalKW = "Unknown"
+        self.VoltageConfig = None
         self.Model = "Unknown"
         self.Phase = "Unknown"
         self.NominalLineVolts = 240
