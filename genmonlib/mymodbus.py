@@ -99,6 +99,8 @@ class ModbusProtocol(ModbusBase):
         try:
             # CRCMOD library, used for CRC calculations
             self.ModbusCrc = crcmod.predefined.mkCrcFun("modbus")
+            # The above predefined is the same as the following crcmod init
+            # self.ModbusCrc = crcmod.mkCrcFun(0x18005, rev=True, initCrc=0xFFFF, xorOut=0x0000)
             self.InitComplete = True
         except Exception as e1:
             self.FatalError("Unable to find crcmod package: " + str(e1))
