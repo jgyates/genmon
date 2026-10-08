@@ -384,7 +384,6 @@ class Evolution(GeneratorController):
                 self.ModBus = ModbusEvo2(self.UpdateRegisterList, config=self.config)
 
             self.Threads = self.MergeDicts(self.Threads, self.ModBus.Threads)
-            self.LastRxPacketCount = self.ModBus.RxPacketCount
 
             self.StartCommonThreads()
 

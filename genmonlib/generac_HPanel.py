@@ -1167,7 +1167,6 @@ class HPanel(GeneratorController):
                 )
 
             self.Threads = self.MergeDicts(self.Threads, self.ModBus.Threads)
-            self.LastRxPacketCount = self.ModBus.RxPacketCount
 
             self.StartCommonThreads()
 

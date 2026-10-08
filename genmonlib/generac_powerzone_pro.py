@@ -567,7 +567,6 @@ class PowerZonePro(GeneratorController):
 
             self.ModBus.AlternateFileProtocol = True
             self.Threads = self.MergeDicts(self.Threads, self.ModBus.Threads)
-            self.LastRxPacketCount = self.ModBus.RxPacketCount
 
             self.StartCommonThreads()
 

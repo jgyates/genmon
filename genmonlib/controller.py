@@ -86,6 +86,7 @@ class GeneratorController(MySupport):
         self.AuxAlarmLock = threading.RLock()
         self.CurrentAlarmState = False
         self.OutageLog = os.path.join(ConfigFilePath, "outage.txt")
+        self.outagelog_max_entries = 100
         self.MinimumOutageDuration = 0
         self.PowerLogMaxSize = 15.0  # 15 MB max size
         self.PowerLog = os.path.join(ConfigFilePath, "kwlog.txt")
@@ -110,6 +111,7 @@ class GeneratorController(MySupport):
         self.TankData = None
         self.FuelLevelOK = None  # used in mynotify.py
         self.debug = False
+        self.LastRxPacketCount = 0
 
         self.UtilityVoltsMin = 0  # Minimum reported utility voltage above threshold
         self.UtilityVoltsMax = 0  # Maximum reported utility voltage above pickup
@@ -235,6 +237,10 @@ class GeneratorController(MySupport):
                     self.LogError(
                         "Using alternate outage logfile: " + str(self.OutageLog)
                     )
+
+                self.outagelog_max_entries = self.config.ReadValue(
+                    "outagelog_max_entries", return_type=int, default=100
+                )
 
                 if self.config.HasOption("kwlog"):
                     self.PowerLog = self.config.ReadValue("kwlog")
@@ -367,6 +373,7 @@ class GeneratorController(MySupport):
     # called after get config file, starts threads common to all controllers
     def StartCommonThreads(self):
 
+        self.LastRxPacketCount = self.ModBus.RxPacketCount
         self.Threads["CheckAlarmThread"] = MyThread(
             self.CheckAlarmThread, Name="CheckAlarmThread", start = False)
         self.Threads["CheckAlarmThread"].Start()
@@ -1543,8 +1550,15 @@ class GeneratorController(MySupport):
     # ----------  GeneratorController:ComminicationsIsActive  -------------------
     # Called every few seconds, if communictions are failing, return False, otherwise
     # True
+    # ----------  GeneratorController::ComminicationsIsActive  ----------------------------
+    # Called every few seconds
     def ComminicationsIsActive(self):
-        return False
+
+        if self.LastRxPacketCount == self.ModBus.RxPacketCount:
+            return False
+        else:
+            self.LastRxPacketCount = self.ModBus.RxPacketCount
+            return True
 
     # ----------  GeneratorController:ResetCommStats  ---------------------------
     # reset communication stats, normally just a call to
@@ -1780,7 +1794,7 @@ class GeneratorController(MySupport):
                     elif len(strDuration):
                         OutageLog.insert(0, [Items[0], strDuration])
 
-                    if len(OutageLog) > 100:  # limit log to 100 entries
+                    if len(OutageLog) > self.outagelog_max_entries:  # limit log to 100 entries
                         OutageLog.pop()
 
             index = 0

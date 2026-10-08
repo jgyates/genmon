@@ -123,7 +123,6 @@ class CustomController(GeneratorController):
 
             self.ModBus.AlternateFileProtocol = self.AlternateFileProtocol
             self.Threads = self.MergeDicts(self.Threads, self.ModBus.Threads)
-            self.LastRxPacketCount = self.ModBus.RxPacketCount
 
             self.StartCommonThreads()
 
