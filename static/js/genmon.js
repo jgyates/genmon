@@ -4470,7 +4470,7 @@ var Pages = {
       favicon:'system', system_theme: 'system',
       autofeedback:'system', update_check:'system', synctime:'system',
       syncdst:'system', disableoutagecheck:'system', optimizeforslowercpu:'system', 
-      outagelog_max_entries: 'system', disablepowerlog:'system', displayunknown:'system'
+      disablepowerlog:'system', displayunknown:'system'
     },
     _CATEGORIES: [
       { id:'general',  label:'Generator',      icon:'zap' },

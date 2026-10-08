@@ -4055,6 +4055,17 @@ def ReadAdvancedSettingsFromFile():
                 GENMON_SECTION,
                 "nominallinevolts",
             ]
+            ConfigSettings["outagelog_max_entries"] = [
+                "int",
+                "Maximum Entries in Outage Log",
+                46,
+                "100",
+                "",
+                "digits",
+                GENMON_CONFIG,
+                GENMON_SECTION,
+                "outagelog_max_entries",
+            ]
             ConfigSettings["outage_notice_delay"] = [
                 "int",
                 "Outage Notice Delay",
@@ -4552,17 +4563,6 @@ def ReadSettingsFromFile():
         GENMON_SECTION,
         "disableoutagecheck",
     ]
-    ConfigSettings["outagelog_max_entries"] = [
-            "int",
-            "Maximum Entries in Outage Log",
-            17,
-            "100",
-            "digits",
-            0,
-            GENMON_CONFIG,
-            GENMON_SECTION,
-            "outagelog_max_entries",
-            ]
     if GStartInfo["SetGenTime"]:
         ConfigSettings["syncdst"] = [
             "boolean",
