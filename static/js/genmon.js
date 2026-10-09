@@ -3310,6 +3310,7 @@ var Pages = {
     _CMD_INFO: {
       starttransfer: {title:'Start Generator + Transfer', cls:'btn-success', desc:'Generator will start, warm up, then activate the transfer switch. Your house will run on generator power.'},
       start:         {title:'Start Generator (No Transfer)', cls:'btn-primary', desc:'Generator will start, warm up and run idle without activating the transfer switch. Your house stays on utility power.'},
+      startexercise: {title:'Start Exercise (Quiet Mode)', cls:'btn-outline', desc:'Generator will start in reduced speed mode (quiet mode) without activating the transfer switch. This does NOT start a timed exercise cycle; the generator keeps running until it is stopped.'},
       stop:          {title:'Stop Generator', cls:'btn-danger', desc:'Generator will stop. If it is powering a load, the transfer switch will deactivate first and there will be a cool-down period.'},
       auto:          {title:'Auto', cls:'btn-outline', desc:'Generator will automatically start and transfer in case of a power outage. This is the normal operating mode.'},
       off:           {title:'Off', cls:'btn-outline', desc:'Generator is turned off and will NOT start automatically in case of a power outage.'},
@@ -3322,23 +3323,32 @@ var Pages = {
       var h = '<div class="page-title">' + icon('maintenance') + ' Maintenance</div>';
 
       /* ── Generator Control ── */
-      if (info.RemoteCommands || info.RemoteButtons || info.ResetAlarms || info.AckAlarms) {
+      if (info.RemoteCommands || info.RemoteExercise || info.RemoteButtons || info.ResetAlarms || info.AckAlarms) {
         h += '<div class="card mb-2"><div class="card-header">' + icon('power') + ' Generator Control</div><div class="card-body">';
         h += '<div id="sw-state" class="maint-switch-state mb-2">' +
           '<span class="kv-key">Current Switch Position</span> ' +
           '<span class="maint-sw-badge">' + esc(S.switchState) + '</span></div>';
 
         /* Generator actions */
-        if (info.RemoteCommands) {
+        if (info.RemoteCommands || info.RemoteExercise) {
           h += '<div class="maint-cmd-section">' +
             '<div class="maint-cmd-label">Generator Actions</div>' +
-            '<p class="form-hint" style="margin:0 0 8px">Start or stop the generator. Starting with transfer powers your house from the generator.</p>' +
+            '<p class="form-hint" style="margin:0 0 8px">' +
+            (info.RemoteCommands ? 'Start or stop the generator. Starting with transfer powers your house from the generator.' : '') +
+            (info.RemoteCommands && info.RemoteExercise ? ' ' : '') +
+            (info.RemoteExercise ? 'Start Exercise runs the generator in reduced speed (quiet) mode; it is not a timed exercise cycle.' : '') +
+            '</p>' +
             '<div class="btn-group flex-wrap">';
-          if (info.RemoteTransfer)
+          if (info.RemoteCommands && info.RemoteTransfer)
             h += '<button class="btn btn-success btn-sm" data-cmd="starttransfer">'+btnIcon('play')+' Start + Transfer</button>';
-          h += '<button class="btn btn-primary btn-sm" data-cmd="start">'+btnIcon('play')+' Start (No Transfer)</button>' +
-            '<button class="btn btn-danger btn-sm" data-cmd="stop">'+btnIcon('stop')+' Stop Generator</button>' +
-            '</div></div>';
+          if (info.RemoteCommands)
+            h += '<button class="btn btn-primary btn-sm" data-cmd="start">'+btnIcon('play')+' Start (No Transfer)</button>';
+          if (info.RemoteExercise)
+            h += '<button class="btn btn-outline btn-sm" data-cmd="startexercise" title="' +
+              esc(Pages.maintenance._CMD_INFO.startexercise.desc) + '">'+btnIcon('play')+' Start Exercise (Quiet)</button>';
+          if (info.RemoteCommands)
+            h += '<button class="btn btn-danger btn-sm" data-cmd="stop">'+btnIcon('stop')+' Stop Generator</button>';
+          h += '</div></div>';
         }
 
         /* Switch position */

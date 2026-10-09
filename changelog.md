@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - added remote alarm reset for Power Zone 200. thanks @@karl-pizzolatto for the data and testing
 - Added alarm log for PZ200. Only 10 log events are stored in the controller.
 - Add the ability to extend the outage log past the default of 100 entries
+- Added remote exericse button for supported controllers (Evo/Nexus)
 
 ## 2.0.01 -2026-05-18
 - Various bug fixes and typo corrections
