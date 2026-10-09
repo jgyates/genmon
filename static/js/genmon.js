@@ -3310,7 +3310,7 @@ var Pages = {
     _CMD_INFO: {
       starttransfer: {title:'Start Generator + Transfer', cls:'btn-success', desc:'Generator will start, warm up, then activate the transfer switch. Your house will run on generator power.'},
       start:         {title:'Start Generator (No Transfer)', cls:'btn-primary', desc:'Generator will start, warm up and run idle without activating the transfer switch. Your house stays on utility power.'},
-      startexercise: {title:'Start Exercise (Quiet Mode)', cls:'btn-outline', desc:'Generator will start in reduced speed mode (quiet mode) without activating the transfer switch. This does NOT start a timed exercise cycle; the generator keeps running until it is stopped.'},
+      startexercise: {title:'Start Exercise (Quiet Mode)', cls:'btn-outline', desc:'Generator will start in reduced speed mode (quiet mode) without activating the transfer switch. This does NOT start a timed exercise cycle; the generator keeps running until it is stopped. The engine state will show as RUNNING but the engine will run at reduced speed (e.g. quiet mode).'},
       stop:          {title:'Stop Generator', cls:'btn-danger', desc:'Generator will stop. If it is powering a load, the transfer switch will deactivate first and there will be a cool-down period.'},
       auto:          {title:'Auto', cls:'btn-outline', desc:'Generator will automatically start and transfer in case of a power outage. This is the normal operating mode.'},
       off:           {title:'Off', cls:'btn-outline', desc:'Generator is turned off and will NOT start automatically in case of a power outage.'},
