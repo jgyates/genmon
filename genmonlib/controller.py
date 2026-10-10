@@ -1794,7 +1794,7 @@ class GeneratorController(MySupport):
                     elif len(strDuration):
                         OutageLog.insert(0, [Items[0], strDuration])
 
-                    if len(OutageLog) > self.outagelog_max_entries:  # limit log to 100 entries
+                    if len(OutageLog) > self.outagelog_max_entries:  # limit log to a finite number of entries
                         OutageLog.pop()
 
             index = 0
