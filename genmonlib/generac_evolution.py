@@ -6183,16 +6183,6 @@ class Evolution(GeneratorController):
 
         return True
 
-    # ----------  Evolution::ComminicationsIsActive  ----------------------------
-    # Called every few seconds
-    def ComminicationsIsActive(self):
-
-        if self.LastRxPacketCount == self.ModBus.RxPacketCount:
-            return False
-        else:
-            self.LastRxPacketCount = self.ModBus.RxPacketCount
-            return True
-
     # ----------  Generator:RemoteButtonsSupported  -----------------------------
     # return true if Panel buttons are settable via the software
     def RemoteButtonsSupported(self):

@@ -2311,16 +2311,6 @@ class CustomController(GeneratorController):
             self.LogErrorLine("Error in GetRPM: " + str(e1))
             return None
 
-    # ----------  CustomController:ComminicationsIsActive  ---------------------
-    # Called every few seconds, if communictions are failing, return False, otherwise
-    # True
-    def ComminicationsIsActive(self):
-        if self.LastRxPacketCount == self.ModBus.RxPacketCount:
-            return False
-        else:
-            self.LastRxPacketCount = self.ModBus.RxPacketCount
-            return True
-
     # ----------  CustomController:RemoteButtonsSupported  ----------------------
     # return true if Panel buttons are settable via the software
     def RemoteButtonsSupported(self):

@@ -3042,16 +3042,6 @@ class PowerZonePro(GeneratorController):
         # TODO Power Zone vs Power Zone Pro
         return "Power Zone"
 
-    # ----------  PowerZonePro:ComminicationsIsActive  -----------------------------
-    # Called every few seconds, if communictions are failing, return False, otherwise
-    # True
-    def ComminicationsIsActive(self):
-        if self.LastRxPacketCount == self.ModBus.RxPacketCount:
-            return False
-        else:
-            self.LastRxPacketCount = self.ModBus.RxPacketCount
-            return True
-
     # ----------  PowerZonePro:RemoteButtonsSupported  -----------------------------
     # return true if Panel buttons are settable via the software
     def RemoteButtonsSupported(self):
