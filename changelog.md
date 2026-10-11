@@ -1,6 +1,17 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 2.0.03 -2026-10-07
+- Added support for an auxiliary alam log (see Advanced Settings to enable) and the Known Issues wiki for more info
+- Added 'Note' category to the service journal
+- Updated service journal to preserve line breaks (thanks @MichaelB2018)
+- remove pytz from requirements as it is no longer needed
+- Performance improvements to genhubitat. thanks @bdwilson
+- added remote alarm reset for Power Zone 200. thanks @@karl-pizzolatto for the data and testing
+- Added alarm log for PZ200. Only 10 log events are stored in the controller.
+- Add the ability to extend the outage log past the default of 100 entries
+- Added remote exericse button for supported controllers (Evo/Nexus)
+
 ## 2.0.02 -2026-08-04
 - New add on for Hubitat Elevation hub, Thanks @bdwilson
 - Support for PowerZone 200. Note: a special cable is required. (Thanks @LSGONE, @BillyEll, @skipfire and @gm58)
@@ -14,20 +25,11 @@ All notable changes to this project will be documented in this file.
 - Update for better alarm handing on Power Zone 200
 - Minor update to feedback email so they are always sent as plain text
 - Updated gensnmp to support pysnmp version 7.1.21 (the last version to support python 3.9)
-- Added support for an auxiliary alam log (see Advanced Settings to enable) and the Known Issues wiki for more info
 - Updated alarm codes for EvoLC 4.5L
 - Added the ability to unhide the password when logging in (thanks @MichaleB2018)
 - Fixed imported buttons (import_buttons) not appearing on the Maintenance page for controllers without built-in buttons (thanks @mattgraham)
 - Allow script-type imported command buttons to execute without a register value
 - Added example generator start / stop / transfer imported command buttons
-- Added 'Note' category to the service journal
-- Updated service journal to preserve line breaks (thanks @MichaelB2018)
-- remove pytz from requirements as it is no longer needed
-- Performance improvements to genhubitat. thanks @bdwilson
-- added remote alarm reset for Power Zone 200. thanks @@karl-pizzolatto for the data and testing
-- Added alarm log for PZ200. Only 10 log events are stored in the controller.
-- Add the ability to extend the outage log past the default of 100 entries
-- Added remote exericse button for supported controllers (Evo/Nexus)
 
 ## 2.0.01 -2026-05-18
 - Various bug fixes and typo corrections
