@@ -344,7 +344,7 @@ class Evolution(GeneratorController):
 
         # Ignore these regiseters on Evo Liquid cooled and firmware models.
         self.LCIgnoreRegisters = [
-            "0637", "0638", "07e6", "07e7"
+            "0608", "060c", "0613", "0637", "0638", "0639", "063a","07e6", "07e7", "2008"
         ]
         self.REGLEN = 0
         self.REGMONITOR = 1
