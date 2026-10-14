@@ -342,6 +342,10 @@ class Evolution(GeneratorController):
             "0638": [2, 0],  # Power Zone 200 Warning is active if non zero
         }  
 
+        # Ignore these regiseters on Evo Liquid cooled and firmware models.
+        self.LCIgnoreRegisters = [
+            "0637", "0638", "07e6", "07e7"
+        ]
         self.REGLEN = 0
         self.REGMONITOR = 1
 
@@ -425,6 +429,8 @@ class Evolution(GeneratorController):
             for PrimeReg, PrimeInfo in self.PrimeRegisters.items():
                 if self.IsStopping:
                     break
+                if not self.PowerZone200 and PrimeReg in self.LCIgnoreRegisters:
+                    continue
                 self.ModBus.ProcessTransaction(
                     PrimeReg, int(PrimeInfo[self.REGLEN] // 2)
                 )
@@ -432,6 +438,8 @@ class Evolution(GeneratorController):
             for Reg, Info in self.BaseRegisters.items():
                 if self.IsStopping:
                     break
+                if not self.PowerZone200 and Reg in self.LCIgnoreRegisters:
+                    continue
                 # The divide by 2 is due to the diference in the values in our dict are bytes
                 # but modbus makes register request in word increments so the request needs to
                 # in word multiples, not bytes
@@ -1541,8 +1549,12 @@ class Evolution(GeneratorController):
         counter = 0
         for Reg, Info in self.BaseRegisters.items():
 
+            if not self.PowerZone200 and Reg in self.LCIgnoreRegisters:
+                continue
             if counter % 6 == 0:
                 for PrimeReg, PrimeInfo in self.PrimeRegisters.items():
+                    if not self.PowerZone200 and PrimeReg in self.LCIgnoreRegisters:
+                        continue
                     localTimeoutCount = self.ModBus.ComTimoutError
                     localSyncError = self.ModBus.ComSyncError
                     self.ModBus.ProcessTransaction(
