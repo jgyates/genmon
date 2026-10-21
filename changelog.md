@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Add the ability to extend the outage log past the default of 100 entries
 - Added remote exericse button for supported controllers (Evo/Nexus)
 - Fixed issue with Evo Liquid Cooled controllers with older firmware that cause a timeout when reading three specific registers 
+- Corrected one issue with genhomeassistant.py (thanks @ahrens26)
 
 ## 2.0.02 -2026-08-04
 - New add on for Hubitat Elevation hub, Thanks @bdwilson
