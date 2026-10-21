@@ -26,6 +26,7 @@ class ClientInterface(MyCommon):
         port=ProgramDefaults.ServerPort,
         log=None,
         loglocation=ProgramDefaults.LogPath,
+        wait_for_ready = None
     ):
         super(ClientInterface, self).__init__()
         if log != None:
@@ -43,6 +44,8 @@ class ClientInterface(MyCommon):
         self.port = port
         self.max_reties = 10
         self.Connect()
+        if wait_for_ready != None:
+            self.WaitForReady(timeout=wait_for_ready)
 
     # ----------  ClientInterface::Connect --------------------------------------
     def Connect(self):
@@ -133,7 +136,7 @@ class ClientInterface(MyCommon):
     def Close(self):
         self.Socket.close()
 
-    # ----------  ClientInterface::ProcessMonitorCommand ------------------------
+    # ----------  ClientInterface::ProcessMonitorCommand -----------------------
     def ProcessMonitorCommand(self, cmd):
 
         data = ""
@@ -146,3 +149,31 @@ class ClientInterface(MyCommon):
         except Exception as e1:
             self.LogErrorLine("Error in ProcessMonitorCommand:" + str(e1))
         return data
+
+    # ----------  ClientInterface::WaitForReady --------------------------------
+    def WaitForReady(self, timeout = 15):
+
+        import datetime
+        Start = datetime.datetime.now()
+        
+        init_ok = False
+        genmon_data = None
+        while (datetime.datetime.now() - Start).total_seconds() < timeout:
+            if self.AcceptingCommands():
+                return True
+        return False
+
+    # ----------  ClientInterface::AcceptingCommands ---------------------------
+    def AcceptingCommands(self, command_override = "generator: start_info_json"):
+
+        try:
+            import json
+            data = self.ProcessMonitorCommand(command_override)
+            if command_override.endswith("_json"):
+                start_info = json.loads(data)
+            elif "retry" in data.lower():
+                raise ValueError("Retry detected")
+            return True
+        except Exception as e1:
+            self.LogErrorLine(f"Error in AcceptingCommands: {e1}")
+            return False

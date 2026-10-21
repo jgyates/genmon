@@ -84,6 +84,9 @@ class Monitor(MySupport):
         self.FeedbackEnabled = False  
         self.FeedbackMessages = {}
 
+        # end of message marker for communication between genmon and other apps (genserv, addons..)
+        self.EOM = "EndOfMessage"
+
         self.MailInit = False  # set to true once mail is init
         # Flag to let the heartbeat thread know we are communicating
         self.CommunicationsActive = False
@@ -110,6 +113,7 @@ class Monitor(MySupport):
         # simulation
         self.Simulation = False
         self.SimulationFile = None
+        self.wait_for_init_seconds = 15
 
         self.console = SetupLogger("genmon_console", log_file="", stream=True)
 
@@ -385,6 +389,8 @@ class Monitor(MySupport):
                 self.bDisablePlatformStats = self.config.ReadValue(
                     "disableplatformstats", return_type=bool
                 )
+
+            self.wait_for_init_seconds = self.config.ReadValue("wait_for_init_seconds", return_type=int, default=15)
 
             if self.config.HasOption("simulation"):
                 self.Simulation = self.config.ReadValue("simulation", return_type=bool)
@@ -809,7 +815,7 @@ class Monitor(MySupport):
                     self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype="error")
                     return ""  # ignored by email module
                 else:
-                    msgbody += "EndOfMessage"
+                    msgbody += self.EOM
                     return msgbody
 
             if self.genmonext != None:
@@ -935,7 +941,7 @@ class Monitor(MySupport):
             CommandList = command.split(" ")
         except Exception as e1:
             msgbody = "Error in ProcessCommand: " + str(e1)
-            msgbody += "EndOfMessage"
+            msgbody += self.EOM
             return msgbody
 
         ValidCommand = False
@@ -986,7 +992,7 @@ class Monitor(MySupport):
             self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype="warn")
             return ""  # ignored by email module
         else:
-            msgbody += "EndOfMessage"
+            msgbody += self.EOM
             return msgbody
 
     # ------------ Monitor::DisplayHelp -----------------------------------------
@@ -1520,6 +1526,15 @@ class Monitor(MySupport):
 
         try:
 
+            # Clients expect a complete reply, so wait for the controller
+            # rather than answer before it exists.
+            StartTime = datetime.datetime.now()
+            while self.Controller == None and \
+                not self.IsStopping and \
+                (datetime.datetime.now() - StartTime).total_seconds() < self.wait_for_init_seconds:
+                # This dealy is to handle serial ports that are slow to open
+                time.sleep(0.05)
+
             statusstr = ""
             if self.Controller == None:
                 outstr = "WARNING: System Initializing"
@@ -1540,8 +1555,10 @@ class Monitor(MySupport):
                 try:
                     data = conn.recv(2098152)  # max json string size plus 1000
                     if len(data):
+                        if self.IsStopping:
+                            break
                         if self.Controller == None:
-                            outstr = "Retry, System Initializing"
+                            outstr = "WARNING: Retry, System Initializing" + self.EOM
                         else:
                             outstr = self.ProcessCommand(data, True)
                         conn.sendall(outstr.encode("utf-8"))

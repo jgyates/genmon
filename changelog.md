@@ -13,6 +13,8 @@ All notable changes to this project will be documented in this file.
 - Added remote exericse button for supported controllers (Evo/Nexus)
 - Fixed issue with Evo Liquid Cooled controllers with older firmware that cause a timeout when reading three specific registers 
 - Corrected one issue with genhomeassistant.py (thanks @ahrens26)
+- Improvment to web connectivity (thanks @skipfire)
+- Update to improve loading on systems with long delays before the serial port is ready
 
 ## 2.0.02 -2026-08-04
 - New add on for Hubitat Elevation hub, Thanks @bdwilson

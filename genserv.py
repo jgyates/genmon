@@ -139,6 +139,8 @@ AppPath = ""
 favicon = "favicon.ico"
 ConfigFilePath = ProgramDefaults.ConfPath
 
+wait_for_init_seconds = 15  # wait for genmon this amonut of seconds
+
 MAIL_SECTION = "MyMail"
 GENMON_SECTION = "GenMon"
 
@@ -3924,6 +3926,18 @@ def ReadAdvancedSettingsFromFile():
             GENMON_SECTION,
             "forceserialuse",
         ]
+        wait_for_init_seconds
+        ConfigSettings["wait_for_init_seconds"] = [
+            "int",
+            "Initialization Wait Time (seconds)",
+            13,
+            15,
+            "",
+            "digits",
+            GENMON_CONFIG,
+            GENMON_SECTION,
+            "wait_for_init_seconds",
+        ]
         ConfigSettings["watchdog_addition"] = [
             "float",
             "Additional Watchdog Timeout (sec)",
@@ -6322,6 +6336,7 @@ def LoadConfig():
     global MfaTrustDays
     global bMfaTrustExtend
     global debug
+    global wait_for_init_seconds
 
     HTTPAuthPass = None
     HTTPAuthUser = None
@@ -6343,6 +6358,10 @@ def LoadConfig():
                 "server_port", return_type=int, default=ProgramDefaults.ServerPort
             )
 
+        wait_for_init_seconds = ConfigFiles[GENMON_CONFIG].ReadValue(
+                "wait_for_init_seconds", return_type=int, default=15
+                )
+    
         bUseMFA = ConfigFiles[GENMON_CONFIG].ReadValue(
             "usemfa", return_type=bool, default=False
         )
@@ -7296,14 +7315,24 @@ if __name__ == "__main__":
 
     MyClientInterface = ClientInterface(host=address, port=clientport, log=log)
 
-    Start = datetime.datetime.now()
+    # This waits for genmon to init the serial port etc
+    if not MyClientInterface.WaitForReady(timeout=wait_for_init_seconds):
+        LogError(f" Timeout waiting for genmon to become ready")
 
-    while (datetime.datetime.now() - Start).total_seconds() < 10:
+    # This waits for comms (serial, TCP, etc) to read the generator data
+    Start = datetime.datetime.now()
+    init_ok = False
+    while (datetime.datetime.now() - Start).total_seconds() < wait_for_init_seconds:
         data = MyClientInterface.ProcessMonitorCommand("generator: gethealth")
         if "OK" in data:
-            LogConsole(" OK - Init complete.")
+            init_ok = True
+            LogConsole(f" OK - Init complete: {data}")
+            LogDebug(f" OK - Init complete: {data}")
             break
+    if init_ok == False:
+        LogError(f"Warning: genmon init not complete after {wait_for_init_seconds} seconds: {data}")
 
+    # Now get the base info about the controller and genmon settings
     try:
         data = MyClientInterface.ProcessMonitorCommand("generator: start_info_json")
         GStartInfo = json.loads(data)
