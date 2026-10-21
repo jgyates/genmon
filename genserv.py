@@ -203,10 +203,17 @@ def StartHTTPRedirectServer():
         def log_message(self, format, *args):
             pass  # suppress request logs
 
+    # A thread per connection and a timeout, so a client that connects and sends
+    # nothing can't stop the redirect from answering everyone else.
+    RedirectHandler.timeout = 30
+
+    class ThreadedRedirectServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+        daemon_threads = True
+
     global RedirectServer
     try:
         socketserver.TCPServer.allow_reuse_address = True
-        RedirectServer = socketserver.TCPServer(
+        RedirectServer = ThreadedRedirectServer(
             (ListenIPAddress, redirect_port), RedirectHandler
         )
         LogDebug(
@@ -223,6 +230,90 @@ def StartHTTPRedirectServer():
             + ": "
             + str(e1)
         )
+
+
+# -------------------------------------------------------------------------------
+# Seconds a new HTTPS connection gets to finish its TLS handshake.
+TLSHandshakeTimeout = 30
+
+
+def DeferTLSHandshake(ssl_context):
+    """Returns (context, deferred): an SSL context that leaves the TLS handshake
+    of each connection to the thread that handles it (see
+    MakeTLSHandshakeRequestHandler), and whether that worked.
+
+    The Flask / werkzeug server otherwise does the handshake in the single
+    thread that accepts connections, with no timeout, so one client that
+    connects and never finishes the handshake (a device that dropped off the
+    network mid-connect, a port scanner) stops genserv from accepting any other
+    connection until that client goes away, which may be never. tests/test_web_stall.py
+    reproduces it. On any error the context is returned unchanged."""
+    try:
+        import ssl
+
+        from werkzeug.serving import generate_adhoc_ssl_context as _wz_adhoc
+        from werkzeug.serving import load_ssl_context
+
+        context = ssl_context
+        if isinstance(context, tuple):
+            context = load_ssl_context(*context)
+        elif context == "adhoc":
+            context = _wz_adhoc()
+        if not isinstance(context, ssl.SSLContext):
+            return ssl_context, False
+
+        wrap_socket = context.wrap_socket
+
+        # werkzeug wraps the listening socket with this, and accept() wraps each
+        # new connection with it too, passing on do_handshake_on_connect.
+        def deferred_wrap_socket(sock, *args, **kwargs):
+            kwargs["do_handshake_on_connect"] = False
+            return wrap_socket(sock, *args, **kwargs)
+
+        context.wrap_socket = deferred_wrap_socket
+        return context, True
+    except Exception as e1:
+        LogErrorLine("Error in DeferTLSHandshake: " + str(e1))
+        return ssl_context, False
+
+
+# -------------------------------------------------------------------------------
+def MakeTLSHandshakeRequestHandler():
+    """werkzeug's request handler, doing the TLS handshake deferred by
+    DeferTLSHandshake first, in this connection's own thread and with a timeout."""
+    import socket
+    import ssl
+
+    from werkzeug.serving import WSGIRequestHandler
+
+    class TLSHandshakeRequestHandler(WSGIRequestHandler):
+        def handle(self):
+            if isinstance(self.connection, ssl.SSLSocket):
+                previous_timeout = self.connection.gettimeout()
+                try:
+                    self.connection.settimeout(TLSHandshakeTimeout)
+                    self.connection.do_handshake()
+                    self.connection.settimeout(previous_timeout)
+                except socket.timeout:
+                    LogError(
+                        "TLS handshake from "
+                        + str(self.client_address[0])
+                        + " did not finish within "
+                        + str(TLSHandshakeTimeout)
+                        + " seconds, connection dropped"
+                    )
+                    return
+                except Exception as e1:
+                    LogDebug(
+                        "TLS handshake from "
+                        + str(self.client_address[0])
+                        + " failed: "
+                        + str(e1)
+                    )
+                    return
+            WSGIRequestHandler.handle(self)
+
+    return TLSHandshakeRequestHandler
 
 
 # -------------------------------------------------------------------------------
@@ -7227,12 +7318,20 @@ if __name__ == "__main__":
         t = threading.Thread(target=StartHTTPRedirectServer, daemon=True)
         t.start()
 
+    WebSSLContext = SSLContext
+    WebRequestHandler = None
+    if SSLContext is not None:
+        WebSSLContext, deferred = DeferTLSHandshake(SSLContext)
+        if deferred:
+            WebRequestHandler = MakeTLSHandshakeRequestHandler()
+
     try:
         app.run(
             host=ListenIPAddress,
             port=HTTPPort,
             threaded=True,
-            ssl_context=SSLContext,
+            ssl_context=WebSSLContext,
+            request_handler=WebRequestHandler,
             use_reloader=False,
             debug=False,
         )
@@ -7250,7 +7349,8 @@ if __name__ == "__main__":
                 host=ListenIPAddress,
                 port=HTTPPort,
                 threaded=True,
-                ssl_context=SSLContext,
+                ssl_context=WebSSLContext,
+                request_handler=WebRequestHandler,
                 use_reloader=False,
                 debug=False,
             )
