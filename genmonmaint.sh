@@ -341,6 +341,10 @@ function archivelogs() {
     sudo cp "$log_path"genmopeka.log ./genmon_logs
     sudo cp "$log_path"gencustomgpio.log ./genmon_logs
     sudo cp "$log_path"gensms_voip.log ./genmon_logs
+    sudo cp "$log_path"genneevo.log ./genmon_logs
+    sudo cp "$log_path"genhalink.log ./genmon_logs
+    sudo cp "$log_path"genhubitat.log ./genmon_logs
+
     tar -zcvf genmon_logs.tar.gz genmon_logs/
     sudo rm -r genmon_logs
     echo "Done."
