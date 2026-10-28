@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - Corrected one issue with genhomeassistant.py (thanks @ahrens26)
 - Improvment to web connectivity (thanks @skipfire)
 - Update to improve loading on systems with long delays before the serial port is ready
+- Updated alarm E-Codes for Power Zone 200
 
 ## 2.0.02 -2026-08-04
 - New add on for Hubitat Elevation hub, Thanks @bdwilson
