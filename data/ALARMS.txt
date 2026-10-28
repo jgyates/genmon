@@ -142,4 +142,10 @@
 4904!ALARM!Engine Fuel Valve 1 Position!Engine Fuel Valve 1 Position!No further description
 4101!ALARM!Engine Position Sensor!Engine Position Sensor!Engine Position Sensor!Engine Position Sensor
 5101!ALARM!Engine Speed Low!Engine Speed Low!No further description
+5415!ALARM!Oil level high or low!Oil level high or low!No further description
+5416!ALARM!Oil level high or low!Oil level high or lowl!No further description
+5417!ALARM!Oil level high or low!Oil level high or low!No further description
+7000!ALARM!Overload - cooldown!Overload - cooldown!The generator has experienced an overload and is in cool down mode. If condition persists, contact a dealer.
+
+
 
