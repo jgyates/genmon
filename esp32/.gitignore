@@ -1,0 +1,10 @@
+# PlatformIO build output and downloaded libraries
+.pio/
+
+# Editor state
+.vscode/
+.idea/
+
+# Python tool caches
+__pycache__/
+*.py[cod]

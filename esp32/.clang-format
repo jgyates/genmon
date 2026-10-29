@@ -1,0 +1,16 @@
+# Google style, with the repository coding standards' column alignment kept
+# intact (CODING_STANDARDS.md section 2.1). Aligned tables and constant blocks
+# are deliberate; this configuration preserves rather than collapses them.
+BasedOnStyle: Google
+IndentWidth: 4
+ColumnLimit: 120
+AccessModifierOffset: -4
+AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveDeclarations: Consecutive
+AlignConsecutiveMacros: Consecutive
+AlignTrailingComments: true
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: true
+MaxEmptyLinesToKeep: 2
+SortIncludes: Never
