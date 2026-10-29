@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 660" width="1000" height="660" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="14">
+  <title>genmon-esp32 wiring: Generac controller, MAX3232, ESP32 DevKitC, buck converter</title>
+  <defs>
+    <marker id="arrow-rx" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1b7f3b"/>
+    </marker>
+    <marker id="arrow-tx" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1f5fbf"/>
+    </marker>
+    <style>
+      .box   { fill: #ffffff; stroke: #2b2f36; stroke-width: 2; rx: 8; }
+      .title { font-weight: 700; font-size: 15px; fill: #1d2330; }
+      .pin   { fill: #1d2330; }
+      .note  { fill: #5f6b7a; font-size: 12px; }
+      .rx    { stroke: #1b7f3b; stroke-width: 3; fill: none; marker-end: url(#arrow-rx); }
+      .tx    { stroke: #1f5fbf; stroke-width: 3; fill: none; marker-end: url(#arrow-tx); }
+      .pwr   { stroke: #c62828; stroke-width: 3; fill: none; }
+      .gnd   { stroke: #222222; stroke-width: 3; fill: none; }
+      .gndd  { stroke: #222222; stroke-width: 2; fill: none; stroke-dasharray: 6 5; }
+      .dot   { fill: #2b2f36; }
+      .warn  { fill: #c62828; font-weight: 700; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1000" height="660" fill="#ffffff"/>
+  <text x="500" y="32" text-anchor="middle" class="title" font-size="19">genmon-esp32 wiring — ESP32-WROOM-32D DevKitC</text>
+  <text x="500" y="54" text-anchor="middle" class="note">Same circuit as upstream Diagrams/wiring_schematic.png with the ESP32 in place of the Raspberry Pi</text>
+
+  <!-- Generator controller -->
+  <rect class="box" x="30" y="80" width="230" height="200"/>
+  <text x="145" y="104" text-anchor="middle" class="title">Generac controller</text>
+  <text x="145" y="122" text-anchor="middle" class="note">8-pin serial connector (RS-232)</text>
+  <text x="44" y="145" class="pin">Pin 8 — controller TX</text>
+  <text x="44" y="195" class="pin">Pin 7 — controller RX</text>
+  <text x="44" y="245" class="pin">Ground — via battery −</text>
+  <circle class="dot" cx="260" cy="140" r="4"/>
+  <circle class="dot" cx="260" cy="190" r="4"/>
+
+  <!-- MAX3232 module -->
+  <rect class="box" x="370" y="80" width="270" height="230"/>
+  <text x="505" y="104" text-anchor="middle" class="title">MAX3232 module</text>
+  <text x="380" y="122" class="note">RS-232 side</text>
+  <text x="630" y="122" text-anchor="end" class="note">TTL (3.3 V) side</text>
+  <text x="380" y="145" class="pin">R1IN (RX in)</text>
+  <text x="380" y="195" class="pin">T1OUT (TX out)</text>
+  <text x="630" y="145" text-anchor="end" class="pin">R1OUT (“RXD”)</text>
+  <text x="630" y="195" text-anchor="end" class="pin">T1IN (“TXD”)</text>
+  <text x="630" y="245" text-anchor="end" class="pin">VCC</text>
+  <text x="630" y="285" text-anchor="end" class="pin">GND</text>
+  <circle class="dot" cx="370" cy="140" r="4"/>
+  <circle class="dot" cx="370" cy="190" r="4"/>
+  <circle class="dot" cx="640" cy="140" r="4"/>
+  <circle class="dot" cx="640" cy="190" r="4"/>
+  <circle class="dot" cx="640" cy="240" r="4"/>
+  <circle class="dot" cx="640" cy="280" r="4"/>
+
+  <!-- ESP32 DevKitC -->
+  <rect class="box" x="750" y="80" width="220" height="280"/>
+  <text x="860" y="104" text-anchor="middle" class="title">ESP32 DevKitC</text>
+  <text x="860" y="122" text-anchor="middle" class="note">WROOM-32D (or 32U for external antenna)</text>
+  <text x="762" y="145" class="pin">GPIO16 (RX2)</text>
+  <text x="762" y="195" class="pin">GPIO17 (TX2)</text>
+  <text x="762" y="245" class="pin">3V3</text>
+  <text x="762" y="285" class="pin">GND</text>
+  <text x="800" y="345" text-anchor="middle" class="pin">5V</text>
+  <text x="900" y="345" text-anchor="middle" class="pin">GND</text>
+  <circle class="dot" cx="750" cy="140" r="4"/>
+  <circle class="dot" cx="750" cy="190" r="4"/>
+  <circle class="dot" cx="750" cy="240" r="4"/>
+  <circle class="dot" cx="750" cy="280" r="4"/>
+  <circle class="dot" cx="800" cy="360" r="4"/>
+  <circle class="dot" cx="900" cy="360" r="4"/>
+
+  <!-- Data: controller TX -> module -> ESP32 RX (green) -->
+  <path class="rx" d="M264,140 L364,140"/>
+  <path class="rx" d="M644,140 L744,140"/>
+  <!-- Data: ESP32 TX -> module -> controller RX (blue) -->
+  <path class="tx" d="M746,190 L646,190"/>
+  <path class="tx" d="M366,190 L266,190"/>
+
+  <!-- Module power from the ESP32 -->
+  <path class="pwr" d="M644,240 L746,240"/>
+  <path class="gnd" d="M644,280 L746,280"/>
+
+  <!-- Battery -->
+  <rect class="box" x="30" y="440" width="230" height="110"/>
+  <text x="145" y="466" text-anchor="middle" class="title">Generator battery</text>
+  <text x="145" y="484" text-anchor="middle" class="note">12 V starting battery</text>
+  <text x="248" y="505" text-anchor="end" class="pin">+</text>
+  <text x="248" y="535" text-anchor="end" class="pin">−</text>
+  <circle class="dot" cx="260" cy="500" r="4"/>
+  <circle class="dot" cx="260" cy="530" r="4"/>
+
+  <!-- Fuse -->
+  <rect x="380" y="490" width="70" height="20" rx="4" fill="#fff6e0" stroke="#2b2f36" stroke-width="2"/>
+  <text x="415" y="505" text-anchor="middle" font-size="12">1 A fuse</text>
+
+  <!-- Buck converter -->
+  <rect class="box" x="720" y="440" width="250" height="110"/>
+  <text x="845" y="476" text-anchor="middle" class="title">Buck converter</text>
+  <text x="845" y="494" text-anchor="middle" class="note">8–24 V in → 5 V out, ≥ 1 A</text>
+  <text x="732" y="515" class="pin">IN+</text>
+  <text x="732" y="540" class="pin">IN−</text>
+  <text x="800" y="460" text-anchor="middle" class="pin" font-size="12">OUT+</text>
+  <text x="900" y="460" text-anchor="middle" class="pin" font-size="12">OUT−</text>
+  <circle class="dot" cx="720" cy="510" r="4"/>
+  <circle class="dot" cx="720" cy="535" r="4"/>
+
+  <!-- Power wiring -->
+  <path class="pwr" d="M264,500 L380,500"/>
+  <path class="pwr" d="M450,500 L600,500 L600,510 L716,510"/>
+  <path class="gnd" d="M264,530 L600,530 L600,535 L716,535"/>
+  <path class="pwr" d="M800,440 L800,364"/>
+  <path class="gnd" d="M900,440 L900,364"/>
+
+  <!-- Controller ground reference -->
+  <path class="gndd" d="M145,280 L145,440"/>
+  <text x="155" y="380" class="note">controller and battery</text>
+  <text x="155" y="396" class="note">share ground (frame)</text>
+
+  <!-- Warning and legend -->
+  <text x="500" y="590" text-anchor="middle" class="warn">Never wire the controller's serial pins directly to the ESP32 — RS-232 swings up to ±12 V.</text>
+  <g transform="translate(160,615)" font-size="13">
+    <line x1="0" y1="0" x2="34" y2="0" stroke="#1b7f3b" stroke-width="3"/><text x="40" y="5">controller → ESP32 data</text>
+    <line x1="200" y1="0" x2="234" y2="0" stroke="#1f5fbf" stroke-width="3"/><text x="240" y="5">ESP32 → controller data</text>
+    <line x1="400" y1="0" x2="434" y2="0" stroke="#c62828" stroke-width="3"/><text x="440" y="5">power</text>
+    <line x1="500" y1="0" x2="534" y2="0" stroke="#222222" stroke-width="3"/><text x="540" y="5">ground</text>
+  </g>
+  <text x="500" y="648" text-anchor="middle" class="note">TTL labels vary by module: if the monitor reports “Not receiving data”, swap the two wires at GPIO16/GPIO17.</text>
+</svg>

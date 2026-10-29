@@ -1,0 +1,4 @@
+# Only build_doc_images.py needs third-party packages; gen_upstream_data.py
+# uses the standard library. Install into a virtual environment:
+#   python -m venv .venv && .venv/bin/pip install -r esp32/tools/requirements.txt
+Pillow==13.0.0

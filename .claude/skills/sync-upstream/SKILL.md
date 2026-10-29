@@ -58,6 +58,8 @@ the user before porting anything that is not automatic.
 | `genmon.py` | `core/report_builder.cpp` (DisplayMonitor, GetStartInfo) | Port report key changes only |
 | `addon/genhomeassistant.py` | `core/ha_catalog.*`, `core/ha_values.*`, `core/ha_discovery.*`, `esp/ha_publisher.*` | **Port**: entity compatibility depends on it |
 | `addon/genmqtt.py` | `core/mqtt_flatten.*`, `esp/genmqtt_publisher.*` | Port topic / payload changes |
+| `Diagrams/**` (photos, drawings) | `esp32/docs/images/upstream/` via the `MANIFEST` in `esp32/tools/build_doc_images.py` | **Semi-automatic**: changed images rebuild in step 5; for a new image, look at it, add a manifest entry if it applies to an Evolution/Nexus ESP32 build (with a banner note if a Raspberry Pi is visible), and reference it from the matching `esp32/docs/*.md` page |
+| `README.md` hardware / cable / wiring sections | `esp32/docs/hardware.md`, `cable.md`, `wiring.md` | Carry over facts that also apply to the ESP32 build |
 | `conf/genmon.conf`, `conf/genhomeassistant.conf`, `conf/genmqtt.conf` | `esp/settings.*` (field table in `visitFields`) and the web page groups in `esp/web_page.h` | Add options that affect Evolution/Nexus or the two MQTT add-ons |
 | `genmonlib/generac_HPanel.py`, `generac_powerzone_pro.py`, `custom_controller.py`, `data/controller/*`, other `data/homeassistant/*.json` | none | Not applicable (controllers the firmware does not support) |
 | `genserv.py`, `static/`, `templates/`, other `addon/*`, `OtherApps/`, `*.sh`, `requirements.txt` | none | Not applicable (Raspberry Pi platform) |
@@ -89,6 +91,15 @@ keeps existing Home Assistant entities and MQTT consumers working.
 python esp32/tools/gen_upstream_data.py
 python esp32/tools/gen_upstream_data.py --check   # must exit 0
 ```
+
+If anything under `Diagrams/` changed (needs Pillow from `esp32/tools/requirements.txt`):
+
+```bash
+python esp32/tools/build_doc_images.py
+python esp32/tools/build_doc_images.py --check    # must exit 0
+```
+
+Open every image the manifest annotates and confirm the banner is correct for it.
 
 ## 6. Verify
 

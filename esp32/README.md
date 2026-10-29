@@ -64,47 +64,22 @@ guesses them, and the event log says so.
 
 ## Hardware
 
-| Part | Notes |
-|---|---|
-| ESP32-WROOM-32D DevKitC | Any ESP32 DevKitC works; the 32D is what this was written for |
-| MAX3232 RS-232 ↔ TTL module | Must be **MAX3232** (3.3 V capable), not MAX232 (5 V only) |
-| 12 V → 5 V buck converter, ≥ 1 A | Powers the ESP32 from the generator's starting battery |
-| Cable to the controller's serial port | The same cable used for a genmon Raspberry Pi install |
-| Enclosure, preferably with an external antenna | The generator housing is a metal box |
-
-The controller's serial port uses **RS-232 voltages (up to ±12 V)**. Never connect it
-directly to ESP32 pins; the level shifter is mandatory.
+An ESP32 DevKitC, a **MAX3232** RS-232 ↔ TTL module, a 12 V → 5 V buck converter, and the
+same controller cable a Raspberry Pi genmon install uses. The full build guide, with photos, is
+in [`docs/`](docs/README.md):
+[hardware](docs/hardware.md) · [controllers](docs/controllers.md) · [cable](docs/cable.md) ·
+[wiring](docs/wiring.md) · [enclosure](docs/enclosure.md) · [troubleshooting](docs/troubleshooting.md).
 
 ## Wiring
 
-This is the same circuit as genmon's
-[`Diagrams/wiring_schematic.png`](../Diagrams/wiring_schematic.png), with the ESP32 in place
-of the Raspberry Pi. Connector pin numbering is in [`Diagrams/Molex_Pinout.png`](../Diagrams/Molex_Pinout.png);
-see genmon's wiki for where the port is on your controller.
+![genmon-esp32 wiring](docs/images/wiring_esp32.svg)
 
-```
- Generator controller            MAX3232 module                ESP32 DevKitC
- 8-pin serial port               RS-232 side | TTL side
- ─────────────────               ──────────────────────        ─────────────
- pin 8  (controller TX) ───────► RX           |  TX  ◄──────── GPIO17 (TX2)
- pin 7  (controller RX) ◄─────── TX           |  RX  ────────► GPIO16 (RX2)
-                                              |  VCC ◄──────── 3V3
-                                              |  GND ───────┬─ GND
-                                                            │
- Generator 12 V battery (+) ──► buck IN+   buck OUT+ 5 V ───┼─► 5V pin
- Generator 12 V battery (−) ──► buck IN−   buck OUT− ───────┴─► GND
-```
+The controller's serial port uses **RS-232 voltages (up to ±12 V)**; never connect it directly to
+ESP32 pins. Power the MAX3232 from the ESP32's **3V3**, not 5 V. Details, signal-level checks and
+DB9 module pinouts are in [docs/wiring.md](docs/wiring.md).
 
-- RS-232 is crossed (controller TX → module RX), exactly as in genmon's diagram. TTL pin
-  labels vary between modules: if the monitor reports "Not receiving data", swap the two
-  TTL wires at the ESP32. Both swaps are harmless.
-- All grounds (battery negative, buck output, MAX3232, ESP32) must be common.
-- GPIO 16/17 are the defaults; any other usable pins can be set in Settings → Controller.
-- Don't power the DevKitC from USB and the 5V pin at the same time unless your board has a
-  protection diode on 5V. Unplug the buck converter while flashing over USB.
-- Factory reset (for example after a lost admin password): press **EN** (reset), release it,
-  then within 3 seconds press and hold **BOOT** for 5 seconds. (Holding BOOT *while*
-  pressing EN starts the ESP32's flash loader instead, which is harmless; just reset again.)
+Factory reset (for example after a lost admin password): press **EN** (reset), release it, then
+within 3 seconds press and hold **BOOT** for 5 seconds.
 
 ## Build and flash
 
@@ -124,7 +99,8 @@ Later updates can be installed from the web page (Control → Firmware) using
 
 ## First-time setup
 
-1. Power the ESP32. With no Wi-Fi configured it opens an access point named
+1. Wire it up following the [build guide](docs/README.md). Power the ESP32. With no Wi-Fi
+   configured it opens an access point named
    `genmon-setup-XXXX`, password `genmon-setup`.
 2. Join it and browse to `http://192.168.4.1/`.
 3. Under **Settings**, set at least `wifi_ssid`, `wifi_password`, `admin_password`,
@@ -230,7 +206,10 @@ esp32/
 │   │   └── *.inc                 generated from upstream data files (do not edit)
 │   └── esp/                  ESP32 services: UART, NVS settings, Wi-Fi, web, MQTT
 ├── tests/                    Unity tests for src/core (pio test -e native)
-└── tools/gen_upstream_data.py  regenerates the *.inc files from ../data/
+├── docs/                     build guide; images/upstream/ is generated from ../Diagrams/
+└── tools/
+    ├── gen_upstream_data.py  regenerates the *.inc files from ../data/
+    └── build_doc_images.py   rebuilds docs/images/upstream/ (needs Pillow, see requirements.txt)
 ```
 
 - Run the tests with `pio test -e native` (needs a host gcc or clang with C++17).
@@ -247,6 +226,8 @@ After merging:
 
 1. `python esp32/tools/gen_upstream_data.py` picks up new alarm codes and Home Assistant
    entity definitions automatically (`--check` verifies nothing is stale).
+   `python esp32/tools/build_doc_images.py` refreshes the documentation photos; new upstream
+   images are added to its manifest by hand.
 2. Changes to `genmonlib/generac_evolution.py`, the Modbus modules, or the
    `genhomeassistant` / `genmqtt` add-ons are ported by hand. The mapping from each Python
    function to its C++ counterpart is in `.claude/skills/sync-upstream/SKILL.md`.

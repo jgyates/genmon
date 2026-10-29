@@ -18,6 +18,9 @@ All notable changes to genmon-esp32 are documented here. The format follows
 - `tools/gen_upstream_data.py` to compile upstream `data/ALARMS.txt` and
   `data/homeassistant/*.json` into the firmware.
 - `sync-upstream` Claude Code skill for merging and porting upstream changes.
+- Build guide in `docs/` (hardware, controllers, cable, wiring, enclosure, troubleshooting) with
+  an ESP32 wiring diagram and upstream's photos, annotated where they show a Raspberry Pi.
+- `tools/build_doc_images.py` to regenerate the documentation images from upstream `Diagrams/`.
 
 ### Upstream baseline
 
