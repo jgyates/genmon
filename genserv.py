@@ -4755,7 +4755,7 @@ def ReadSettingsFromFile():
             0,
             GENMON_CONFIG,
             GENMON_SECTION,
-            "min_sensorlog_entries",
+            "max_sensorlog_entries",
         ]
     ConfigSettings["autofeedback"] = [
         "boolean",
