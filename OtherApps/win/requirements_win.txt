@@ -11,7 +11,7 @@ paho-mqtt
 pysnmp==7.1.21
 ldap3
 # pysan1 is fixed at 0.6.1 due to pysnmp 7.1.21 requiring pyasn1 < 0.6.1
-pyasn1==0.6.1
+pyasn1==0.6.5
 pyotp
 webauthn>=2.0
 psutil
