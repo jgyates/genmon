@@ -4248,7 +4248,10 @@ class Evolution(GeneratorController):
             # low word returns e-code on PZ200
             if regvalue & 0xffe00000:
                 return False
-        elif regvalue & 0xFFE0FFC0:
+        elif regvalue & 0xFFE0FF00:
+            return False
+        # The false alarm value of 0xff can be seen in passing on Evo2 and Evo LC 4.5L, ignore this
+        elif self.BitIsEqual(regvalue, 0x000000ff, 0x000000ff):
             return False
         return True
 
@@ -4295,11 +4298,12 @@ class Evolution(GeneratorController):
                 if self.BitIsEqual(regvalue, 0x001F0000, 0x00170000):
                     return self.LastAlarmValue
 
-            if not self.Evolution2:
+            if not self.Evolution2 and not self.Evo45L:
                 return regvalue
 
-            if not self.IgnoreUnknown:
-                return regvalue
+            # ignore uniknow values for Evo2 and Evo4.5L LC
+            #if not self.IgnoreUnknown:
+            #    return regvalue
 
             IgnoreList = [
                 0x2020,
@@ -4310,7 +4314,8 @@ class Evolution(GeneratorController):
                 0x6F670000,
                 0x6F67,
                 0x6538,
-                0x6538
+                0x6538,
+                0xff
             ]
 
             if not self.Reg0001IsValid(regvalue):
