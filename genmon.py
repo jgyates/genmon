@@ -370,7 +370,7 @@ class Monitor(MySupport):
                     "server_port", return_type=int
                 )
 
-            self.ServerIPAddress = self.config.ReadValue("genmon_server_address", default = "127.0.0.1")
+            self.ServerIPAddress = self.config.ReadValue("genmon_server_address", default = "")
 
             self.LogLocation = self.config.ReadValue(
                 "loglocation", default=ProgramDefaults.LogPath
