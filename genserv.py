@@ -3935,7 +3935,18 @@ def ReadAdvancedSettingsFromFile():
             GENMON_SECTION,
             "forceserialuse",
         ]
-        wait_for_init_seconds
+        ConfigSettings["allow_local_access"] = [
+            "boolean",
+            "Allow LAN access to genmon",
+            12,
+            False,
+            "",
+            "",
+            GENMON_CONFIG,
+            GENMON_SECTION,
+            "allow_local_access",
+        ]
+
         ConfigSettings["wait_for_init_seconds"] = [
             "int",
             "Initialization Wait Time (seconds)",

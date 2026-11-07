@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - Fixed bug with custom controller handling some types of ieee754 values
 - misc security improvemnts
 - Added code hash value to About page
+- Local LAN socket access to genmon is now disabled by default. If you want enable this then look at the advanced seeting named "Allow LAN access to genmon" 
 
 ## 2.0.02 -2026-08-04
 - New add on for Hubitat Elevation hub, Thanks @bdwilson
