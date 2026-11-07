@@ -6215,6 +6215,7 @@ var Pages = {
       h += '<div class="card mb-2"><div class="card-header">' + icon('cpu') + ' Software</div><div class="card-body">';
       var softRows = '';
       [['Genmon Version', info.version],
+       ['Code Hash', info.code_hash],
        ['Python', info.python], ['Platform', info.platform],
        ['OS Architecture', (info.os_bits||'')], ['Install Date', info.install]
       ].forEach(function(f){

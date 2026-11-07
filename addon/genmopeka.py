@@ -230,7 +230,7 @@ class GenMopekaData(MySupport):
                 sys.exit(1)
 
             if self.tank_type == None:
-                self.tank_type == "Custom"
+                self.tank_type = "Custom"
 
             if self.tank_type.lower() != "custom":
                 # default tank mim

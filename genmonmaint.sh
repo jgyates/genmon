@@ -369,11 +369,24 @@ function restoregenmon() {
     sudo sh -c "printf '%s\n' $restore_file >> $RESTORE_HISTORY"
     sudo sh -c "printf '%s\n' $current_time >> $RESTORE_HISTORY"
 
-    tar -xzf $restore_file
-    sudo cp -r ./genmon_backup/* $config_path
-    sudo rm -r genmon_backup
-    sudo rm $restore_file
+    base_filename="${restore_file##*/}"
 
+    echo "$base_filename"
+
+
+    # echo copy restore archive to a temp folder
+    if [[ -d temp_restore ]]; then
+      echo removing temp_restore
+      sudo rm -r temp_restore
+    fi
+
+    mkdir temp_restore 
+    sudo mv $restore_file ./temp_restore
+    cd temp_restore
+    sudo tar -xzf $base_filename
+    sudo cp -r ./genmon_backup/* $config_path
+    cd ..
+    sudo rm -r temp_restore
 }
 #-------------------------------------------------------------------------------
 # backup genmon
@@ -386,9 +399,14 @@ function backupgenmon() {
     mkdir genmon_backup
 
     sudo cp -r "$config_path"*  ./genmon_backup
-    tar -zcvf genmon_backup.tar.gz genmon_backup/
+    sudo tar -zcvf genmon_backup.tar.gz genmon_backup/
     sudo rm -r genmon_backup
     echo "Done."
+}
+#-------------------------------------------------------------------------------
+function githubhash(){
+  cd $genmondir
+  git rev-parse --short HEAD
 }
 #-------------------------------------------------------------------------------
 # update genmon from the github repository
@@ -432,6 +450,7 @@ function printhelp() {
   echo "  -t           Specify full path of the backup to restore"
   echo "  -r           Refresh (update) required libraries"
   echo "  -u           Update genmon to the latest version"
+  echo "  -v           Display github hash for current source tree"
   echo "  -C           Remove *.pyc files (clean pre-compiled python files)"
   echo "  -n           Do not prompt for Y/N, assume yes"
   echo "  -c           Specify full path to config file directory"
@@ -446,9 +465,8 @@ function printhelp() {
 #-------------------------------------------------------------------------------
 # main entry
 
-
-while getopts ":hfp:bt:irunc:Csl:" opt; do
-  echo $OPTARG
+while getopts ":hfp:bt:iruvnc:Csl:" opt; do
+  #echo $OPTARG
   case ${opt} in
     h )
       printhelp
@@ -487,6 +505,10 @@ while getopts ":hfp:bt:irunc:Csl:" opt; do
     r )
       refresh_opt=true
       ;;
+    v ) 
+      githubhash
+      exit 0
+      ;;
     u )
       update_opt=true
       ;;
@@ -494,6 +516,7 @@ while getopts ":hfp:bt:irunc:Csl:" opt; do
       noprompt_opt=true
       ;;
     \? )
+      echo ""
       echo "Invalid Option: -$OPTARG" 1>&2
       printhelp
       exit 1
@@ -502,6 +525,7 @@ while getopts ":hfp:bt:irunc:Csl:" opt; do
 done
 shift $((OPTIND -1))
 
+echo ""
 if [ "$update_os" = true ] ; then
    sudo apt-get --allow-releaseinfo-change update && sudo apt-get upgrade
 fi

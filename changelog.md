@@ -17,6 +17,10 @@ All notable changes to this project will be documented in this file.
 - Update to improve loading on systems with long delays before the serial port is ready
 - Updated alarm E-Codes for Power Zone 200
 - Improved alarm handling for Evo 2.0 and Evo LC 4.5L
+- Fixed bug with Modbus TCP support
+- Fixed bug with custom controller handling some types of ieee754 values
+- misc security improvemnts
+- Added code hash value to About page
 
 ## 2.0.02 -2026-08-04
 - New add on for Hubitat Elevation hub, Thanks @bdwilson

@@ -24,6 +24,7 @@ import itertools
 import struct
 import copy
 import re
+import math
 
 from genmonlib.mylog import SetupLogger
 from genmonlib.myplatform import MyPlatform

@@ -71,11 +71,14 @@ class ModbusProtocol(ModbusBase):
             self.ModBusPacketTimoutMS += self.AdditionalModbusTimeout * 1000.0
 
             if self.ModbusTCP:
+                # adjust packet parameters for modbus TCP (no crc)
                 self.MIN_PACKET_RESPONSE_LENGTH -= 2
                 self.MBUS_RES_PAYLOAD_SIZE_MINUS_LENGTH -= 2
                 self.MBUS_FILE_READ_PAYLOAD_SIZE_MINUS_LENGTH -= 2
                 self.MBUS_CRC_SIZE = 0
                 self.MIN_PACKET_ERR_LENGTH -= 2
+                self.MIN_PACKET_MIN_WRITE_RESPONSE_LENGTH -= 2
+                self.MBUS_SINGLE_WRITE_RES_LENGTH -= 2
 
             if self.UseTCP:
                 self.ModBusPacketTimoutMS = self.ModBusPacketTimoutMS + 2000
@@ -879,7 +882,7 @@ class ModbusProtocol(ModbusBase):
                 0, length & 0xFF
             )  # byte 5:   length field (lower byte) = number of bytes following
             Packet.insert(
-                0, length & 0xFF00
+                0, (length >> 8) & 0xFF
             )  # byte 4:   length field (upper byte) = 0 (since all messages are smaller than 256)
             Packet.insert(0, 0)  # byte 3:   protocol identifier = 0
             Packet.insert(0, 0)  # byte 2:   protocol identifier = 0

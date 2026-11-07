@@ -73,12 +73,9 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-if sys.version_info[0] < 3:
-    from urlparse import parse_qs, parse_qsl, urlparse
-else:
-    from urllib.parse import urlparse
-    from urllib.parse import parse_qs
-    from urllib.parse import parse_qsl
+from urllib.parse import urlparse
+from urllib.parse import parse_qs
+from urllib.parse import parse_qsl
 
 import datetime
 import re
@@ -691,6 +688,8 @@ def mfa_auth():
 
             if verified:
                 session["mfa_ok"] = True
+                session["logged_in"] = session["provisional_login"]
+                session["write_access"] = session["provisional_write_access"]
                 resp = redirect(url_for("root"))
                 # Set MFA trust cookie if checkbox was checked and trust is enabled
                 if bMfaTrustExtend and request.form.get("trust_browser"):
@@ -767,14 +766,24 @@ def do_admin_login():
     ro_pass_ok = secrets.compare_digest(submitted_pass, HTTPAuthPass_RO or "")
 
     if admin_user_ok and admin_pass_ok:
-        session["logged_in"] = True
-        session["write_access"] = True
+        if not bUseMFA:
+            #do not set this until MFA is success
+            session["logged_in"] = True
+            session["write_access"] = True
+        else:
+            session["provisional_login"] = True
+            session["provisional_write_access"] = True
         session["username"] = submitted_user
         LogError("Admin Login")
         return admin_login_helper()
     elif ro_user_ok and ro_pass_ok:
-        session["logged_in"] = True
-        session["write_access"] = False
+        if not bUseMFA:
+            #do not set this until MFA is success
+            session["logged_in"] = True
+            session["write_access"] = False
+        else:
+            session["provisional_login"] = True
+            session["provisional_write_access"] = False
         session["username"] = submitted_user
         LogError("Limited Rights Login")
         return admin_login_helper()
@@ -812,7 +821,7 @@ def CheckLockOutDuration():
             # send message to user only once every 4 hours
             if securityMessageSent == None or (
                 (datetime.datetime.now() - securityMessageSent).total_seconds()
-                > (4 * 60)
+                > (4 * 60 * 60)
             ):
 
                 message = {
@@ -914,7 +923,7 @@ def command(command):
 
     if Closing or Restarting:
         return jsonify("Closing")
-    if HTTPAuthUser == None or HTTPAuthPass == None:
+    if not LoginActive():
 
         # Not everything sent to this function is a json string
         # so try to jsonify it and if that fails just return the
@@ -995,12 +1004,11 @@ def ProcessCommand(command):
 
             try:
                 if command in [
-                    "setexercise",
-                    "setquiet",
-                    "setremote",
-                    "add_maint_log",
-                    "delete_row_maint_log",
-                    "edit_row_maint_log",
+                    "setexercise", "setquiet", "setremote", "add_maint_log", 
+                    "delete_row_maint_log", "edit_row_maint_log", 
+                    "set_button_command", "settime", "sensor_log_clear", 
+                    "power_log_clear", "fuel_log_clear", "clear_maint_log", 
+                    "clear_aux_alarm_log"
                 ] and not HasWriteAccess():
                     return jsonify("Read Only Mode")
 
@@ -1084,6 +1092,7 @@ def ProcessCommand(command):
                             StartInfo["pages"]["settings"] = False
                             StartInfo["pages"]["notifications"] = False
                         StartInfo["LoginActive"] = LoginActive()
+                        StartInfo["code_hash"] = GitHubCodeHash()
                         data = json.dumps(StartInfo, sort_keys=False)
                     except Exception as e1:
                         LogErrorLine("Error in JSON parse / decode: " + str(e1))
@@ -5696,6 +5705,17 @@ def Update():
     except Exception as e1:
         LogErrorLine("Error in Update: " + str(e1))
 
+# -------------------------------------------------------------------------------
+def GitHubCodeHash():
+    try:
+        output, bSuccess = RunBashScript("genmonmaint.sh -v", log = False, return_output=True)
+        if not bSuccess:
+            LogError("Error in Update")
+            return "Unknown"
+        return output.strip()
+    except Exception as e1:
+        LogErrorLine("Error in Update: " + str(e1))
+        return "Unknown"
 
 # -------------------------------------------------------------------------------
 def GetLogs():
@@ -5717,7 +5737,7 @@ def RestoreBackup(ArchivePath):
 
 
 # -------------------------------------------------------------------------------
-def RunBashScript(ScriptName, log = False):
+def RunBashScript(ScriptName, log = False, return_output = False):
     
     global OperatingSystem
 
@@ -5733,17 +5753,17 @@ def RunBashScript(ScriptName, log = False):
             command = "/bin/bash "
             command = command + script
         LogError("Script: " + command)
-        if log == False:
-            subprocess.call(command, shell=True)
-        else:
-            try:
-                output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)
-            except subprocess.CalledProcessError as e:
-                output = e.output.decode()
+        
+        try:
+            output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            output = e.output.decode()
 
-            if sys.version_info >= (3, 0):
-                output = output.decode()
+        output = output.decode()
+        if log:
             LogError(command + ": \n" +  output)
+        if return_output:
+            return output, True
         return True
 
     except Exception as e1:

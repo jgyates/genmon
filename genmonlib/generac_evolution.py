@@ -1790,10 +1790,10 @@ class Evolution(GeneratorController):
                 Register = 0x0003  # remote run in quiet mode (exercise)
         # This command resets all maintenance timers
         elif Command == "resetmainttimer":
-            Register == 0x0009
+            Register = 0x0009
         # Reset maintenance alarm
         elif Command == "resetmaintalarm":
-            Register == 0x0008
+            Register = 0x0008
         elif Command == "resetalarm":
             # appears to work on Evo LC and Evo2.0 (tested with Firmware V1.15)
             Register = 0x000D

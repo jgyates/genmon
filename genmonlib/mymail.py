@@ -193,15 +193,13 @@ class MyMail(MySupport):
                 subtype = 'alternative'
             else:
                 subtype = 'mixed'
-            if sys.version_info[0] < 3:  # PYTHON 2
-                msg = MIMEMultipart(subtype)
-            else:  # PYTHON 3
-                try:
-                    import email.policy
 
-                    msg = MIMEMultipart(subtype,policy=email.policy.SMTP)
-                except:
-                    msg = MIMEMultipart(subtype)
+            try:
+                import email.policy
+
+                msg = MIMEMultipart(subtype,policy=email.policy.SMTP)
+            except:
+                msg = MIMEMultipart(subtype)
 
             parent.attach(msg)
             if sender_name == None or not len(sender_name):
@@ -231,25 +229,20 @@ class MyMail(MySupport):
             if use_html:
                 html_message = MyMail.ConvertTextToHTML(body)
 
-            if sys.version_info[0] < 3:  # PYTHON 2
-                msg.attach(MIMEText(body, "plain"))
+            try:
+                msg.attach(
+                    MIMEText(
+                        body, "plain", _charset="utf-8", policy=email.policy.SMTP
+                    )
+                )
                 if use_html:
-                    msg.attach(MIMEText(html_message, "html"))
-            else:  # PYTHON 3
-                try:
                     msg.attach(
                         MIMEText(
-                            body, "plain", _charset="utf-8", policy=email.policy.SMTP
+                            html_message, "html", _charset="utf-8", policy=email.policy.SMTP
                         )
                     )
-                    if use_html:
-                        msg.attach(
-                            MIMEText(
-                                html_message, "html", _charset="utf-8", policy=email.policy.SMTP
-                            )
-                        )
-                except:
-                    msg.attach(MIMEText(body, "plain"))
+            except:
+                msg.attach(MIMEText(body, "plain"))
         except Exception as e1:
             return "Error formatting email: " + str(e1)
 
@@ -271,10 +264,7 @@ class MyMail(MySupport):
             if password != "" and not smtpauth_disable:
                 session.login(MyMail.FilterAddress(email_account), str(password))
 
-            if sys.version_info[0] < 3:  # PYTHON 2
-                message = parent.as_string()
-            else:  # PYTHON 3
-                message = parent.as_bytes()
+            message = parent.as_bytes()
 
             if "," in recipient:
                 multiple_recipients = recipient.split(",")
@@ -632,16 +622,9 @@ class MyMail(MySupport):
                             if self.WaitForExit("EmailCommandThread", 15):
                                 return
                             continue
-                        if sys.version_info[0] < 3:  # PYTHON 2
-                            msg = email.message_from_string(data[0][1])
-                        else:  # PYTHON 3
-                            msg = email.message_from_bytes(data[0][1])
+                        msg = email.message_from_bytes(data[0][1])
                         decode_val = email.header.decode_header(msg["Subject"])[0]
-                        if sys.version_info[0] < 3:  # PYTHON 2
-                            subject = unicode(decode_val[0])
-                            subject = subject.decode("utf-8")
-                        else:  # PYTHON 3
-                            subject = decode_val[0]
+                        subject = decode_val[0]
                         self.IncomingCallback(subject)
 
                         # move the message to processed folder
@@ -705,14 +688,11 @@ class MyMail(MySupport):
                 subtype = 'alternative'
             else:
                 subtype = 'mixed'
-            if sys.version_info[0] < 3:  # PYTHON 2
+            try:
+                import email.policy
+                msg = MIMEMultipart(subtype, policy=email.policy.SMTP)
+            except:
                 msg = MIMEMultipart(subtype)
-            else:
-                try:
-                    import email.policy
-                    msg = MIMEMultipart(subtype, policy=email.policy.SMTP)
-                except:
-                    msg = MIMEMultipart(subtype)
             if self.SenderName == None or not len(self.SenderName):
                 parent["From"] = "<" + self.SenderAccount + ">"
             else:
@@ -749,25 +729,20 @@ class MyMail(MySupport):
             if self.UseHTML and not force_text:
                 html_message = MyMail.ConvertTextToHTML(body)
 
-            if sys.version_info[0] < 3:  # PYTHON 2
-                msg.attach(MIMEText(body, "plain"))
-                if self.UseHTML:
-                    msg.attach(MIMEText(html_message, "html"))
-            else:  # PYTHON 3
-                try:
+            try:
+                msg.attach(
+                    MIMEText(
+                        body, "plain", _charset="utf-8", policy=email.policy.SMTP
+                    )
+                )
+                if self.UseHTML and not force_text:
                     msg.attach(
                         MIMEText(
-                            body, "plain", _charset="utf-8", policy=email.policy.SMTP
+                            html_message, "html", _charset="utf-8", policy=email.policy.SMTP
                         )
                     )
-                    if self.UseHTML and not force_text:
-                        msg.attach(
-                            MIMEText(
-                                html_message, "html", _charset="utf-8", policy=email.policy.SMTP
-                            )
-                        )
-                except:
-                    msg.attach(MIMEText(body, "plain"))
+            except:
+                msg.attach(MIMEText(body, "plain"))
         except Exception as e1:
             self.LogErrorLine("Error in email init 2: " + str(e1))
             return False
@@ -822,10 +797,7 @@ class MyMail(MySupport):
                     MyMail.FilterAddress(self.EmailAccount), str(self.EmailPassword)
                 )
 
-            if sys.version_info[0] < 3:  # PYTHON 2
-                message = parent.as_string()
-            else:  # PYTHON 3
-                message = parent.as_bytes()
+            message = parent.as_bytes()
 
             if "," in recipient:
                 multiple_recipients = recipient.split(",")
