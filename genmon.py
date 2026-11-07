@@ -370,13 +370,16 @@ class Monitor(MySupport):
                     "server_port", return_type=int
                 )
 
-            self.AllowLocalAccess = self.config.ReadValue(
+            self.usehttps = self.config.ReadValue(
+                            "usehttps", return_type=bool, default=False
+                        )
+            self.allow_local_access = self.config.ReadValue(
                             "allow_local_access", return_type=bool, default=False
                         )
-            if self.AllowLocalAccess:
-                default_ip_bind = ""
-            else:
-                default_ip_bind = "127.0.0.1"
+            default_ip_bind = ""    # bind to all adapters
+            if self.usehttps and not self.allow_local_access:
+                default_ip_bind = "127.0.0.1"   # only bind to localhost
+
             self.ServerIPAddress = self.config.ReadValue("genmon_server_address", default = default_ip_bind)
 
             self.LogLocation = self.config.ReadValue(
