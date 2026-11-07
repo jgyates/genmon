@@ -24,6 +24,7 @@ from email.mime.text import MIMEText
 from email.utils import COMMASPACE, formatdate
 from os.path import basename
 from shutil import copyfile
+import ssl
 
 import idna
 
@@ -247,13 +248,14 @@ class MyMail(MySupport):
             return "Error formatting email: " + str(e1)
 
         try:
+            context = ssl.create_default_context()
             if use_ssl:
-                session = smtplib.SMTP_SSL(smtp_server, smtp_port)
+                session = smtplib.SMTP_SSL(smtp_server, smtp_port, context=context)
                 session.ehlo()
             else:
                 session = smtplib.SMTP(smtp_server, smtp_port)
                 if not tls_disable:
-                    session.starttls()
+                    session.starttls(context=context)
                 session.ehlo()
                 # this allows support for simple TLS
         except Exception as e1:
@@ -582,10 +584,11 @@ class MyMail(MySupport):
     # ---------- MyMail.EmailCommandThread --------------------------------------
     def EmailCommandThread(self):
 
+        context = ssl.create_default_context()
         while True:
             # start email command thread
             try:
-                self.Mailbox = imaplib.IMAP4_SSL(self.IMAPServer)
+                self.Mailbox = imaplib.IMAP4_SSL(self.IMAPServer, context = context)
                 if self.debug:
                     self.Mailbox.Debug = 4
             except Exception:
@@ -773,13 +776,14 @@ class MyMail(MySupport):
         # self.LogError("Logging in: SMTP Server <"+self.SMTPServer+">:Port <"+str(self.SMTPPort) + ">")
 
         try:
+            context = ssl.create_default_context()
             if self.SSLEnabled:
-                session = smtplib.SMTP_SSL(self.SMTPServer, self.SMTPPort)
+                session = smtplib.SMTP_SSL(self.SMTPServer, self.SMTPPort, context = context)
                 session.ehlo()
             else:
                 session = smtplib.SMTP(self.SMTPServer, self.SMTPPort)
                 if not self.TLSDisable:
-                    session.starttls()
+                    session.starttls(context = context)
                 session.ehlo()
             try:
                 if self.debug:
