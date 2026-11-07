@@ -1310,6 +1310,13 @@ class GeneratorController(MySupport):
         try:
             orignialvalue = value
 
+            if "title" in entry:
+                title = entry["title"]
+            elif "reg" in entry:
+                title = entry["reg"]
+            else:
+                title = "Unknown"
+
             if "swapwords32" in entry.keys():
                 # change from 01234567 to 456701234
                 if entry["swapwords32"] == True:
@@ -1321,15 +1328,15 @@ class GeneratorController(MySupport):
             if "ieee754" in entry.keys() and ReturnFloat:
                 # Use this for testing: https://www.h-schmidt.net/FloatConverter/IEEE754.html
                 if entry["ieee754"].lower() == "half":  # 16 bits
-                    value = float(struct.unpack('f', struct.pack('H', int(value)))[0])
+                    value = float(struct.unpack('f', struct.pack('e', int(value)))[0])
                 elif entry["ieee754"].lower() == "single":  # 32 bits
                     value = float(struct.unpack('f', struct.pack('I', int(value)))[0])
                 elif entry["ieee754"].lower() == "double":  # 64 bits
-                    value = float(struct.unpack('f', struct.pack('Q', int(value)))[0])
+                    value = float(struct.unpack('f', struct.pack('d', int(value)))[0])
                 else:
                     self.LogError("Error converting IEEE754 floating point: invalid ieee754 type: " + str(entry))
                 if math.isnan(value):
-                    self.LogDebug("Error: value is not an IEEE floating point number: " + ("%x" % orignialvalue) + " : " + str(entry["title"]) + ": " + str(value))
+                    self.LogDebug("Error: value is not an IEEE floating point number: " + ("%x" % orignialvalue) + " : " + str(title) + ": " + str(value))
                     return 0.0
             if "multiplier" in entry.keys():
                 if ReturnFloat:
@@ -1338,7 +1345,7 @@ class GeneratorController(MySupport):
                     value = int(value * float(entry["multiplier"]))
             return value
         except Exception as e1:
-            self.LogErrorLine("Error in ProcessBitModifiers: " + str(e1) + ": " + str(entry["title"]))
+            self.LogErrorLine("Error in ProcessBitModifiers: " + str(e1) + ": " + str(title))
             return value
 
     # --------------------GeneratorController:DelayBetweenFrames----------------
