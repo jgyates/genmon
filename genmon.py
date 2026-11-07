@@ -1448,12 +1448,8 @@ class Monitor(MySupport):
                 # Do the check
                 try:
                     url = "https://raw.githubusercontent.com/jgyates/genmon/master/genmonlib/program_defaults.py"
-                    if sys.version_info[0] < 3:
-                        # Fall back to Python 2's urllib2
-                        from urllib2 import urlopen
-                    else:
-                        # For Python 3.0 and later
-                        from urllib.request import urlopen
+                    # For Python 3.0 and later
+                    from urllib.request import urlopen
 
                     data = urlopen(url).read(4000)  # read only first 4000 chars
                     data = data.decode("ascii")
@@ -1692,7 +1688,7 @@ class Monitor(MySupport):
                         item.close()
                     except:
                         continue
-                    self.ConnectionList.remove(item)
+                self.ConnectionList = []
             except:
                 pass
 

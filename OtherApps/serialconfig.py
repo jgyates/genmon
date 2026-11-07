@@ -196,8 +196,7 @@ def CheckServiceOutput(Output):
 
     try:
         for line in iter(Output.splitlines()):
-            if sys.version_info[0] >= 3:
-                line = line.decode()
+            line = line.decode()
             if "Loaded:" in line:
                 line = line.strip()
                 lineitems = line.split(";")
@@ -350,8 +349,7 @@ def GetRaspberryPiModel():
     try:    
         process = Popen(["cat", "/proc/device-tree/model"], stdout=PIPE)
         output, _error = process.communicate()
-        if sys.version_info[0] >= 3:
-            output = output.decode("utf-8")
+        output = output.decode("utf-8")
         return str(output.rstrip("\x00"))
     except Exception as e1:
         return None

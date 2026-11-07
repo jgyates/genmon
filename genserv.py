@@ -1254,11 +1254,11 @@ def SendTestEmail(query_string):
         sender_account = str(parameters["sender_account"])
         sender_account = sender_account.strip()
         if not len(sender_account):
-            sender_account == None
+            sender_account = None
         sender_name = str(parameters["sender_name"])
         sender_name = sender_name.strip()
         if not len(sender_name):
-            sender_name == None
+            sender_name = None
         recipient = str(parameters["recipient"])
         recipient = recipient.strip()
         password = str(parameters["password"])

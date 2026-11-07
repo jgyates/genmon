@@ -134,8 +134,6 @@ class MyTest(MyCommon):
 
                 if isinstance(ReturnValue, str):
                     self.PrintResults(ReturnValue)
-                elif sys.version_info[0] < 3 and isinstance(ReturnValue, unicode):
-                    self.PrintResults(ReturnValue)
                 elif isinstance(ReturnValue, dict):
                     self.PrintResults(self.DictToString(ReturnValue))
                 elif isinstance(ReturnValue, list):

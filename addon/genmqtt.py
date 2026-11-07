@@ -310,12 +310,8 @@ class MyGenPush(MySupport):
             if not isinstance(listinput, list):
                 return False
             for item in listinput:
-                if sys.version_info[0] < 3:
-                    if not (isinstance(item, str) or isinstance(item, unicode)):
-                        return False
-                else:
-                    if not (isinstance(item, str) or isinstance(item, bytes)):
-                        return False
+                if not (isinstance(item, str) or isinstance(item, bytes)):
+                    return False
             return True
         except Exception as e1:
             self.LogErrorLine("Error in ListIsStrings: " + str(e1))

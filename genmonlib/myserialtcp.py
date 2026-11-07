@@ -133,10 +133,7 @@ class SerialTCPDevice(MySupport):
                             continue
                     for c in self.Read():
                         with self.BufferLock:
-                            if sys.version_info[0] < 3:
-                                self.Buffer.append(ord(c))  # PYTHON2
-                            else:
-                                self.Buffer.append(c)  # PYTHON3
+                            self.Buffer.append(c)  # PYTHON3
                         # first check for SignalStopped is when we are receiving
                         if self.IsStopSignaled("SerialTCPReadThread"):
                             return

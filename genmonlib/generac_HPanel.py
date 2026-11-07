@@ -236,9 +236,8 @@ class HPanelIO(object):
         ("0089", 0x1000): "User Config 116",
         ("0089", 0x0800): "User Config 117",
         ("0089", 0x0400): "User Config 118",
-        ("0089", 0x0400): "User Config 118",
         ("0089", 0x0200): "RPM Missing",
-        ("0089", 0x0200): "Reset Alarms",
+        ("0089", 0x0100): "Reset Alarms",
     }
     Alarms = {
         # Output 1

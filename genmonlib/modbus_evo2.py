@@ -302,16 +302,7 @@ class ModbusEvo2(ModbusProtocol):
     def ConvertToBytes(self, Buffer):
 
         try:
-            if sys.version_info[0] < 3:
-                byte_output = bytearray("")
-                for i in range(0, len(Buffer)):
-                    if isinstance(Buffer[i], str):
-                        byte_output.append(ord(Buffer[i]))
-                    else:
-                        byte_output.append(Buffer[i])
-                return byte_output
-            else:
-                return bytes(Buffer)
+            return bytes(Buffer)
         except Exception as e1:
             self.LogErrorLine("Error in ConvertToBytes: " + str(e1))
             return Buffer

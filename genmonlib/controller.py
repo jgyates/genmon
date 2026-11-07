@@ -37,8 +37,7 @@ from genmonlib.program_defaults import ProgramDefaults
 
 
 # Fix Python 2.x. unicode type
-if sys.version_info[0] >= 3:  # PYTHON 3
-    unicode = str
+unicode = str
 
 
 class GeneratorController(MySupport):
@@ -943,7 +942,7 @@ class GeneratorController(MySupport):
     # read conf file, used internally, not called by genmon
     # return True on success, else False
     def GetConfig(self):
-        True
+        return True
 
     # ---------------------GeneratorController::SystemInAlarm--------------------
     # return True if generator is in alarm, else False
@@ -971,7 +970,7 @@ class GeneratorController(MySupport):
                 try:
                     CommandSetList = json.loads(EntryString)
                     # validate object
-                    if not isinstance(CommandSetList, list) and not (len(CommandSetList) == 0):
+                    if not isinstance(CommandSetList, list) or not (len(CommandSetList) == 0):
                         self.LogError("Invalid button object in SetCommandButton")
                         return "Error: Invalid button object"
                     # Execute Command
@@ -1134,16 +1133,13 @@ class GeneratorController(MySupport):
         # Each dict in the list is in the format of the objects in the 'buttons' 
         # list in the custom controller JSON format
         try:
-            if sys.version_info[0] < 3:  #
-                self.LogError("Error in ExecuteRemoteCommand, requires python3: " + str(sys.version_info.major) + "." + str(sys.version_info.minor))
-                return "Error in ExecuteRemoteCommand, requires python3"
             if not isinstance(CommandSetList, list):
                 return "Error: invalid input in ExecuteRemoteCommand"
             
             with self.ModBus.CommAccessLock:
                 # put the lock here so if there are multiple commands they will be executed back to back
                 for button_command in CommandSetList:
-                    if not isinstance(button_command, dict) and not len(button_command) == 1:
+                    if not isinstance(button_command, dict) or not len(button_command) == 1:
                         self.LogError("Error on ExecuteRemoteCommand, expecting single dict: " + str(button_command))
                         return "Error: invalid input in ExecuteRemoteCommand"
                     if not "onewordcommand" in button_command.keys():
@@ -1222,7 +1218,7 @@ class GeneratorController(MySupport):
                         try:
                             import subprocess
 
-                            OutputStream = subprocess.PIPE
+                            OutputStream = subprocess.DEVNULL
                             executelist = [sys.executable, ScriptFileName]
                             pid = subprocess.Popen(
                                 executelist,
@@ -3414,7 +3410,7 @@ class GeneratorController(MySupport):
                 elif self.UseMetric:
                     return 0.0, "L"
                 else:
-                    0.0, Units
+                    return 0.0, Units
             # Slope of fuel consumption plot (it is very close to if not linear in most cases)
             Slope = (Y2 - Y1) / (X2 - X1)  
             # now use point slope equation to find consumption for one hour
@@ -3879,6 +3875,7 @@ class GeneratorController(MySupport):
                 # validate object
                 if not self.ValidateMaintLogEntry(Entry):
                     return "Invalid maintenance log entry"
+                self.GetMaintLogDict()  # added a safe guard read here
                 self.MaintLogList.append(Entry)
                 with self.MaintLock:
                     with open(self.MaintLogFileName, "w") as outfile:
@@ -4142,7 +4139,7 @@ class GeneratorController(MySupport):
                 date_string = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")
             self.AuxAlarmLog.append(f"{date_string} {entry}")
             if len(self.AuxAlarmLog) > self.MaxAuxAlarmLogEntries:
-                self.AuxLarmLog = self.AuxAlarmLog[-int(self.self.MaxAuxAlarmLogEntries):]
+                self.AuxAlarmLog = self.AuxAlarmLog[-int(self.MaxAuxAlarmLogEntries):]
             self.SaveAuxAlarmLog()
             return True
         except Exception as e1:
@@ -4178,7 +4175,7 @@ class GeneratorController(MySupport):
                 except:
                     pass
 
-            self.AuxAlarmLog = {}
+            self.AuxAlarmLog = []
 
             return "Aux alarm log cleared"
         except Exception as e1:

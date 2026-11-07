@@ -89,10 +89,7 @@ class Loader(MySupport):
             if sys.version_info < (3, 9):
                 self.LogError(f"ERROR: Python version 3.9 or higher required.")
 
-            if sys.version_info[0] < 3:
-                self.pipProgram = "pip2"
-            else:
-                self.pipProgram = "pip3"
+            self.pipProgram = "pip3"
             self.CachedConfig = {}
 
             if not os.path.isdir(self.ConfigFilePath):
@@ -553,10 +550,7 @@ class Loader(MySupport):
     def InstallBaseSoftware(self):
 
         try:
-            if sys.version_info[0] < 3:
-                pipInstallProgram = "python-pip"
-            else:
-                pipInstallProgram = "python3-pip"
+            pipInstallProgram = "python3-pip"
 
             self.LogInfo("Installing " + pipInstallProgram)
 
@@ -630,7 +624,7 @@ class Loader(MySupport):
             if not os.path.isdir(ConfigFilePath):
                 try:
                     os.mkdir(ConfigFilePath)
-                    if not os.access(ConfigFilePath + File, os.R_OK):
+                    if not os.access(ConfigFilePath, os.R_OK):
                         pass
                 except Exception as e1:
                     log.error(
@@ -655,45 +649,6 @@ class Loader(MySupport):
         except Exception as e1:
             log.error("Error moving files: " + str(e1), LogLine=True)
         return True
-
-    # ---------------------------------------------------------------------------
-    def FixPyOWMMaintIssues(self):
-        try:
-            # check version of pyowm
-            import pyowm
-
-            if sys.version_info[0] < 3:
-                required_version = "2.9.0"
-            else:
-                required_version = "2.10.0"
-
-            if not self.LibraryIsInstalled("pyowm"):
-                self.LogError("Error in FixPyOWMMaintIssues: pyowm not installed")
-                return False
-
-            installed_version = self.GetLibararyVersion("pyowm")
-
-            if installed_version == None:
-                self.LogError("Error in FixPyOWMMaintIssues: pyowm version not found")
-                return None
-
-            if self.VersionTuple(installed_version) <= self.VersionTuple(
-                required_version
-            ):
-                return True
-
-            self.LogInfo(
-                "Found wrong version of pyowm, uninstalling and installing the correct version."
-            )
-
-            self.InstallLibrary("pyowm", uninstall=True)
-
-            self.InstallLibrary("pyowm", version=required_version)
-
-            return True
-        except Exception as e1:
-            self.LogErrorLine("Error in FixPyOWMMaintIssues: " + str(e1))
-            return False
 
     # ---------------------------------------------------------------------------
     def GetLibararyVersion(self, libraryname, importonly=False):
@@ -954,7 +909,6 @@ class Loader(MySupport):
             if self.NewInstall:
                 pass
                 #self.LogInfo("Running one time maintenance check")
-                #self.FixPyOWMMaintIssues()
 
             # TODO other version checks can be added here
 

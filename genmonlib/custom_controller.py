@@ -1334,9 +1334,9 @@ class CustomController(GeneratorController):
         except Exception as e1:
             self.LogErrorLine(f"Error in DisplayStatus: {e1}")
             if ReturnList:
-                []
+                return []
             else:
-                ""
+                return ""
     # ----------  GeneratorController::SetGeneratorTimeDate----------------------
     # set generator time to system time
     def SetGeneratorTimeDate(self):

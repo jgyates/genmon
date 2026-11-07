@@ -254,7 +254,7 @@ class MyMail(MySupport):
                 session = smtplib.SMTP(smtp_server, smtp_port)
                 if not tls_disable:
                     session.starttls()
-                session.ehlo
+                session.ehlo()
                 # this allows support for simple TLS
         except Exception as e1:
             # self.LogErrorLine("Error Test SMTP : SSL:<" + str(use_ssl)  + ">: " + str(e1))
@@ -623,8 +623,11 @@ class MyMail(MySupport):
                                 return
                             continue
                         msg = email.message_from_bytes(data[0][1])
-                        decode_val = email.header.decode_header(msg["Subject"])[0]
-                        subject = decode_val[0]
+                        try:
+                            decode_val = email.header.decode_header(msg["Subject"])[0]
+                            subject = decode_val[0]
+                        except Exception as e1:
+                            subject = ""
                         self.IncomingCallback(subject)
 
                         # move the message to processed folder
@@ -777,7 +780,7 @@ class MyMail(MySupport):
                 session = smtplib.SMTP(self.SMTPServer, self.SMTPPort)
                 if not self.TLSDisable:
                     session.starttls()
-                session.ehlo
+                session.ehlo()
             try:
                 if self.debug:
                     pass

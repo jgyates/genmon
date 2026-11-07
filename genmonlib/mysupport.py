@@ -24,9 +24,8 @@ from genmonlib.mylog import SetupLogger
 from genmonlib.myplatform import MyPlatform
 from genmonlib.program_defaults import ProgramDefaults
 
-# Fix Python 2.x. unicode type
-if sys.version_info[0] >= 3:  # PYTHON 3
-    unicode = str
+
+unicode = str
 # ------------ MySupport class --------------------------------------------------
 class MySupport(MyCommon):
     def __init__(self, simulation=False):
@@ -286,13 +285,6 @@ class MySupport(MyCommon):
                     ReturnDict["type"] = "float"
                     ReturnDict["value"] = round(value, 2)
                     return ReturnDict
-            elif sys.version_info[0] < 3 and isinstance(value, long):
-                if not NoString:
-                    return "%d %s" % (int(value), str(unit))
-                else:
-                    ReturnDict["type"] = "long"
-                    ReturnDict["value"] = value
-                    return ReturnDict
             else:
                 self.LogError(
                     "Unsupported type in ValueOut: "
@@ -367,17 +359,13 @@ class MySupport(MyCommon):
 
         if isinstance(item, str):
             return item
-        if sys.version_info[0] < 3 and isinstance(item, unicode):
-            return str(item)
         elif callable(item):
             return item()
         elif isinstance(item, int):
             return str(item)
-        elif sys.version_info[0] < 3 and isinstance(item, (int, long)):
-            return str(item)
         elif isinstance(item, float):
             return str(item)
-        elif sys.version_info[0] >= 3 and isinstance(item, (bytes)):
+        elif isinstance(item, (bytes)):
             return str(item)
         elif isinstance(item, NoneType):
             return "None"

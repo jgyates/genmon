@@ -72,10 +72,7 @@ if __name__ == "__main__":  # usage program.py [server_address] [port]
     try:
 
         while True:
-            if sys.version_info[0] < 3:  # Python 2.x
-                line = raw_input(">")
-            else:  # python 3.x
-                line = input(">")
+            line = input(">")
 
             if line.lower() == "exit":
                 break

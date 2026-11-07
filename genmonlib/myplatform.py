@@ -202,8 +202,8 @@ class MyPlatform(MyCommon):
                 process = Popen([binarypath, "measure_temp"], stdout=PIPE)
                 output, _error = process.communicate()
                 output = output.decode("utf-8")
-                if sys.version_info[0] >= 3:
-                    output = str(output)  # convert byte array to string for python3
+
+                output = str(output)  # convert byte array to string for python3
 
                 TempCelciusFloat = float(
                     output[output.index("=") + 1 : output.rindex("'")]
@@ -501,8 +501,7 @@ class MyPlatform(MyCommon):
     def GetWiFiSignalStrengthFromAdapter(self, adapter, JSONNum=False):
         try:
             result = subprocess.check_output(["iw", adapter, "link"])
-            if sys.version_info[0] >= 3:
-                result = result.decode("utf-8")
+            result = result.decode("utf-8")
             match = re.search("signal: -(\\d+) dBm", result)
             return match.group(1)
         except Exception as e1:
@@ -514,8 +513,7 @@ class MyPlatform(MyCommon):
     def GetWiFiSignalQuality(self, adapter, JSONNum=False):
         try:
             result = subprocess.check_output(["iwconfig", adapter])
-            if sys.version_info[0] >= 3:
-                result = result.decode("utf-8")
+            result = result.decode("utf-8")
             match = re.search("Link Quality=([\\s\\S]*?) ", result)
             return match.group(1)
         except Exception as e1:
@@ -525,8 +523,8 @@ class MyPlatform(MyCommon):
     def GetWiFiSSID(self, adapter):
         try:
             result = subprocess.check_output(["iwconfig", adapter])
-            if sys.version_info[0] >= 3:
-                result = result.decode("utf-8")
+
+            result = result.decode("utf-8")
             match = re.search('ESSID:"([\\s\\S]*?)"', result)
             return match.group(1)
         except Exception as e1:
@@ -599,10 +597,8 @@ class MyPlatform(MyCommon):
     @staticmethod
     def InternetConnected():
 
-        if sys.version_info[0] < 3:
-            import httplib
-        else:
-            import http.client as httplib
+        
+        import http.client as httplib
 
         conn = httplib.HTTPConnection("www.google.com", timeout=2)
         try:

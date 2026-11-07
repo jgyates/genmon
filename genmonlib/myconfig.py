@@ -13,16 +13,12 @@
 import sys
 import threading
 
-if sys.version_info[0] < 3:
-    from ConfigParser import ConfigParser
-else:
-    from configparser import ConfigParser
+from configparser import ConfigParser
 
 from genmonlib.mycommon import MyCommon
 
 # Fix Python 2.x. unicode type
-if sys.version_info[0] >= 3:  # PYTHON 3
-    unicode = str
+unicode = str
 
 
 class MyConfig(MyCommon):
@@ -37,10 +33,7 @@ class MyConfig(MyCommon):
         self.CriticalLock = threading.Lock()  # Critical Lock (writing conf file)
         self.InitComplete = False
         try:
-            if sys.version_info[0] < 3:
-                self.config = ConfigParser()
-            else:
-                self.config = ConfigParser(interpolation=None)
+            self.config = ConfigParser(interpolation=None)
             self.config.read(self.FileName)
 
             if self.Section == None:

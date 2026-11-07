@@ -46,8 +46,8 @@ def CheckServiceOutput(Output):
 
     try:
         for line in iter(Output.splitlines()):
-            if sys.version_info[0] >= 3:
-                line = line.decode()
+
+            line = line.decode()
             if "Loaded:" in line:
                 line = line.strip()
                 lineitems = line.split(";")

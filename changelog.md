@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - misc security improvemnts
 - Added code hash value to About page
 - Local LAN socket access to genmon is now disabled by default if authentication is enabled in the web interface. If you want enable this then look at the advanced seeting named "Allow LAN access to genmon" 
+- remove numerious python 2.x references in the code that are no longer used
 
 ## 2.0.02 -2026-08-04
 - New add on for Hubitat Elevation hub, Thanks @bdwilson

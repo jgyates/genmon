@@ -175,7 +175,7 @@ Enter command:
                     if p < gauge.ap_table[0][1]:
                         print(
                             "Error: the low entry must be less than the high entry, {0:.1f} is not less than {1:.1f}".format(
-                                gauge.ap_table[0][1]
+                                gauge.ap_table[0][1], gauge.ap_table[1][1]
                             ),
                             p,
                         )

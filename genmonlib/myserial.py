@@ -161,10 +161,7 @@ class SerialDevice(MySupport):
                     data = self.Read()
                     if len(data):
                         with self.BufferLock:
-                            if sys.version_info[0] < 3:
-                                self.Buffer.extend(ord(c) for c in data)  # PYTHON2
-                            else:
-                                self.Buffer.extend(data)  # PYTHON3 (bytes -> ints)
+                            self.Buffer.extend(data)  # PYTHON3 (bytes -> ints)
                     # check for SignalStopped once per read (the read above blocks up
                     # to the configured timeout, so this is not a busy loop)
                     if self.IsStopSignaled("SerialReadThread"):

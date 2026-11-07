@@ -1110,10 +1110,7 @@ class ModbusProtocol(ModbusBase):
                 return False
             ByteArray = bytearray(Packet[: len(Packet) - 2])
 
-            if sys.version_info[0] < 3:
-                results = self.ModbusCrc(str(ByteArray))
-            else:  # PYTHON3
-                results = self.ModbusCrc(ByteArray)
+            results = self.ModbusCrc(ByteArray)
 
             CRCValue = ((Packet[-1] & 0xFF) << 8) | (Packet[-2] & 0xFF)
             if results != CRCValue:
@@ -1134,10 +1131,7 @@ class ModbusProtocol(ModbusBase):
                 return None
             ByteArray = bytearray(Packet)
 
-            if sys.version_info[0] < 3:
-                results = self.ModbusCrc(str(ByteArray))
-            else:  # PYTHON3
-                results = self.ModbusCrc(ByteArray)
+            results = self.ModbusCrc(ByteArray)
 
             return results
         except Exception as e1:

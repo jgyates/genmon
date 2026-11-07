@@ -17,10 +17,7 @@ import re
 import sys
 import time
 
-if sys.version_info[0] < 3:
-    from httplib import HTTPSConnection
-else:
-    from http.client import HTTPSConnection
+from http.client import HTTPSConnection
 
 from genmonlib.controller import GeneratorController
 from genmonlib.modbus_evo2 import ModbusEvo2
@@ -1148,18 +1145,15 @@ class Evolution(GeneratorController):
             status = response.status
             self.StoreGeneracCookies(response)
             RawData = response.read()
-            if sys.version_info[0] < 3:
-                data = RawData  # Python 2.x
-            else:
-                # response.info() is deprecated; read the charset from the header
-                ContentType = response.getheader("Content-Type", "") or ""
-                encoding = "utf8"
-                if "charset=" in ContentType.lower():
-                    encoding = (
-                        ContentType.lower().split("charset=")[1].split(";")[0].strip()
-                        or "utf8"
-                    )
-                data = RawData.decode(encoding, "replace")
+            # response.info() is deprecated; read the charset from the header
+            ContentType = response.getheader("Content-Type", "") or ""
+            encoding = "utf8"
+            if "charset=" in ContentType.lower():
+                encoding = (
+                    ContentType.lower().split("charset=")[1].split(";")[0].strip()
+                    or "utf8"
+                )
+            data = RawData.decode(encoding, "replace")
             return status, data
         finally:
             if conn != None:
@@ -1170,10 +1164,7 @@ class Evolution(GeneratorController):
         # Collect any cookies the site sets so they can be replayed on later
         # requests (needed to pass Incapsula bot protection from some IPs).
         try:
-            if sys.version_info[0] < 3:
-                SetCookies = response.msg.getheaders("set-cookie")
-            else:
-                SetCookies = response.headers.get_all("Set-Cookie") or []
+            SetCookies = response.headers.get_all("Set-Cookie") or []
             if not SetCookies:
                 return
             Cookies = getattr(self, "GeneracCookies", None)
@@ -4101,7 +4092,6 @@ class Evolution(GeneratorController):
             0x4f: "Engine Oil Temperature 1",           # Evo4.5L
             0x50: "Engine Fuel Shutoff 1 Control",      # Evo4.5L
             # EvoLC 4.5L
-            0x5C: "Engine Fuel Shutoff 2 Control",
             0x5C: "Engine Fuel Shutoff 2 Control",
             0x51: "Engine Position Sensor",
             0x52: "Engine Timing Sensor",
