@@ -1037,8 +1037,6 @@ class Evolution(GeneratorController):
             # Evo2 G0072230
             23: ["14KW","60","120/240","1","816 cc","240",],        #
             10: ["20KW", "60", "208 3 Phase", "3", "999 cc", "208"], # Trinity G007077
-            # 3 phase export
-            11: ["20KW","50","208 3 Phase","3","999 cc","208",],    #
             # 3 distinct models 220, 230, 240
             12: ["8KVA","50","220,230,240","1","530 cc","240",],    #
             # 3 distinct models 220, 230, 240
@@ -1046,6 +1044,9 @@ class Evolution(GeneratorController):
             # 3 distinct models 220, 230, 240
             14: ["13KVA","50","220,230,240","1","992 cc","240",],   #
         }
+        if self.Phase == 3:
+            # 3 phase export
+            ModelLookUp_EvoAC2[11] = ["20KW","50","208 3 Phase","3","999 cc","208",]
 
         ModelLookup_PowerZone200 = {
             6: ["22KW","60","120/240","1","997 cc","240",],        #
