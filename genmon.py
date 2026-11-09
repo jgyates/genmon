@@ -965,10 +965,17 @@ class Monitor(MySupport):
                     BaseCmd = item.split("=")
                     LookUp = BaseCmd[0]
                 # check if we disallow write commands via email
+                WriteCommands = [
+                    "setexercise", "setquiet", "setremote", "add_maint_log", 
+                    "delete_row_maint_log", "edit_row_maint_log", 
+                    "set_button_command", "settime", "sensor_log_clear", 
+                    "power_log_clear", "fuel_log_clear", "clear_maint_log", 
+                    "clear_aux_alarm_log"
+                ]
                 if (
                     self.ReadOnlyEmailCommands
                     and not fromsocket
-                    and LookUp in ["settime", "setexercise", "setquiet", "setremote"]
+                    and LookUp in WriteCommands
                 ):
                     continue
 

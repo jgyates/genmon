@@ -132,6 +132,8 @@ class SerialTCPDevice(MySupport):
                                 return
                             continue
                     for c in self.Read():
+                        if c == None:
+                            break   # disconnected
                         with self.BufferLock:
                             self.Buffer.append(c)  # PYTHON3
                         # first check for SignalStopped is when we are receiving
@@ -194,8 +196,12 @@ class SerialTCPDevice(MySupport):
             if self.Socket == None:
                 return ""
             data = self.Socket.recv(self.rxdatasize)
-            if data == None:
-                return ""
+            if data == None:    # should never happen
+                return None
+            if len(data) == 0:  # this signals the socket is disconnected
+                self.Socket.close()
+                self.Socket = None
+                return None
             return data
         except socket.timeout as err:
             return ""
@@ -204,13 +210,13 @@ class SerialTCPDevice(MySupport):
             if self.Socket != None:
                 self.Socket.close()
                 self.Socket = None
-            return ""
+            return None
         except Exception as e1:
             self.LogErrorLine("Error in SerialTCPDevice:Read : " + str(e1))
             if self.Socket != None:
                 self.Socket.close()
                 self.Socket = None
-            return ""
+            return None
 
     # ---------- SerialTCPDevice::Write-----------------------------------------
     def Write(self, data):
