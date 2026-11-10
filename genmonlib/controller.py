@@ -26,6 +26,7 @@ import copy
 import re
 import math
 
+from genmonlib.myfileutil import AtomicWrite
 from genmonlib.mylog import SetupLogger
 from genmonlib.myplatform import MyPlatform
 from genmonlib.mysupport import MySupport
@@ -3885,9 +3886,10 @@ class GeneratorController(MySupport):
                 self.GetMaintLogDict()  # added a safe guard read here
                 self.MaintLogList.append(Entry)
                 with self.MaintLock:
-                    with open(self.MaintLogFileName, "w") as outfile:
-                        json.dump(self.MaintLogList, outfile, sort_keys=True, indent=4)  
-                        outfile.flush()
+                    AtomicWrite(
+                        self.MaintLogFileName,
+                        json.dumps(self.MaintLogList, sort_keys=True, indent=4),
+                    )
             except Exception as e1:
                 self.LogErrorLine("Error in AddEntryToMaintLog: " + str(e1))
                 return "Invalid input for Maintenance Log entry (2)."
@@ -4008,11 +4010,10 @@ class GeneratorController(MySupport):
         try:
             self.MaintLogList = NewLog
             with self.MaintLock:
-                with open(self.MaintLogFileName, "w") as outfile:
-                    json.dump(
-                        self.MaintLogList, outfile, sort_keys=True, indent=4
-                    )  # , ensure_ascii = False)
-                    outfile.flush()
+                AtomicWrite(
+                    self.MaintLogFileName,
+                    json.dumps(self.MaintLogList, sort_keys=True, indent=4),
+                )
 
         except Exception as e1:
             self.LogErrorLine("Error in SaveMaintLog: " + str(e1))
@@ -4160,11 +4161,10 @@ class GeneratorController(MySupport):
                 return False
             with self.AuxAlarmLock:
                 # this will create the file if not there
-                with open(self.AuxAlarmLogFileName, "w") as outfile:
-                    json.dump(
-                        self.AuxAlarmLog, outfile, sort_keys=True, indent=4
-                    )  # , ensure_ascii = False)
-                    outfile.flush()
+                AtomicWrite(
+                    self.AuxAlarmLogFileName,
+                    json.dumps(self.AuxAlarmLog, sort_keys=True, indent=4),
+                )
 
         except Exception as e1:
             self.LogErrorLine("Error in SaveAuxAlarmLog: " + str(e1))

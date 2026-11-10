@@ -57,6 +57,7 @@ except Exception as e1:
 try:
     from genmonlib.myclient import ClientInterface
     from genmonlib.myconfig import MyConfig
+    from genmonlib.myfileutil import AtomicWrite
     from genmonlib.mylog import SetupLogger
     from genmonlib.mymail import MyMail
     from genmonlib.mysupport import MySupport
@@ -1173,12 +1174,15 @@ def ProcessCommand(command):
                     if len(raw) > 16384:  # 16 KB cap to prevent memory/storage abuse
                         return "Error: payload too large"
                     try:
-                        json.loads(raw)  # validate JSON
+                        # validate, then store on a single line: valid JSON
+                        # may contain newlines, which would corrupt the conf
+                        raw = json.dumps(json.loads(raw), separators=(",", ":"))
                     except Exception:
                         return "Error: invalid JSON"
-                    ConfigFiles[GENMON_CONFIG].WriteValue(
+                    if not ConfigFiles[GENMON_CONFIG].WriteValue(
                         "ui_prefs", raw, section="GenMon"
-                    )
+                    ):
+                        return "Error: unable to save preferences"
                 return "OK"
 
         elif command in ["getreglabels"]:
@@ -6742,13 +6746,9 @@ def _load_backup_codes():
 
 
 def _save_backup_codes(data):
-    path = _backup_codes_path()
-    with open(path, "w") as f:
-        json.dump(data, f, indent=2)
-    try:
-        os.chmod(path, 0o600)  # owner-only; contains hashed backup codes
-    except OSError:
-        pass  # Windows doesn't support POSIX permissions
+    # owner-only; contains hashed backup codes. The file is created 0600 before
+    # any data is written, so the contents are never readable by others.
+    AtomicWrite(_backup_codes_path(), json.dumps(data, indent=2), mode=0o600)
 
 
 def _hash_code(code):
@@ -6826,13 +6826,9 @@ def _load_passkeys():
 
 
 def _save_passkeys(data):
-    path = _passkeys_path()
-    with open(path, "w") as f:
-        json.dump(data, f, indent=2)
-    try:
-        os.chmod(path, 0o600)  # owner-only; contains passkey public keys
-    except OSError:
-        pass  # Windows doesn't support POSIX permissions
+    # owner-only; contains passkey public keys. The file is created 0600 before
+    # any data is written, so the contents are never readable by others.
+    AtomicWrite(_passkeys_path(), json.dumps(data, indent=2), mode=0o600)
 
 
 @app.route("/passkey/register/begin", methods=["POST"])

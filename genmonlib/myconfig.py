@@ -10,12 +10,12 @@
 #
 # -------------------------------------------------------------------------------
 
-import sys
 import threading
 
 from configparser import ConfigParser
 
 from genmonlib.mycommon import MyCommon
+from genmonlib.myfileutil import AtomicWrite, FileLock
 
 # Fix Python 2.x. unicode type
 unicode = str
@@ -122,34 +122,6 @@ class MyConfig(MyCommon):
             return default
 
     # ---------------------MyConfig::WriteSection--------------------------------
-    # NOTE: This will remove comments from the config file
-    def alt_WriteSection(self, SectionName):
-
-        if self.Simulation:
-            return True
-
-        if not self.InitComplete:
-            return False
-        SectionList = self.GetSections()
-
-        if SectionName in SectionList:
-            self.LogError("Error in WriteSection: Section already exist.")
-            return True
-        try:
-            with self.CriticalLock:
-                # open in unbuffered mode
-                with open(self.FileName, "w") as ConfigFile:
-                    if sys.version_info.major < 3:
-                        self.config.add_section(SectionName)
-                    else:
-                        self.config[SectionName] = {}
-                    self.config.write(ConfigFile)
-            return True
-        except Exception as e1:
-            self.LogErrorLine("Error in WriteSection: " + str(e1))
-            return False
-
-    # ---------------------MyConfig::WriteSection--------------------------------
     def WriteSection(self, SectionName):
 
         if self.Simulation:
@@ -162,48 +134,28 @@ class MyConfig(MyCommon):
         if SectionName in SectionList:
             self.LogError("Error in WriteSection: Section already exist.")
             return True
+        if self.HasLineBreak(SectionName):
+            self.LogError("Error in WriteSection: invalid section name: " + repr(SectionName))
+            return False
         try:
-            with self.CriticalLock:
-                # open in unbuffered mode
-                with open(self.FileName, "a") as ConfigFile:
-                    ConfigFile.write("[" + SectionName + "]")
-                    ConfigFile.flush()
-                    ConfigFile.close()
-                    # update the read data that is cached
-                    self.config.read(self.FileName)
+            with self.CriticalLock, FileLock(self.FileName):
+                with open(self.FileName, "r") as ConfigFile:
+                    FileString = ConfigFile.read()
+                if len(FileString) and not FileString.endswith("\n"):
+                    FileString += "\n"
+                FileString += "[" + SectionName + "]\n"
+                AtomicWrite(self.FileName, FileString)
+                # update the read data that is cached
+                self.config.read(self.FileName)
             return True
         except Exception as e1:
             self.LogErrorLine("Error in WriteSection: " + str(e1))
             return False
 
-    # ---------------------MyConfig::WriteValue----------------------------------
-    # NOTE: This will remove comments from the config file
-    def alt_WriteValue(self, Entry, Value, remove=False, section=None):
-
-        if self.Simulation:
-            return
-
-        if not self.InitComplete:
-            return False
-        if section != None:
-            self.SetSection(section)
-
-        try:
-            with self.CriticalLock:
-                if sys.version_info.major < 3:
-                    self.config.set(self.Section, Entry, Value)
-                else:
-                    section_data = self.config[self.Section]
-                    section_data[Entry] = Value
-
-                # Write changes back to file
-                with open(self.FileName, "w") as ConfigFile:
-                    self.config.write(ConfigFile)
-                return True
-
-        except Exception as e1:
-            self.LogErrorLine("Error in WriteValue: " + str(e1))
-            return False
+    # ---------------------MyConfig::HasLineBreak--------------------------------
+    def HasLineBreak(self, Value):
+        # a line break in a key or value would inject extra lines into the file
+        return "\n" in Value or "\r" in Value
 
     # ---------------------MyConfig::WriteValue----------------------------------
     def WriteValue(self, Entry, Value, remove=False, section=None):
@@ -217,23 +169,33 @@ class MyConfig(MyCommon):
         if section != None:
             self.SetSection(section)
 
+        try:
+            if self.HasLineBreak(Entry) or (not remove and self.HasLineBreak(Value)):
+                self.LogError(
+                    "Error in WriteValue: line break not allowed in " + repr(Entry)
+                )
+                return False
+        except TypeError:
+            self.LogError("Error in WriteValue: non-string entry or value for " + repr(Entry))
+            return False
+
         SectionFound = False
         try:
-            with self.CriticalLock:
+            with self.CriticalLock, FileLock(self.FileName):
                 Found = False
-                ConfigFile = open(self.FileName, "r")
-                FileString = ConfigFile.read()
-                ConfigFile.close()
+                with open(self.FileName, "r") as ConfigFile:
+                    FileString = ConfigFile.read()
 
-                # open in unbuffered mode
-                ConfigFile = open(self.FileName, "w")
+                # build the new file in memory, then replace the old one in a
+                # single step so a crash can never leave a partial config
+                Output = []
                 for line in FileString.splitlines():
                     if not line.isspace():  # blank lines
                         newLine = line.strip()  # strip leading spaces
                         if len(newLine):
                             if not newLine[0] == "#":  # not a comment
                                 if not SectionFound and not self.LineIsSection(newLine):
-                                    ConfigFile.write(line + "\n")
+                                    Output.append(line + "\n")
                                     continue
 
                                 if (
@@ -244,10 +206,10 @@ class MyConfig(MyCommon):
                                     if (
                                         SectionFound and not Found and not remove
                                     ):  # we reached the end of the section
-                                        ConfigFile.write(Entry + " = " + Value + "\n")
+                                        Output.append(Entry + " = " + Value + "\n")
                                         Found = True
                                     SectionFound = False
-                                    ConfigFile.write(line + "\n")
+                                    Output.append(line + "\n")
                                     continue
                                 if (
                                     self.LineIsSection(newLine)
@@ -255,11 +217,11 @@ class MyConfig(MyCommon):
                                     == self.GetSectionName(newLine).lower()
                                 ):
                                     SectionFound = True
-                                    ConfigFile.write(line + "\n")
+                                    Output.append(line + "\n")
                                     continue
 
                                 if not SectionFound:
-                                    ConfigFile.write(line + "\n")
+                                    Output.append(line + "\n")
                                     continue
                                 items = newLine.split(
                                     "="
@@ -268,20 +230,19 @@ class MyConfig(MyCommon):
                                     items[0] = items[0].strip()
                                     if items[0] == Entry:
                                         if not remove:
-                                            ConfigFile.write(
+                                            Output.append(
                                                 Entry + " = " + Value + "\n"
                                             )
                                         Found = True
                                         continue
 
-                    ConfigFile.write(line + "\n")
+                    Output.append(line + "\n")
                 # if this is a new entry, then write it to the file, unless we are removing it
                 # this check is if there is not section below the one we are working in,
                 # it will be added to the end of the file
                 if not Found and not remove:
-                    ConfigFile.write(Entry + " = " + Value + "\n")
-                ConfigFile.flush()
-                ConfigFile.close()
+                    Output.append(Entry + " = " + Value + "\n")
+                AtomicWrite(self.FileName, "".join(Output))
                 # update the read data that is cached
                 self.config.read(self.FileName)
             return True
