@@ -1,0 +1,186 @@
+{
+    "controller_type": "custom",
+    "comment": "SNMP MIB configuration for Kohler KG40 with APM402/Decision-Maker 3000 controller",
+    "comment2": "Keywords must match exact titles shown in genmon web interface",
+    "comment3": "OID format is x,y,z - ControllerID 4 is prepended automatically for custom controllers",
+    "snmp": [
+        {
+            "oid": "0, 0, 1",
+            "return_type": "str",
+            "description": "switchState",
+            "default": "Unknown",
+            "keywords": ["Status", "Switch State"]
+        },
+        {
+            "oid": "0, 0, 2",
+            "return_type": "str",
+            "description": "engineState",
+            "default": "Unknown",
+            "keywords": ["Status", "Engine State"]
+        },
+        {
+            "oid": "0, 0, 3",
+            "return_type": "str",
+            "description": "batteryVoltage",
+            "default": "Unknown",
+            "keywords": ["Status", "Battery Voltage"]
+        },
+        {
+            "oid": "0, 0, 4",
+            "return_type": "str",
+            "integer": true,
+            "description": "engineSpeed",
+            "default": "0",
+            "keywords": ["Status", "Engine", "Engine Speed"]
+        },
+        {
+            "oid": "0, 0, 5",
+            "return_type": "str",
+            "description": "oilPressure",
+            "default": "Unknown",
+            "keywords": ["Status", "Engine", "Oil Pressure"]
+        },
+        {
+            "oid": "0, 0, 6",
+            "return_type": "str",
+            "description": "coolantTemperature",
+            "default": "Unknown",
+            "keywords": ["Status", "Engine", "Coolant Temperature"]
+        },
+        {
+            "oid": "0, 0, 7",
+            "return_type": "str",
+            "description": "fuelLevel",
+            "default": "Unknown",
+            "keywords": ["Status", "Engine", "Fuel Level"]
+        },
+        {
+            "oid": "0, 0, 8",
+            "return_type": "str",
+            "description": "fuelRate",
+            "default": "Unknown",
+            "keywords": ["Status", "Engine", "Fuel Rate"]
+        },
+        {
+            "oid": "0, 0, 9",
+            "return_type": "str",
+            "description": "fuelPressure",
+            "default": "Unknown",
+            "keywords": ["Status", "Engine", "Fuel Pressure"]
+        },
+        {
+            "oid": "0, 0, 10",
+            "return_type": "str",
+            "description": "exhaustTemperature",
+            "default": "Unknown",
+            "keywords": ["Status", "Engine", "Exhaust Temperature"]
+        },
+        {
+            "oid": "0, 0, 11",
+            "return_type": "str",
+            "description": "intakeAirTemperature",
+            "default": "Unknown",
+            "keywords": ["Status", "Engine", "Intake Air Temperature"]
+        },
+        {
+            "oid": "0, 0, 12",
+            "return_type": "str",
+            "description": "voltageAB",
+            "default": "Unknown",
+            "keywords": ["Status", "Generator Output", "Voltage AB"]
+        },
+        {
+            "oid": "0, 0, 13",
+            "return_type": "str",
+            "description": "voltageAN",
+            "default": "Unknown",
+            "keywords": ["Status", "Generator Output", "Voltage AN"]
+        },
+        {
+            "oid": "0, 0, 14",
+            "return_type": "str",
+            "description": "voltageBN",
+            "default": "Unknown",
+            "keywords": ["Status", "Generator Output", "Voltage BN"]
+        },
+        {
+            "oid": "0, 0, 15",
+            "return_type": "str",
+            "description": "currentA",
+            "default": "Unknown",
+            "keywords": ["Status", "Generator Output", "Current A"]
+        },
+        {
+            "oid": "0, 0, 16",
+            "return_type": "str",
+            "description": "currentB",
+            "default": "Unknown",
+            "keywords": ["Status", "Generator Output", "Current B"]
+        },
+        {
+            "oid": "0, 0, 17",
+            "return_type": "str",
+            "description": "frequency",
+            "default": "Unknown",
+            "keywords": ["Status", "Generator Output", "Frequency"]
+        },
+        {
+            "oid": "0, 0, 18",
+            "return_type": "str",
+            "description": "totalTruePower",
+            "default": "Unknown",
+            "keywords": ["Status", "Generator Output", "Total True Power"]
+        },
+        {
+            "oid": "0, 0, 19",
+            "return_type": "str",
+            "description": "percentRatedPower",
+            "default": "Unknown",
+            "keywords": ["Status", "Generator Output", "Percent of Rated Power"]
+        },
+        {
+            "oid": "0, 1, 1",
+            "return_type": "str",
+            "description": "totalOperationTime",
+            "default": "Unknown",
+            "keywords": ["Maintenance", "Total Operation Time"]
+        },
+        {
+            "oid": "0, 1, 2",
+            "return_type": "str",
+            "description": "engineTotalRunTime",
+            "default": "Unknown",
+            "keywords": ["Maintenance", "Engine Total Run Time"]
+        },
+        {
+            "oid": "0, 1, 3",
+            "return_type": "str",
+            "description": "engineRunTimeLoaded",
+            "default": "Unknown",
+            "keywords": ["Maintenance", "Engine Run Time Loaded"]
+        },
+        {
+            "oid": "0, 1, 4",
+            "return_type": "str",
+            "integer": true,
+            "description": "totalNumberOfStarts",
+            "default": "0",
+            "keywords": ["Maintenance", "Total Number of Starts"]
+        },
+        {
+            "oid": "0, 1, 5",
+            "return_type": "str",
+            "description": "totalEnergy",
+            "default": "Unknown",
+            "keywords": ["Maintenance", "Total Energy"]
+        },
+        {
+            "oid": "0, 1, 6",
+            "return_type": "str",
+            "integer": true,
+            "description": "activeAlertCount",
+            "default": "0",
+            "keywords": ["Maintenance", "Active Alert Count"]
+        }
+    ]
+}

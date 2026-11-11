@@ -1,0 +1,697 @@
+{
+    "controller_name": "Kohler APM402 Decision-Maker 3000",
+    "event_log_type": "kohler_dm3000",
+    "generator_phase": 3,
+    "rated_nominal_rpm": 1800,
+    "rated_max_output_power_kw": 40,
+    "rated_nominal_voltage": "Unknown",
+    "rated_nominal_freq": 60,
+    "nominal_battery_voltage": 12,
+
+    "holding_registers": {
+        "044b": {"length": 2, "text": "Engine Speed, RPM"},
+        "044c": {"length": 2, "text": "Engine Target Speed, RPM"},
+        "044d": {"length": 2, "text": "Engine Oil Pressure, kPa"},
+        "044e": {"length": 2, "text": "Engine Coolant Temperature, C"},
+        "0451": {"length": 2, "text": "Engine Fuel Level, %"},
+        "0452": {"length": 2, "text": "Battery Voltage, V"},
+        "0455": {"length": 2, "text": "Fuel Pressure, kPa"},
+        "052a": {"length": 4, "text": "Generator True Total Power, W"},
+        "052c": {"length": 2, "text": "Generator True Percent of Rated Power, %"},
+        "0533": {"length": 4, "text": "Generator Voltage AB, V"},
+        "053b": {"length": 4, "text": "Generator Voltage Average Line to Line, V"},
+        "053d": {"length": 4, "text": "Generator Voltage AN, V"},
+        "054b": {"length": 4, "text": "Generator Voltage Average Line to Neutral, V"},
+        "053d": {"length": 4, "text": "Generator Current A, A"},
+        "054d": {"length": 2, "text": "Generator Frequency, Hz"},
+        "05be": {"length": 2, "text": "Genset State"},
+        "05df": {"length": 4, "text": "Total Operation Time, h"},
+        "05e9": {"length": 4, "text": "Engine Total Run Time, h"},
+        "05eb": {"length": 4, "text": "Engine Total Run Time Loaded, h"},
+        "05ed": {"length": 4, "text": "Engine Total Number of Starts"},
+        "05ef": {"length": 4, "text": "Genset Total Energy, kWh"},
+        "7a08": {"length": 2, "text": "Active Alert Count"},
+        "7a09": {"length": 4, "text": "Active Alert 1 DeviceEvent"},
+        "7a0b": {"length": 4, "text": "Active Alert 2 DeviceEvent"},
+        "270e": {"length": 2, "text": "Modbus Product ID"}
+    },
+
+    "log_registers": {
+        "7d00": {
+            "reg_type": "holding",
+            "length": 2,
+            "text": "Event Log Count",
+            "iteration": 1,
+            "step": 1
+        },
+        "7d02": {
+            "reg_type": "holding",
+            "length": 2,
+            "text": "Event Log Entry",
+            "iteration": 30,
+            "step": 14
+        }
+    },
+
+    "switch_state": [
+        {
+            "reg": "05be",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "0001",
+            "title": "Switch State",
+            "text": "Auto"
+        },
+        {
+            "reg": "05be",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "0002",
+            "title": "Switch State",
+            "text": "Run"
+        },
+        {
+            "reg": "05be",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "000f",
+            "title": "Switch State",
+            "text": "Auto"
+        },
+        {
+            "reg": "05be",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "0000",
+            "title": "Switch State",
+            "text": "Off"
+        },
+        {
+            "reg": "05be",
+            "type": "default",
+            "title": "Switch State",
+            "text": "Unknown"
+        }
+    ],
+
+    "engine_state": [
+        {
+            "reg": "05be",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "0001",
+            "title": "Engine State",
+            "text": "Cranking"
+        },
+        {
+            "reg": "05be",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "0002",
+            "title": "Engine State",
+            "text": "Crank Pause"
+        },
+        {
+            "reg": "05be",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "0003",
+            "title": "Engine State",
+            "text": "Idle"
+        },
+        {
+            "reg": "05be",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "0004",
+            "title": "Engine State",
+            "text": "Running"
+        },
+        {
+            "reg": "05be",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "0005",
+            "title": "Engine State",
+            "text": "Cooldown"
+        },
+        {
+            "reg": "05be",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "0006",
+            "title": "Engine State",
+            "text": "Stopping"
+        },
+        {
+            "reg": "05be",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "0007",
+            "title": "Engine State",
+            "text": "Shutdown"
+        },
+        {
+            "reg": "05be",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "0008",
+            "title": "Engine State",
+            "text": "Test Loaded"
+        },
+        {
+            "reg": "05be",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "0009",
+            "title": "Engine State",
+            "text": "Test Unloaded"
+        },
+        {
+            "reg": "05be",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "000b",
+            "title": "Engine State",
+            "text": "Exercise Loaded"
+        },
+        {
+            "reg": "05be",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "000f",
+            "title": "Engine State",
+            "text": "Standby"
+        },
+        {
+            "reg": "05be",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "0010",
+            "title": "Engine State",
+            "text": "Preheat"
+        },
+        {
+            "reg": "05be",
+            "type": "default",
+            "title": "Engine State",
+            "text": "Off"
+        }
+    ],
+
+    "basestatus": [
+        {
+            "reg": "05be",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "0004",
+            "title": "Base Status",
+            "text": "RUNNING"
+        },
+        {
+            "reg": "05be",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "0008",
+            "title": "Base Status",
+            "text": "RUNNING"
+        },
+        {
+            "reg": "05be",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "000b",
+            "title": "Base Status",
+            "text": "EXERCISING"
+        },
+        {
+            "reg": "05be",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "0009",
+            "title": "Base Status",
+            "text": "EXERCISING"
+        },
+        {
+            "reg": "05be",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "0007",
+            "title": "Base Status",
+            "text": "ALARM"
+        },
+        {
+            "reg": "7a08",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "0000",
+            "title": "Base Status",
+            "text": "READY"
+        },
+        {
+            "reg": "05be",
+            "type": "default",
+            "title": "Base Status",
+            "text": "OFF"
+        }
+    ],
+
+    "alarm_active": [
+        {
+            "reg": "7a08",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "0001",
+            "title": "Active Alarm",
+            "text": "System In Alarm"
+        },
+        {
+            "reg": "7a08",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "0002",
+            "title": "Active Alarm",
+            "text": "System In Alarm"
+        }
+    ],
+
+    "alarm_conditions": [
+        {
+            "reg": "7a09",
+            "mask": "000000ff",
+            "type": "bits",
+            "value": "00000004",
+            "title": "Alarm",
+            "text": "Overcrank Shutdown"
+        },
+        {
+            "reg": "7a09",
+            "mask": "000000ff",
+            "type": "bits",
+            "value": "00000013",
+            "title": "Alarm",
+            "text": "Emergency Stop"
+        },
+        {
+            "reg": "7a09",
+            "mask": "000000ff",
+            "type": "bits",
+            "value": "00000014",
+            "title": "Alarm",
+            "text": "Alternator Protection Shutdown"
+        },
+        {
+            "reg": "7a09",
+            "mask": "000000ff",
+            "type": "bits",
+            "value": "0000001c",
+            "title": "Alarm",
+            "text": "Locked Rotor Shutdown"
+        },
+        {
+            "reg": "7a09",
+            "mask": "000000ff",
+            "type": "bits",
+            "value": "0000001e",
+            "title": "Alarm",
+            "text": "AC Sensing Loss"
+        },
+        {
+            "reg": "7a09",
+            "mask": "000000ff",
+            "type": "bits",
+            "value": "00000019",
+            "title": "Alarm",
+            "text": "Common Warning"
+        },
+        {
+            "reg": "7a09",
+            "mask": "000000ff",
+            "type": "bits",
+            "value": "0000001a",
+            "title": "Alarm",
+            "text": "Common Fault"
+        },
+        {
+            "reg": "7a09",
+            "mask": "000000ff",
+            "type": "bits",
+            "value": "00000001",
+            "title": "Alarm",
+            "text": "Parameter Value Abnormal"
+        }
+    ],
+
+    "status": [
+        {
+            "reg": "0452",
+            "mask": "ffff",
+            "type": "float",
+            "multiplier": 0.1,
+            "units": "V",
+            "round": 1,
+            "title": "Battery Voltage"
+        },
+        {
+            "title": "Engine",
+            "container": true,
+            "value": [
+                {
+                    "reg": "044b",
+                    "mask": "ffff",
+                    "type": "int",
+                    "units": "RPM",
+                    "title": "Engine Speed"
+                },
+                {
+                    "reg": "044d",
+                    "mask": "ffff",
+                    "type": "float",
+                    "multiplier": 0.1,
+                    "units": "kPa",
+                    "round": 1,
+                    "title": "Oil Pressure"
+                },
+                {
+                    "reg": "044e",
+                    "mask": "ffff",
+                    "type": "float",
+                    "multiplier": 0.1,
+                    "temperature": "celsius",
+                    "units": "C",
+                    "round": 1,
+                    "title": "Coolant Temperature"
+                },
+                {
+                    "reg": "0451",
+                    "mask": "ffff",
+                    "type": "int",
+                    "units": "%",
+                    "title": "Fuel Level"
+                },
+                {
+                    "reg": "0455",
+                    "mask": "ffff",
+                    "type": "int",
+                    "units": "kPa",
+                    "title": "Fuel Pressure"
+                }
+            ]
+        },
+        {
+            "title": "Generator Output",
+            "container": true,
+            "value": [
+                {
+                    "reg": "0533",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "multiplier": 0.1,
+                    "units": "V",
+                    "round": 1,
+                    "title": "Voltage AB"
+                },
+                {
+                    "reg": "052f",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "multiplier": 0.1,
+                    "units": "V",
+                    "round": 1,
+                    "title": "Voltage BC"
+                },
+                {
+                    "reg": "0531",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "multiplier": 0.1,
+                    "units": "V",
+                    "round": 1,
+                    "title": "Voltage CA"
+                },
+                {
+                    "reg": "053d",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "multiplier": 0.1,
+                    "units": "A",
+                    "round": 1,
+                    "title": "Current A"
+                },
+                {
+                    "reg": "054d",
+                    "mask": "ffff",
+                    "type": "float",
+                    "multiplier": 0.1,
+                    "units": "Hz",
+                    "round": 1,
+                    "title": "Frequency"
+                },
+                {
+                    "reg": "052a",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "multiplier": 0.1,
+                    "units": "W",
+                    "round": 1,
+                    "title": "Total True Power"
+                },
+                {
+                    "reg": "052c",
+                    "mask": "ffff",
+                    "type": "int",
+                    "units": "%",
+                    "title": "Percent of Rated Power"
+                }
+            ]
+        }
+    ],
+
+    "maintenance": [
+        {
+            "reg": "05df",
+            "mask": "ffffffff",
+            "type": "float",
+            "multiplier": 0.1,
+            "units": "h",
+            "round": 1,
+            "title": "Total Operation Time"
+        },
+        {
+            "reg": "05e9",
+            "mask": "ffffffff",
+            "type": "float",
+            "multiplier": 0.1,
+            "units": "h",
+            "round": 1,
+            "title": "Engine Total Run Time"
+        },
+        {
+            "reg": "05eb",
+            "mask": "ffffffff",
+            "type": "float",
+            "multiplier": 0.1,
+            "units": "h",
+            "round": 1,
+            "title": "Engine Run Time Loaded"
+        },
+        {
+            "reg": "05ed",
+            "mask": "ffffffff",
+            "type": "int",
+            "title": "Total Number of Starts"
+        },
+        {
+            "reg": "05ef",
+            "mask": "ffffffff",
+            "type": "float",
+            "multiplier": 0.1,
+            "units": "kWh",
+            "round": 1,
+            "title": "Total Energy"
+        },
+        {
+            "reg": "7a08",
+            "mask": "ffff",
+            "type": "int",
+            "title": "Active Alert Count"
+        }
+    ],
+
+    "gauges": [
+        {
+            "reg": "0452",
+            "mask": "ffff",
+            "type": "float",
+            "multiplier": 0.1,
+            "units": "V",
+            "round": 1,
+            "sensor": "batteryvolts",
+            "nominal": 12,
+            "title": "Battery Voltage",
+            "values": [0, 10, 11, 13, 14, 16],
+            "maximum": 16
+        },
+        {
+            "reg": "053b",
+            "mask": "ffffffff",
+            "type": "float",
+            "multiplier": 0.1,
+            "units": "V",
+            "round": 1,
+            "sensor": "linevolts",
+            "nominal": "Unknown",
+            "title": "Output Voltage"
+        },
+        {
+            "reg": "054d",
+            "mask": "ffff",
+            "type": "float",
+            "multiplier": 0.1,
+            "units": "Hz",
+            "round": 1,
+            "sensor": "frequency",
+            "nominal": 60,
+            "title": "Frequency"
+        },
+        {
+            "reg": "044b",
+            "mask": "ffff",
+            "type": "int",
+            "units": "RPM",
+            "sensor": "rpm",
+            "nominal": 1800,
+            "title": "RPM"
+        },
+        {
+            "reg": "044e",
+            "mask": "ffff",
+            "type": "float",
+            "multiplier": 0.1,
+            "temperature": "celsius",
+            "units": "C",
+            "round": 1,
+            "sensor": "temperature",
+            "nominal": 82,
+            "maximum": 110,
+            "title": "Coolant Temperature"
+        },
+        {
+            "reg": "044d",
+            "mask": "ffff",
+            "type": "float",
+            "multiplier": 0.1,
+            "units": "kPa",
+            "round": 1,
+            "sensor": "pressure",
+            "nominal": 400,
+            "title": "Oil Pressure"
+        },
+        {
+            "reg": "052a",
+            "mask": "ffffffff",
+            "type": "float",
+            "multiplier": 0.0001,
+            "units": "kW",
+            "round": 2,
+            "sensor": "power",
+            "nominal": "Unknown",
+            "title": "Power Output"
+        },
+        {
+            "reg": "052a",
+            "mask": "ffffffff",
+            "type": "float",
+            "multiplier": 0.0001,
+            "units": "kW",
+            "round": 2,
+            "sensor": "powergraph",
+            "nominal": "Unknown",
+            "title": "Power Graph"
+        }
+    ],
+
+    "power": {
+        "reg": "052a",
+        "mask": "ffffffff",
+        "type": "float",
+        "multiplier": 0.0001,
+        "units": "kW",
+        "round": 2,
+        "title": "Power Output"
+    },
+
+    "outputvoltage": {
+        "reg": "054b",
+        "mask": "ffffffff",
+        "type": "float",
+        "multiplier": 0.1,
+        "units": "V",
+        "round": 1,
+        "title": "Output Voltage"
+    },
+
+    "run_hours": {
+        "reg": "05e9",
+        "mask": "ffffffff",
+        "type": "float",
+        "multiplier": 0.1,
+        "units": "h",
+        "round": 1,
+        "title": "Run Hours"
+    },
+
+    "identity": [
+        {
+            "reg": "270e",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "0025",
+            "title": "Kohler APM402 Decision-Maker 3000",
+            "text": "Kohler APM402 Decision-Maker 3000"
+        },
+        {
+            "reg": "044b",
+            "type": "default",
+            "title": "Unknown Controller",
+            "text": "Unknown Controller"
+        }
+    ],
+
+    "buttons": [
+        {
+            "onewordcommand": "start",
+            "title": "Remote Start",
+            "command_sequence": [
+                {
+                    "reg": "001a",
+                    "value": "0001",
+                    "length": 2
+                }
+             ]
+        },
+        {
+            "onewordcommand": "stop",
+            "title": "Remote Stop",
+            "command_sequence": [
+                {
+                    "reg": "001a",
+                    "value": "0002",
+                    "length": 2
+                }
+            ]
+        },
+        {
+            "onewordcommand": "reset",
+            "title": "Reset Alarms",
+            "command_sequence": [
+                {
+                    "reg": "001a",
+                    "value": "000d",
+                    "length": 2
+                }
+            ]
+        }
+    ]
+
+}
