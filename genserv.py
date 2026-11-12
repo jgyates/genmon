@@ -3825,6 +3825,7 @@ def GetImportConfigFileNames():
             os.path.dirname(os.path.realpath(__file__)), "data", "controller"
         )
         listing = os.listdir(path)
+        listing.sort()
         return ",".join(listing)
     except Exception as e1:
         LogErrorLine("Error Reading Config File (ReadSingleConfigValue): " + str(e1))
