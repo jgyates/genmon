@@ -15,9 +15,11 @@ This project will monitor a backup generator that utilizes the Generac Controlle
 * [Deep See Electronics 7320MKII Controller](https://github.com/jgyates/genmon/wiki/Appendix-N-Genmon-Supporting-Other-Controller-Types)
 * [ComAp Controller](https://github.com/jgyates/genmon/wiki/Appendix-N-Genmon-Supporting-Other-Controller-Types)
 * [Briggs & Stratton GC-1031/GC-1032](https://github.com/jgyates/genmon/wiki/Appendix-P-Briggs-and-Stratton-Controller-Information)
-* [Kohler APM604](https://powersystems.kohlerenergy.com/en/product/apm603)
+* [Kohler APM603](https://powersystems.kohlerenergy.com/en/product/apm603)
+* [Kohler APM402 / Decision-Maker 3000](https://github.com/jgyates/genmon/wiki/Appendix-N-Genmon-Supporting-Other-Controller-Types)
 * [MEBAY DC4x - DC9x controllers](https://mebay.cn/#/index/product_display/list?sign=product_display&id=39&level=1&random=10)
-* [SmartGenSmartGen HGM40x0](https://github.com/jgyates/genmon/wiki/Appendix-N-Genmon-Supporting-Other-Controller-Types)
+* [SmartGen HGM40x0](https://github.com/jgyates/genmon/wiki/Appendix-N-Genmon-Supporting-Other-Controller-Types)
+* [Basler DGC 2020HD](https://github.com/jgyates/genmon/wiki/Appendix-U-Basler-DGC-2020HD-Controller)
 
 The project is written mostly in python and has been tested with a Raspberry Pi 3 (Pi Zero, Pi Zero W, Pi Zero 2W, Pi 2, Pi 3b+ and Pi 4 have also been validated). 32 and 64 bit version of raspbian have been used with the project. To use this project you would need to create a physical enclosure for your raspberry pi and possibly [make a cable](https://github.com/jgyates/genmon/wiki/3.1--Making-a-Cable) to connect the raspberry pi to the generator controller or purchase [pre-assembled hardware](https://github.com/jgyates/genmon/wiki/2--Hardware#custom-hat). If you are comfortable doing these things and you have a backup generator that has a supported controller, then this project may be of interest to you.
 
@@ -114,7 +116,8 @@ Gemmon supports several type of generator controllers. The following table shows
 | ComAP Controller | [ComAP IG-NT](https://www.comap-control.com/products/controllers/paralleling-gen-set-controllers/inteligen/inteligen-nt/) | Settings -> Advanced -> Controller Type -> custom, then Settings -> Advanced -> Custom Controller Config File -> ComAP.json|
 | Deepsea | [Deepsea](https://www.deepseaelectronics.com/genset)| Settings -> Advanced -> Controller Type -> custom, then Settings -> Advanced -> Custom Controller Config File -> Deepsea_controller.json|
 | Kohler APM603| [Product Page](https://powersystems.kohlerenergy.com/en/product/apm603)| Settings -> Advanced -> Controller Type -> custom, then Settings -> Advanced -> Custom Controller Config File -> Kohler_APM603.json |
-| [MEBAY DCxx  (DC04-DC90)](https://github.com/jgyates/genmon/wiki/Appendix-R---MEBAY-Controller-with-RS-485) | [MEBAY DC4x, DC5x, DC6x, DC7x, DC8x and DC9x](https://mebay.cn/#/index/product_display/list?sign=product_display&id=39&level=1&random=7)| Settings -> Advanced -> Controller Type -> custom, then Settings -> Advanced -> Custom Controller Config File -> MEBAY_DCxx.json.json |
+| Kohler APM402 / Decision-Maker 3000 | [Operation Manual](https://techcomm.kohler.com/techcomm/pdf/tp6694.pdf)| Settings -> Advanced -> Controller Type -> custom, then Settings -> Advanced -> Custom Controller Config File -> Kohler_APM402.json |
+| [MEBAY DCxx  (DC04-DC90)](https://github.com/jgyates/genmon/wiki/Appendix-R---MEBAY-Controller-with-RS-485) | [MEBAY DC4x, DC5x, DC6x, DC7x, DC8x and DC9x](https://mebay.cn/#/index/product_display/list?sign=product_display&id=39&level=1&random=7)| Settings -> Advanced -> Controller Type -> custom, then Settings -> Advanced -> Custom Controller Config File -> MEBAY_DCxx.json |
 | SmartGen HGM40x0 | [SmartGen HGM40x0 Series](https://www.smartgen-america.com/catalog/products/genset-controllers/)| Settings -> Advanced -> Controller Type -> custom, then Settings -> Advanced -> Custom Controller Config File -> SmartGen_HGM4000.json |
 | [Basler DGC 2020HD](https://github.com/jgyates/genmon/wiki/Appendix-U-Basler-DGC-2020HD-Controller) | [Product Page](https://www.basler.com/product/dgc-2020hd-digital-genset-controller/)| Settings -> Advanced -> Controller Type -> custom, then Settings -> Advanced -> Custom Controller Config File -> Basler_DGC_2020HD.json |
 
