@@ -1398,7 +1398,7 @@ class Monitor(MySupport):
             try:
                 # check for software update
                 self.CheckSoftwareUpdate()
-                self.CommunicationsActive = self.Controller.ComminicationsIsActive()
+                self.CommunicationsActive = self.Controller.CommunicationsAreActive()
 
                 if self.CommunicationsActive:
                     LastActiveTime = datetime.datetime.now()

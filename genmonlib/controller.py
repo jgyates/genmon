@@ -1552,12 +1552,12 @@ class GeneratorController(MySupport):
     def GetController(self, Actual=True):
         return "Test Controller"
 
-    # ----------  GeneratorController:ComminicationsIsActive  -------------------
+    # ----------  GeneratorController:CommunicationsAreActive  -----------------
     # Called every few seconds, if communictions are failing, return False, otherwise
     # True
-    # ----------  GeneratorController::ComminicationsIsActive  ----------------------------
+    # ----------  GeneratorController::CommunicationsAreActive  ----------------
     # Called every few seconds
-    def ComminicationsIsActive(self):
+    def CommunicationsAreActive(self):
 
         if self.LastRxPacketCount == self.ModBus.RxPacketCount:
             return False

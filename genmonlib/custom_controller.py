@@ -641,7 +641,7 @@ class CustomController(GeneratorController):
                 if LogRegister.lower().startswith("comment"):
                         continue
                 LogRegInt = int(LogRegister,16)
-                LogRegEndOffset = int(LogRegisterData["step"]) * int(LogRegisterData["iteration"])
+                LogRegEndOffset = int(LogRegisterData["step"]) * int(self.ProcessIterationCount(LogRegisterData))
                 if RegInt >= LogRegInt and RegInt <= (LogRegInt + LogRegEndOffset):
                     return True, LogRegisterData["length"], LogRegisterData["text"]
             return False, 0, ""
@@ -672,7 +672,7 @@ class CustomController(GeneratorController):
                             IsInput = True
                     Length = RegisterData["length"]
                     Step = RegisterData["step"]
-                    Iteration = RegisterData["iteration"]
+                    Iteration = self.ProcessIterationCount(RegisterData)
                     RegisterInt = int(Register, 16)
                     while(Iteration > 0):
                         Register = "%04x" % RegisterInt
@@ -1975,7 +1975,24 @@ class CustomController(GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in ProcessMaskModifier: " + str(e1) + ": " + str(entry["title"]))
             return ReturnValue
-    
+
+    # ------------ GeneratorController:ProcessIterationCount -------------------
+    def ProcessIterationCount(self, entry):
+
+        try:
+            if not "iteration" in entry.keys():
+                self.LogError(f"WARNING: iteration not in object in ProcessIterationCount")
+                return 0
+            iteration = entry["iteration"]
+            if isinstance(iteration, int):
+                return iteration
+            # iteration must be an object
+            title, value = self.GetDisplayEntry(entry, no_units=True)
+            return int(value)
+        except Exception as e1:
+            self.LogErrorLine(f"Error in ProcessIterationCount: {e1}, {entry}")
+            return 0
+
     # ------------ GeneratorController:ProcessIterationObject ------------------
     def ProcessIterationObject(self, entry):
         try:
@@ -1992,7 +2009,7 @@ class CustomController(GeneratorController):
                 if not "step" in entry.keys():
                     self.LogError("Error in ProcessIterationObject: reg present but not step: "  + str(entry))
                     return None
-                iteration = entry["iteration"]
+                iteration = self.ProcessIterationCount(entry)
                 LogList = []
                 while iteration > 0:
                     Register = "%04x" % RegisterInt
