@@ -65,7 +65,7 @@
                 "reg_type": "holding",
                 "length": 10, 
                 "text": "Alarm Log", 
-                "comment": "iteration may be an integer or a object that defines a register read, i.e. with reg, type:int, etc",
+                "comment3": "iteration may be an integer or a object that defines a register read, i.e. with reg, type:int, etc",
                 "iteration": 50, 
                 "step": 5
               },
