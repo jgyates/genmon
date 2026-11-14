@@ -2036,11 +2036,19 @@ class MyHomeAssistant(MySupport):
 
             # Handle unit of measurement, with special handling for temperature sensors
             unit = entity_def.get("unit")
-            if unit:
+            if entity_def.get("device_class") == "temperature":
+                # HA requires degree symbols for temperature units
+                if unit in ("F", "°F"):
+                    unit = "°F"
+                elif unit in ("C", "°C"):
+                    unit = "°C"
+                if unit:
+                    payload["unit_of_measurement"] = unit
+                else:
+                    # Temperature sensors require a unit - set based on metric setting
+                    payload["unit_of_measurement"] = "°C" if self.UseMetric else "°F"
+            elif unit:
                 payload["unit_of_measurement"] = unit
-            elif entity_def.get("device_class") == "temperature":
-                # Temperature sensors require a unit - set based on metric setting
-                payload["unit_of_measurement"] = "°C" if self.UseMetric else "°F"
             elif entity_def.get("device_class") == "consumption":
                 # Fuel consumption sensors require a unit - set based on metric setting
                 payload["unit_of_measurement"] = "l" if self.UseMetric else "gal"
