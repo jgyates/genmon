@@ -971,7 +971,7 @@ class GeneratorController(MySupport):
                 try:
                     CommandSetList = json.loads(EntryString)
                     # validate object
-                    if not isinstance(CommandSetList, list) or not (len(CommandSetList) == 0):
+                    if not isinstance(CommandSetList, list) or len(CommandSetList) == 0:
                         self.LogError("Invalid button object in SetCommandButton")
                         return "Error: Invalid button object"
                     # Execute Command
@@ -1140,7 +1140,7 @@ class GeneratorController(MySupport):
             with self.ModBus.CommAccessLock:
                 # put the lock here so if there are multiple commands they will be executed back to back
                 for button_command in CommandSetList:
-                    if not isinstance(button_command, dict) or not len(button_command) == 1:
+                    if not isinstance(button_command, dict) or not len(button_command):
                         self.LogError("Error on ExecuteRemoteCommand, expecting single dict: " + str(button_command))
                         return "Error: invalid input in ExecuteRemoteCommand"
                     if not "onewordcommand" in button_command.keys():
