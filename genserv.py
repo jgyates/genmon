@@ -13,6 +13,7 @@ from __future__ import print_function
 import collections
 import errno
 import hashlib
+import hmac
 import json
 import os
 import os.path
@@ -326,25 +327,63 @@ def HasWriteAccess():
     return session.get("write_access", False)
 
 
+# /cmd/ commands that change state. They are only accepted as POST (with the
+# X-CSRFToken header, see csrf_check); a GET returns 405.
+POST_ONLY_COMMANDS = frozenset([
+    "setexercise", "setquiet", "setremote", "settime", "set_button_command",
+    "sendregisters", "sendlogfiles", "notify_message",
+    "add_maint_log", "edit_row_maint_log", "delete_row_maint_log",
+    "clear_maint_log", "clear_aux_alarm_log",
+    "power_log_clear", "fuel_log_clear", "sensor_log_clear",
+    "setsettings", "set_advanced_settings", "set_add_on_settings",
+    "setnotifications", "set_ui_prefs", "test_email",
+    "updatesoftware", "restart", "stop", "shutdown", "reboot",
+])
+
+
+# -------------------------------------------------------------------------------
+def CSRFToken():
+    """Install-wide CSRF token sent back in the X-CSRFToken header.
+
+    Derived from app.secret_key, so it needs no cookie (the session cookie is
+    Secure and therefore not stored by browsers over plain HTTP) and changes
+    whenever the secret key is regenerated. Other sites can neither read it
+    (same-origin policy) nor send a custom header cross-origin without a CORS
+    preflight, which genserv never approves."""
+    key = app.secret_key
+    if not key:
+        return ""
+    if isinstance(key, str):
+        key = key.encode("utf-8")
+    return hmac.new(key, b"genmon-csrf-v1", hashlib.sha256).hexdigest()
+
+
 # -------------------------------------------------------------------------------
 @app.before_request
 def csrf_check():
     """Block cross-origin state-changing requests (CSRF protection).
+
+    Every non-GET request must carry a valid X-CSRFToken header. If the
+    browser also sends Origin/Referer, it must match this host.
 
     Reverse-proxy aware: trusts X-Forwarded-Host so that the browser's
     Origin (the public domain) matches even when Flask sees the backend
     address as request.host.
     """
     if request.method in ("GET", "HEAD", "OPTIONS"):
-        return  # safe methods — SameSite cookie handles GET-based CSRF
+        return  # safe methods; state-changing /cmd/ commands reject GET in command()
     # Login endpoints are protected by credentials, not session — exempt from CSRF
     if request.endpoint in ("do_admin_login", "passkey_login_begin", "passkey_login_complete", "mfa_auth"):
         return
+    expected = CSRFToken()
+    supplied = request.headers.get("X-CSRFToken", "")
+    if not expected or not hmac.compare_digest(supplied.encode("utf-8"), expected.encode("utf-8")):
+        LogError("CSRF blocked: missing or invalid X-CSRFToken header: " + request.path)
+        return jsonify({"error": "CSRF validation failed"}), 403
     origin = request.headers.get("Origin")
     referer = request.headers.get("Referer")
     if not origin and not referer:
-        LogError("CSRF blocked: missing Origin and Referer")
-        return jsonify({"error": "CSRF validation failed"}), 403
+        return  # non-browser client (integration, script) with a valid token
     # Build the set of hosts we trust: the direct host Flask sees plus
     # any X-Forwarded-Host a reverse proxy (Caddy, nginx, etc.) provides.
     trusted_hosts = {request.host}
@@ -408,7 +447,7 @@ def inject_asset_helpers():
         except Exception:
             return "1"
 
-    return dict(asset_ver=asset_ver)
+    return dict(asset_ver=asset_ver, csrf_token=CSRFToken)
 
 
 # -------------------------------------------------------------------------------
@@ -919,9 +958,15 @@ def doLdapLogin(username, password):
 
 
 # -------------------------------------------------------------------------------
-@app.route("/cmd/<command>")
+@app.route("/cmd/<command>", methods=["GET", "POST"])
 def command(command):
 
+    if command in POST_ONLY_COMMANDS and request.method != "POST":
+        LogError("Rejected GET for state-changing command: " + command)
+        response = jsonify({"error": "Use POST with the X-CSRFToken header for this command"})
+        response.status_code = 405
+        response.headers["Allow"] = "POST"
+        return response
     if Closing or Restarting:
         return jsonify("Closing")
     if not LoginActive():
@@ -1014,48 +1059,48 @@ def ProcessCommand(command):
                     return jsonify("Read Only Mode")
 
                 if command == "setexercise":
-                    settimestr = request.args.get("setexercise", 0, type=str)
+                    settimestr = request.values.get("setexercise", 0, type=str)
                     if settimestr:
                         finalcommand += "=" + settimestr
                 elif command == "setquiet":
                     # /cmd/setquiet?setquiet=off
-                    setquietstr = request.args.get("setquiet", 0, type=str)
+                    setquietstr = request.values.get("setquiet", 0, type=str)
                     if setquietstr:
                         finalcommand += "=" + setquietstr
                 elif command == "setremote":
-                    setremotestr = request.args.get("setremote", 0, type=str)
+                    setremotestr = request.values.get("setremote", 0, type=str)
                     if setremotestr:
                         finalcommand += "=" + setremotestr
 
                 if command == "power_log_json":
                     # example: /cmd/power_log_json?power_log_json=1440
-                    setlogstr = request.args.get("power_log_json", 0, type=str)
+                    setlogstr = request.values.get("power_log_json", 0, type=str)
                     if setlogstr:
                         finalcommand += "=" + setlogstr
                 if command == "sensor_log_json":
                     # example: /cmd/sensor_log_json?sensor_log_json=1440&sensor=Oil+Temp
-                    minutes = request.args.get("sensor_log_json", 0, type=str)
-                    sensor = request.args.get("sensor", "", type=str)
+                    minutes = request.values.get("sensor_log_json", 0, type=str)
+                    sensor = request.values.get("sensor", "", type=str)
                     if minutes and sensor:
                         finalcommand += "=" + minutes + "&sensor=" + sensor
                 # Sanitize command parameters: strip null bytes and newlines
                 # to prevent header/log injection, cap length to limit abuse.
                 if command == "add_maint_log":
-                    # use direct method instead of request.args.get due to unicode
+                    # use direct method instead of request.values.get due to unicode
                     # input for add_maint_log for international users
-                    input = request.args["add_maint_log"]
+                    input = request.values["add_maint_log"]
                     input = input.replace("\x00", "").replace("\n", " ").replace("\r", " ")[:2048]
                     finalcommand += "=" + input
                 if command == "delete_row_maint_log":
-                    input = request.args["delete_row_maint_log"]
+                    input = request.values["delete_row_maint_log"]
                     input = input.replace("\x00", "").replace("\n", " ").replace("\r", " ")[:512]
                     finalcommand += "=" + input
                 if command == "edit_row_maint_log":
-                    input = request.args["edit_row_maint_log"]
+                    input = request.values["edit_row_maint_log"]
                     input = input.replace("\x00", "").replace("\n", " ").replace("\r", " ")[:2048]
                     finalcommand += "=" + input
                 if command == "set_button_command":
-                    input = request.args["set_button_command"]
+                    input = request.values["set_button_command"]
                     input = input.replace("\x00", "").replace("\n", " ").replace("\r", " ")[:512]
                     finalcommand += "=" + input
                 data = MyClientInterface.ProcessMonitorCommand(finalcommand)
@@ -1107,6 +1152,10 @@ def ProcessCommand(command):
             else:
                 return "Access denied"
 
+        elif command in ["csrf_token"]:
+            # for integrations: send back as X-CSRFToken header on POST requests
+            return jsonify({"csrf_token": CSRFToken()})
+
         elif command in ["getfavicon"]:
             return jsonify(favicon)
 
@@ -1122,7 +1171,7 @@ def ProcessCommand(command):
             return jsonify(data)
         elif command in ["setnotifications"]:
             if HasWriteAccess():
-                SaveNotifications(request.args.get("setnotifications", 0, type=str))
+                SaveNotifications(request.values.get("setnotifications", 0, type=str))
             return "OK"
 
         # Add on items
@@ -1133,7 +1182,7 @@ def ProcessCommand(command):
                     return json.dumps(data, sort_keys=False)
                 elif command == "set_add_on_settings":
                     SaveAddOnSettings(
-                        request.args.get("set_add_on_settings", default=None, type=str)
+                        request.values.get("set_add_on_settings", default=None, type=str)
                     )
                 else:
                     return "OK"
@@ -1146,7 +1195,7 @@ def ProcessCommand(command):
                     return json.dumps(data, sort_keys=False)
                 elif command == "set_advanced_settings":
                     SaveAdvancedSettings(
-                        request.args.get(
+                        request.values.get(
                             "set_advanced_settings", default=None, type=str
                         )
                     )
@@ -1156,7 +1205,7 @@ def ProcessCommand(command):
 
         elif command in ["setsettings"]:
             if HasWriteAccess():
-                SaveSettings(request.args.get("setsettings", 0, type=str))
+                SaveSettings(request.values.get("setsettings", 0, type=str))
             return "OK"
 
         # ---- UI preferences (persisted to genmon.conf, no restart) ----
@@ -1170,7 +1219,7 @@ def ProcessCommand(command):
                     return "{}"
             elif command == "set_ui_prefs":
                 if HasWriteAccess():
-                    raw = request.args.get("set_ui_prefs", "{}", type=str)
+                    raw = request.values.get("set_ui_prefs", "{}", type=str)
                     if len(raw) > 16384:  # 16 KB cap to prevent memory/storage abuse
                         return "Error: payload too large"
                     try:
@@ -1221,7 +1270,7 @@ def ProcessCommand(command):
                 )
         elif command in ["test_email"]:
             if HasWriteAccess():
-                return SendTestEmail(request.args.get("test_email", default=None, type=str))
+                return SendTestEmail(request.values.get("test_email", default=None, type=str))
         else:
             return render_template("command_template.html", command=command, theme=get_theme_pref())
     except Exception as e1:

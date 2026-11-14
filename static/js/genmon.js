@@ -16,8 +16,19 @@ var CFG = {
   regPollMs:    1000,   // register view
   ajaxTimeout:  4000,
   storageKey:   'genmon_v2',
-  version:      '2.0.0'
+  version:      '2.0.0',
+  csrfToken:    ($('meta[name="csrf-token"]').attr('content') || '')
 };
+
+/* State-changing requests need the X-CSRFToken header. Only same-origin
+   non-GET requests get it, so it never leaks to other hosts (e.g. GitHub). */
+$.ajaxSetup({
+  beforeSend: function(xhr, s) {
+    if (!s.crossDomain && String(s.type || 'GET').toUpperCase() !== 'GET') {
+      xhr.setRequestHeader('X-CSRFToken', CFG.csrfToken);
+    }
+  }
+});
 
 /* ============================================================
    STATE
@@ -177,8 +188,8 @@ var Store = {
     if (!this._loaded) return;   /* never overwrite server data if we failed to load */
     clearTimeout(this._syncTimer);
     try {
-      $.ajax({url: CFG.baseUrl + 'set_ui_prefs?set_ui_prefs=' +
-        encodeURIComponent(JSON.stringify(this._c)),
+      $.ajax({url: CFG.baseUrl + 'set_ui_prefs', method: 'POST',
+        data: { set_ui_prefs: JSON.stringify(this._c) },
         dataType:'text', timeout:4000});
     } catch(e) {}
   },
@@ -352,10 +363,13 @@ var API = {
       if (API._errs > 3 && S.connected) { S.connected = false; UI.connBadge(); }
     });
   },
-  set: function(cmd, val, timeout) {
+  /* State-changing command: POST /cmd/<cmd> with body <cmd>=<val> */
+  set: function(cmd, val, timeout, dataType) {
+    var data = {};
+    data[cmd] = (val === undefined || val === null) ? '' : val;
     return $.ajax({
-      url: CFG.baseUrl + cmd + '?' + cmd + '=' + encodeURIComponent(val),
-      dataType: 'text', timeout: timeout || CFG.ajaxTimeout * 3, cache: false
+      url: CFG.baseUrl + cmd, method: 'POST', data: data,
+      dataType: dataType || 'text', timeout: timeout || CFG.ajaxTimeout * 3, cache: false
     });
   }
 };
@@ -4211,7 +4225,7 @@ var Pages = {
           parts.push(em+'='+cats.join(','));
         });
         Modal.restart('Notification settings saved. Service is restarting\u2026');
-        $.ajax({ url: CFG.baseUrl + 'setnotifications',
+        $.ajax({ url: CFG.baseUrl + 'setnotifications', method: 'POST',
           data: { setnotifications: parts.join('&') } });
         delete S.dirty['notifications'];
       });
@@ -5655,7 +5669,7 @@ var Pages = {
             smtpauth_disable:($w.find('#f_smtpauth_disable').is(':checked')),
             use_html:       ($w.find('#f_use_html').is(':checked'))
           });
-          API.get('test_email?test_email=' + encodeURIComponent(payload), 15000)
+          API.set('test_email', payload, 15000, 'json')
             .done(function(r) {
               if (r && r.error) Modal.alert('Test Email', r.error);
               else Modal.alert('Test Email', (r && r.message) || 'Test email sent successfully.');
@@ -5668,7 +5682,7 @@ var Pages = {
       $w.on('click', '[data-sys]', function() {
         var cmd = $(this).data('sys');
         Modal.confirm('System', 'Execute: ' + cmd + '?', function() {
-          API.get(cmd, 30000).done(function() {
+          API.set(cmd, '', 30000).done(function() {
             if (cmd === 'restart') {
               Modal.restart('Service is restarting…');
             } else {
@@ -5732,7 +5746,7 @@ var Pages = {
           newUrl = proto + '://' + host + portSuffix + '/';
         }
         Modal.restart('Settings saved. Service is restarting\u2026', newUrl);
-        $.ajax({ url: CFG.baseUrl + 'setsettings',
+        $.ajax({ url: CFG.baseUrl + 'setsettings', method: 'POST',
           data: { setsettings: val },
           dataType:'text', timeout:12000, cache:false
         });
@@ -5744,7 +5758,7 @@ var Pages = {
       $w.on('click', '#adv-save', function() {
         var val = UI.collectForm('#adv-form');
         Modal.restart('Advanced settings saved. Service is restarting\u2026');
-        $.ajax({ url: CFG.baseUrl + 'set_advanced_settings',
+        $.ajax({ url: CFG.baseUrl + 'set_advanced_settings', method: 'POST',
           data: { set_advanced_settings: val },
           dataType:'text', timeout:12000, cache:false
         });
@@ -5801,7 +5815,7 @@ var Pages = {
           parts.push(em+'='+cats.join(','));
         });
         Modal.restart('Notification settings saved. Service is restarting\u2026');
-        $.ajax({ url: CFG.baseUrl + 'setnotifications',
+        $.ajax({ url: CFG.baseUrl + 'setnotifications', method: 'POST',
           data: { setnotifications: parts.join('&') } });
         _tabSnaps['__notifications__'] = _snapForTab('__notifications__');
         _checkDirty();
@@ -6355,7 +6369,7 @@ var Pages = {
               '</div>'), []);
             var fd = new FormData();
             fd.append('file', file);
-            fetch('/upload', { method: 'POST', body: fd }).then(function(resp) {
+            fetch('/upload', { method: 'POST', body: fd, headers: { 'X-CSRFToken': CFG.csrfToken } }).then(function(resp) {
               return resp.json();
             }).then(function(data) {
               if (data.status === 'ok') {
@@ -6421,7 +6435,7 @@ var Pages = {
                 $('#upd-bar').css('width', Math.min(updPct, 95) + '%');
               }, 300);
               /* Fire update request (timeout: 0 — server restarts before replying) */
-              $.ajax({ url: CFG.baseUrl + 'updatesoftware', dataType: 'json', timeout: 0, cache: false })
+              $.ajax({ url: CFG.baseUrl + 'updatesoftware', method: 'POST', dataType: 'json', timeout: 0, cache: false })
                 .done(function(){
                   /* Unexpected — server shouldn't reply before restarting */
                   clearInterval(updTimer);
@@ -6447,7 +6461,7 @@ var Pages = {
       });
       $('#a-restart').on('click', function(){
         Modal.confirm('Restart','Restart the genmon service?', function(){
-          $.ajax({ url: CFG.baseUrl + 'restart', dataType: 'json', timeout: 0, cache: false });
+          $.ajax({ url: CFG.baseUrl + 'restart', method: 'POST', dataType: 'json', timeout: 0, cache: false });
           Modal.restart('Service is restarting\u2026');
         });
       });

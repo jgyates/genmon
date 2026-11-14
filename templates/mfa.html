@@ -115,7 +115,7 @@
   function sendOTP(btn) {
     btn.disabled = true;
     document.getElementById('otp-status').textContent = 'Sending\u2026';
-    fetch('/send_otp', {method:'POST'}).then(function(r){return r.json()}).then(function(d){
+    fetch('/send_otp', {method:'POST', headers:{'X-CSRFToken': {{ csrf_token()|tojson }}}}).then(function(r){return r.json()}).then(function(d){
       document.getElementById('otp-status').textContent = d.status === 'ok' ? 'Code sent! Check your email.' : (d.msg || 'Error sending code');
       setTimeout(function(){ btn.disabled = false; }, 60000);
     }).catch(function(){

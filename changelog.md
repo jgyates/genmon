@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - Update to make config and JSON file writes atomic to reduce file corruption if power is lost
 - made iteration object in custom_controller be an int or an object
 - Added initial support for Kohler APM402
+- Web UI security updates (thanks @MichaelB2018 and @skipfire)
 
 ## 2.0.02 -2026-08-04
 - New add on for Hubitat Elevation hub, Thanks @bdwilson
