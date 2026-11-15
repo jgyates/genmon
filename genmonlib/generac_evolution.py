@@ -3154,30 +3154,6 @@ class Evolution(GeneratorController):
                 {"Battery Status (Sensor)": self.GetBatteryStatusAlternate()}
             )
 
-            # get UKS
-            Value = self.GetUnknownSensor("05ed")
-            if len(Value):
-                # Shift by one then  apply this formula
-                # The shift by one appears
-                # Sensor values odd below 60 decimal, even above 60 decimal (60 shift right 1 is 30 which is 11.5C or 52.7F)
-                SensorValue = int(Value) >> 1
-                Celsius = float(
-                    (-0.2081 * SensorValue**2) + (10.928 * SensorValue) - 129.02
-                )
-                Fahrenheit = self.ConvertCelsiusToFahrenheit(Celsius=Celsius)
-                CStr = "%.1f" % Celsius
-                FStr = "%.1f" % Fahrenheit
-                Sensors.append(
-                    {
-                        "Ambient Temp Thermistor": "Sensor: "
-                        + Value
-                        + ", "
-                        + CStr
-                        + "C, "
-                        + FStr
-                        + "F"
-                    }
-                )
 
         if self.EvolutionController and self.Evolution2:
             Sensors.append(
@@ -5302,7 +5278,7 @@ class Evolution(GeneratorController):
     # ------------ Evolution:GetAmbientTemp -------------------------
     def GetAmbientTemp(self, ReturnInt=False, JSONNum = False):
 
-        if self.EvolutionController and self.Evolution2:
+        if self.EvolutionController and (self.Evolution2 or self.self.LiquidCooled):
             Value = self.GetParameter("05ed", ReturnInt=True)
             if self.UseMetric:
                 unit = "C"
