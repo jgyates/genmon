@@ -4824,7 +4824,7 @@ def ReadSettingsFromFile():
             "int",
             "Maximum Entries in Sensor Log",
             71,
-            "8000",
+            "2000",
             "digits",
             0,
             GENMON_CONFIG,

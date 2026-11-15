@@ -98,7 +98,7 @@ class GeneratorController(MySupport):
         self.PowerLock = threading.RLock()
         self.SensorLogPath = os.path.join(ConfigFilePath, "sensordata")
         self.SensorLogMaxSize = 5.0  # 5 MB max size per sensor
-        self.MaxSensorLogEntries = 8000
+        self.MaxSensorLogEntries = 2000
         self.SensorLogLock = threading.RLock()
         self.SensorLogLists = {}  # per-sensor cached lists: {sensor_name: [[ts, val], ...]}
         self.bAlternateDateFormat = False
@@ -231,7 +231,7 @@ class GeneratorController(MySupport):
                     "sensorlogmax", return_type=float, default=5.0
                 )
                 self.MaxSensorLogEntries = self.config.ReadValue(
-                    "max_sensorlog_entries", return_type=int, default=8000
+                    "max_sensorlog_entries", return_type=int, default=2000
                 )
                 if self.config.HasOption("outagelog"):
                     self.OutageLog = self.config.ReadValue("outagelog")
