@@ -595,7 +595,7 @@ class Evolution(GeneratorController):
                     )
                     self.TileList.append(Tile)
 
-                if self.EvolutionController and (self.Evolution2 or self.self.LiquidCooled):
+                if self.EvolutionController and (self.Evolution2 or self.LiquidCooled):
                     nominal = 21
                     maximum = 65
                     if self.UseMetric:
@@ -2893,7 +2893,7 @@ class Evolution(GeneratorController):
 
             Maintenance = self.DisplayMaintenanceCommon(Maintenance, JSONNum=JSONNum)
 
-            if self.EvolutionController and (self.Evolution2 or self.self.LiquidCooled):
+            if self.EvolutionController and (self.Evolution2 or self.LiquidCooled):
                 Value = self.GetAmbientTemp(ReturnInt = False, JSONNum=JSONNum)
                 Maintenance["Maintenance"].append(
                     {
@@ -5278,7 +5278,7 @@ class Evolution(GeneratorController):
     # ------------ Evolution:GetAmbientTemp -------------------------
     def GetAmbientTemp(self, ReturnInt=False, JSONNum = False):
 
-        if self.EvolutionController and (self.Evolution2 or self.self.LiquidCooled):
+        if self.EvolutionController and (self.Evolution2 or self.LiquidCooled):
             Value = self.GetParameter("05ed", ReturnInt=True)
             if self.UseMetric:
                 unit = "C"
