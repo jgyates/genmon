@@ -2486,12 +2486,16 @@ class GeneratorController(MySupport):
             self.LogErrorLine("Error in  ClearSensorLog: " + str(e1))
             return "Error in  ClearSensorLog: " + str(e1)
 
-    # ----------  GeneratorController::GetSensorNames-------------------------
+    # ----------  GeneratorController::GetSensorNames---------------------------
     def GetSensorNames(self):
         try:
             names = []
             if self.bUseRaspberryPiCpuTempGauge:
                 names.append("CPU Temp")
+
+            # get controller names if any
+            names.extend(self.GetControllerSensorNames())
+
             if self.ExternalSensorGagueData:
                 for gauge in self.ExternalSensorGagueData:
                     names.append(gauge.get("title", ""))
@@ -2500,6 +2504,25 @@ class GeneratorController(MySupport):
             self.LogErrorLine("Error in GetSensorNames: " + str(e1))
             return []
 
+    # ----------  GeneratorController::GetControllerSensorNames-----------------
+    # This function is overridden in the child controller specific class to 
+    # define other sensors. This should return a list. If not additional sensors
+    # then return an empty list
+    def GetControllerSensorNames(self):
+
+        # return ["Sensor 1", "Sensor 2"]
+        return []
+
+    # ----------  GeneratorController::CollectControllerSensorData--------------
+    # This fuction is overriden in the child controller specific class and 
+    # is called periodically to write sensor data to log files
+    def CollectControllerSensorData(self):
+
+        # If the sensor data has changed from the last poll then log it to file
+        # example:
+        #   TimeStamp = datetime.datetime.now().strftime("%x %X")
+        #   self.LogToSensorLog("Sensor 2", TimeStamp, str(Sensor2Value))
+        return
     # ----------  GeneratorController::SensorCollectionThread-------------------
     def SensorCollectionThread(self):
 
@@ -2540,7 +2563,8 @@ class GeneratorController(MySupport):
                         LastCpuTemp = CpuTemp
                         TimeStamp = datetime.datetime.now().strftime("%x %X")
                         self.LogToSensorLog("CPU Temp", TimeStamp, str(CpuTemp))
-                
+
+                self.CollectControllerSensorData()
                 # Time to exit?
                 if self.IsStopSignaled("SensorCollectionThread"):
                     return
