@@ -2277,7 +2277,8 @@ class GeneratorController(MySupport):
             self.LogErrorLine("Error in  GetAveragePower: " + str(e1))
             return 0, 0
 
-    # ----------  GeneratorController::DecimateList--------------------------------
+    # ----------  GeneratorController::DecimateList-----------------------------
+    # Sensor loging helper
     def DecimateList(self, inputList, MaxSize):
         try:
             if len(inputList) <= MaxSize:

@@ -595,6 +595,29 @@ class Evolution(GeneratorController):
                     )
                     self.TileList.append(Tile)
 
+                if self.EvolutionController and self.Evolution2:
+                    nominal = 21
+                    maximum = 65
+                    if self.UseMetric:
+                        units = "C"
+                    else:
+                        units = "F"
+                        nominal = self.ConvertCelsiusToFahrenheit(nominal)
+                        maximum = self.ConvertCelsiusToFahrenheit(maximum)
+                    Tile = MyTile(
+                        self.log,
+                        title="Ambient Temp",
+                        units=units,
+                        type="temperature",
+                        subtype="ambient",
+                        nominal=nominal,
+                        maximum=maximum,
+                        callback=self.GetAmbientTemp,
+                        callbackparameters=(True,),
+                    )
+                    self.TileList.append(Tile)
+                    
+
                 self.SetupCommonTiles()
 
         except Exception as e1:
@@ -2871,25 +2894,13 @@ class Evolution(GeneratorController):
             Maintenance = self.DisplayMaintenanceCommon(Maintenance, JSONNum=JSONNum)
 
             if self.EvolutionController and self.Evolution2:
-                if self.UseMetric:
-                    Value = self.ConvertFahrenheitToCelsius(
-                        self.GetParameter("05ed", ReturnInt=True)
-                    )
-                    Maintenance["Maintenance"].append(
-                        {
-                            "Ambient Temperature Sensor": self.ValueOut(
-                                Value, "C", JSONNum
-                            )
-                        }
-                    )
-                else:
-                    Maintenance["Maintenance"].append(
-                        {
-                            "Ambient Temperature Sensor": self.ValueOut(
-                                self.GetParameter("05ed", ReturnInt=True), "F", JSONNum
-                            )
-                        }
-                    )
+                Value = self.GetAmbientTemp(ReturnInt = False, JSONNum=JSONNum)
+                Maintenance["Maintenance"].append(
+                    {
+                        "Ambient Temperature Sensor": Value
+
+                    }
+                )
 
             ControllerSettings = []
             Maintenance["Maintenance"].append(
@@ -3137,9 +3148,6 @@ class Evolution(GeneratorController):
             TimeActive = "None"
         Sensors.append({"Last Startup Delay Timer Active": TimeActive})
 
-        if (self.EvolutionController and not self.LiquidCooled) or self.UseExternalCTData:
-            Sensors.append({"Load Imbalance": str(self.GetLegBalance(None,None, True)) + " %"})
-        
         if self.EvolutionController and self.LiquidCooled:
             # get total hours since activation
             Sensors.append(
@@ -3156,7 +3164,7 @@ class Evolution(GeneratorController):
                 Celsius = float(
                     (-0.2081 * SensorValue**2) + (10.928 * SensorValue) - 129.02
                 )
-                Fahrenheit = 9.0 / 5.0 * Celsius + 32
+                Fahrenheit = self.ConvertCelsiusToFahrenheit(Celsius=Celsius)
                 CStr = "%.1f" % Celsius
                 FStr = "%.1f" % Fahrenheit
                 Sensors.append(
@@ -5290,6 +5298,27 @@ class Evolution(GeneratorController):
             Divider = 2
 
         return self.GetParameter("0009", ReturnInt=ReturnInt, Label="V", Divider=Divider)
+
+    # ------------ Evolution:GetAmbientTemp -------------------------
+    def GetAmbientTemp(self, ReturnInt=False, JSONNum = False):
+
+        if self.EvolutionController and self.Evolution2:
+            Value = self.GetParameter("05ed", ReturnInt=True)
+            if self.UseMetric:
+                unit = "C"
+                Value = self.ConvertFahrenheitToCelsius(Value)
+            else:
+                unit = "F"
+
+            if ReturnInt:
+                return Value
+            return self.ValueOut(Value, unit, NoString = JSONNum)
+        else:
+            if ReturnInt:
+                return 0
+            else:
+                Units = "C" if self.UseMetric else "F"
+                return f"0 {Units}"
 
     # ------------ Evolution:GetBatteryVoltage -------------------------
     def GetBatteryVoltage(self, ReturnFloat=False):
