@@ -1723,7 +1723,7 @@ def GetAddOns():
                 "outage_priority", return_type=str, default="NORMAL"
             ),
             "list",
-            "Fuel Level Notification priority identifier. See https://pushover.net/api#priority",
+            "Outage Notification priority identifier. See https://pushover.net/api#priority",
             bounds="LOWEST,LOW,NORMAL,HIGH,EMERGENCY",
             display_name="Outage Priority",
         )
