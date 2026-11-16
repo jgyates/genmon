@@ -614,7 +614,13 @@ class MySupport(MyCommon):
 
     # ------------ MySupport::SetupAddOnProgram----------------------------------
     @staticmethod
-    def SetupAddOnProgram(prog_name):
+    def SetupAddOnProgram(prog_name, extra_options=None):
+        # extra_options is an optional dict of additional command line options
+        # that require a value, mapping the short option letter to a tuple of
+        # (long option name, help text), e.g. {"f": ("filename", "<outputfile>")}
+        # If extra_options is provided, a dict mapping each long option name to
+        # the value given on the command line (or None) is returned as an
+        # additional (seventh) return value.
         console = SetupLogger(prog_name + "_console", log_file="", stream=True)
 
         if not MySupport.PermissionsOK():
@@ -628,16 +634,28 @@ class MySupport(MyCommon):
             + prog_name
             + ".py -a <IP Address or localhost> -c <path to "
             + prog_name
-            + " config file>\n"
+            + " config file>"
         )
+
+        short_opts = "hc:a:"
+        long_opts = ["help", "configpath=", "address="]
+        extra_values = {}
+        extra_lookup = {}
+        if extra_options:
+            for short_opt, (long_opt, help_text) in extra_options.items():
+                short_opts += short_opt + ":"
+                long_opts.append(long_opt + "=")
+                extra_values[long_opt] = None
+                extra_lookup["-" + short_opt] = long_opt
+                extra_lookup["--" + long_opt] = long_opt
+                HelpStr += " -" + short_opt + " " + help_text
+        HelpStr += "\n"
 
         ConfigFilePath = ProgramDefaults.ConfPath
         address = ProgramDefaults.LocalHost
 
         try:
-            opts, args = getopt.getopt(
-                sys.argv[1:], "hc:a:", ["help", "configpath=", "address="]
-            )
+            opts, args = getopt.getopt(sys.argv[1:], short_opts, long_opts)
         except getopt.GetoptError:
             console.error("Invalid command line argument.")
             sys.exit(2)
@@ -650,6 +668,8 @@ class MySupport(MyCommon):
                 address = arg
             elif opt in ("-c", "--configpath"):
                 ConfigFilePath = arg.strip()
+            elif opt in extra_lookup:
+                extra_values[extra_lookup[opt]] = arg.strip()
 
         try:
             port, loglocation, multi_instance = MySupport.GetGenmonInitInfo(
@@ -680,6 +700,8 @@ class MySupport(MyCommon):
             log.error("Error : " + str(e1) + ": " + MySupport.GetErrorLine())
             sys.exit(1)
 
+        if extra_options:
+            return console, ConfigFilePath, address, port, loglocation, log, extra_values
         return console, ConfigFilePath, address, port, loglocation, log
 
     # ---------------------MySupport::GetGenmonInitInfo--------------------------
