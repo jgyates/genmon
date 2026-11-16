@@ -31,6 +31,8 @@
     h2 { font-size: 1.15rem; font-weight: 700; margin-bottom: .75rem; }
     p { color: var(--text-muted); font-size: .9rem; line-height: 1.5; }
     .countdown { font-size: 1.6rem; font-weight: 700; color: var(--danger); margin-top: .75rem; }
+    .retry { margin-top: 1rem; }
+    .retry a { color: var(--text); }
   </style>
   <script src="js/system-theme.js"></script>
 </head>
@@ -43,7 +45,29 @@
     </svg>
     <h2>Account Locked</h2>
     <p>Too many failed login attempts. Please try again in:</p>
-    <div class="countdown">{{ time }}s</div>
+    <div class="countdown" id="countdown" data-seconds="{{ time|default('', true) }}">{% if time %}{{ time }}s{% endif %}</div>
+    <p class="retry"><a href="/">Return to the login page</a></p>
   </div>
+  <script>
+    // count the remaining lockout time down, then go back to the login page
+    (function () {
+      var el = document.getElementById("countdown");
+      var left = parseInt(el.getAttribute("data-seconds"), 10);
+      if (isNaN(left)) {
+        el.hidden = true;
+        return;
+      }
+      function tick() {
+        if (left < 0) {
+          location.replace("/");
+          return;
+        }
+        el.textContent = left + "s";
+        left -= 1;
+        setTimeout(tick, 1000);
+      }
+      tick();
+    })();
+  </script>
 </body>
 </html>

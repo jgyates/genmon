@@ -363,14 +363,33 @@ var API = {
       if (API._errs > 3 && S.connected) { S.connected = false; UI.connBadge(); }
     });
   },
-  /* State-changing command: POST /cmd/<cmd> with body <cmd>=<val> */
+  /* State-changing command: POST /cmd/<cmd> with body <cmd>=<val>.
+     For a read only login genserv refuses write commands with a normal
+     (HTTP 200) reply of "Read Only Mode" or "Access denied". That is reported
+     here and the returned promise is left unresolved, so the caller shows
+     neither its success message nor its generic error message. */
   set: function(cmd, val, timeout, dataType) {
     var data = {};
     data[cmd] = (val === undefined || val === null) ? '' : val;
-    return $.ajax({
+    var d = $.Deferred();
+    $.ajax({
       url: CFG.baseUrl + cmd, method: 'POST', data: data,
       dataType: dataType || 'text', timeout: timeout || CFG.ajaxTimeout * 3, cache: false
+    }).done(function(resp, status, xhr) {
+      if (API._writeDenied(xhr.responseText)) {
+        Modal.alert('Denied', 'Write access required.');
+        return;
+      }
+      d.resolve(resp, status, xhr);
+    }).fail(function(xhr, status, err) {
+      d.reject(xhr, status, err);
     });
+    return d.promise();
+  },
+  /* true if a /cmd/ reply is genserv refusing a write for a read only login */
+  _writeDenied: function(text) {
+    var t = String(text || '').trim().replace(/^"+|"+$/g, '');
+    return t === 'Read Only Mode' || t === 'Access denied';
   }
 };
 
@@ -3483,6 +3502,7 @@ var Pages = {
 
       /* ── Save exercise ── */
       $('#ex-save').on('click', function() {
+        if (info.LoginActive && !S.writeAccess) { Modal.alert('Denied','Write access required.'); return; }
         var val = $('#ex-day').val()+','+$('#ex-time').val()+','+$('#ex-freq').val();
         API.set('setexercise', val).done(function(){ Modal.alert('Saved','Exercise schedule updated.'); })
           .fail(function(){ Modal.alert('Error','Failed to save.'); });
@@ -3491,6 +3511,7 @@ var Pages = {
 
       /* ── Set Generator Time ── */
       $('#maint-settime').on('click', function() {
+        if (info.LoginActive && !S.writeAccess) { Modal.alert('Denied','Write access required.'); return; }
         Modal.confirm('Set Generator Time',
           'Synchronize the generator clock with the monitor system time? This may take up to one minute.',
           function() {
@@ -3501,6 +3522,7 @@ var Pages = {
 
       /* ── Reset Power Log ── */
       $('#maint-reset-power').on('click', function() {
+        if (info.LoginActive && !S.writeAccess) { Modal.alert('Denied','Write access required.'); return; }
         Modal.confirm('Reset Power Log',
           'This will delete the power log and reset fuel consumption estimates. Use this after refilling your fuel tank. Continue?',
           function() {
