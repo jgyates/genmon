@@ -25,6 +25,7 @@ bleak
 # so I am removing it from the base install
 #fluids
 voipms==0.2.5
-RPi.GPIO
+# GPIO library (rpi-lgpio, or RPi.GPIO on older systems) is installed by
+# genmonmaint.sh installgpio(). Do not add RPi.GPIO here, it conflicts with rpi-lgpio.
 aiohttp
 zeroconf

@@ -23,11 +23,12 @@ try:
     if os.path.isdir(os.path.join(parent_root, "genmonlib")):
         sys.path.insert(1, parent_root)
 
+    from genmonlib.mycommon import MyCommon
     from genmonlib.myconfig import MyConfig
-    from genmonlib.mylog import SetupLogger
     from genmonlib.mymail import MyMail
     from genmonlib.mynotify import GenNotify
     from genmonlib.mysupport import MySupport
+    from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
     print(
         "\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n"
@@ -38,167 +39,236 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-# ----------  Signal Handler ----------------------------------------------------
-def signal_handler(signal, frame):
 
-    GenNotify.Close()
-    sys.exit(0)
+# ------------ GenEmail2SMS class -----------------------------------------------
+class GenEmail2SMS(MySupport):
 
+    # ------------ GenEmail2SMS::init--------------------------------------------
+    def __init__(
+        self,
+        log=None,
+        loglocation=ProgramDefaults.LogPath,
+        ConfigFilePath=MyCommon.DefaultConfPath,
+        host=ProgramDefaults.LocalHost,
+        port=ProgramDefaults.ServerPort,
+        console=None,
+    ):
 
-# ----------  OnRun -------------------------------------------------------------
-def OnRun(Active):
+        super(GenEmail2SMS, self).__init__()
 
-    if Active:
-        console.info("Generator Running")
-        SendNotice("Generator Running")
-    else:
-        console.info("Generator Running End")
+        self.LogFileName = os.path.join(loglocation, "genemail2sms.log")
+        # log errors in this module to a file
+        self.log = log
+        self.console = console
 
+        self.ConfigFilePath = ConfigFilePath
+        self.MonitorAddress = host
+        self.debug = False
+        self.SiteName = None
+        self.DestinationEmail = ""
+        self.Mail = None
+        self.Notify = None
 
-# ----------  OnRunManual -------------------------------------------------------
-def OnRunManual(Active):
+        if self.MonitorAddress != None:
+            self.MonitorAddress = self.MonitorAddress.strip()
 
-    if Active:
-        console.info("Generator Running in Manual Mode")
-        SendNotice("Generator Running in Manual Mode")
-    else:
-        console.info("Generator Running in Manual Mode End")
+        if self.MonitorAddress == None or not len(self.MonitorAddress):
+            self.MonitorAddress = ProgramDefaults.LocalHost
 
+        for required_file in ["genmon.conf", "mymail.conf"]:
+            required_path = os.path.join(ConfigFilePath, required_file)
+            if not os.path.isfile(required_path):
+                self.LogConsole("Missing config file : " + required_path)
+                self.LogError("Missing config file : " + required_path)
+                sys.exit(1)
 
-# ----------  OnExercise --------------------------------------------------------
-def OnExercise(Active):
+        configfile = os.path.join(ConfigFilePath, "genemail2sms.conf")
+        try:
+            self.SiteName = self.GetSiteName()
 
-    if Active:
-        console.info("Generator Exercising")
-        SendNotice("Generator Exercising")
-    else:
-        console.info("Generator Exercising End")
+            self.config = MyConfig(
+                filename=configfile, section="genemail2sms", log=self.log
+            )
 
+            self.DestinationEmail = self.config.ReadValue("destination", default="")
 
-# ----------  OnReady -----------------------------------------------------------
-def OnReady(Active):
+            if self.DestinationEmail == "" or (not "@" in self.DestinationEmail):
+                self.LogError("Missing parameter in " + configfile)
+                self.LogConsole("Missing parameter in " + configfile)
+                sys.exit(1)
 
-    if Active:
-        console.info("Generator Ready")
-        SendNotice("Generator Ready")
-    else:
-        console.info("Generator Ready End")
+            # init mail, start processing incoming email
+            self.Mail = MyMail(
+                loglocation=loglocation, log=self.log, ConfigFilePath=ConfigFilePath
+            )
+        except Exception as e1:
+            self.LogErrorLine("Error reading " + configfile + ": " + str(e1))
+            self.LogConsole("Error reading " + configfile + ": " + str(e1))
+            sys.exit(1)
 
+        try:
+            self.Notify = GenNotify(
+                host=self.MonitorAddress,
+                port=port,
+                onready=self.OnReady,
+                onexercise=self.OnExercise,
+                onrun=self.OnRun,
+                onrunmanual=self.OnRunManual,
+                onalarm=self.OnAlarm,
+                onservice=self.OnService,
+                onoff=self.OnOff,
+                onmanual=self.OnManual,
+                onutilitychange=self.OnUtilityChange,
+                onsoftwareupdate=self.OnSoftwareUpdate,
+                onsystemhealth=self.OnSystemHealth,
+                onfuelstate=self.OnFuelState,
+                onpistate=self.OnPiState,
+                log=self.log,
+                loglocation=loglocation,
+                console=self.console,
+                config=self.config,
+            )
 
-# ----------  OnOff -------------------------------------------------------------
-def OnOff(Active):
+            signal.signal(signal.SIGTERM, self.SignalClose)
+            signal.signal(signal.SIGINT, self.SignalClose)
 
-    if Active:
-        console.info("Generator Off")
-        SendNotice("Generator Off")
-    else:
-        console.info("Generator Off End")
+        except Exception as e1:
+            self.LogErrorLine("Error in GenEmail2SMS init: " + str(e1))
+            self.LogConsole("Error in GenEmail2SMS init: " + str(e1))
+            sys.exit(1)
 
+    # ----------  GenEmail2SMS::GetSiteName -------------------------------------
+    def GetSiteName(self):
 
-# ----------  OnManual ----------------------------------------------------------
-def OnManual(Active):
+        try:
+            localconfig = MyConfig(
+                filename=os.path.join(self.ConfigFilePath, "genmon.conf"),
+                section="GenMon",
+                log=self.log,
+            )
+            return localconfig.ReadValue("sitename", default=None)
+        except Exception as e1:
+            self.LogErrorLine("Error in GetSiteName: " + str(e1))
+            self.LogConsole("Error in GetSiteName: " + str(e1))
+            return None
 
-    if Active:
-        console.info("Generator Manual")
-        SendNotice("Generator Manual")
-    else:
-        console.info("Generator Manual End")
+    # ----------  GenEmail2SMS::SendNotice --------------------------------------
+    def SendNotice(self, Message):
 
+        try:
+            if self.SiteName != None and self.SiteName != "":
+                Subject = "Generator Notice at " + self.SiteName
+            else:
+                Subject = "Generator Notice"
+            self.Mail.sendEmail(Subject, Message, recipient=self.DestinationEmail)
 
-# ----------  OnAlarm -----------------------------------------------------------
-def OnAlarm(Active):
+        except Exception as e1:
+            self.LogErrorLine("Error in SendNotice: " + str(e1))
+            self.LogConsole("Error in SendNotice: " + str(e1))
 
-    if Active:
-        console.info("Generator Alarm")
-        SendNotice("Generator Alarm")
-    else:
-        console.info("Generator Alarm End")
+    # ----------  GenEmail2SMS::NotifyState -------------------------------------
+    # common handler for simple on / off state callbacks
+    def NotifyState(self, Active, Message):
 
-
-# ----------  OnService ---------------------------------------------------------
-def OnService(Active):
-
-    if Active:
-        console.info("Generator Service Due")
-        SendNotice("Generator Service Due")
-    else:
-        console.info("Generator Service Due End")
-
-
-# ----------  OnUtilityChange ---------------------------------------------------
-def OnUtilityChange(Active):
-
-    if Active:
-        console.info("Utility Service is Down")
-        SendNotice("Utility Service is Down")
-    else:
-        SendNotice("Utility Service is Up")
-        console.info("Utility Service is Up")
-
-
-# ----------  OnSoftwareUpdate --------------------------------------------------
-def OnSoftwareUpdate(Active):
-
-    if Active:
-        console.info("Software Update Available")
-        SendNotice("Software Update Available")
-    else:
-        SendNotice("Software Is Up To Date")
-        console.info("Software Is Up To Date")
-
-
-# ----------  OnSystemHealth ----------------------------------------------------
-def OnSystemHealth(Notice):
-    SendNotice("System Health : " + Notice)
-    console.info("System Health : " + Notice)
-
-
-# ----------  OnFuelState -------------------------------------------------------
-def OnFuelState(Active):
-    if Active:  # True is OK
-        console.info("Fuel Level is OK")
-        SendNotice("Fuel Level is OK")
-    else:  # False = Low
-        SendNotice("Fuel Level is Low")
-        console.info("Fuel Level is Low")
-
-
-# ----------  OnPiState ---------------------------------------------------------
-def OnPiState(Notice):
-    SendNotice("Pi Health : " + Notice)
-    console.info("Pi Health : " + Notice)
-
-
-# ----------  SendNotice --------------------------------------------------------
-def SendNotice(Message):
-
-    try:
-        if SiteName != None and SiteName != "":
-            Subject = "Generator Notice at " + SiteName
+        if Active:
+            self.LogConsole(Message)
+            self.SendNotice(Message)
         else:
-            Subject = "Generator Notice"
-        MyMail.sendEmail(Subject, Message, recipient=DestinationEmail)
+            self.LogConsole(Message + " End")
 
-    except Exception as e1:
-        log.error("Error in SendNotice: " + str(e1))
-        console.error("Error in SendNotice: " + str(e1))
+    # ----------  GenEmail2SMS::OnRun -------------------------------------------
+    def OnRun(self, Active):
+        self.NotifyState(Active, "Generator Running")
+
+    # ----------  GenEmail2SMS::OnRunManual -------------------------------------
+    def OnRunManual(self, Active):
+        self.NotifyState(Active, "Generator Running in Manual Mode")
+
+    # ----------  GenEmail2SMS::OnExercise --------------------------------------
+    def OnExercise(self, Active):
+        self.NotifyState(Active, "Generator Exercising")
+
+    # ----------  GenEmail2SMS::OnReady -----------------------------------------
+    def OnReady(self, Active):
+        self.NotifyState(Active, "Generator Ready")
+
+    # ----------  GenEmail2SMS::OnOff -------------------------------------------
+    def OnOff(self, Active):
+        self.NotifyState(Active, "Generator Off")
+
+    # ----------  GenEmail2SMS::OnManual ----------------------------------------
+    def OnManual(self, Active):
+        self.NotifyState(Active, "Generator Manual")
+
+    # ----------  GenEmail2SMS::OnAlarm -----------------------------------------
+    def OnAlarm(self, Active):
+        self.NotifyState(Active, "Generator Alarm")
+
+    # ----------  GenEmail2SMS::OnService ---------------------------------------
+    def OnService(self, Active):
+        self.NotifyState(Active, "Generator Service Due")
+
+    # ----------  GenEmail2SMS::OnUtilityChange ---------------------------------
+    def OnUtilityChange(self, Active):
+
+        if Active:
+            Message = "Utility Service is Down"
+        else:
+            Message = "Utility Service is Up"
+        self.LogConsole(Message)
+        self.SendNotice(Message)
+
+    # ----------  GenEmail2SMS::OnSoftwareUpdate --------------------------------
+    def OnSoftwareUpdate(self, Active):
+
+        if Active:
+            Message = "Software Update Available"
+        else:
+            Message = "Software Is Up To Date"
+        self.LogConsole(Message)
+        self.SendNotice(Message)
+
+    # ----------  GenEmail2SMS::OnSystemHealth ----------------------------------
+    def OnSystemHealth(self, Notice):
+
+        self.LogConsole("System Health : " + Notice)
+        self.SendNotice("System Health : " + Notice)
+
+    # ----------  GenEmail2SMS::OnFuelState -------------------------------------
+    def OnFuelState(self, Active):
+
+        if Active:  # True is OK
+            Message = "Fuel Level is OK"
+        else:  # False = Low
+            Message = "Fuel Level is Low"
+        self.LogConsole(Message)
+        self.SendNotice(Message)
+
+    # ----------  GenEmail2SMS::OnPiState ---------------------------------------
+    def OnPiState(self, Notice):
+
+        self.LogConsole("Pi Health : " + Notice)
+        self.SendNotice("Pi Health : " + Notice)
+
+    # ----------GenEmail2SMS::SignalClose----------------------------------------
+    def SignalClose(self, signum, frame):
+
+        self.Close()
+        sys.exit(0)
+
+    # ----------GenEmail2SMS::Close----------------------------------------------
+    def Close(self):
+
+        try:
+            if self.Notify != None:
+                self.Notify.Close()
+            if self.Mail != None:
+                self.Mail.Close()
+        except Exception as e1:
+            self.LogErrorLine("Error in Close: " + str(e1))
 
 
-# ----------  GetSiteName -------------------------------------------------------
-def GetSiteName():
-
-    try:
-        localconfig = MyConfig(
-            filename=ConfigFilePath + "genmon.conf", section="GenMon"
-        )
-        return localconfig.ReadValue("sitename", default=None)
-    except Exception as e1:
-        log.error("Error in GetSiteName: " + str(e1))
-        console.error("Error in GetSiteName: " + str(e1))
-        return None
-
-
-# ------------------- Command-line interface for gengpio ------------------------
+# -------------------------------------------------------------------------------
 if __name__ == "__main__":
 
     (
@@ -210,92 +280,16 @@ if __name__ == "__main__":
         log,
     ) = MySupport.SetupAddOnProgram("genemail2sms")
 
-    # Set the signal handler
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
+    GenEmail2SMSInstance = GenEmail2SMS(
+        log=log,
+        loglocation=loglocation,
+        ConfigFilePath=ConfigFilePath,
+        host=address,
+        port=port,
+        console=console,
+    )
 
-    if not os.path.isfile(os.path.join(ConfigFilePath, "genmon.conf")):
-        console.error(
-            "Missing config file : " + os.path.join(ConfigFilePath, "genmon.conf")
-        )
-        log.error(
-            "Missing config file : " + os.path.join(ConfigFilePath, "genmon.conf")
-        )
-        sys.exit(1)
-    if not os.path.isfile(os.path.join(ConfigFilePath, "mymail.conf")):
-        console.error(
-            "Missing config file : " + os.path.join(ConfigFilePath, "mymail.conf")
-        )
-        log.error(
-            "Missing config file : " + os.path.join(ConfigFilePath, "mymail.conf")
-        )
-        sys.exit(1)
+    while True:
+        time.sleep(0.5)
 
-    try:
-
-        SiteName = GetSiteName()
-        config = MyConfig(
-            filename=os.path.join(ConfigFilePath, "genemail2sms.conf"),
-            section="genemail2sms",
-            log=log,
-        )
-
-        DestinationEmail = config.ReadValue("destination", default="")
-
-        if DestinationEmail == "" or (not "@" in DestinationEmail):
-            log.error(
-                "Missing parameter in "
-                + os.path.join(ConfigFilePath, "genemail2sms.conf")
-            )
-            console.error(
-                "Missing parameter in "
-                + os.path.join(ConfigFilePath, "genemail2sms.conf")
-            )
-            sys.exit(1)
-
-        # init mail, start processing incoming email
-        MyMail = MyMail(loglocation=loglocation, log=log, ConfigFilePath=ConfigFilePath)
-    except Exception as e1:
-        log.error(
-            "Error reading "
-            + os.path.join(ConfigFilePath, "genemail2sms.conf")
-            + ": "
-            + str(e1)
-        )
-        console.error(
-            "Error reading "
-            + os.path.join(ConfigFilePath, "genemail2sms.conf")
-            + ": "
-            + str(e1)
-        )
-        sys.exit(1)
-    try:
-
-        GenNotify = GenNotify(
-            host=address,
-            port=port,
-            onready=OnReady,
-            onexercise=OnExercise,
-            onrun=OnRun,
-            onrunmanual=OnRunManual,
-            onalarm=OnAlarm,
-            onservice=OnService,
-            onoff=OnOff,
-            onmanual=OnManual,
-            onutilitychange=OnUtilityChange,
-            onsoftwareupdate=OnSoftwareUpdate,
-            onsystemhealth=OnSystemHealth,
-            onfuelstate=OnFuelState,
-            onpistate=OnPiState,
-            log=log,
-            loglocation=loglocation,
-            console=console,
-            config=config,
-        )
-
-        while True:
-            time.sleep(1)
-
-    except Exception as e1:
-        log.error("Error: " + str(e1))
-        console.error("Error: " + str(e1))
+    sys.exit(1)

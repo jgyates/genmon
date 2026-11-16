@@ -158,7 +158,48 @@ function updatelibraries() {
 
   echo "Updating libraries...."
   sudo $pythoncommand -m pip install --upgrade -r $genmondir/requirements.txt -U $pipoptions
+  installgpio
   echo "Done."
+}
+
+#-------------------------------------------------------------------------------
+# Install the GPIO library. rpi-lgpio provides the RPi.GPIO API on top of lgpio
+# and works on all Pi models (required on the Pi 5). Fall back to the original
+# RPi.GPIO if lgpio can not be installed (e.g. older OS without liblgpio-dev).
+function installgpio() {
+
+  echo "Installing GPIO library...."
+  # needed to build lgpio from source if no binary wheel exists; may not exist on older OS
+  sudo apt-get -yqq install liblgpio-dev || echo "liblgpio-dev not available on this OS"
+
+  # RPi.GPIO and rpi-lgpio install the same module files, so they can not coexist
+  if sudo $pythoncommand -m pip show RPi.GPIO >/dev/null 2>&1; then
+    echo "Removing RPi.GPIO (replacing with rpi-lgpio)"
+    if ! sudo $pythoncommand -m pip uninstall -y RPi.GPIO >/dev/null 2>&1; then
+      # pip can not remove RPi.GPIO installed by the OS package manager (e.g.
+      # python3-rpi.gpio on Bullseye and older, where no managed python
+      # environment is used). RPi.GPIO works on these systems, so keep it.
+      # The Pi 5 requires Bookworm (managed environment), so it never gets here.
+      echo "RPi.GPIO was installed by the OS and can not be removed by pip, keeping it"
+      return 0
+    fi
+    sudo $pythoncommand -m pip uninstall -y rpi-lgpio >/dev/null 2>&1
+  fi
+
+  if sudo $pythoncommand -m pip install --upgrade rpi-lgpio $pipoptions && \
+     sudo $pythoncommand -c "import lgpio, RPi.GPIO" >/dev/null 2>&1; then
+    echo "Installed rpi-lgpio"
+    return 0
+  fi
+
+  if is_pifive; then
+    echo "ERROR: rpi-lgpio could not be installed. GPIO add-ons will not work on a Raspberry Pi 5."
+    return 1
+  fi
+
+  echo "rpi-lgpio not available on this system, falling back to RPi.GPIO"
+  sudo $pythoncommand -m pip uninstall -y rpi-lgpio >/dev/null 2>&1
+  sudo $pythoncommand -m pip install --upgrade RPi.GPIO $pipoptions
 }
 
 #-------------------------------------------------------------------------------
@@ -199,15 +240,16 @@ function installgenmon() {
       sudo apt-get -yqq install python-pip
     fi
     if [ "$usepython3" = true ] ; then
-      sudo apt-get -yqq install build-essential libssl-dev libffi-dev python3-dev cargo swig liblgpio-dev
+      sudo apt-get -yqq install build-essential libssl-dev libffi-dev python3-dev cargo swig
     else
-      sudo apt-get -yqq install build-essential libssl-dev libffi-dev python-dev cargo swig liblgpio-dev
+      sudo apt-get -yqq install build-essential libssl-dev libffi-dev python-dev cargo swig
     fi
     sudo apt-get -yqq install cmake
     # upgrade setuptools for the environment
     sudo $pythoncommand  -m pip install --upgrade setuptools
 
     sudo $pythoncommand -m pip install -r $genmondir/requirements.txt $pipoptions
+    installgpio
 
     sudo chmod 775 "$genmondir/startgenmon.sh"
     sudo chmod 775 "$genmondir/genmonmaint.sh"

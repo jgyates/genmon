@@ -14,6 +14,7 @@ import json
 import os
 import signal
 import sys
+import threading
 import time
 
 try:
@@ -25,9 +26,11 @@ try:
         sys.path.insert(1, parent_root)
 
     from genmonlib.myclient import ClientInterface
+    from genmonlib.mycommon import MyCommon
     from genmonlib.myconfig import MyConfig
-    from genmonlib.mylog import SetupLogger
     from genmonlib.mysupport import MySupport
+    from genmonlib.mythread import MyThread
+    from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
     print(
         "\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n"
@@ -38,91 +41,204 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-import RPi.GPIO as GPIO
-
-led_pin = 12  # GPIO board pin number that LED is connected to (default value)
-
-# ----------  Signal Handler ----------------------------------------------------
-def signal_handler(signal, frame):
-
-    # Turn off LED before exiting
-    GPIO.output(led_pin, GPIO.LOW)
-
-    GPIO.cleanup()
-    MyClientInterface.Close()
-    sys.exit(0)
+try:
+    import RPi.GPIO as GPIO
+except Exception as e1:
+    print("\n\nThis program requires the RPi.GPIO module to be installed.\n")
+    print(
+        "Please see the project documentation at https://github.com/jgyates/genmon.\n"
+    )
+    print("Error: " + str(e1))
+    sys.exit(2)
 
 
-# ----------  blink_LED ---------------------------------------------------------
-def blink_LED(pin, nfast):
-    blinkdelay = 0.15
+# ------------ GenGPIOLedBlink class --------------------------------------------
+class GenGPIOLedBlink(MySupport):
 
-    GPIO.output(pin, GPIO.HIGH)
-    time.sleep(1)
-    GPIO.output(pin, GPIO.LOW)
-    time.sleep(1)
+    # ------------ GenGPIOLedBlink::init-----------------------------------------
+    def __init__(
+        self,
+        log=None,
+        loglocation=ProgramDefaults.LogPath,
+        ConfigFilePath=MyCommon.DefaultConfPath,
+        host=ProgramDefaults.LocalHost,
+        port=ProgramDefaults.ServerPort,
+        console=None,
+    ):
 
-    for i in range(nfast):
-        GPIO.output(pin, GPIO.HIGH)
-        time.sleep(blinkdelay)
-        GPIO.output(pin, GPIO.LOW)
-        time.sleep(blinkdelay)
+        super(GenGPIOLedBlink, self).__init__()
 
+        self.LogFileName = os.path.join(loglocation, "gengpioledblink.log")
+        self.AccessLock = threading.Lock()
+        # log errors in this module to a file
+        self.log = log
+        self.console = console
 
-# ------------------- Command-line interface for gengpioledblink ----------------
-if __name__ == "__main__":  # usage program.py [server_address]
+        self.MonitorAddress = host
+        self.debug = False
+        self.LedPin = 12  # GPIO board pin number that LED is connected to (default)
+        self.BlinkDelay = 0.15  # seconds between fast blinks
+        self.ErrorRetryTime = 5  # seconds to wait after an error
+        self.Generator = None
+        self.GPIOInitialized = False
 
-    try:
-        (
-            console,
-            ConfigFilePath,
-            address,
-            port,
-            loglocation,
-            log,
-        ) = MySupport.SetupAddOnProgram("gengpioledblink")
-        # Set the signal handler
-        signal.signal(signal.SIGINT, signal_handler)
-        signal.signal(signal.SIGTERM, signal_handler)
+        if self.MonitorAddress != None:
+            self.MonitorAddress = self.MonitorAddress.strip()
 
-        conf_file = os.path.join(ConfigFilePath, "gengpioledblink.conf")
-        if os.path.isfile(conf_file):
-            config = MyConfig(filename=conf_file, section="gengpioledblink", log=log)
+        if self.MonitorAddress == None or not len(self.MonitorAddress):
+            self.MonitorAddress = ProgramDefaults.LocalHost
 
-            led_pin = config.ReadValue("ledpin", return_type=int, default=12)
+        configfile = os.path.join(ConfigFilePath, "gengpioledblink.conf")
+        try:
+            if os.path.isfile(configfile):
+                self.config = MyConfig(
+                    filename=configfile, section="gengpioledblink", log=self.log
+                )
+                self.LedPin = self.config.ReadValue(
+                    "ledpin", return_type=int, default=12
+                )
+                self.debug = self.config.ReadValue(
+                    "debug", return_type=bool, default=False
+                )
+        except Exception as e1:
+            self.LogErrorLine("Error reading " + configfile + ": " + str(e1))
+            self.LogConsole("Error reading " + configfile + ": " + str(e1))
+            sys.exit(1)
 
-        MyClientInterface = ClientInterface(host=address, port=port, log=log)
+        try:
+            self.Generator = ClientInterface(
+                host=self.MonitorAddress, port=port, log=self.log
+            )
 
-        # setup GPIO using Board numbering
-        GPIO.setmode(GPIO.BOARD)
+            # setup GPIO using Board numbering
+            GPIO.setmode(GPIO.BOARD)
+            self.LogConsole(str(GPIO.RPI_INFO))
+            GPIO.setwarnings(False)
+            GPIO.setup(self.LedPin, GPIO.OUT, initial=GPIO.LOW)
+            self.GPIOInitialized = True
 
-        console.info(GPIO.RPI_INFO)
+            # start thread to monitor genmon health and blink the LED
+            self.Threads["LedBlinkThread"] = MyThread(
+                self.LedBlinkThread, Name="LedBlinkThread", start=False
+            )
+            self.Threads["LedBlinkThread"].Start()
 
-        GPIO.setwarnings(False)
-        GPIO.setup(led_pin, GPIO.OUT, initial=GPIO.LOW)
+            signal.signal(signal.SIGTERM, self.SignalClose)
+            signal.signal(signal.SIGINT, self.SignalClose)
+
+        except Exception as e1:
+            self.LogErrorLine("Error in GenGPIOLedBlink init: " + str(e1))
+            self.LogConsole("Error in GenGPIOLedBlink init: " + str(e1))
+            sys.exit(1)
+
+    # ----------  GenGPIOLedBlink::SendCommand ----------------------------------
+    def SendCommand(self, Command):
+
+        if len(Command) == 0:
+            return "Invalid Command"
+
+        try:
+            with self.AccessLock:
+                data = self.Generator.ProcessMonitorCommand(Command)
+        except Exception as e1:
+            self.LogErrorLine("Error calling ProcessMonitorCommand: " + str(Command))
+            data = ""
+
+        return data
+
+    # ----------  GenGPIOLedBlink::SetLed ---------------------------------------
+    # turn LED on / off, then wait. Returns True if the thread should exit
+    def SetLed(self, on, delay):
+
+        GPIO.output(self.LedPin, GPIO.HIGH if on else GPIO.LOW)
+        return self.WaitForExit("LedBlinkThread", delay)
+
+    # ----------  GenGPIOLedBlink::BlinkLED -------------------------------------
+    # one long blink followed by nfast short blinks. Returns True if the thread
+    # should exit
+    def BlinkLED(self, nfast):
+
+        if self.SetLed(True, 1) or self.SetLed(False, 1):
+            return True
+
+        for i in range(nfast):
+            if self.SetLed(True, self.BlinkDelay) or self.SetLed(
+                False, self.BlinkDelay
+            ):
+                return True
+        return False
+
+    # ----------  GenGPIOLedBlink::GetMonitorHealthOK ---------------------------
+    def GetMonitorHealthOK(self):
+
+        TempDict = json.loads(self.SendCommand("generator: monitor_json"))
+        Health = TempDict["Monitor"][0]["Generator Monitor Stats"][0]["Monitor Health"]
+        self.LogDebug("Monitor Health: " + str(Health))
+        return Health.lower() == "ok"
+
+    # ---------- GenGPIOLedBlink::LedBlinkThread---------------------------------
+    def LedBlinkThread(self):
 
         while True:
-
-            # Get Genmon status
             try:
-                TempDict = {}
-                TempDict = json.loads(
-                    MyClientInterface.ProcessMonitorCommand("generator: monitor_json")
-                )
-
-                if (
-                    TempDict["Monitor"][0]["Generator Monitor Stats"][0][
-                        "Monitor Health"
-                    ].lower()
-                    == "ok"
-                ):
-                    blink_LED(led_pin, 5)
+                if self.GetMonitorHealthOK():
+                    nfast = 5
                 else:
-                    blink_LED(led_pin, 2)
+                    nfast = 2
+
+                if self.BlinkLED(nfast):
+                    return
 
             except Exception as e1:
-                log.error("Error getting monitor health: " + str(e1))
+                self.LogErrorLine("Error getting monitor health: " + str(e1))
+                if self.WaitForExit("LedBlinkThread", float(self.ErrorRetryTime)):
+                    return
 
-    except Exception as e1:
-        log.error("Error: " + str(e1))
-        console.error("Error: " + str(e1))
+    # ----------GenGPIOLedBlink::SignalClose-------------------------------------
+    def SignalClose(self, signum, frame):
+
+        self.Close()
+        sys.exit(0)
+
+    # ----------GenGPIOLedBlink::Close-------------------------------------------
+    def Close(self):
+
+        try:
+            self.KillThread("LedBlinkThread")
+
+            if self.GPIOInitialized:
+                # Turn off LED before exiting
+                GPIO.output(self.LedPin, GPIO.LOW)
+                GPIO.cleanup()
+
+            if self.Generator != None:
+                self.Generator.Close()
+        except Exception as e1:
+            self.LogErrorLine("Error in Close: " + str(e1))
+
+
+# -------------------------------------------------------------------------------
+if __name__ == "__main__":
+
+    (
+        console,
+        ConfigFilePath,
+        address,
+        port,
+        loglocation,
+        log,
+    ) = MySupport.SetupAddOnProgram("gengpioledblink")
+
+    GenGPIOLedBlinkInstance = GenGPIOLedBlink(
+        log=log,
+        loglocation=loglocation,
+        ConfigFilePath=ConfigFilePath,
+        host=address,
+        port=port,
+        console=console,
+    )
+
+    while True:
+        time.sleep(0.5)
+
+    sys.exit(1)
