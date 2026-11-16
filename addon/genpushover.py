@@ -168,7 +168,7 @@ def OnService(Active):
             "Generator Service Due", priority=service_state_priority, category="warn"
         )
     else:
-        console.info("Generator Servcie Due End")
+        console.info("Generator Service Due End")
 
 
 # ----------  OnUtilityChange ---------------------------------------------------

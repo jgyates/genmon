@@ -251,7 +251,7 @@ class GenCallMeBot(MySupport):
             self.LogConsole("Generator Service Due")
             self.Queue.SendMessage("Generator Service Due")
         else:
-            self.LogConsole("Generator Servcie Due End")
+            self.LogConsole("Generator Service Due End")
 
 
     # ----------  OnUtilityChange ---------------------------------------------------

@@ -29,7 +29,6 @@ class MyVoipMs(MySupport):
         self.did = did
         self.debug = debug
 
-        self.debug = False
         try:
             from voipms import VoipMs
             # https://github.com/4doom4/python-voipms

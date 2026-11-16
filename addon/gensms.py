@@ -138,7 +138,7 @@ def OnService(Active):
         console.info("Generator Service Due")
         Queue.SendMessage("Generator Service Due")
     else:
-        console.info("Generator Servcie Due End")
+        console.info("Generator Service Due End")
 
 
 # ----------  OnUtilityChange ---------------------------------------------------
