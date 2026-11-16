@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - Added initial support for Kohler APM402
 - Web UI security updates (thanks @MichaelB2018 and @skipfire)
 - Added Ambient Temp gauge for Evo 2.0
+- Maintenance updates for some older addon program to convert to a class architecture
 
 ## 2.0.02 -2026-08-04
 - New add on for Hubitat Elevation hub, Thanks @bdwilson
