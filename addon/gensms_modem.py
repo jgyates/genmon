@@ -23,10 +23,11 @@ try:
     if os.path.isdir(os.path.join(parent_root, "genmonlib")):
         sys.path.insert(1, parent_root)
 
-    from genmonlib.mylog import SetupLogger
+    from genmonlib.mycommon import MyCommon
     from genmonlib.mymodem import LTEPiHat
     from genmonlib.mynotify import GenNotify
     from genmonlib.mysupport import MySupport
+    from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
     print(
         "\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n"
@@ -38,153 +39,202 @@ except Exception as e1:
     sys.exit(2)
 
 
-# ----------  Signal Handler ----------------------------------------------------
-def signal_handler(signal, frame):
+# ------------ GenSMSModem class ------------------------------------------------
+class GenSMSModem(MySupport):
 
-    try:
-        GenNotify.Close()
-        SMS.Close()
-    except:
-        pass
-    sys.exit(0)
+    # ------------ GenSMSModem::init---------------------------------------------
+    def __init__(
+        self,
+        log=None,
+        loglocation=ProgramDefaults.LogPath,
+        ConfigFilePath=MyCommon.DefaultConfPath,
+        host=ProgramDefaults.LocalHost,
+        port=ProgramDefaults.ServerPort,
+        console=None,
+    ):
+
+        super(GenSMSModem, self).__init__()
+
+        self.LogFileName = os.path.join(loglocation, "gensms_modem.log")
+        # log errors in this module to a file
+        self.log = log
+        self.console = console
+
+        self.MonitorAddress = host
+        self.debug = False
+        self.SMS = None
+        self.Notify = None
+
+        if self.MonitorAddress != None:
+            self.MonitorAddress = self.MonitorAddress.strip()
+
+        if self.MonitorAddress == None or not len(self.MonitorAddress):
+            self.MonitorAddress = ProgramDefaults.LocalHost
+
+        try:
+            self.SMS = LTEPiHat(
+                log=self.log, loglocation=loglocation, ConfigFilePath=ConfigFilePath
+            )
+            if not self.SMS.InitComplete:
+                self.SMS.Close()
+                self.LogError("Modem Init FAILED!")
+                self.LogConsole("Modem Init FAILED!")
+                sys.exit(2)
+
+        except Exception as e1:
+            self.LogErrorLine("Error on modem init: " + str(e1))
+            self.LogConsole("Error on modem init: " + str(e1))
+            sys.exit(1)
+
+        try:
+            self.Notify = GenNotify(
+                host=self.MonitorAddress,
+                port=port,
+                onready=self.OnReady,
+                onexercise=self.OnExercise,
+                onrun=self.OnRun,
+                onrunmanual=self.OnRunManual,
+                onalarm=self.OnAlarm,
+                onservice=self.OnService,
+                onoff=self.OnOff,
+                onmanual=self.OnManual,
+                onutilitychange=self.OnUtilityChange,
+                onsoftwareupdate=self.OnSoftwareUpdate,
+                onsystemhealth=self.OnSystemHealth,
+                onfuelstate=self.OnFuelState,
+                onpistate=self.OnPiState,
+                log=self.log,
+                loglocation=loglocation,
+                console=self.console,
+                config=self.SMS.GetConfig(),
+            )
+
+            self.LogError(self.SMS.GetInfo(ReturnString=True))
+
+            signal.signal(signal.SIGTERM, self.SignalClose)
+            signal.signal(signal.SIGINT, self.SignalClose)
+
+        except Exception as e1:
+            self.LogErrorLine("Error in GenSMSModem init: " + str(e1))
+            self.LogConsole("Error in GenSMSModem init: " + str(e1))
+            self.Close()
+            sys.exit(1)
+
+    # ----------  GenSMSModem::SendNotice ---------------------------------------
+    def SendNotice(self, Message):
+
+        try:
+            self.SMS.SendMessage(Message)
+        except Exception as e1:
+            self.LogErrorLine("Error in SendNotice: " + str(e1))
+            self.LogConsole("Error in SendNotice: " + str(e1))
+
+    # ----------  GenSMSModem::NotifyState --------------------------------------
+    # common handler for simple on / off state callbacks
+    def NotifyState(self, Active, Message):
+
+        if Active:
+            self.LogConsole(Message)
+            self.SendNotice(Message)
+        else:
+            self.LogConsole(Message + " End")
+
+    # ----------  GenSMSModem::OnRun --------------------------------------------
+    def OnRun(self, Active):
+        self.NotifyState(Active, "Generator Running")
+
+    # ----------  GenSMSModem::OnRunManual --------------------------------------
+    def OnRunManual(self, Active):
+        self.NotifyState(Active, "Generator Running in Manual Mode")
+
+    # ----------  GenSMSModem::OnExercise ---------------------------------------
+    def OnExercise(self, Active):
+        self.NotifyState(Active, "Generator Exercising")
+
+    # ----------  GenSMSModem::OnReady ------------------------------------------
+    def OnReady(self, Active):
+        self.NotifyState(Active, "Generator Ready")
+
+    # ----------  GenSMSModem::OnOff --------------------------------------------
+    def OnOff(self, Active):
+        self.NotifyState(Active, "Generator Off")
+
+    # ----------  GenSMSModem::OnManual -----------------------------------------
+    def OnManual(self, Active):
+        self.NotifyState(Active, "Generator Manual")
+
+    # ----------  GenSMSModem::OnAlarm ------------------------------------------
+    def OnAlarm(self, Active):
+        self.NotifyState(Active, "Generator Alarm")
+
+    # ----------  GenSMSModem::OnService ----------------------------------------
+    def OnService(self, Active):
+        self.NotifyState(Active, "Generator Service Due")
+
+    # ----------  GenSMSModem::OnUtilityChange ----------------------------------
+    def OnUtilityChange(self, Active):
+
+        if Active:
+            Message = "Utility Service is Down"
+        else:
+            Message = "Utility Service is Up"
+        self.LogConsole(Message)
+        self.SendNotice(Message)
+
+    # ----------  GenSMSModem::OnSoftwareUpdate ---------------------------------
+    def OnSoftwareUpdate(self, Active):
+
+        if Active:
+            Message = "Software Update Available"
+        else:
+            Message = "Software Is Up To Date"
+        self.LogConsole(Message)
+        self.SendNotice(Message)
+
+    # ----------  GenSMSModem::OnSystemHealth -----------------------------------
+    def OnSystemHealth(self, Notice):
+
+        self.LogConsole("System Health : " + Notice)
+        self.SendNotice("System Health : " + Notice)
+
+    # ----------  GenSMSModem::OnFuelState --------------------------------------
+    def OnFuelState(self, Active):
+
+        if Active:  # True is OK
+            Message = "Fuel Level is OK"
+        else:  # False = Low
+            Message = "Fuel Level is Low"
+        self.LogConsole(Message)
+        self.SendNotice(Message)
+
+    # ----------  GenSMSModem::OnPiState ----------------------------------------
+    def OnPiState(self, Notice):
+
+        self.LogConsole("Pi Health : " + Notice)
+        self.SendNotice("Pi Health : " + Notice)
+
+    # ----------GenSMSModem::SignalClose-----------------------------------------
+    def SignalClose(self, signum, frame):
+
+        self.Close()
+        sys.exit(0)
+
+    # ----------GenSMSModem::Close-----------------------------------------------
+    def Close(self):
+
+        try:
+            if self.Notify != None:
+                self.Notify.Close()
+        except Exception as e1:
+            self.LogErrorLine("Error closing GenNotify: " + str(e1))
+        try:
+            if self.SMS != None:
+                self.SMS.Close()
+        except Exception as e1:
+            self.LogErrorLine("Error closing modem: " + str(e1))
 
 
-# ----------  OnRun -------------------------------------------------------------
-def OnRun(Active):
-
-    if Active:
-        console.info("Generator Running")
-        SendNotice("Generator Running")
-    else:
-        console.info("Generator Running End")
-
-
-# ----------  OnRunManual -------------------------------------------------------
-def OnRunManual(Active):
-
-    if Active:
-        console.info("Generator Running in Manual Mode")
-        SendNotice("Generator Running in Manual Mode")
-    else:
-        console.info("Generator Running in Manual Mode End")
-
-
-# ----------  OnExercise --------------------------------------------------------
-def OnExercise(Active):
-
-    if Active:
-        console.info("Generator Exercising")
-        SendNotice("Generator Exercising")
-    else:
-        console.info("Generator Exercising End")
-
-
-# ----------  OnReady -----------------------------------------------------------
-def OnReady(Active):
-
-    if Active:
-        console.info("Generator Ready")
-        SendNotice("Generator Ready")
-    else:
-        console.info("Generator Ready End")
-
-
-# ----------  OnOff -------------------------------------------------------------
-def OnOff(Active):
-
-    if Active:
-        console.info("Generator Off")
-        SendNotice("Generator Off")
-    else:
-        console.info("Generator Off End")
-
-
-# ----------  OnManual ----------------------------------------------------------
-def OnManual(Active):
-
-    if Active:
-        console.info("Generator Manual")
-        SendNotice("Generator Manual")
-    else:
-        console.info("Generator Manual End")
-
-
-# ----------  OnAlarm -----------------------------------------------------------
-def OnAlarm(Active):
-
-    if Active:
-        console.info("Generator Alarm")
-        SendNotice("Generator Alarm")
-    else:
-        console.info("Generator Alarm End")
-
-
-# ----------  OnService ---------------------------------------------------------
-def OnService(Active):
-
-    if Active:
-        console.info("Generator Service Due")
-        SendNotice("Generator Service Due")
-    else:
-        console.info("Generator Servcie Due End")
-
-
-# ----------  OnUtilityChange ---------------------------------------------------
-def OnUtilityChange(Active):
-
-    if Active:
-        console.info("Utility Service is Down")
-        SendNotice("Utility Service is Down")
-    else:
-        SendNotice("Utility Service is Up")
-        console.info("Utility Service is Up")
-
-
-# ----------  OnSoftwareUpdate --------------------------------------------------
-def OnSoftwareUpdate(Active):
-
-    if Active:
-        console.info("Software Update Available")
-        SendNotice("Software Update Available")
-    else:
-        SendNotice("Software Is Up To Date")
-        console.info("Software Is Up To Date")
-
-
-# ----------  OnSystemHealth ----------------------------------------------------
-def OnSystemHealth(Notice):
-    SendNotice("System Health : " + Notice)
-    console.info("System Health : " + Notice)
-
-
-# ----------  OnFuelState -------------------------------------------------------
-def OnFuelState(Active):
-    if Active:  # True is OK
-        console.info("Fuel Level is OK")
-        SendNotice("Fuel Level is OK")
-    else:  # False = Low
-        SendNotice("Fuel Level is Low")
-        console.info("Fuel Level is Low")
-
-
-# ----------  OnPiState ---------------------------------------------------------
-def OnPiState(Notice):
-    SendNotice("Pi Health : " + Notice)
-    console.info("Pi Health : " + Notice)
-
-
-# ----------  SendNotice --------------------------------------------------------
-def SendNotice(Message):
-
-    try:
-
-        SMS.SendMessage(Message)
-    except Exception as e1:
-        log.error("Error: " + str(e1))
-        console.error("Error: " + str(e1))
-
-
-# ------------------- Command-line interface for gengpio -----------------------#
+# -------------------------------------------------------------------------------
 if __name__ == "__main__":
 
     (
@@ -196,52 +246,16 @@ if __name__ == "__main__":
         log,
     ) = MySupport.SetupAddOnProgram("gensms_modem")
 
-    # Set the signal handler
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
+    GenSMSModemInstance = GenSMSModem(
+        log=log,
+        loglocation=loglocation,
+        ConfigFilePath=ConfigFilePath,
+        host=address,
+        port=port,
+        console=console,
+    )
 
-    try:
+    while True:
+        time.sleep(0.5)
 
-        SMS = LTEPiHat(log=log, loglocation=loglocation, ConfigFilePath=ConfigFilePath)
-        if not SMS.InitComplete:
-            SMS.Close()
-            log.error("Modem Init FAILED!")
-            console.error("Modem Init FAILED!")
-            sys.exit(2)
-
-    except Exception as e1:
-        log.error("Error on modem init:" + str(e1))
-        console.error("Error modem init: " + str(e1))
-        sys.exit(1)
-    try:
-        GenNotify = GenNotify(
-            host=address,
-            port=port,
-            onready=OnReady,
-            onexercise=OnExercise,
-            onrun=OnRun,
-            onrunmanual=OnRunManual,
-            onalarm=OnAlarm,
-            onservice=OnService,
-            onoff=OnOff,
-            onmanual=OnManual,
-            onutilitychange=OnUtilityChange,
-            onsoftwareupdate=OnSoftwareUpdate,
-            onsystemhealth=OnSystemHealth,
-            onfuelstate=OnFuelState,
-            onpistate=OnPiState,
-            log=log,
-            loglocation=loglocation,
-            console=console,
-            config=SMS.GetConfig(),
-        )
-
-        SMSInfo = SMS.GetInfo(ReturnString=True)
-        log.error(SMSInfo)
-
-        while True:
-            time.sleep(1)
-
-    except Exception as e1:
-        log.error("Error: " + str(e1))
-        console.error("Error: " + str(e1))
+    sys.exit(1)

@@ -23,13 +23,14 @@ try:
     if os.path.isdir(os.path.join(parent_root, "genmonlib")):
         sys.path.insert(1, parent_root)
 
-    from genmonlib.myconfig import MyConfig
-    from genmonlib.mylog import SetupLogger
     from genmonlib.myclient import ClientInterface
+    from genmonlib.mycommon import MyCommon
+    from genmonlib.myconfig import MyConfig
     from genmonlib.mymsgqueue import MyMsgQueue
     from genmonlib.mynotify import GenNotify
     from genmonlib.mysupport import MySupport
-    from genmonlib import myvoipms
+    from genmonlib.myvoipms import MyVoipMs
+    from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
     print(
         "\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n"
@@ -40,162 +41,269 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-# ----------  Signal Handler ----------------------------------------------------
-def signal_handler(signal, frame):
 
-    try:
-        GenNotify.Close()
-        Queue.Close()
-    except Exception as e1:
-        log.error("signal_handler: " + str(e1))
+# ------------ GenSMSVoip class -------------------------------------------------
+class GenSMSVoip(MySupport):
 
-    sys.exit(0)
+    # ------------ GenSMSVoip::init----------------------------------------------
+    def __init__(
+        self,
+        log=None,
+        loglocation=ProgramDefaults.LogPath,
+        ConfigFilePath=MyCommon.DefaultConfPath,
+        host=ProgramDefaults.LocalHost,
+        port=ProgramDefaults.ServerPort,
+        console=None,
+    ):
+
+        super(GenSMSVoip, self).__init__()
+
+        self.LogFileName = os.path.join(loglocation, "gensms_voip.log")
+        # log errors in this module to a file
+        self.log = log
+        self.console = console
+
+        self.MonitorAddress = host
+        self.debug = False
+        self.SiteName = None
+        self.DestinationList = []
+        self.Voip = None
+        self.Generator = None
+        self.Queue = None
+        self.Notify = None
+
+        if self.MonitorAddress != None:
+            self.MonitorAddress = self.MonitorAddress.strip()
+
+        if self.MonitorAddress == None or not len(self.MonitorAddress):
+            self.MonitorAddress = ProgramDefaults.LocalHost
+
+        configfile = os.path.join(ConfigFilePath, "gensms_voip.conf")
+        try:
+            self.config = MyConfig(
+                filename=configfile, section="gensms_voip", log=self.log
+            )
+
+            self.Username = self.config.ReadValue("username", default="")
+            self.Password = self.config.ReadValue("password", default="")
+            destination = self.config.ReadValue("destination", default="")
+            did = self.config.ReadValue("did", default="")
+            self.debug = self.config.ReadValue("debug", return_type=bool, default=False)
+
+            if (
+                self.Username == ""
+                or self.Password == ""
+                or destination == ""
+                or did == ""
+            ):
+                self.LogError("Missing parameter in " + configfile)
+                self.LogConsole("Missing parameter in " + configfile)
+                sys.exit(1)
+
+            try:
+                self.DID = self.ParsePhoneNumber(did)
+                for dest in destination.split(","):
+                    if len(dest.strip()):
+                        self.DestinationList.append(self.ParsePhoneNumber(dest))
+                if not len(self.DestinationList):
+                    raise Exception("No destination numbers found")
+            except Exception as e1:
+                message = (
+                    "Invalid DID or destination phone number. DID = "
+                    + str(did)
+                    + " Dest = "
+                    + str(destination)
+                    + ", "
+                    + str(e1)
+                )
+                self.LogError(message)
+                self.LogConsole(message)
+                sys.exit(1)
+
+        except Exception as e1:
+            self.LogErrorLine("Error reading " + configfile + ": " + str(e1))
+            self.LogConsole("Error reading " + configfile + ": " + str(e1))
+            sys.exit(1)
+
+        try:
+            self.Voip = MyVoipMs(
+                log=self.log,
+                console=self.console,
+                username=self.Username,
+                password=self.Password,
+                did=self.DID,
+                debug=self.debug,
+            )
+
+            self.Generator = ClientInterface(
+                host=self.MonitorAddress, port=port, log=self.log
+            )
+            self.SiteName = self.Generator.ProcessMonitorCommand(
+                "generator: getsitename"
+            )
+
+            self.Queue = MyMsgQueue(
+                config=self.config, log=self.log, callback=self.SendNotice
+            )
+
+            self.Notify = GenNotify(
+                host=self.MonitorAddress,
+                port=port,
+                onready=self.OnReady,
+                onexercise=self.OnExercise,
+                onrun=self.OnRun,
+                onrunmanual=self.OnRunManual,
+                onalarm=self.OnAlarm,
+                onservice=self.OnService,
+                onoff=self.OnOff,
+                onmanual=self.OnManual,
+                onutilitychange=self.OnUtilityChange,
+                onsoftwareupdate=self.OnSoftwareUpdate,
+                onsystemhealth=self.OnSystemHealth,
+                onfuelstate=self.OnFuelState,
+                onpistate=self.OnPiState,
+                log=self.log,
+                loglocation=loglocation,
+                console=self.console,
+                config=self.config,
+            )
+
+            signal.signal(signal.SIGTERM, self.SignalClose)
+            signal.signal(signal.SIGINT, self.SignalClose)
+
+        except Exception as e1:
+            self.LogErrorLine("Error in GenSMSVoip init: " + str(e1))
+            self.LogConsole("Error in GenSMSVoip init: " + str(e1))
+            self.Close()
+            sys.exit(1)
+
+    # ----------  GenSMSVoip::ParsePhoneNumber ----------------------------------
+    # remove formatting characters and convert to an integer. Raises an
+    # exception if the number is not valid
+    def ParsePhoneNumber(self, number):
+
+        number = number.replace("-", "").replace("+", "").strip()
+        return int(number)
+
+    # ----------  GenSMSVoip::SendNotice ----------------------------------------
+    # called by the message queue, return False to have the queue retry
+    def SendNotice(self, Message):
+
+        try:
+            if self.SiteName != None and len(self.SiteName):
+                Message = self.SiteName + ": " + Message
+
+            # send to multiple recipient(s)
+            for recipient in self.DestinationList:
+                if not self.Voip.SendSMS(destination=recipient, message=Message):
+                    return False
+            return True
+        except Exception as e1:
+            self.LogErrorLine("Error in SendNotice: " + str(e1))
+            self.LogConsole("Error in SendNotice: " + str(e1))
+            return False
+
+    # ----------  GenSMSVoip::QueueNotice ---------------------------------------
+    def QueueNotice(self, Message):
+
+        self.LogConsole(Message)
+        self.Queue.SendMessage(Message)
+
+    # ----------  GenSMSVoip::NotifyState ---------------------------------------
+    # common handler for simple on / off state callbacks
+    def NotifyState(self, Active, Message):
+
+        if Active:
+            self.QueueNotice(Message)
+        else:
+            self.LogConsole(Message + " End")
+
+    # ----------  GenSMSVoip::OnRun ---------------------------------------------
+    def OnRun(self, Active):
+        self.NotifyState(Active, "Generator Running")
+
+    # ----------  GenSMSVoip::OnRunManual ---------------------------------------
+    def OnRunManual(self, Active):
+        self.NotifyState(Active, "Generator Running in Manual Mode")
+
+    # ----------  GenSMSVoip::OnExercise ----------------------------------------
+    def OnExercise(self, Active):
+        self.NotifyState(Active, "Generator Exercising")
+
+    # ----------  GenSMSVoip::OnReady -------------------------------------------
+    def OnReady(self, Active):
+        self.NotifyState(Active, "Generator Ready")
+
+    # ----------  GenSMSVoip::OnOff ---------------------------------------------
+    def OnOff(self, Active):
+        self.NotifyState(Active, "Generator Off")
+
+    # ----------  GenSMSVoip::OnManual ------------------------------------------
+    def OnManual(self, Active):
+        self.NotifyState(Active, "Generator Manual")
+
+    # ----------  GenSMSVoip::OnAlarm -------------------------------------------
+    def OnAlarm(self, Active):
+        self.NotifyState(Active, "Generator Alarm")
+
+    # ----------  GenSMSVoip::OnService -----------------------------------------
+    def OnService(self, Active):
+        self.NotifyState(Active, "Generator Service Due")
+
+    # ----------  GenSMSVoip::OnUtilityChange -----------------------------------
+    def OnUtilityChange(self, Active):
+
+        if Active:
+            self.QueueNotice("Utility Service is Down")
+        else:
+            self.QueueNotice("Utility Service is Up")
+
+    # ----------  GenSMSVoip::OnSoftwareUpdate ----------------------------------
+    def OnSoftwareUpdate(self, Active):
+
+        if Active:
+            self.QueueNotice("Software Update Available")
+        else:
+            self.QueueNotice("Software Is Up To Date")
+
+    # ----------  GenSMSVoip::OnSystemHealth ------------------------------------
+    def OnSystemHealth(self, Notice):
+        self.QueueNotice("System Health : " + Notice)
+
+    # ----------  GenSMSVoip::OnFuelState ---------------------------------------
+    def OnFuelState(self, Active):
+
+        if Active:  # True is OK
+            self.QueueNotice("Fuel Level is OK")
+        else:  # False = Low
+            self.QueueNotice("Fuel Level is Low")
+
+    # ----------  GenSMSVoip::OnPiState -----------------------------------------
+    def OnPiState(self, Notice):
+        self.QueueNotice("Pi Health : " + Notice)
+
+    # ----------GenSMSVoip::SignalClose------------------------------------------
+    def SignalClose(self, signum, frame):
+
+        self.Close()
+        sys.exit(0)
+
+    # ----------GenSMSVoip::Close------------------------------------------------
+    def Close(self):
+
+        for name, item in [
+            ("GenNotify", self.Notify),
+            ("message queue", self.Queue),
+            ("generator client", self.Generator),
+        ]:
+            try:
+                if item != None:
+                    item.Close()
+            except Exception as e1:
+                self.LogErrorLine("Error closing " + name + ": " + str(e1))
 
 
-# ----------  OnRun -------------------------------------------------------------
-def OnRun(Active):
-
-    if Active:
-        console.info("Generator Running")
-        Queue.SendMessage("Generator Running")
-    else:
-        console.info("Generator Running End")
-
-
-# ----------  OnRunManual -------------------------------------------------------
-def OnRunManual(Active):
-
-    if Active:
-        console.info("Generator Running in Manual Mode")
-        Queue.SendMessage("Generator Running in Manual Mode")
-    else:
-        console.info("Generator Running in Manual Mode End")
-
-
-# ----------  OnExercise --------------------------------------------------------
-def OnExercise(Active):
-
-    if Active:
-        console.info("Generator Exercising")
-        Queue.SendMessage("Generator Exercising")
-    else:
-        console.info("Generator Exercising End")
-
-
-# ----------  OnReady -----------------------------------------------------------
-def OnReady(Active):
-
-    if Active:
-        console.info("Generator Ready")
-        Queue.SendMessage("Generator Ready")
-    else:
-        console.info("Generator Ready End")
-
-
-# ----------  OnOff -------------------------------------------------------------
-def OnOff(Active):
-
-    if Active:
-        console.info("Generator Off")
-        Queue.SendMessage("Generator Off")
-    else:
-        console.info("Generator Off End")
-
-
-# ----------  OnManual ----------------------------------------------------------
-def OnManual(Active):
-
-    if Active:
-        console.info("Generator Manual")
-        Queue.SendMessage("Generator Manual")
-    else:
-        console.info("Generator Manual End")
-
-
-# ----------  OnAlarm -----------------------------------------------------------
-def OnAlarm(Active):
-
-    if Active:
-        console.info("Generator Alarm")
-        Queue.SendMessage("Generator Alarm")
-    else:
-        console.info("Generator Alarm End")
-
-
-# ----------  OnService ---------------------------------------------------------
-def OnService(Active):
-
-    if Active:
-        console.info("Generator Service Due")
-        Queue.SendMessage("Generator Service Due")
-    else:
-        console.info("Generator Servcie Due End")
-
-
-# ----------  OnUtilityChange ---------------------------------------------------
-def OnUtilityChange(Active):
-
-    if Active:
-        console.info("Utility Service is Down")
-        Queue.SendMessage("Utility Service is Down")
-    else:
-        Queue.SendMessage("Utility Service is Up")
-        console.info("Utility Service is Up")
-
-
-# ----------  OnSoftwareUpdate --------------------------------------------------
-def OnSoftwareUpdate(Active):
-
-    if Active:
-        console.info("Software Update Available")
-        Queue.SendMessage("Software Update Available")
-    else:
-        Queue.SendMessage("Software Is Up To Date")
-        console.info("Software Is Up To Date")
-
-
-# ----------  OnSystemHealth ----------------------------------------------------
-def OnSystemHealth(Notice):
-    Queue.SendMessage("System Health : " + Notice)
-    console.info("System Health : " + Notice)
-
-
-# ----------  OnFuelState -------------------------------------------------------
-def OnFuelState(Active):
-    if Active:  # True is OK
-        console.info("Fuel Level is OK")
-        Queue.SendMessage("Fuel Level is OK")
-    else:  # False = Low
-        Queue.SendMessage("Fuel Level is Low")
-        console.info("Fuel Level is Low")
-
-
-# ----------  OnPiState ---------------------------------------------------------
-def OnPiState(Notice):
-    Queue.SendMessage("Pi Health : " + Notice)
-    console.info("Pi Health : " + Notice)
-
-
-# ----------  SendNotice --------------------------------------------------------
-def SendNotice(Message):
-
-    try:
-
-        if sitename != None and len(sitename):
-            Message = sitename + ": " + Message        
-
-        # send to multiple recipient(s)
-        for recipient in destination_list:
-            if not Voip.SendSMS(destination = recipient, message = Message):
-                return False
-        return True
-    except Exception as e1:
-        log.error("Error SendNotice: " + str(e1))
-        console.error("Error SendNotice: " + str(e1))
-        return False
-
-
-# ------------------- Command-line interface for gengpio ------------------------
+# -------------------------------------------------------------------------------
 if __name__ == "__main__":
 
     (
@@ -207,100 +315,16 @@ if __name__ == "__main__":
         log,
     ) = MySupport.SetupAddOnProgram("gensms_voip")
 
-    # Set the signal handler
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
+    GenSMSVoipInstance = GenSMSVoip(
+        log=log,
+        loglocation=loglocation,
+        ConfigFilePath=ConfigFilePath,
+        host=address,
+        port=port,
+        console=console,
+    )
 
-    try:
+    while True:
+        time.sleep(0.5)
 
-        config = MyConfig(
-            filename=os.path.join(ConfigFilePath, "gensms_voip.conf"),
-            section="gensms_voip",
-            log=log,
-        )
-
-        username = config.ReadValue("username", default="")
-        password = config.ReadValue("password", default="")
-        destination = config.ReadValue("destination", default="")
-        did = config.ReadValue("did", default="")
-        debug = config.ReadValue("debug", return_type=bool, default=False)
-
-        destination_str_list = destination.split(",")
-
-        if (
-            username == ""
-            or password == ""
-            or destination == ""
-            or did == ""
-        ):
-            log.error(
-                "Missing parameter in " + os.path.join(ConfigFilePath, "gensms_voip.conf")
-            )
-            console.error(
-                "Missing parameter in " + os.path.join(ConfigFilePath, "gensms_voip.conf")
-            )
-            sys.exit(1)
-        try:
-            did = did.replace("-", "")
-            did = did.replace("+", "")
-            did = did.strip()
-            did = int(did)
-            destination_list = []
-            for dest in destination_str_list:
-                dest = dest.replace("-","")
-                dest = dest.replace("+","")
-                dest = dest.strip()
-                destination_list.append(int(destination))
-        except Exception as e1:
-            log.error("Invalid DID or destination phone number. DID = " + str(did) + " Dest = " + str(destination) + ", " + str(e1))
-            sys.exit(1)
-    except Exception as e1:
-        log.error(
-            "Error reading "
-            + os.path.join(ConfigFilePath, "gensms_voip.conf")
-            + ": "
-            + str(e1)
-        )
-        console.error(
-            "Error reading "
-            + os.path.join(ConfigFilePath, "gensms_voip.conf")
-            + ": "
-            + str(e1)
-        )
-        sys.exit(1)
-    try:
-
-        Voip = myvoipms.MyVoipMs(log = log, console = console, username = username, password = password, did = did, debug = debug)
-
-        Generator = ClientInterface(host=address, port=port, log=log)
-        sitename = Generator.ProcessMonitorCommand("generator: getsitename")
-        Queue = MyMsgQueue(config=config, log=log, callback=SendNotice)
-
-        GenNotify = GenNotify(
-            host=address,
-            port=port,
-            onready=OnReady,
-            onexercise=OnExercise,
-            onrun=OnRun,
-            onrunmanual=OnRunManual,
-            onalarm=OnAlarm,
-            onservice=OnService,
-            onoff=OnOff,
-            onmanual=OnManual,
-            onutilitychange=OnUtilityChange,
-            onsoftwareupdate=OnSoftwareUpdate,
-            onsystemhealth=OnSystemHealth,
-            onfuelstate=OnFuelState,
-            onpistate=OnPiState,
-            log=log,
-            loglocation=loglocation,
-            console=console,
-            config=config,
-        )
-
-        while True:
-            time.sleep(1)
-
-    except Exception as e1:
-        log.error("Error: " + str(e1))
-        console.error("Error: " + str(e1))
+    sys.exit(1)

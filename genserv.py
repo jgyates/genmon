@@ -7178,7 +7178,7 @@ def SetupMFA():
         account = "genmon"
     try:
         MFA_URL = pyotp.totp.TOTP(SecretMFAKey).provisioning_uri(
-            account, issuer_name="Genmon"
+            name=account, issuer_name="Genmon"
         )
     except Exception as e1:
         LogErrorLine("Error setting up 2FA: " + str(e1))
