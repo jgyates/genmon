@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -------------------------------------------------------------------------------
 #    FILE: gengpio.py
-# PURPOSE: genmon.py support program to allow GPIO pints to drive
+# PURPOSE: genmon.py support program to allow GPIO pins to drive
 # status LEDs
 #
 #  AUTHOR: Jason G Yates
@@ -15,6 +15,7 @@ import json
 import os
 import signal
 import sys
+import threading
 import time
 
 try:
@@ -26,9 +27,11 @@ try:
         sys.path.insert(1, parent_root)
 
     from genmonlib.myclient import ClientInterface
+    from genmonlib.mycommon import MyCommon
     from genmonlib.myconfig import MyConfig
-    from genmonlib.mylog import SetupLogger
     from genmonlib.mysupport import MySupport
+    from genmonlib.mythread import MyThread
+    from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
     print(
         "\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n"
@@ -39,49 +42,273 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-import RPi.GPIO as GPIO
+try:
+    import RPi.GPIO as GPIO
+except Exception as e1:
+    print("\n\nThis program requires the RPi.GPIO module to be installed.\n")
+    print(
+        "Please see the project documentation at https://github.com/jgyates/genmon.\n"
+    )
+    print("Error: " + str(e1))
+    sys.exit(2)
 
-dt_on_time = None
-dt_off_time = None
 
-# ----------  LogDebug ---------------------------------------------------------
-def LogDebug(input_str):
-    global debug
-    if debug:
-        log.error(input_str)
+# ------------ GenGPIO class ----------------------------------------------------
+class GenGPIO(MySupport):
 
-# ----------  InitGPIO ----------------------------------------------------------
-def InitGPIO(pin, direction=GPIO.OUT, initial=GPIO.LOW):
+    # These are the Raspberry Pi header pin numbers (not GPIO numbers), see
+    # https://pinout.xyz/  A value of zero means the output is not used.
+    # config file entry name : default header pin
+    PIN_DEFAULTS = {
+        # generator status
+        "STATUS_READY": 16,
+        "STATUS_ALARM": 18,
+        "STATUS_SERVICE": 22,
+        "STATUS_RUNNING": 26,
+        "STATUS_EXERCISING": 24,
+        "STATUS_OFF": 21,
+        # genmon / internet errors
+        "ER_GENMON": 3,
+        "ER_INTERNET": 5,
+        # alarm codes
+        "ER_SPEED": 29,
+        "ER_LOW_OIL": 31,
+        "ER_HIGH_TEMP": 33,
+        "ER_RPM_SENSE": 35,
+        "ER_VOLTAGE": 37,
+        "ER_OVERCRANK": 40,
+        "ER_OVERLOAD": 38,
+        "ER_GOVERNOR": 36,
+        "ER_WARNING": 32,
+        # Raspberry pi CPU temp
+        "ER_PITEMP": 0,
+        # time of day controlled output
+        "PIN_EXTERNAL_SIGNAL": 0,
+    }
 
-    try:
-        if pin != 0:
-            GPIO.setup(pin, direction, initial=initial)
+    # generator state (from "generator: getbase") : status pin set HIGH for that state
+    STATE_PINS = {
+        "READY": "STATUS_READY",
+        "EXERCISING": "STATUS_EXERCISING",
+        "RUNNING": "STATUS_RUNNING",
+        "RUNNING-MANUAL": "STATUS_RUNNING",
+        "ALARM": "STATUS_ALARM",
+        "SERVICEDUE": "STATUS_SERVICE",
+        "OFF": "STATUS_OFF",
+        "MANUAL": "STATUS_OFF",
+    }
+
+    # Evolution last alarm code ranges (inclusive) : pin set HIGH for that alarm
+    # Last Error Code is not supported by Nexus controllers
+    ALARM_CODE_PINS = [
+        ("ER_SPEED", [(1200, 1299), (1600, 1699)]),  # Overspeed/Underspeed
+        ("ER_LOW_OIL", [(1300, 1399)]),  # Low Oil
+        ("ER_HIGH_TEMP", [(1400, 1499)]),  # High Temp
+        ("ER_RPM_SENSE", [(1500, 1599)]),  # RPM Sensor
+        ("ER_VOLTAGE", [(1800, 1899), (1900, 1999)]),  # Overvoltage/Undervoltage
+        ("ER_OVERCRANK", [(1100, 1199)]),  # Overcrank
+        ("ER_OVERLOAD", [(2100, 2199)]),  # Overload
+        ("ER_GOVERNOR", [(2500, 2599)]),  # Governor
+        ("ER_WARNING", [(0, 0)]),  # Warning (alarm 0000)
+        # Other Faults, add the entry name to PIN_DEFAULTS and uncomment to use
+        # ("ER_Controller", [(1000, 1099)]),  # Controller Internal
+        # ("ER_Ignition", [(2600, 2669)]),  # Ignition
+        # ("ER_Low_Fuel", [(2680, 2680), (2700, 2700)]),  # Fuel Level
+        # ("ER_Low_Coolant", [(2720, 2720)]),  # Low Coolant
+        # ("ER_Battery_Problem", [(2750, 2750), (2760, 2760)]),  # Battery
+        # ("ER_Charger", [(2770, 2770), (2780, 2780)]),  # Charger
+    ]
+
+    # ------------ GenGPIO::init-------------------------------------------------
+    def __init__(
+        self,
+        log=None,
+        loglocation=ProgramDefaults.LogPath,
+        ConfigFilePath=MyCommon.DefaultConfPath,
+        host=ProgramDefaults.LocalHost,
+        port=ProgramDefaults.ServerPort,
+        console=None,
+    ):
+
+        super(GenGPIO, self).__init__()
+
+        self.LogFileName = os.path.join(loglocation, "gengpio.log")
+        self.AccessLock = threading.Lock()
+        # log errors in this module to a file
+        self.log = log
+        self.console = console
+
+        self.MonitorAddress = host
+        self.debug = False
+        self.PollTime = 3  # seconds between status checks
+        self.NetworkPollTime = 20  # seconds between internet status checks
+        self.Generator = None
+        self.GPIOInitialized = False
+
+        self.Pins = {}
+        self.CPUThresholdTemp = 0
+        self.OnTime = None
+        self.OffTime = None
+        self.Evolution = False
+
+        # state used by the monitor thread
+        self.LastEvent = ""
+        self.LastNetStatus = ""
+        self.LastMonitorHealth = ""
+        self.LastCPUTemp = ""
+        self.ExternalPinState = None
+        self.NetStatusUpdated = datetime.datetime(2000, 1, 1, 1, 00)
+
+        if self.MonitorAddress != None:
+            self.MonitorAddress = self.MonitorAddress.strip()
+
+        if self.MonitorAddress == None or not len(self.MonitorAddress):
+            self.MonitorAddress = ProgramDefaults.LocalHost
+
+        configfile = os.path.join(ConfigFilePath, "gengpio.conf")
+        try:
+            self.config = MyConfig(filename=configfile, section="gengpio", log=self.log)
+
+            self.debug = self.config.ReadValue("debug", return_type=bool, default=False)
+
+            for name, default in self.PIN_DEFAULTS.items():
+                self.Pins[name] = self.config.ReadValue(
+                    name, return_type=int, default=default
+                )
+
+            self.CPUThresholdTemp = self.config.ReadValue(
+                "CPU_THRESHOLD_TEMP", return_type=float, default=70.0
+            )
+            if self.Pins["ER_PITEMP"] != 0 and self.CPUThresholdTemp != 0:
+                self.LogError("Monitoring PI CPU Temp")
+
+            self.ReadExternalSignalConfig()
+
+        except Exception as e1:
+            self.LogErrorLine("Error reading " + configfile + ": " + str(e1))
+            self.LogConsole("Error reading " + configfile + ": " + str(e1))
+            sys.exit(1)
+
+        try:
+            self.Generator = ClientInterface(
+                host=self.MonitorAddress, port=port, log=self.log
+            )
+
+            # setup GPIO using Board numbering
+            GPIO.setmode(GPIO.BOARD)
+            self.LogConsole(str(GPIO.RPI_INFO))
+            GPIO.setwarnings(False)
+            self.GPIOInitialized = True
+
+            for name in self.Pins:
+                self.InitGPIO(name, GPIO.OUT, initial=GPIO.LOW)
+
+            data = self.SendCommand("generator: monitor")
+            if "evolution" in data.lower():
+                self.Evolution = True
+                self.LogConsole("Evolution Controller Detected")
+            else:
+                self.Evolution = False
+                self.LogConsole("Non Evolution Controller Detected")
+
+            # start thread to monitor genmon and update the GPIO outputs
+            self.Threads["GPIOThread"] = MyThread(
+                self.GPIOThread, Name="GPIOThread", start=False
+            )
+            self.Threads["GPIOThread"].Start()
+
+            signal.signal(signal.SIGTERM, self.SignalClose)
+            signal.signal(signal.SIGINT, self.SignalClose)
+
+        except Exception as e1:
+            self.LogErrorLine("Error in GenGPIO init: " + str(e1))
+            self.LogConsole("Error in GenGPIO init: " + str(e1))
+            self.Close()
+            sys.exit(1)
+
+    # ----------  GenGPIO::ReadExternalSignalConfig -----------------------------
+    def ReadExternalSignalConfig(self):
+
+        if self.Pins["PIN_EXTERNAL_SIGNAL"] == 0:
+            return
+
+        self.LogError("Using External Pin for Signaling")
+        on_time_str = self.config.ReadValue("PIN_EXTERNAL_SIGNAL_ON_TIME", default=None)
+        off_time_str = self.config.ReadValue("PIN_EXTERNAL_SIGNAL_OFF_TIME", default=None)
+
+        if on_time_str == None:
+            self.LogError("Error: Invalid setting for on time for external signal GPIO")
         else:
-            LogDebug("Note: pin = 0 in InitGPIO")
-    except Exception as e1:
-        log.error("Error in InitGPIO on pin %d : %s" % (int(pin), str(e1)))
+            on_time_str = on_time_str.strip()
+            self.OnTime = self.ConvertToTimeObject(on_time_str)
+            if self.OnTime == None:
+                self.LogError(
+                    "Error: invalid time format for signal enable time: " + on_time_str
+                )
 
-
-# ----------  SetGPIO -----------------------------------------------------------
-def SetGPIO(pin, state):
-
-    try:
-        if pin != 0:
-            GPIO.output(pin, state)
+        if off_time_str == None:
+            self.LogError("Error: Invalid setting for off time for external signal GPIO")
         else:
-            LogDebug("Error: pin = 0 in SetGPIO")
-    except Exception as e1:
-        log.error("Error in InitGPIO on SetGPIO %d : %s" % (int(pin), str(e1)))
+            off_time_str = off_time_str.strip()
+            self.OffTime = self.ConvertToTimeObject(off_time_str)
+            if self.OffTime == None:
+                self.LogError(
+                    "Error: invalid time format for signal disable time: " + off_time_str
+                )
 
+        if self.OnTime == None or self.OffTime == None:
+            self.LogError("Disabling external signal pin.")
+            self.Pins["PIN_EXTERNAL_SIGNAL"] = 0
 
-# ----------  Signal Handler ---------------------------------------------------
-def signal_handler(signal, frame):
+        self.LogDebug("External Pin On Time: " + str(on_time_str))
+        self.LogDebug("External Pin Off Time: " + str(off_time_str))
 
-    GPIO.cleanup()
-    MyClientInterface.Close()
-    sys.exit(0)
-# ---------------- removeAlpha--------------------------------------------------
-def removeAlpha(inputStr):
+    # ----------  GenGPIO::InitGPIO ---------------------------------------------
+    def InitGPIO(self, name, direction=GPIO.OUT, initial=GPIO.LOW):
+
+        pin = self.Pins.get(name, 0)
+        try:
+            if pin != 0:
+                GPIO.setup(pin, direction, initial=initial)
+            else:
+                self.LogDebug("Note: pin = 0 in InitGPIO for " + name)
+        except Exception as e1:
+            self.LogErrorLine(
+                "Error in InitGPIO for %s on pin %d : %s" % (name, int(pin), str(e1))
+            )
+
+    # ----------  GenGPIO::SetGPIO ----------------------------------------------
+    def SetGPIO(self, name, state):
+
+        pin = self.Pins.get(name, 0)
+        try:
+            if pin != 0:
+                GPIO.output(pin, state)
+            else:
+                self.LogDebug("Note: pin = 0 in SetGPIO for " + name)
+        except Exception as e1:
+            self.LogErrorLine(
+                "Error in SetGPIO for %s on pin %d : %s" % (name, int(pin), str(e1))
+            )
+
+    # ----------  GenGPIO::SendCommand ------------------------------------------
+    def SendCommand(self, Command):
+
+        if len(Command) == 0:
+            return "Invalid Command"
+
+        try:
+            with self.AccessLock:
+                data = self.Generator.ProcessMonitorCommand(Command)
+        except Exception as e1:
+            self.LogErrorLine("Error calling ProcessMonitorCommand: " + str(Command))
+            data = ""
+
+        return data
+
+    # ---------------- GenGPIO::RemoveAlpha -------------------------------------
+    def RemoveAlpha(self, inputStr):
+
         answer = ""
         for char in inputStr:
             if not char.isalpha() and char != " " and char != "%":
@@ -89,407 +316,265 @@ def removeAlpha(inputStr):
 
         return answer.strip()
 
-# ---------------- todayAt------------------------------------------------------
-def todayAt (hr, min=0, sec=0, micros=0):
-   now = datetime.datetime.now()
-   return now.replace(hour=hr, minute=min, second=sec, microsecond=micros)    
-
-# ---------------- ConvertToTimeObject------------------------------------------
-def ConvertToTimeObject(input_str):
-    try:
-        if input_str == None:
-            return None 
-        if not isTimeFormat(input_str):
-            return None
-        return datetime.datetime.strptime(input_str,'%H:%M')
-    except Exception as e1:
-        log.error("Error converting time to time object: " + str(input_str))
-        return None
-# ---------------- isTimeFormat-------------------------------------------------
-def isTimeFormat(input_str):
+    # ---------------- GenGPIO::ConvertToTimeObject -----------------------------
+    def ConvertToTimeObject(self, input_str):
 
         try:
-            time.strptime(input_str, '%H:%M')
+            if input_str == None:
+                return None
+            if not self.IsTimeFormat(input_str):
+                return None
+            return datetime.datetime.strptime(input_str, "%H:%M")
+        except Exception as e1:
+            self.LogErrorLine(
+                "Error converting time to time object: " + str(input_str)
+            )
+            return None
+
+    # ---------------- GenGPIO::IsTimeFormat ------------------------------------
+    def IsTimeFormat(self, input_str):
+
+        try:
+            time.strptime(input_str, "%H:%M")
             return True
         except ValueError:
-            LogDebug("Error in isTimeFormat:" + str(input_str))
+            self.LogDebug("Error in IsTimeFormat:" + str(input_str))
             return False
 
-# ---------------- PastTimeOrEqual----------------------------------------------
-def PastTimeOrEqual(target_time):
-    try:
-        current_time = datetime.datetime.now()
-        if current_time.hour == target_time.hour and current_time.minute >= target_time.minute:
-            return True
-        if current_time.hour > target_time.hour:
-            return True
-        return False
-    except Exception as e1:
-        log.error("Error in PastTimeOrEqual: " + str(e1))
-        return False
-# ---------------- IsTimeTriggered----------------------------------------------
-def IsTimeTriggered(on_state = False, off_state = False):
+    # ---------------- GenGPIO::PastTimeOrEqual ---------------------------------
+    def PastTimeOrEqual(self, target_time):
 
-    global dt_on_time
-    global dt_off_time
-    try:
-        if dt_off_time > dt_on_time:
-            if off_state == True and PastTimeOrEqual(dt_off_time):
+        try:
+            current_time = datetime.datetime.now()
+            if (
+                current_time.hour == target_time.hour
+                and current_time.minute >= target_time.minute
+            ):
                 return True
-            if on_state == True and PastTimeOrEqual(dt_on_time) and not PastTimeOrEqual(dt_off_time):
+            if current_time.hour > target_time.hour:
                 return True
-            if off_state == True and not PastTimeOrEqual(dt_on_time) and not PastTimeOrEqual(dt_off_time):
-                return True
-        elif dt_off_time < dt_on_time:
-            if on_state == True and  PastTimeOrEqual(dt_on_time):
-                return True 
-            if off_state == True and PastTimeOrEqual(dt_off_time) and not PastTimeOrEqual(dt_on_time):
-                return True
-            if on_state == True and not PastTimeOrEqual(dt_on_time) and not PastTimeOrEqual(dt_off_time):
-                return True
-        return False
-    except Exception as e1:
-        log.error("Error in IsTimeTriggered: " + str(e1))
-        return False
-# ------------------- Command-line interface for gengpio -----------------------
-if __name__ == "__main__":  # usage program.py [server_address
+            return False
+        except Exception as e1:
+            self.LogErrorLine("Error in PastTimeOrEqual: " + str(e1))
+            return False
 
-    try:
-        (
-            console,
-            ConfigFilePath,
-            address,
-            port,
-            loglocation,
-            log,
-        ) = MySupport.SetupAddOnProgram("gengpio")
+    # ---------------- GenGPIO::IsTimeTriggered ---------------------------------
+    def IsTimeTriggered(self, on_state=False, off_state=False):
 
-        # Set the signal handler
-        signal.signal(signal.SIGINT, signal_handler)
-        signal.signal(signal.SIGTERM, signal_handler)
+        try:
+            on_time = self.OnTime
+            off_time = self.OffTime
+            if off_time > on_time:
+                if off_state == True and self.PastTimeOrEqual(off_time):
+                    return True
+                if (
+                    on_state == True
+                    and self.PastTimeOrEqual(on_time)
+                    and not self.PastTimeOrEqual(off_time)
+                ):
+                    return True
+                if (
+                    off_state == True
+                    and not self.PastTimeOrEqual(on_time)
+                    and not self.PastTimeOrEqual(off_time)
+                ):
+                    return True
+            elif off_time < on_time:
+                if on_state == True and self.PastTimeOrEqual(on_time):
+                    return True
+                if (
+                    off_state == True
+                    and self.PastTimeOrEqual(off_time)
+                    and not self.PastTimeOrEqual(on_time)
+                ):
+                    return True
+                if (
+                    on_state == True
+                    and not self.PastTimeOrEqual(on_time)
+                    and not self.PastTimeOrEqual(off_time)
+                ):
+                    return True
+            return False
+        except Exception as e1:
+            self.LogErrorLine("Error in IsTimeTriggered: " + str(e1))
+            return False
 
-        MyClientInterface = ClientInterface(host=address, port=port, log=log)
+    # ---------------- GenGPIO::UpdateGeneratorState ----------------------------
+    def UpdateGeneratorState(self):
 
-        config = MyConfig(
-            filename=os.path.join(ConfigFilePath, "gengpio.conf"),
-            section="gengpio",
-            log=log,
-        )
-        # setup GPIO using Board numbering
-        GPIO.setmode(GPIO.BOARD)
+        data = self.SendCommand("generator: getbase")
 
-        external_pin_state = None
+        if self.LastEvent == data:
+            return
+        self.LastEvent = data
+        self.LogConsole("State: " + data)
 
-        console.info(GPIO.RPI_INFO)
+        # set the status pin for the current state HIGH, all others LOW
+        active_pin = self.STATE_PINS.get(data, None)
+        for name in set(self.STATE_PINS.values()):
+            self.SetGPIO(name, GPIO.HIGH if name == active_pin else GPIO.LOW)
 
-        GPIO.setwarnings(False)
-
-        TimeUpdated = datetime.datetime(2000, 1, 1, 1, 00)
-
-        # These are the GPIP pins numbers on the Raspberry PI GPIO header
-        # https://pinout.xyz/
-        # Commnet out or Uncomment the GPIO and Generator status and alarms you wish to monitor.  Limited on GPIO.
-        STATUS_READY = config.ReadValue("STATUS_READY", return_type=int, default=16)
-        STATUS_ALARM = config.ReadValue("STATUS_ALARM", return_type=int, default=18)
-        STATUS_SERVICE = config.ReadValue("STATUS_SERVICE", return_type=int, default=22)
-        STATUS_RUNNING = config.ReadValue("STATUS_RUNNING", return_type=int, default=26)
-        STATUS_EXERCISING = config.ReadValue("STATUS_EXERCISING", return_type=int, default=24)
-        STATUS_OFF = config.ReadValue("STATUS_OFF", return_type=int, default=21)
-
-        # Set additional GPIO based on these error codes
-        ER_GENMON = config.ReadValue("ER_GENMON", return_type=int, default=3)
-        ER_INTERNET = config.ReadValue("ER_INTERNET", return_type=int, default=5)
-        ER_SPEED = config.ReadValue("ER_SPEED", return_type=int, default=29)
-        ER_LOW_OIL = config.ReadValue("ER_LOW_OIL", return_type=int, default=31)
-        ER_HIGH_TEMP = config.ReadValue("ER_HIGH_TEMP", return_type=int, default=33)
-        ER_RPM_SENSE = config.ReadValue("ER_RPM_SENSE", return_type=int, default=35)
-        ER_VOLTAGE = config.ReadValue("ER_VOLTAGE", return_type=int, default=37)
-        ER_OVERCRANK = config.ReadValue("ER_OVERCRANK", return_type=int, default=40)
-        ER_OVERLOAD = config.ReadValue("ER_OVERLOAD", return_type=int, default=38)
-        ER_GOVERNOR = config.ReadValue("ER_GOVERNOR", return_type=int, default=36)
-        ER_WARNING = config.ReadValue("ER_WARNING", return_type=int, default=32)
-
-        debug = config.ReadValue("debug", return_type=bool, default=False)
-
-        # Raspberry pi CPU temp
-        ER_PITEMP = config.ReadValue("ER_PITEMP", return_type=int, default=0)
-        CPU_THRESHOLD_TEMP = config.ReadValue("CPU_THRESHOLD_TEMP", return_type=float, default=70.0)
-        if ER_PITEMP != 0 and CPU_THRESHOLD_TEMP != 0:
-            log.error("Monitoring PI CPU Temp")
-
-        PIN_EXTERNAL_SIGNAL = config.ReadValue("PIN_EXTERNAL_SIGNAL", return_type=int, default=0)
-        PIN_EXTERNAL_SIGNAL_ON_TIME = config.ReadValue("PIN_EXTERNAL_SIGNAL_ON_TIME",default=None)
-        PIN_EXTERNAL_SIGNAL_OFF_TIME = config.ReadValue("PIN_EXTERNAL_SIGNAL_OFF_TIME",default=None)
-        if PIN_EXTERNAL_SIGNAL != 0 :
-            log.error("Using External Pin for Signaling")
-            if PIN_EXTERNAL_SIGNAL_ON_TIME == None:
-                log.error("Error: Invalid setting for on time for external signal GPIO")
-                PIN_EXTERNAL_SIGNAL = 0
-            else:
-                PIN_EXTERNAL_SIGNAL_ON_TIME = PIN_EXTERNAL_SIGNAL_ON_TIME.strip()
-                dt_on_time = ConvertToTimeObject(PIN_EXTERNAL_SIGNAL_ON_TIME)
-                if dt_on_time == None:
-                    log.error("Error: invalid time format for signal enable time: " + str(PIN_EXTERNAL_SIGNAL_ON_TIME))
-                    PIN_EXTERNAL_SIGNAL = 0
-            if PIN_EXTERNAL_SIGNAL_OFF_TIME == None:
-                log.error("Error: Invalid setting for off time for external signal GPIO")
-                PIN_EXTERNAL_SIGNAL = 0
-            else:
-                PIN_EXTERNAL_SIGNAL_OFF_TIME = PIN_EXTERNAL_SIGNAL_OFF_TIME.strip()
-                dt_off_time = ConvertToTimeObject(PIN_EXTERNAL_SIGNAL_OFF_TIME)
-                if dt_off_time == None:
-                    log.error("Error: invalid time format for signal disable time: " + str(PIN_EXTERNAL_SIGNAL_OFF_TIME))
-                    PIN_EXTERNAL_SIGNAL = 0
-            if PIN_EXTERNAL_SIGNAL == 0:
-                log.error("Disabling external signal pin.")
-
-            LogDebug("External Pin On Time: " + PIN_EXTERNAL_SIGNAL_ON_TIME)
-            LogDebug("External Pin Off Time: " + PIN_EXTERNAL_SIGNAL_OFF_TIME)
-
-        # Other Faults
-        # ER_Controller = config.ReadValue('ER_Controller', return_type = int, default = 3) # Must chose from available GPIO
-        # ER_Ignition = config.ReadValue('ER_Ignition', return_type = int, default = ) # Must chose from available GPIO
-        # ER_Low_Fuel = config.ReadValue('ER_Low_Fuel', return_type = int, default = ) # Must chose from available GPIO
-        # ER_Low_Coolant = config.ReadValue('ER_Low_Coolant', return_type = int, default = ) # Must chose from available GPIO
-        # ER_Battery_Problem = config.ReadValue('ER_Battery_Problem', return_type = int, default = ) # Must chose from available GPIO
-        # ER_Charger = config.ReadValue('ER_Charger', return_type = int, default = ) # Must chose from available GPIO
-
-        InitGPIO(STATUS_READY, GPIO.OUT, initial=GPIO.LOW)
-        InitGPIO(STATUS_ALARM, GPIO.OUT, initial=GPIO.LOW)
-        InitGPIO(STATUS_SERVICE, GPIO.OUT, initial=GPIO.LOW)
-        InitGPIO(STATUS_RUNNING, GPIO.OUT, initial=GPIO.LOW)
-        InitGPIO(STATUS_EXERCISING, GPIO.OUT, initial=GPIO.LOW)
-        InitGPIO(STATUS_OFF, GPIO.OUT, initial=GPIO.LOW)
-
-        InitGPIO(ER_GENMON, GPIO.OUT, initial=GPIO.LOW)
-        InitGPIO(ER_INTERNET, GPIO.OUT, initial=GPIO.LOW)
-
-        InitGPIO(ER_SPEED, GPIO.OUT, initial=GPIO.LOW)
-        InitGPIO(ER_LOW_OIL, GPIO.OUT, initial=GPIO.LOW)
-        InitGPIO(ER_HIGH_TEMP, GPIO.OUT, initial=GPIO.LOW)
-        InitGPIO(ER_RPM_SENSE, GPIO.OUT, initial=GPIO.LOW)
-        InitGPIO(ER_VOLTAGE, GPIO.OUT, initial=GPIO.LOW)
-        InitGPIO(ER_OVERCRANK, GPIO.OUT, initial=GPIO.LOW)
-        InitGPIO(ER_OVERLOAD, GPIO.OUT, initial=GPIO.LOW)
-        InitGPIO(ER_GOVERNOR, GPIO.OUT, initial=GPIO.LOW)
-        InitGPIO(ER_WARNING, GPIO.OUT, initial=GPIO.LOW)
-        InitGPIO(ER_PITEMP, GPIO.OUT, initial=GPIO.LOW)
-
-        InitGPIO(PIN_EXTERNAL_SIGNAL, GPIO.OUT, initial=GPIO.LOW)
-
-        # Other Faults
-        # InitGPIO(ER_Controller, GPIO.OUT, initial=GPIO.LOW)
-        # InitGPIO(ER_Ignition, GPIO.OUT, initial=GPIO.LOW)
-        # InitGPIO(ER_Low_Fuel, GPIO.OUT, initial=GPIO.LOW)
-        # InitGPIO(ER_Low_Coolant, GPIO.OUT, initial=GPIO.LOW)
-        # InitGPIO(ER_Battery_Problem, GPIO.OUT, initial=GPIO.LOW)
-        # InitGPIO(ER_Charger, GPIO.OUT, initial=GPIO.LOW)
-
-        LastEvent = ""
-        LastNetStatus = ""
-        LastMonitorHealth = ""
-        LastCPUTemp = ""
-
-        data = MyClientInterface.ProcessMonitorCommand("generator: monitor")
-
-        if "evolution" in data.lower():
-            Evolution = True
-            console.info("Evolution Controller Detected\n")
+        if data == "ALARM" and self.Evolution:
+            # Last Error Code not supported by Nexus
+            LastErrorCode = int(self.SendCommand("generator: getregvalue=05f1"), 16)
+            self.LogDebug("Last Error Code: " + str(LastErrorCode))
+            for name, code_ranges in self.ALARM_CODE_PINS:
+                for low, high in code_ranges:
+                    if low <= LastErrorCode <= high:
+                        self.SetGPIO(name, GPIO.HIGH)
         else:
-            Evolution = False
-            console.info("Non Evolution Controller Detected\n")
+            for name, code_ranges in self.ALARM_CODE_PINS:
+                self.SetGPIO(name, GPIO.LOW)
+
+    # ---------------- GenGPIO::UpdateMonitorHealth -----------------------------
+    def UpdateMonitorHealth(self, MonitorData):
+
+        try:
+            HealthStr = MonitorData["Monitor"][0]["Generator Monitor Stats"][0][
+                "Monitor Health"
+            ]
+            if HealthStr != self.LastMonitorHealth:
+                self.LastMonitorHealth = HealthStr
+                if HealthStr.lower() == "ok":
+                    self.SetGPIO("ER_GENMON", GPIO.LOW)
+                else:
+                    self.SetGPIO("ER_GENMON", GPIO.HIGH)
+        except Exception as e1:
+            self.LogErrorLine("Error getting monitor health: " + str(e1))
+
+    # ---------------- GenGPIO::UpdateInternetStatus ----------------------------
+    def UpdateInternetStatus(self):
+
+        try:
+            # only check this every NetworkPollTime seconds
+            TimeNow = datetime.datetime.now()
+            if (TimeNow - self.NetStatusUpdated).total_seconds() > self.NetworkPollTime:
+                self.NetStatusUpdated = TimeNow
+                self.LogConsole("Updating internet status: " + str(self.NetStatusUpdated))
+                data = self.SendCommand("generator: network_status")
+                if data != self.LastNetStatus:
+                    self.LastNetStatus = data
+                    if data.lower() == "ok":
+                        self.SetGPIO("ER_INTERNET", GPIO.LOW)
+                    else:
+                        self.SetGPIO("ER_INTERNET", GPIO.HIGH)
+        except Exception as e1:
+            self.LogErrorLine("Error getting internet status: " + str(e1))
+
+    # ---------------- GenGPIO::UpdateCPUTemp -----------------------------------
+    def UpdateCPUTemp(self, MonitorData):
+
+        try:
+            if self.Pins["ER_PITEMP"] != 0 and self.CPUThresholdTemp != 0:
+                CPUTempStr = MonitorData["Monitor"][2]["Platform Stats"][0][
+                    "CPU Temperature"
+                ]
+                CPUTempStr = self.RemoveAlpha(CPUTempStr)
+                if CPUTempStr != self.LastCPUTemp:
+                    self.LastCPUTemp = CPUTempStr
+                    if float(CPUTempStr) < self.CPUThresholdTemp:
+                        self.LogDebug("CPU Temp in Range: " + CPUTempStr)
+                        self.SetGPIO("ER_PITEMP", GPIO.LOW)
+                    else:
+                        self.LogDebug("CPU Temp is HIGH: " + CPUTempStr)
+                        self.SetGPIO("ER_PITEMP", GPIO.HIGH)
+        except Exception as e1:
+            self.LogErrorLine("Error checking pi CPU temp status: " + str(e1))
+
+    # ---------------- GenGPIO::UpdateExternalSignal ----------------------------
+    def UpdateExternalSignal(self):
+
+        try:
+            if self.Pins["PIN_EXTERNAL_SIGNAL"] != 0:
+                if self.IsTimeTriggered(on_state=True):
+                    if self.ExternalPinState == None or self.ExternalPinState == False:
+                        self.LogDebug("External Pin State set to ON")
+                        self.ExternalPinState = True
+                    self.SetGPIO("PIN_EXTERNAL_SIGNAL", GPIO.HIGH)
+                if self.IsTimeTriggered(off_state=True):
+                    if self.ExternalPinState == None or self.ExternalPinState == True:
+                        self.LogDebug("External Pin State set to OFF")
+                        self.ExternalPinState = False
+                    self.SetGPIO("PIN_EXTERNAL_SIGNAL", GPIO.LOW)
+        except Exception as e1:
+            self.LogErrorLine("Error in external pin signal: " + str(e1))
+
+    # ---------------- GenGPIO::GetMonitorData ----------------------------------
+    def GetMonitorData(self):
+
+        try:
+            return json.loads(self.SendCommand("generator: monitor_json"))
+        except Exception as e1:
+            self.LogErrorLine("Error getting monitor data: " + str(e1))
+            return {}
+
+    # ---------- GenGPIO::GPIOThread---------------------------------------------
+    def GPIOThread(self):
 
         while True:
-
-            data = MyClientInterface.ProcessMonitorCommand("generator: getbase")
-
-            if LastEvent != data:
-                LastEvent = data
-                console.info("State: " + data)
-
-                if data == "READY":
-                    SetGPIO(STATUS_READY, GPIO.HIGH)
-                else:
-                    SetGPIO(STATUS_READY, GPIO.LOW)
-
-                if data == "EXERCISING":
-                    SetGPIO(STATUS_EXERCISING, GPIO.HIGH)
-                else:
-                    SetGPIO(STATUS_EXERCISING, GPIO.LOW)
-
-                if data == "RUNNING" or data == "RUNNING-MANUAL":
-                    SetGPIO(STATUS_RUNNING, GPIO.HIGH)
-                else:
-                    SetGPIO(STATUS_RUNNING, GPIO.LOW)
-
-                if data == "ALARM":
-                    SetGPIO(STATUS_ALARM, GPIO.HIGH)
-                else:
-                    SetGPIO(STATUS_ALARM, GPIO.LOW)
-
-                if data == "SERVICEDUE":
-                    SetGPIO(STATUS_SERVICE, GPIO.HIGH)
-                else:
-                    SetGPIO(STATUS_SERVICE, GPIO.LOW)
-
-                if data == "OFF" or data == "MANUAL":
-                    SetGPIO(STATUS_OFF, GPIO.HIGH)
-                else:
-                    SetGPIO(STATUS_OFF, GPIO.LOW)
-
-                if (
-                    data == "ALARM" and Evolution
-                ):  # Last Error Code not supported by Nexus
-
-                    # get last error code
-                    data = MyClientInterface.ProcessMonitorCommand(
-                        "generator: getregvalue=05f1"
-                    )
-                    LastErrorCode = int(data, 16)
-
-                    # Overspeed/Underspeed (alarms 1200s, 1600s)
-                    if 1200 <= LastErrorCode <= 1299 or 1600 <= LastErrorCode <= 1699:
-                        SetGPIO(ER_SPEED, GPIO.HIGH)
-
-                    # Low Oil (alarm 1300s)
-                    if 1300 <= LastErrorCode <= 1399:
-                        SetGPIO(ER_LOW_OIL, GPIO.HIGH)
-
-                    # High Temp (alarm 1400s)
-                    if 1400 <= LastErrorCode <= 1499:
-                        SetGPIO(ER_HIGH_TEMP, GPIO.HIGH)
-
-                    # RPM Sensor (alarm 1500s)
-                    if 1500 <= LastErrorCode <= 1599:
-                        SetGPIO(ER_RPM_SENSE, GPIO.HIGH)
-
-                    # Overvoltage/Undervoltage (alarm 1800s, 1900s)
-                    if 1800 <= LastErrorCode <= 1899 or 1900 <= LastErrorCode <= 1999:
-                        SetGPIO(ER_VOLTAGE, GPIO.HIGH)
-
-                    # Overcrank (alarm 1100s)
-                    if 1100 <= LastErrorCode <= 1199:
-                        SetGPIO(ER_OVERCRANK, GPIO.HIGH)
-
-                    # Overload (alarm 2100s)
-                    if 2100 <= LastErrorCode <= 2199:
-                        SetGPIO(ER_OVERLOAD, GPIO.HIGH)
-
-                    # Governor (alarm 2500s)
-                    if 2500 <= LastErrorCode <= 2599:
-                        SetGPIO(ER_GOVERNOR, GPIO.HIGH)
-
-                    # Warning (alarm 0000)
-                    if 0000 == LastErrorCode:
-                        SetGPIO(ER_WARNING, GPIO.HIGH)
-
-                    # Controller Internal (alarm 1000s)
-                    # if 1000 <= LastErrorCode <= 1099:
-                    #    SetGPIO(ER_Controller,GPIO.HIGH)
-
-                    # Ignition (alarm 2600-2669)
-                    # if 2600 <= LastErrorCode <= 2669:
-                    #    SetGPIO(ER_Ignition,GPIO.HIGH)
-
-                    # Fuel Level (alarm 2680 and 2700)
-                    # if LastErrorCode == 2680 or LastErrorCode == 2700:
-                    #    SetGPIO(ER_Low_Fuel,GPIO.HIGH)
-
-                    # Low Coolant (alarm 2720)
-                    # if LastErrorCode == 2720:
-                    #    SetGPIO(ER_Low_Coolant,GPIO.HIGH)
-
-                    # Battery (alarm 2750 and 2760)
-                    # if LastErrorCode == 2750 or LastErrorCode == 2760:
-                    #    SetGPIO(ER_Battery_Problem,GPIO.HIGH)
-
-                    # Charger (alarm 2770 and 2780)
-                    # if LastErrorCode == 2770 or LastErrorCode == 2780:
-                    #    SetGPIO(ER_Charger,GPIO.HIGH)
-
-                else:
-                    SetGPIO(ER_SPEED, GPIO.LOW)
-                    SetGPIO(ER_LOW_OIL, GPIO.LOW)
-                    SetGPIO(ER_HIGH_TEMP, GPIO.LOW)
-                    SetGPIO(ER_RPM_SENSE, GPIO.LOW)
-                    SetGPIO(ER_VOLTAGE, GPIO.LOW)
-                    SetGPIO(ER_OVERCRANK, GPIO.LOW)
-                    SetGPIO(ER_OVERLOAD, GPIO.LOW)
-                    SetGPIO(ER_GOVERNOR, GPIO.LOW)
-                    SetGPIO(ER_WARNING, GPIO.LOW)
-                    # SetGPIO(ER_Controller,GPIO.LOW)
-                    # SetGPIO(ER_Ignition,GPIO.LOW)
-                    # SetGPIO(ER_Low_Fuel,GPIO.LOW)
-                    # SetGPIO(ER_Low_Coolant,GPIO.LOW)
-                    # SetGPIO(ER_Battery_Problem,GPIO.LOW)
-                    # SetGPIO(ER_Charger,GPIO.LOW)
-
-            # Get Genmon status
             try:
-                data = MyClientInterface.ProcessMonitorCommand("generator: monitor_json")
-                TempDict = {}
-                TempDict = json.loads(data)
-                HealthStr = TempDict["Monitor"][0]["Generator Monitor Stats"][0]["Monitor Health"]
-                if HealthStr != LastMonitorHealth:
-                    LastMonitorHealth = HealthStr
-                    if HealthStr.lower() == "ok":
-                        SetGPIO(ER_GENMON, GPIO.LOW)
-                    else:
-                        SetGPIO(ER_GENMON, GPIO.HIGH)
+                self.UpdateGeneratorState()
             except Exception as e1:
-                log.error("Error getting monitor health: " + str(e1))
-            # get Internet Status
-            try:
-                # only check this every 20 seconds
-                TimeNow = datetime.datetime.now()
-                if (TimeNow - TimeUpdated).total_seconds() > 20:
-                    TimeUpdated = TimeNow
-                    console.info("Updating internet status: " + str((TimeUpdated)))
-                    data = MyClientInterface.ProcessMonitorCommand("generator: network_status")
-                    if data != LastNetStatus:
-                        LastNetStatus = data
-                        if data.lower() == "ok":
-                            SetGPIO(ER_INTERNET, GPIO.LOW)
-                        else:
-                            SetGPIO(ER_INTERNET, GPIO.HIGH)
+                self.LogErrorLine("Error updating generator state: " + str(e1))
 
-            except Exception as e1:
-                log.error("Error getting internet status: " + str(e1))
+            # monitor health and CPU temp both come from the same monitor data
+            MonitorData = self.GetMonitorData()
+            self.UpdateMonitorHealth(MonitorData)
+            self.UpdateInternetStatus()
+            self.UpdateCPUTemp(MonitorData)
+            self.UpdateExternalSignal()
 
-            try:
-                 if ER_PITEMP != 0 and CPU_THRESHOLD_TEMP != 0:
-                    data = MyClientInterface.ProcessMonitorCommand("generator: monitor_json")
-                    TempDict = {}
-                    TempDict = json.loads(data)
-                    CPUTempStr = TempDict["Monitor"][2]["Platform Stats"][0]["CPU Temperature"]
-                    CPUTempStr = removeAlpha(CPUTempStr)
-                    if CPUTempStr != LastCPUTemp:
-                        LastCPUTemp = CPUTempStr
-                        if float(CPUTempStr) < CPU_THRESHOLD_TEMP:
-                            LogDebug("CPU Temp in Range: " + CPUTempStr)
-                            SetGPIO(ER_PITEMP, GPIO.LOW)
-                        else:
-                            LogDebug("CPU Temp is HIGH: "  + CPUTempStr)
-                            SetGPIO(ER_PITEMP, GPIO.HIGH)
-            except Exception as e1:
-                log.error("Error checking pi CPU temp status: " + str(e1))
+            if self.WaitForExit("GPIOThread", float(self.PollTime)):
+                return
 
-            try:
-                if PIN_EXTERNAL_SIGNAL != 0:
-                    if IsTimeTriggered(on_state = True):
-                        if external_pin_state == None or external_pin_state == False:
-                            LogDebug("External Pin State set to ON")
-                            external_pin_state = True
-                        SetGPIO(PIN_EXTERNAL_SIGNAL, GPIO.HIGH)
-                    if IsTimeTriggered(off_state = True):
-                        if external_pin_state == None or external_pin_state == True:
-                            LogDebug("External Pin State set to OFF")
-                            external_pin_state = False
-                        SetGPIO(PIN_EXTERNAL_SIGNAL, GPIO.LOW)
-            except Exception as e1:
-                log.error("Error in external pin signal: " + str(e1))
-            time.sleep(3)
+    # ----------GenGPIO::SignalClose---------------------------------------------
+    def SignalClose(self, signum, frame):
 
-    except Exception as e1:
-        log.error("Error: " + str(e1))
-        console.error("Error: " + str(e1))
+        self.Close()
+        sys.exit(0)
+
+    # ----------GenGPIO::Close---------------------------------------------------
+    def Close(self):
+
+        try:
+            if "GPIOThread" in self.Threads:
+                self.KillThread("GPIOThread")
+        except Exception as e1:
+            self.LogErrorLine("Error stopping GPIO thread: " + str(e1))
+        try:
+            if self.GPIOInitialized:
+                GPIO.cleanup()
+        except Exception as e1:
+            self.LogErrorLine("Error in GPIO cleanup: " + str(e1))
+        try:
+            if self.Generator != None:
+                self.Generator.Close()
+        except Exception as e1:
+            self.LogErrorLine("Error closing generator client: " + str(e1))
+
+
+# -------------------------------------------------------------------------------
+if __name__ == "__main__":
+
+    (
+        console,
+        ConfigFilePath,
+        address,
+        port,
+        loglocation,
+        log,
+    ) = MySupport.SetupAddOnProgram("gengpio")
+
+    GenGPIOInstance = GenGPIO(
+        log=log,
+        loglocation=loglocation,
+        ConfigFilePath=ConfigFilePath,
+        host=address,
+        port=port,
+        console=console,
+    )
+
+    while True:
+        time.sleep(0.5)
+
+    sys.exit(1)

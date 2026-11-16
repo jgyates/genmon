@@ -23,12 +23,13 @@ try:
     if os.path.isdir(os.path.join(parent_root, "genmonlib")):
         sys.path.insert(1, parent_root)
 
-    from genmonlib.myconfig import MyConfig
-    from genmonlib.mylog import SetupLogger
     from genmonlib.myclient import ClientInterface
+    from genmonlib.mycommon import MyCommon
+    from genmonlib.myconfig import MyConfig
     from genmonlib.mymsgqueue import MyMsgQueue
     from genmonlib.mynotify import GenNotify
     from genmonlib.mysupport import MySupport
+    from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
     print(
         "\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n"
@@ -49,167 +50,239 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-# ----------  Signal Handler ----------------------------------------------------
-def signal_handler(signal, frame):
 
-    try:
-        GenNotify.Close()
-        Queue.Close()
-    except Exception as e1:
-        log.error("signal_handler: " + str(e1))
+# ------------ GenSMS class -----------------------------------------------------
+class GenSMS(MySupport):
 
-    sys.exit(0)
+    # ------------ GenSMS::init--------------------------------------------------
+    def __init__(
+        self,
+        log=None,
+        loglocation=ProgramDefaults.LogPath,
+        ConfigFilePath=MyCommon.DefaultConfPath,
+        host=ProgramDefaults.LocalHost,
+        port=ProgramDefaults.ServerPort,
+        console=None,
+    ):
 
+        super(GenSMS, self).__init__()
 
-# ----------  OnRun -------------------------------------------------------------
-def OnRun(Active):
+        self.LogFileName = os.path.join(loglocation, "gensms.log")
+        # log errors in this module to a file
+        self.log = log
+        self.console = console
 
-    if Active:
-        console.info("Generator Running")
-        Queue.SendMessage("Generator Running")
-    else:
-        console.info("Generator Running End")
+        self.MonitorAddress = host
+        self.debug = False
+        self.SiteName = None
+        self.ToNumberList = []
+        self.Generator = None
+        self.Queue = None
+        self.Notify = None
 
+        if self.MonitorAddress != None:
+            self.MonitorAddress = self.MonitorAddress.strip()
 
-# ----------  OnRunManual -------------------------------------------------------
-def OnRunManual(Active):
+        if self.MonitorAddress == None or not len(self.MonitorAddress):
+            self.MonitorAddress = ProgramDefaults.LocalHost
 
-    if Active:
-        console.info("Generator Running in Manual Mode")
-        Queue.SendMessage("Generator Running in Manual Mode")
-    else:
-        console.info("Generator Running in Manual Mode End")
+        configfile = os.path.join(ConfigFilePath, "gensms.conf")
+        try:
+            self.config = MyConfig(filename=configfile, section="gensms", log=self.log)
 
+            self.AccountSID = self.config.ReadValue("accountsid", default="")
+            self.AuthToken = self.config.ReadValue("authtoken", default="")
+            to_number = self.config.ReadValue("to_number", default="")
+            self.FromNumber = self.config.ReadValue("from_number", default="")
+            self.debug = self.config.ReadValue("debug", return_type=bool, default=False)
 
-# ----------  OnExercise --------------------------------------------------------
-def OnExercise(Active):
+            # to_number may contain multiple recipients separated by commas
+            self.ToNumberList = [
+                number.strip() for number in to_number.split(",") if len(number.strip())
+            ]
 
-    if Active:
-        console.info("Generator Exercising")
-        Queue.SendMessage("Generator Exercising")
-    else:
-        console.info("Generator Exercising End")
+            if (
+                self.AccountSID == ""
+                or self.AuthToken == ""
+                or not len(self.ToNumberList)
+                or self.FromNumber == ""
+            ):
+                self.LogError("Missing parameter in " + configfile)
+                self.LogConsole("Missing parameter in " + configfile)
+                sys.exit(1)
 
+        except Exception as e1:
+            self.LogErrorLine("Error reading " + configfile + ": " + str(e1))
+            self.LogConsole("Error reading " + configfile + ": " + str(e1))
+            sys.exit(1)
 
-# ----------  OnReady -----------------------------------------------------------
-def OnReady(Active):
-
-    if Active:
-        console.info("Generator Ready")
-        Queue.SendMessage("Generator Ready")
-    else:
-        console.info("Generator Ready End")
-
-
-# ----------  OnOff -------------------------------------------------------------
-def OnOff(Active):
-
-    if Active:
-        console.info("Generator Off")
-        Queue.SendMessage("Generator Off")
-    else:
-        console.info("Generator Off End")
-
-
-# ----------  OnManual ----------------------------------------------------------
-def OnManual(Active):
-
-    if Active:
-        console.info("Generator Manual")
-        Queue.SendMessage("Generator Manual")
-    else:
-        console.info("Generator Manual End")
-
-
-# ----------  OnAlarm -----------------------------------------------------------
-def OnAlarm(Active):
-
-    if Active:
-        console.info("Generator Alarm")
-        Queue.SendMessage("Generator Alarm")
-    else:
-        console.info("Generator Alarm End")
-
-
-# ----------  OnService ---------------------------------------------------------
-def OnService(Active):
-
-    if Active:
-        console.info("Generator Service Due")
-        Queue.SendMessage("Generator Service Due")
-    else:
-        console.info("Generator Service Due End")
-
-
-# ----------  OnUtilityChange ---------------------------------------------------
-def OnUtilityChange(Active):
-
-    if Active:
-        console.info("Utility Service is Down")
-        Queue.SendMessage("Utility Service is Down")
-    else:
-        Queue.SendMessage("Utility Service is Up")
-        console.info("Utility Service is Up")
-
-
-# ----------  OnSoftwareUpdate --------------------------------------------------
-def OnSoftwareUpdate(Active):
-
-    if Active:
-        console.info("Software Update Available")
-        Queue.SendMessage("Software Update Available")
-    else:
-        Queue.SendMessage("Software Is Up To Date")
-        console.info("Software Is Up To Date")
-
-
-# ----------  OnSystemHealth ----------------------------------------------------
-def OnSystemHealth(Notice):
-    Queue.SendMessage("System Health : " + Notice)
-    console.info("System Health : " + Notice)
-
-
-# ----------  OnFuelState -------------------------------------------------------
-def OnFuelState(Active):
-    if Active:  # True is OK
-        console.info("Fuel Level is OK")
-        Queue.SendMessage("Fuel Level is OK")
-    else:  # False = Low
-        Queue.SendMessage("Fuel Level is Low")
-        console.info("Fuel Level is Low")
-
-
-# ----------  OnPiState ---------------------------------------------------------
-def OnPiState(Notice):
-    Queue.SendMessage("Pi Health : " + Notice)
-    console.info("Pi Health : " + Notice)
-
-
-# ----------  SendNotice --------------------------------------------------------
-def SendNotice(Message):
-
-    try:
-
-        if sitename != None and len(sitename):
-            Message = sitename + ": " + Message
-
-        client = Client(account_sid, auth_token)
-
-        # send to multiple recipient(s)
-        for recipient in to_number_list:
-            recipient = recipient.strip()
-            message = client.messages.create(
-                to=recipient, from_=from_number, body=Message
+        try:
+            self.Generator = ClientInterface(
+                host=self.MonitorAddress, port=port, log=self.log
             )
-            console.info(message.sid)
-        return True
-    except Exception as e1:
-        log.error("Error: " + str(e1))
-        console.error("Error: " + str(e1))
-        return False
+            self.SiteName = self.Generator.ProcessMonitorCommand(
+                "generator: getsitename"
+            )
+
+            self.Queue = MyMsgQueue(
+                config=self.config, log=self.log, callback=self.SendNotice
+            )
+
+            self.Notify = GenNotify(
+                host=self.MonitorAddress,
+                port=port,
+                onready=self.OnReady,
+                onexercise=self.OnExercise,
+                onrun=self.OnRun,
+                onrunmanual=self.OnRunManual,
+                onalarm=self.OnAlarm,
+                onservice=self.OnService,
+                onoff=self.OnOff,
+                onmanual=self.OnManual,
+                onutilitychange=self.OnUtilityChange,
+                onsoftwareupdate=self.OnSoftwareUpdate,
+                onsystemhealth=self.OnSystemHealth,
+                onfuelstate=self.OnFuelState,
+                onpistate=self.OnPiState,
+                log=self.log,
+                loglocation=loglocation,
+                console=self.console,
+                config=self.config,
+            )
+
+            signal.signal(signal.SIGTERM, self.SignalClose)
+            signal.signal(signal.SIGINT, self.SignalClose)
+
+        except Exception as e1:
+            self.LogErrorLine("Error in GenSMS init: " + str(e1))
+            self.LogConsole("Error in GenSMS init: " + str(e1))
+            self.Close()
+            sys.exit(1)
+
+    # ----------  GenSMS::SendNotice --------------------------------------------
+    # called by the message queue, return False to have the queue retry
+    def SendNotice(self, Message):
+
+        try:
+            if self.SiteName != None and len(self.SiteName):
+                Message = self.SiteName + ": " + Message
+
+            client = Client(self.AccountSID, self.AuthToken)
+
+            # send to multiple recipient(s)
+            for recipient in self.ToNumberList:
+                message = client.messages.create(
+                    to=recipient, from_=self.FromNumber, body=Message
+                )
+                self.LogConsole(message.sid)
+                self.LogDebug("Sent to " + recipient + ": " + Message)
+            return True
+        except Exception as e1:
+            self.LogErrorLine("Error in SendNotice: " + str(e1))
+            self.LogConsole("Error in SendNotice: " + str(e1))
+            return False
+
+    # ----------  GenSMS::QueueNotice -------------------------------------------
+    def QueueNotice(self, Message):
+
+        self.LogConsole(Message)
+        self.Queue.SendMessage(Message)
+
+    # ----------  GenSMS::NotifyState -------------------------------------------
+    # common handler for simple on / off state callbacks
+    def NotifyState(self, Active, Message):
+
+        if Active:
+            self.QueueNotice(Message)
+        else:
+            self.LogConsole(Message + " End")
+
+    # ----------  GenSMS::OnRun -------------------------------------------------
+    def OnRun(self, Active):
+        self.NotifyState(Active, "Generator Running")
+
+    # ----------  GenSMS::OnRunManual -------------------------------------------
+    def OnRunManual(self, Active):
+        self.NotifyState(Active, "Generator Running in Manual Mode")
+
+    # ----------  GenSMS::OnExercise --------------------------------------------
+    def OnExercise(self, Active):
+        self.NotifyState(Active, "Generator Exercising")
+
+    # ----------  GenSMS::OnReady -----------------------------------------------
+    def OnReady(self, Active):
+        self.NotifyState(Active, "Generator Ready")
+
+    # ----------  GenSMS::OnOff -------------------------------------------------
+    def OnOff(self, Active):
+        self.NotifyState(Active, "Generator Off")
+
+    # ----------  GenSMS::OnManual ----------------------------------------------
+    def OnManual(self, Active):
+        self.NotifyState(Active, "Generator Manual")
+
+    # ----------  GenSMS::OnAlarm -----------------------------------------------
+    def OnAlarm(self, Active):
+        self.NotifyState(Active, "Generator Alarm")
+
+    # ----------  GenSMS::OnService ---------------------------------------------
+    def OnService(self, Active):
+        self.NotifyState(Active, "Generator Service Due")
+
+    # ----------  GenSMS::OnUtilityChange ---------------------------------------
+    def OnUtilityChange(self, Active):
+
+        if Active:
+            self.QueueNotice("Utility Service is Down")
+        else:
+            self.QueueNotice("Utility Service is Up")
+
+    # ----------  GenSMS::OnSoftwareUpdate --------------------------------------
+    def OnSoftwareUpdate(self, Active):
+
+        if Active:
+            self.QueueNotice("Software Update Available")
+        else:
+            self.QueueNotice("Software Is Up To Date")
+
+    # ----------  GenSMS::OnSystemHealth ----------------------------------------
+    def OnSystemHealth(self, Notice):
+        self.QueueNotice("System Health : " + Notice)
+
+    # ----------  GenSMS::OnFuelState -------------------------------------------
+    def OnFuelState(self, Active):
+
+        if Active:  # True is OK
+            self.QueueNotice("Fuel Level is OK")
+        else:  # False = Low
+            self.QueueNotice("Fuel Level is Low")
+
+    # ----------  GenSMS::OnPiState ---------------------------------------------
+    def OnPiState(self, Notice):
+        self.QueueNotice("Pi Health : " + Notice)
+
+    # ----------GenSMS::SignalClose----------------------------------------------
+    def SignalClose(self, signum, frame):
+
+        self.Close()
+        sys.exit(0)
+
+    # ----------GenSMS::Close----------------------------------------------------
+    def Close(self):
+
+        for name, item in [
+            ("GenNotify", self.Notify),
+            ("message queue", self.Queue),
+            ("generator client", self.Generator),
+        ]:
+            try:
+                if item != None:
+                    item.Close()
+            except Exception as e1:
+                self.LogErrorLine("Error closing " + name + ": " + str(e1))
 
 
-# ------------------- Command-line interface for gengpio ------------------------
+# -------------------------------------------------------------------------------
 if __name__ == "__main__":
 
     (
@@ -221,84 +294,16 @@ if __name__ == "__main__":
         log,
     ) = MySupport.SetupAddOnProgram("gensms")
 
-    # Set the signal handler
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
+    GenSMSInstance = GenSMS(
+        log=log,
+        loglocation=loglocation,
+        ConfigFilePath=ConfigFilePath,
+        host=address,
+        port=port,
+        console=console,
+    )
 
-    try:
+    while True:
+        time.sleep(0.5)
 
-        config = MyConfig(
-            filename=os.path.join(ConfigFilePath, "gensms.conf"),
-            section="gensms",
-            log=log,
-        )
-
-        account_sid = config.ReadValue("accountsid", default="")
-        auth_token = config.ReadValue("authtoken", default="")
-        to_number = config.ReadValue("to_number", default="")
-        from_number = config.ReadValue("from_number", default="")
-
-        to_number_list = to_number.split(",")
-
-        if (
-            account_sid == ""
-            or auth_token == ""
-            or to_number == ""
-            or from_number == ""
-        ):
-            log.error(
-                "Missing parameter in " + os.path.join(ConfigFilePath, "gensms.conf")
-            )
-            console.error(
-                "Missing parameter in " + os.path.join(ConfigFilePath, "gensms.conf")
-            )
-            sys.exit(1)
-
-    except Exception as e1:
-        log.error(
-            "Error reading "
-            + os.path.join(ConfigFilePath, "gensms.conf")
-            + ": "
-            + str(e1)
-        )
-        console.error(
-            "Error reading "
-            + os.path.join(ConfigFilePath, "gensms.conf")
-            + ": "
-            + str(e1)
-        )
-        sys.exit(1)
-    try:
-
-        Generator = ClientInterface(host=address, port=port, log=log)
-        sitename = Generator.ProcessMonitorCommand("generator: getsitename")
-        Queue = MyMsgQueue(config=config, log=log, callback=SendNotice)
-
-        GenNotify = GenNotify(
-            host=address,
-            port=port,
-            onready=OnReady,
-            onexercise=OnExercise,
-            onrun=OnRun,
-            onrunmanual=OnRunManual,
-            onalarm=OnAlarm,
-            onservice=OnService,
-            onoff=OnOff,
-            onmanual=OnManual,
-            onutilitychange=OnUtilityChange,
-            onsoftwareupdate=OnSoftwareUpdate,
-            onsystemhealth=OnSystemHealth,
-            onfuelstate=OnFuelState,
-            onpistate=OnPiState,
-            log=log,
-            loglocation=loglocation,
-            console=console,
-            config=config,
-        )
-
-        while True:
-            time.sleep(1)
-
-    except Exception as e1:
-        log.error("Error: " + str(e1))
-        console.error("Error: " + str(e1))
+    sys.exit(1)
