@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 - added remote alarm reset for Power Zone 200. thanks @karl-pizzolatto for the data and testing
 - Added alarm log for PZ200. Only 10 log events are stored in the controller.
 - Add the ability to extend the outage log past the default of 100 entries
-- Added remote exericse button for supported controllers (Evo/Nexus)
+- Added remote exercise button for supported controllers (Evo/Nexus)
 - Fixed issue with Evo Liquid Cooled controllers with older firmware that cause a timeout when reading three specific registers 
 - Corrected one issue with genhomeassistant.py (thanks @ahrens26)
 - Improvment to web connectivity (thanks @skipfire)
@@ -19,7 +19,7 @@ All notable changes to this project will be documented in this file.
 - Improved alarm handling for Evo 2.0 and Evo LC 4.5L
 - Fixed bug with Modbus TCP support
 - Fixed bug with custom controller handling some types of ieee754 values
-- misc security improvemnts
+- misc security improvements
 - Added code hash value to About page
 - Local LAN socket access to genmon is now disabled by default if authentication is enabled in the web interface. If you want enable this then look at the advanced seeting named "Allow LAN access to genmon" 
 - remove numerous python 2.x references in the code that are no longer used
@@ -58,7 +58,7 @@ All notable changes to this project will be documented in this file.
 - Minor bug fix for temperature graphs
 - Added option to not divided utility volts for 3 phase Evoltuion Air Cooled units.
 - Added TCP keep alive option
-- Added setting in Web UI to adjust light / dark theme based on broswer settings Thanks @soumya92
+- Added setting in Web UI to adjust light / dark theme based on browser settings Thanks @soumya92
 - Performance improvement for temperature graphs, Thanks @MichaelB2018
 - New add on for Otodata Bluetooth propane tank sensor, Thanks @bdwilson
 - Update to change the web app cache priority that may fix some networks with slow loading web pages
