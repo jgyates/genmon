@@ -441,6 +441,8 @@ function backupgenmon() {
     mkdir genmon_backup
 
     sudo cp -r "$config_path"*  ./genmon_backup
+    # PIDs of running programs, not settings
+    sudo rm -f ./genmon_backup/genloader.pids
     sudo tar -zcvf genmon_backup.tar.gz genmon_backup/
     sudo rm -r genmon_backup
     echo "Done."

@@ -12,6 +12,7 @@ import collections
 import configparser
 import getopt
 import importlib
+import json
 import importlib.util
 import os
 import re
@@ -28,6 +29,7 @@ except ImportError:  # Python 3.7, which genmon no longer supports (see PythonSu
 
 try:
     from genmonlib.myconfig import MyConfig
+    from genmonlib.myfileutil import AtomicWrite
     from genmonlib.mylog import SetupLogger
     from genmonlib.mysupport import MySupport
     from genmonlib.program_defaults import ProgramDefaults
@@ -68,6 +70,8 @@ class Loader(MySupport):
         self.version = None
 
         self.ConfigFilePath = ConfigFilePath
+        # PIDs of the started modules, see ReadPIDs
+        self.PIDFile = os.path.join(self.ConfigFilePath, "genloader.pids")
 
         self.ConfigFileName = "genloader.conf"
         # log errors in this module to a file
@@ -1099,14 +1103,14 @@ class Loader(MySupport):
                 else:
                     TempDict["postloaddelay"] = 0
 
-                if self.config.HasOption("pid"):
-                    TempDict["pid"] = self.config.ReadValue(
-                        "pid", return_type=int, default=0, NoLog=True
-                    )
-                else:
-                    TempDict["pid"] = 0
-
+                TempDict["pid"] = 0
                 self.CachedConfig[SectionName] = TempDict
+
+            # the PIDs of the running modules
+            PIDs = self.MovePIDsFromConfig(self.ReadPIDs())
+            for SectionName, PID in PIDs.items():
+                if SectionName in self.CachedConfig:
+                    self.CachedConfig[SectionName]["pid"] = PID
             return True
 
         except Exception as e1:
@@ -1383,21 +1387,82 @@ class Loader(MySupport):
         return any(os.path.basename(arg) == modulename for arg in CommandLine)
 
     # ---------------------------------------------------------------------------
+    # The PIDs of the started modules are kept in genloader.pids in the config
+    # folder ({"genmon": 1234, ...}), not in genloader.conf, so genloader.conf
+    # only changes when its settings do. Returns None if the file does not exist.
+    def ReadPIDs(self):
+
+        if not os.path.isfile(self.PIDFile):
+            return None
+        try:
+            with open(self.PIDFile) as f:
+                Data = json.load(f)
+            PIDs = {}
+            for Section, PID in Data.items():
+                try:
+                    PIDs[str(Section)] = int(PID)
+                except (TypeError, ValueError):
+                    pass
+            return PIDs
+        except Exception as e1:
+            self.LogError("Error reading " + self.PIDFile + ": " + str(e1))
+            return {}
+
+    # ---------------------------------------------------------------------------
+    def WritePIDs(self, PIDs):
+
+        try:
+            AtomicWrite(self.PIDFile, json.dumps(PIDs, indent=1, sort_keys=True) + "\n")
+            return True
+        except Exception as e1:
+            self.LogError("Error writing " + self.PIDFile + ": " + str(e1))
+            return False
+
+    # ---------------------------------------------------------------------------
+    # Older versions kept each module's PID as "pid" in genloader.conf. If
+    # genloader.pids does not exist yet, they are moved there; otherwise (e.g.
+    # an old genloader.conf was restored) the old entries are only removed.
+    # Returns the PIDs to use.
+    def MovePIDsFromConfig(self, PIDs):
+
+        try:
+            OldPIDs = {}
+            for Section in self.config.GetSections():
+                self.config.SetSection(Section)
+                if self.config.HasOption("pid"):
+                    OldPIDs[Section] = self.config.ReadValue(
+                        "pid", return_type=int, default=0, NoLog=True
+                    )
+            if PIDs is None:
+                PIDs = {Section: PID for Section, PID in OldPIDs.items() if PID}
+                if not self.WritePIDs(PIDs):
+                    return PIDs  # keep the old entries, try again next time
+                if len(OldPIDs):
+                    self.LogError("Moved the module PIDs from genloader.conf to " + self.PIDFile)
+            elif len(OldPIDs):
+                self.LogError("Removed old PID entries from genloader.conf")
+            for Section in OldPIDs:
+                self.config.WriteValue("pid", "", remove=True, section=Section)
+            return PIDs
+        except Exception as e1:
+            self.LogInfo("Error in MovePIDsFromConfig: " + str(e1), LogLine=True)
+            return PIDs or {}
+
+    # ---------------------------------------------------------------------------
+    # Save (or with pid "" forget) the PID of a module
     def UpdatePID(self, modulename, pid=None):
 
         try:
-            filename = os.path.splitext(modulename)[0]  # remove extension
-            if not self.config.SetSection(filename):
-                self.LogError(
-                    "Error settting section name in UpdatePID: " + str(filename)
-                )
-                return False
-            self.config.WriteValue("pid", str(pid))
-            return True
+            Section = os.path.splitext(modulename)[0]  # remove extension
+            PIDs = self.ReadPIDs() or {}
+            if pid in (None, "", 0):
+                PIDs.pop(Section, None)
+            else:
+                PIDs[Section] = int(pid)
+            return self.WritePIDs(PIDs)
         except Exception as e1:
             self.LogInfo("Error writing PID for " + modulename + " : " + str(e1))
             return False
-        return True
 
 
 # ------------------main---------------------------------------------------------

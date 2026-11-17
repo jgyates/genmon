@@ -21,6 +21,7 @@
 
 import ast
 import glob
+import json
 import logging
 import re
 import os
@@ -78,6 +79,7 @@ class GenLoaderTests(unittest.TestCase):
         self.loader.bSystemIsNotLinux = False
         self.loader.bSystemIsWindows = False
         self.loader.ConfigFilePath = "/etc/genmon/"
+        self.loader.PIDFile = "/nonexistent/genloader.pids"
 
     def test_python_version(self):
         with mock.patch.object(genloader.sys, "version_info", (3, 9, 2)):
@@ -356,6 +358,7 @@ class GenLoaderConfigTests(unittest.TestCase):
         loader.log, self.log = make_logger("conf_log")
         loader.console, _ = make_logger("conf_console")
         loader.ConfigFilePath = self.folder
+        loader.PIDFile = os.path.join(self.folder, "genloader.pids")
         loader.ConfigFileName = "genloader.conf"
         loader.configfile = os.path.join(self.folder, "genloader.conf")
         loader.ConfPath = os.path.join(REPO_DIR, "conf")
@@ -484,6 +487,78 @@ class GenLoaderConfigTests(unittest.TestCase):
         open(os.path.join(self.folder, "templogs", "templog_test.csv"), "w").close()
         self.loader.Maintenance()
         self.assertTrue(os.path.isfile(os.path.join(self.folder, "sensordata", "sensor_test.csv")))
+
+    # ---- PIDs (genloader.pids) --------------------------------------------
+    def add_option(self, section, option, value):
+        with open(self.loader.configfile) as f:
+            text = f.read()
+        text = text.replace("[" + section + "]\n", "[" + section + "]\n" + option + " = " + value + "\n", 1)
+        with open(self.loader.configfile, "w") as f:
+            f.write(text)
+        self.loader.config = self.MyConfig(filename=self.loader.configfile, section="genmon",
+                                           log=self.loader.log)
+
+    def conf_text(self):
+        with open(self.loader.configfile) as f:
+            return f.read()
+
+    def pid_file(self):
+        with open(self.loader.PIDFile) as f:
+            return json.load(f)
+
+    def test_pids_are_not_saved_in_genloader_conf(self):
+        self.loader.GetConfig()
+        before = self.conf_text()
+        self.assertTrue(self.loader.UpdatePID("genslack.py", 1234))
+        self.assertTrue(self.loader.UpdatePID("genmon.py", 99))
+        self.assertEqual(self.pid_file(), {"genmon": 99, "genslack": 1234})
+        self.assertTrue(self.loader.UpdatePID("genslack.py", ""))
+        self.assertEqual(self.pid_file(), {"genmon": 99})
+        self.assertEqual(self.conf_text(), before)
+
+    def test_old_pids_moved_from_genloader_conf(self):
+        self.add_option("genslack", "pid", "1234")
+        self.add_option("genmon", "pid", "")
+        self.assertTrue(self.loader.GetConfig())
+        self.assertEqual(self.loader.CachedConfig["genslack"]["pid"], 1234)
+        self.assertEqual(self.loader.CachedConfig["genmon"]["pid"], 0)
+        self.assertEqual(self.pid_file(), {"genslack": 1234})
+        self.assertNotIn("pid =", self.conf_text())
+        self.assertTrue(any(m.startswith("Moved the module PIDs") for m in self.log.messages))
+
+    def test_restored_genloader_conf_with_pids(self):
+        # genloader.pids exists, the old entries in genloader.conf are not used
+        with open(self.loader.PIDFile, "w") as f:
+            json.dump({"genserv": 55}, f)
+        self.add_option("genserv", "pid", "99")
+        self.assertTrue(self.loader.GetConfig())
+        self.assertEqual(self.loader.CachedConfig["genserv"]["pid"], 55)
+        self.assertEqual(self.pid_file(), {"genserv": 55})
+        self.assertNotIn("pid =", self.conf_text())
+        self.assertIn("Removed old PID entries from genloader.conf", self.log.messages)
+
+    def test_damaged_pid_file(self):
+        with open(self.loader.PIDFile, "w") as f:
+            f.write("not json")
+        self.assertTrue(self.loader.GetConfig())
+        self.assertEqual(self.loader.CachedConfig["genmon"]["pid"], 0)
+        self.assertTrue(self.loader.UpdatePID("genmon.py", 77))
+        self.assertEqual(self.pid_file(), {"genmon": 77})
+
+    def test_start_then_stop_uses_pid_file(self):
+        self.loader.GetConfig()
+        self.loader.HardStop = False
+        with mock.patch.object(genloader.subprocess, "Popen", return_value=FakeProcess()):
+            self.assertTrue(self.loader.LoadModule(REPO_DIR, "genserv.py", args=""))
+        self.assertEqual(self.pid_file(), {"genserv": 4321})
+        self.loader.GetConfig()  # the next genloader run
+        self.assertEqual(self.loader.CachedConfig["genserv"]["pid"], 4321)
+        self.loader.LoadOrder = ["genserv"]
+        with mock.patch.object(self.loader, "PIDIsModule", return_value=True), \
+                mock.patch.object(genloader, "Popen", return_value=FakeProcess()) as popen:
+            self.assertTrue(self.loader.StopModules())
+        self.assertEqual(popen.call_args[0][0], ["kill", "4321"])
+        self.assertEqual(self.pid_file(), {})
 
     # ---- ValidateConfig ---------------------------------------------------
     def test_validate_config_copies_missing_conf_files(self):
