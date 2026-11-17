@@ -2,7 +2,9 @@
 # -------------------------------------------------------------------------------
 #    FILE: test_genloader.py
 # PURPOSE: Tests for genloader.py: reading and checking genloader.conf, the
-#          load order, which libraries are needed, starting and stopping
+#          load order, which libraries are needed and whether they are
+#          installed, the list of libraries compared with requirements.txt
+#          and the imports in the programs, starting and stopping
 #          modules, running pip and other commands, replacing genloader.conf,
 #          and the one time file move.
 #
@@ -17,8 +19,10 @@
 #
 # -------------------------------------------------------------------------------
 
+import ast
 import glob
 import logging
+import re
 import os
 import shutil
 import subprocess
@@ -89,6 +93,59 @@ class GenLoaderTests(unittest.TestCase):
             with self.subTest(platform=platform):
                 with mock.patch.object(genloader.sys, "platform", platform):
                     self.assertEqual(genloader.Loader.IsWindows(), expected)
+
+    # ---- LibraryIsInstalled -----------------------------------------------
+    def test_parse_version(self):
+        for text, expected in [("7.1.21", (7, 1, 21)), ("2.0.0rc1", (2, 0, 0)),
+                               ("1.6.1.post0", (1, 6, 1)), ("unknown", None)]:
+            with self.subTest(version=text):
+                self.assertEqual(genloader.Loader.ParseVersion(text), expected)
+
+    def test_installed_version(self):
+        with mock.patch.object(genloader.metadata, "version", return_value="1.2.3") as version:
+            self.assertEqual(genloader.Loader.InstalledVersion(
+                "bleson @ git+https://github.com/TheCellule/python-bleson"), "1.2.3")
+        version.assert_called_once_with("bleson")
+        # a name pip spells differently from the package information
+        dist = mock.Mock(version="24.2.1", metadata={"Name": "pyOpenSSL"})
+        with mock.patch.object(genloader.metadata, "version",
+                               side_effect=genloader.metadata.PackageNotFoundError("pyopenssl")), \
+                mock.patch.object(genloader.metadata, "distributions", return_value=[dist]):
+            self.assertEqual(genloader.Loader.InstalledVersion("pyopenssl"), "24.2.1")
+            self.assertIsNone(genloader.Loader.InstalledVersion("not_installed"))
+
+    def installed(self, found=True, version=None, needed=None, **kwargs):
+        spec = object() if found else None
+        with mock.patch.object(genloader.importlib.util, "find_spec", return_value=spec) as find, \
+                mock.patch.object(genloader.importlib, "import_module") as imp, \
+                mock.patch.object(genloader.Loader, "InstalledVersion", return_value=version):
+            result = self.loader.LibraryIsInstalled("pyotp", needed, installname="pyotp", **kwargs)
+        return result, find, imp
+
+    def test_library_is_installed(self):
+        self.assertTrue(self.installed()[0])
+        self.assertFalse(self.installed(found=False)[0])
+        # the library is found, not imported
+        _, find, imp = self.installed()
+        find.assert_called_once_with("pyotp")
+        imp.assert_not_called()
+
+    def test_library_version(self):
+        # pyotp has no __version__, so this was never checked before
+        self.assertTrue(self.installed(version="2.9.0", needed="2.3.0")[0])
+        self.assertFalse(self.installed(version="2.0.0", needed="2.3.0")[0])
+        self.assertIn("Need update on pyotp from 2.0.0 to 2.3.0", self.log.messages)
+        self.assertTrue(self.installed(version="2.3.0rc1", needed="2.3.0")[0])
+        # no package information: the version is not known, accept it
+        self.assertTrue(self.installed(version=None, needed="2.3.0")[0])
+
+    def test_library_test_import(self):
+        # ldap3 can be installed but fail to import (pyasn1 version)
+        result, find, imp = self.installed(testimport=True)
+        self.assertTrue(result)
+        imp.assert_called_once_with("pyotp")
+        with mock.patch.object(genloader.importlib, "import_module", side_effect=ImportError("x")):
+            self.assertFalse(self.loader.LibraryIsInstalled("ldap3", testimport=True))
 
     # ---- LoadModule ---------------------------------------------------------
     def start(self, args):
@@ -515,6 +572,111 @@ class GenLoaderConfigTests(unittest.TestCase):
         self.assertEqual(started, [self.loader.CachedConfig[m]["module"] for m in enabled])
         self.assertEqual(started[0], "genmon.py")
         self.assertIn("genslack.py", started)
+
+
+
+# -------------------------------------------------------------------------------
+class DependencyListTests(unittest.TestCase):
+    """genloader's list of libraries (GetDependencyRegistry), requirements.txt
+    (used by genmonmaint.sh) and the imports in the programs agree."""
+
+    # in genloader's list but not requirements.txt, and why
+    ONLY_GENLOADER = {
+        "fluids": "left out of requirements.txt on purpose (slow to build, fails on 32 bit "
+                  "trixie); genloader installs it when genmopeka is enabled",
+        "mopeka-pro-check": "only for genmopeka's use_old_lib option",
+    }
+    # in requirements.txt but not genloader's list, and why
+    ONLY_REQUIREMENTS = {
+        "flask-compress": "optional, genserv skips compression without it",
+        "configparser": "part of Python 3",
+    }
+    # libraries where the versions differ, and why
+    VERSION_DIFFERENCES = {
+        "pyotp": "genloader needs at least 2.3.0, requirements.txt installs the newest",
+    }
+    # imports that are not in genloader's list, and why
+    OTHER_IMPORTS = {
+        "requests": "installed with twilio and pyowm",
+        "cryptography": "installed with pyopenssl",
+        "werkzeug": "installed with flask",
+        "itsdangerous": "installed with flask",
+        "flask_compress": "optional, see flask-compress",
+        "RPi": "installed by genmonmaint.sh (rpi-lgpio or RPi.GPIO)",
+        "genmonext": "optional user extension",
+        "genservext": "optional user extension",
+    }
+
+    @staticmethod
+    def name(text):
+        # "bleson @ git+..." or "paho-mqtt==1.6.1" -> "bleson", "paho-mqtt"
+        return re.sub(r"[-_.]+", "-", re.split(r"[\s@=<>\[]", text.strip())[0]).lower()
+
+    @classmethod
+    def setUpClass(cls):
+        loader = genloader.Loader.__new__(genloader.Loader)
+        registry = loader.GetDependencyRegistry()
+        cls.dependencies = list(registry["base"])
+        for group in registry["addons"] + registry["features"]:
+            cls.dependencies += group["dependencies"]
+        cls.genloader = {cls.name(d["install"]): d["version"] for d in cls.dependencies}
+        cls.requirements = {}
+        with open(os.path.join(REPO_DIR, "requirements.txt")) as f:
+            for line in f:
+                line = line.split("#")[0].strip()
+                if line:
+                    version = line.split("==")[1].strip() if "==" in line else None
+                    cls.requirements[cls.name(line)] = version
+
+    def test_genloader_libraries_in_requirements(self):
+        for name in sorted(self.genloader):
+            with self.subTest(library=name):
+                if name not in self.ONLY_GENLOADER:
+                    self.assertIn(name, self.requirements)
+
+    def test_requirements_in_genloader(self):
+        for name in sorted(self.requirements):
+            with self.subTest(library=name):
+                if name not in self.ONLY_REQUIREMENTS:
+                    self.assertIn(name, self.genloader)
+
+    def test_versions_match(self):
+        for name in sorted(set(self.genloader) & set(self.requirements)):
+            with self.subTest(library=name):
+                if name not in self.VERSION_DIFFERENCES:
+                    self.assertEqual(self.genloader[name], self.requirements[name])
+
+    def test_explained_differences_are_current(self):
+        for name in self.ONLY_GENLOADER:
+            self.assertIn(name, self.genloader)
+            self.assertNotIn(name, self.requirements)
+        for name in self.ONLY_REQUIREMENTS:
+            self.assertIn(name, self.requirements)
+            self.assertNotIn(name, self.genloader)
+
+    def test_program_imports_are_installed(self):
+        # every library a program imports is in genloader's list (or explained)
+        known = {d["import"].split(".")[0] for d in self.dependencies} | set(self.OTHER_IMPORTS)
+        local = {os.path.splitext(os.path.basename(p))[0]
+                 for p in glob.glob(os.path.join(REPO_DIR, "*.py"))
+                 + glob.glob(os.path.join(REPO_DIR, "addon", "*.py"))} | {"genmonlib"}
+        stdlib = set(getattr(sys, "stdlib_module_names", ())) or None
+        if stdlib is None:
+            self.skipTest("needs Python 3.10 or later (sys.stdlib_module_names)")
+        programs = [os.path.join(REPO_DIR, n) for n in ["genmon.py", "genserv.py"]]
+        programs += sorted(glob.glob(os.path.join(REPO_DIR, "addon", "*.py")))
+        for path in programs:
+            with open(path) as f:
+                tree = ast.parse(f.read())
+            imports = set()
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    imports |= {a.name.split(".")[0] for a in node.names}
+                elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+                    imports.add(node.module.split(".")[0])
+            for module in sorted(imports - stdlib - local):
+                with self.subTest(program=os.path.basename(path), library=module):
+                    self.assertIn(module, known)
 
 
 if __name__ == "__main__":

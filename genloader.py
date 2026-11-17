@@ -11,12 +11,20 @@
 import collections
 import configparser
 import getopt
+import importlib
+import importlib.util
 import os
+import re
 import subprocess
 import sys
 import time
 from shutil import copyfile, move
 from subprocess import PIPE, Popen
+
+try:
+    from importlib import metadata
+except ImportError:  # Python 3.7, which genmon no longer supports (see PythonSupported)
+    metadata = None
 
 try:
     from genmonlib.myconfig import MyConfig
@@ -245,16 +253,22 @@ class Loader(MySupport):
         Version=None,
         LinuxOnly=False,
         MinPython=None,
+        TestImport=False,
     ):
 
         # ImportName is the module name used by importlib. InstallName is the
         # package name used by pip, which can differ (e.g. serial -> pyserial).
+        # Version is the minimum version (pip installs exactly that version if
+        # the installed one is older). TestImport imports the library to check
+        # it, instead of only finding it, for a library that can be installed
+        # but fail to import.
         return {
             "import": ImportName,
             "install": InstallName if InstallName != None else ImportName,
             "version": Version,
             "linuxonly": LinuxOnly,
             "minpython": MinPython,
+            "testimport": TestImport,
         }
 
     # ---------------------------------------------------------------------------
@@ -279,7 +293,8 @@ class Loader(MySupport):
                 self.LibraryDependency("pyotp", Version="2.3.0"),  # 2FA support
                 self.LibraryDependency("psutil"),  # process utilities
                 self.LibraryDependency("OpenSSL", "pyopenssl"),  # SSL
-                self.LibraryDependency("ldap3"),  # LDAP
+                # ldap3 fails to import with some pyasn1 versions, see CheckSystem
+                self.LibraryDependency("ldap3", TestImport=True),  # LDAP
             ],
             "addons": [
                 {
@@ -336,7 +351,10 @@ class Loader(MySupport):
                 {
                     "modules": ["genmopeka"],
                     "dependencies": [
-                        self.LibraryDependency("fluids", MinPython=(3, 6)),
+                        self.LibraryDependency("fluids"),
+                        self.LibraryDependency(
+                            "bleson", "bleson @ git+https://github.com/TheCellule/python-bleson"
+                        ),
                     ],
                 },
                 {
@@ -379,6 +397,20 @@ class Loader(MySupport):
                     },
                     "dependencies": [
                         self.LibraryDependency("zeroconf"),
+                    ],
+                },
+                {
+                    # mopeka_pro_check is only used by genmopeka's old library
+                    # option
+                    "modules": ["genmopeka"],
+                    "config": {
+                        "file": "genmopeka.conf",
+                        "section": "genmopeka",
+                        "option": "use_old_lib",
+                        "default": False,
+                    },
+                    "dependencies": [
+                        self.LibraryDependency("mopeka_pro_check"),
                     ],
                 },
                 {
@@ -495,7 +527,12 @@ class Loader(MySupport):
 
                 if not self.ShouldCheckLibrary(Module):
                     continue
-                if not self.LibraryIsInstalled(Module["import"], Module["version"]):
+                if not self.LibraryIsInstalled(
+                    Module["import"],
+                    Module["version"],
+                    installname=Module["install"],
+                    testimport=Module.get("testimport", False),
+                ):
                     self.LogInfo(
                         "Warning: required library "
                         + Module["install"]
@@ -686,27 +723,71 @@ class Loader(MySupport):
         return True
 
     # ---------------------------------------------------------------------------
-    def LibraryIsInstalled(self, libraryname, version = None):
+    # The leading numbers of a version, e.g. "2.0.0rc1" -> (2, 0, 0)
+    @staticmethod
+    def ParseVersion(value):
+
+        Match = re.match(r"\d+(\.\d+)*", str(value).strip())
+        if Match is None:
+            return None
+        return tuple(int(x) for x in Match.group(0).split("."))
+
+    # ---------------------------------------------------------------------------
+    # The installed version of a pip package, from the package information (the
+    # library is not imported). None if it can not be found.
+    @staticmethod
+    def InstalledVersion(installname):
+
+        if metadata is None:
+            return None
+        # "bleson @ git+https://..." -> "bleson"
+        Name = re.split(r"[\s@=<>\[]", installname.strip())[0]
+        try:
+            return metadata.version(Name)
+        except metadata.PackageNotFoundError:
+            pass
+        except Exception:
+            return None
+        # older Pythons do not match "pyopenssl" to "pyOpenSSL" or "-" to "_"
+        Wanted = re.sub(r"[-_.]+", "-", Name).lower()
+        try:
+            for Dist in metadata.distributions():
+                DistName = Dist.metadata["Name"] or ""
+                if re.sub(r"[-_.]+", "-", DistName).lower() == Wanted:
+                    return Dist.version
+        except Exception:
+            pass
+        return None
+
+    # ---------------------------------------------------------------------------
+    # True if the library is installed (and at least version, if given). The
+    # library is only found, not imported, unless testimport: importing every
+    # library on each start is slow on a Pi.
+    def LibraryIsInstalled(self, libraryname, version=None, installname=None, testimport=False):
 
         try:
-            import importlib
-
-            my_module = importlib.import_module(libraryname)
-
-            if version != None:
-                try:
-                    version_installed = tuple(int(x) for x in my_module.__version__.split('.'))
-                except Exception:
-                    # probably no version exported in this library
-                    return True
-                version_needed = tuple(int(x) for x in version.split('.'))
-                if version_installed < version_needed:
-                    self.LogError(f"Need update on {libraryname} from {version_installed} to {version_needed}")
-                    return False
-
-            return True
+            if testimport:
+                importlib.import_module(libraryname)
+            elif importlib.util.find_spec(libraryname) is None:
+                return False
         except Exception:
             return False
+
+        if version == None:
+            return True
+        Installed = self.InstalledVersion(installname or libraryname)
+        if Installed is None:
+            # e.g. installed by the OS package manager without package
+            # information, so the version is not known
+            return True
+        InstalledTuple = self.ParseVersion(Installed)
+        NeededTuple = self.ParseVersion(version)
+        if InstalledTuple is None or NeededTuple is None:
+            return True
+        if InstalledTuple < NeededTuple:
+            self.LogError("Need update on %s from %s to %s" % (libraryname, Installed, version))
+            return False
+        return True
 
     # ---------------------------------------------------------------------------
     def InstallLibrary(self, libraryname, update=False, version=None, uninstall=False):
