@@ -200,6 +200,39 @@ class MaintenanceCommandTests(SettingsTestCase):
 
 
 # -------------------------------------------------------------------------------
+class SettingsTableTests(SettingsTestCase):
+    """The settings tables in genmonlib/genservsettings.py."""
+
+    TYPES = ["string", "password", "int", "float", "boolean", "list"]
+
+    def test_advanced_settings_table(self):
+        instance = self.fixture.instance
+        table = self.fixture.module_globals["ADVANCED_SETTINGS"]
+        self.assertEqual(len(table), len({s.key for s in table}), "duplicate key")
+        for s in table:
+            with self.subTest(setting=s.key):
+                self.assertIn(s.type, self.TYPES)
+                self.assertIn(s.file, ["genmon", "mail"])
+                if s.type == "list":
+                    self.assertTrue(instance.SettingValue(s.bounds), "list without choices")
+                # a condition genserv does not know is never shown
+                self.assertIn(s.when, [None, "custom", "evo_nexus", "not_h100", "h100", "nexus",
+                                       "linux"])
+
+    def test_advanced_settings_shown_for_controller(self):
+        # the default test setup is an Evolution controller on Linux
+        keys = set(self.fixture.get_json("/cmd/get_advanced_settings"))
+        self.assertTrue({"unbalanced_capacity", "usenominallinevolts",
+                         "uselinuxwifisignalgauge"} <= keys)
+        self.assertFalse({"ignore_alarms", "usecalculatedpower", "nexus_legacy_freq"} & keys)
+        self.fixture.stop()
+        self.fixture = GenServFixture("open", settings={"controllertype": "h_100"}).start()
+        keys = set(self.fixture.get_json("/cmd/get_advanced_settings"))
+        self.assertIn("usecalculatedpower", keys)
+        self.assertFalse({"unbalanced_capacity", "usenominallinevolts", "ignore_alarms"} & keys)
+
+
+# -------------------------------------------------------------------------------
 class SnapshotTests(SettingsTestCase):
     def normalize(self, text):
         # temporary folders and random keys are different on every run

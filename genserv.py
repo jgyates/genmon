@@ -64,6 +64,12 @@ try:
     from genmonlib.mysupport import MySupport
     from genmonlib.myplatform import MyPlatform
     from genmonlib.program_defaults import ProgramDefaults
+    from genmonlib.genservsettings import (
+        ADVANCED_SETTINGS,
+        GENMON_DIR,
+        IMPORT_CONFIG_FILES,
+        Dynamic,
+    )
 
 except Exception as e1:
     print(
@@ -2652,701 +2658,76 @@ class GenServ(MySupport):
     # -------------------------------------------------------------------------------
     def ReadAdvancedSettingsFromFile(self):
 
+        return self.ReadSettingsTable(ADVANCED_SETTINGS, "ReadAdvancedSettingsFromFile")
+
+    # -------------------------------------------------------------------------------
+    # True if a setting with this "when" condition is shown (see genservsettings.py)
+    def SettingShown(self, when):
+
+        if when is None:
+            return True
+        if when == "custom":
+            return self.ControllerType == "custom"
+        if when == "evo_nexus":
+            return self.ControllerType == "generac_evo_nexus"
+        if when == "not_h100":
+            return self.ControllerType != "h_100"
+        if when == "h100":
+            return self.ControllerType == "h_100"
+        if when == "nexus":
+            return (self.ControllerType != "h_100"
+                    and "nexus" in self.GetControllerInfo("controller").lower())
+        if when == "linux":
+            return bool(self.GStartInfo.get("Linux", False))
+        self.LogError("Unknown setting condition: " + str(when))
+        return False
+
+    # -------------------------------------------------------------------------------
+    # The value of a Dynamic default or bounds (see genservsettings.py)
+    def SettingValue(self, value):
+
+        if not isinstance(value, Dynamic):
+            return value
+        if value is GENMON_DIR:
+            return os.path.dirname(os.path.realpath(__file__))
+        if value is IMPORT_CONFIG_FILES:
+            return self.GetImportConfigFileNames()
+        raise ValueError("Unknown setting value: " + value.name)
+
+    # -------------------------------------------------------------------------------
+    # Build a settings page from a table in genservsettings.py: the settings that
+    # are shown, each with its current value read from its config file
+    def ReadSettingsTable(self, table, caller):
+
+        Files = {
+            "genmon": (self.GENMON_CONFIG, self.GENMON_SECTION),
+            "mail": (self.MAIL_CONFIG, self.MAIL_SECTION),
+        }
         ConfigSettings = collections.OrderedDict()
         try:
-            # This option is not displayed as it will break the link between genmon and genserv
-            ConfigSettings["server_port"] = [
-                "int",
-                "Server Port",
-                5,
-                ProgramDefaults.ServerPort,
-                "",
-                "digits",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "server_port",
-            ]
-            # this option is not displayed as this will break the modbus comms, only for debugging
-            ConfigSettings["address"] = [
-                "string",
-                "Modbus slave address",
-                6,
-                "9d",
-                "",
-                0,
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "address",
-            ]
-            ConfigSettings["response_address"] = [
-                "string",
-                "Modbus slave transmit address",
-                7,
-                "",
-                "",
-                0,
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "response_address",
-            ]
-            ConfigSettings["additional_modbus_timeout"] = [
-                "float",
-                "Additional Modbus Timeout (sec)",
-                8,
-                "0.0",
-                "",
-                "number",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "additional_modbus_timeout",
-            ]
-
-            ConfigSettings["modbus_between_frame_delay"] = [
-                "float",
-                "Modbus Between Frame Delay (sec)",
-                8,
-                "0.0",
-                "",
-                "number",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "modbus_between_frame_delay",
-            ]
-            # Depricated, no longer needed
-            #ConfigSettings["use_modbus_fc4"] = [
-            #    "boolean",
-            #    "Use Modbus FC4 instead of FC3",
-            #    9,
-            #    False,
-            #    "",
-            #    0,
-            #    GENMON_CONFIG,
-            #    GENMON_SECTION,
-            #    "use_modbus_fc4",
-            #]
-            ConfigSettings["serial_rate"] = [
-                "int",
-                "Serial Data Rate",
-                10,
-                9600,
-                "",
-                "digits",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "serial_rate",
-            ]
-            ConfigSettings["serial_parity"] = [
-                "list",
-                "Serial Parity",
-                11,
-                "None",
-                "",
-                "None,Even,Odd",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "serial_parity",
-            ]
-            ConfigSettings["forceserialuse"] = [
-                "boolean",
-                "Force Use of Serial Port on Errors",
-                12,
-                False,
-                "",
-                0,
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "forceserialuse",
-            ]
-            ConfigSettings["allow_local_access"] = [
-                "boolean",
-                "Allow LAN access to genmon",
-                12,
-                False,
-                "",
-                "",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "allow_local_access",
-            ]
-
-            ConfigSettings["wait_for_init_seconds"] = [
-                "int",
-                "Initialization Wait Time (seconds)",
-                13,
-                15,
-                "",
-                "digits",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "wait_for_init_seconds",
-            ]
-            ConfigSettings["watchdog_addition"] = [
-                "float",
-                "Additional Watchdog Timeout (sec)",
-                13,
-                "0.0",
-                "",
-                "number",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "watchdog_addition",
-            ]
-            ConfigSettings["controllertype"] = [
-                "list",
-                "Controller Type",
-                14,
-                "generac_evo_nexus",
-                "",
-                "generac_evo_nexus,h_100,powerzone_pro,custom",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "controllertype",
-            ]
-
-            import_config_files = self.GetImportConfigFileNames()
-            ConfigSettings["import_config_file"] = [
-                "list",
-                "Custom Controller Config File",
-                21,
-                "Evolution_Liquid_Cooled.json",
-                "",
-                import_config_files,
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "import_config_file",
-            ]
-            if self.ControllerType == "custom":
-                ConfigSettings["ignore_alarms"] = [
-                "string",
-                "Ignore Alarms",
-                22,
-                "",
-                "",
-                "",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "ignore_alarms",
-            ]
-            ConfigSettings["phase"] = [
-                "list",
-                "Generator Phase",
-                22,
-                "1",
-                "",
-                "1,3",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "phase",
-            ]
-            if self.ControllerType == "generac_evo_nexus":
-                ConfigSettings["threephaseutilitycompensation"] = [
-                    "boolean",
-                    "Three Phase Utility Volts Compensation",
-                    23,
-                    False,
-                    "",
-                    0,
-                    self.GENMON_CONFIG,
-                    self.GENMON_SECTION,
-                    "threephaseutilitycompensation",
+            for setting in table:
+                if not self.SettingShown(setting.when):
+                    continue
+                if setting.file not in Files:
+                    self.LogError("Invaild Config File in " + caller + ": " + str(setting.file))
+                    continue
+                FileName, Section = Files[setting.file]
+                bounds = self.SettingValue(setting.bounds)
+                value = self.ReadSingleConfigValue(
+                    entry=setting.key,
+                    filename=FileName,
+                    section=Section,
+                    type=setting.type,
+                    default=self.SettingValue(setting.default),
+                    bounds=bounds,
+                )
+                ConfigSettings[setting.key] = [
+                    setting.type, setting.title, setting.sort, value, "", bounds,
+                    FileName, Section, setting.key,
                 ]
-            ConfigSettings["loglocation"] = [
-                "string",
-                "Log Directory",
-                23,
-                ProgramDefaults.LogPath,
-                "",
-                "required UnixDir",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "loglocation",
-            ]
-            ConfigSettings["userdatalocation"] = [
-                "string",
-                "User Defined Data Directory",
-                24,
-                os.path.dirname(os.path.realpath(__file__)),
-                "",
-                "required UnixDir",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "userdatalocation",
-            ]
-            ConfigSettings["ignore_unknown"] = [
-                "boolean",
-                "Ignore Unknown Values",
-                25,
-                False,
-                "",
-                0,
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "ignore_unknown",
-            ]
-            ConfigSettings["alternate_date_format"] = [
-                "boolean",
-                "Alternate Date Format",
-                26,
-                False,
-                "",
-                0,
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "alternate_date_format",
-            ]
-            ConfigSettings["use_aux_alarm_log"] = [
-                "boolean",
-                "Use Auxiliary Alarm Log",
-                27,
-                False,
-                "",
-                0,
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "use_aux_alarm_log",
-            ]
-            # These settings are not displayed as the auto-detect controller will set these
-            # these are only to be used to override the auto-detect
-            # ConfigSettings["liquidcooled"] = ['boolean', 'Force Controller Type (cooling)', 30, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "liquidcooled"]
-            # ConfigSettings["evolutioncontroller"] = ['boolean', 'Force Controller Type (Evo/Nexus)', 31, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "evolutioncontroller"]
-            # remove outage log, this will always be in the same location
-            # ConfigSettings["outagelog"] = ['string', 'Outage Log', 32, "/home/pi/genmon/outage.txt", "", "required UnixFile", GENMON_CONFIG, GENMON_SECTION, "outagelog"]
-            ConfigSettings["serialnumberifmissing"] = [
-                "string",
-                "Serial Number if Missing",
-                36,
-                "",
-                "",
-                0,
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "serialnumberifmissing",
-            ]
-            ConfigSettings["additionalrunhours"] = [
-                "float",
-                "Additional Run Hours",
-                37,
-                "",
-                "",
-                "number",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "additionalrunhours",
-            ]
-            ConfigSettings["estimated_load"] = [
-                "float",
-                "Estimated Load",
-                38,
-                "0.0",
-                "",
-                "required range:0:1",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "estimated_load",
-            ]
-            ConfigSettings["subtractfuel"] = [
-                "float",
-                "Subtract Fuel",
-                39,
-                "0.0",
-                "",
-                "number",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "subtractfuel",
-            ]
-            if self.ControllerType == "generac_evo_nexus":
-                ConfigSettings["unbalanced_capacity"] = [
-                    "float",
-                    "Unbalanced Load Capacity",
-                    46,
-                    "0",
-                    "",
-                    "range:0:0.50",
-                    self.GENMON_CONFIG,
-                    self.GENMON_SECTION,
-                    "unbalanced_capacity",
-                ]
-                ConfigSettings["show_hours_activation"] = [
-                "boolean",
-                "Time Since Activation Format",
-                47,
-                True,
-                "",
-                0,
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "show_hours_activation",
-                ]
-            # ConfigSettings["kwlog"] = ['string', 'Power Log Name / Disable', 36, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlog"]
-            if self.ControllerType != "h_100":
-                ConfigSettings["usenominallinevolts"] = [
-                    "boolean",
-                    "Use Nominal Volts Override",
-                    45,
-                    False,
-                    "",
-                    0,
-                    self.GENMON_CONFIG,
-                    self.GENMON_SECTION,
-                    "usenominallinevolts",
-                ]
-                ConfigSettings["nominallinevolts"] = [
-                    "int",
-                    "Override nominal line voltage in UI",
-                    46,
-                    "240",
-                    "",
-                    "digits",
-                    self.GENMON_CONFIG,
-                    self.GENMON_SECTION,
-                    "nominallinevolts",
-                ]
-                ConfigSettings["outagelog_max_entries"] = [
-                    "int",
-                    "Maximum Entries in Outage Log",
-                    46,
-                    "100",
-                    "",
-                    "digits",
-                    self.GENMON_CONFIG,
-                    self.GENMON_SECTION,
-                    "outagelog_max_entries",
-                ]
-                ConfigSettings["outage_notice_delay"] = [
-                    "int",
-                    "Outage Notice Delay",
-                    47,
-                    "0",
-                    "",
-                    "digits",
-                    self.GENMON_CONFIG,
-                    self.GENMON_SECTION,
-                    "outage_notice_delay",
-                ]
-                ConfigSettings["min_outage_duration"] = [
-                    "int",
-                    "Minimum Outage Duration",
-                    48,
-                    "0",
-                    "",
-                    "digits",
-                    self.GENMON_CONFIG,
-                    self.GENMON_SECTION,
-                    "min_outage_duration",
-                ]
-                ConfigSettings["outage_notice_interval"] = [
-                    "int",
-                    "Outage Recurring Notice Interval (minutes)",
-                    49,
-                    "0",
-                    "",
-                    "digits",
-                    self.GENMON_CONFIG,
-                    self.GENMON_SECTION,
-                    "outage_notice_interval",
-                ]
-                ControllerInfo = self.GetControllerInfo("controller").lower()
-                if "nexus" in ControllerInfo:
-                    ConfigSettings["nexus_legacy_freq"] = [
-                        "boolean",
-                        "Use Nexus Legacy Frequency",
-                        50,
-                        True,
-                        "",
-                        0,
-                        self.GENMON_CONFIG,
-                        self.GENMON_SECTION,
-                        "nexus_legacy_freq",
-                    ]
-                    # this is setup automatically for Nexus controllers
-                    # ConfigSettings["uselegacysetexercise"] = ['boolean', 'Use Legacy Exercise Time', 49, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "uselegacysetexercise"]
-            else:
-                ConfigSettings["usecalculatedpower"] = [
-                    "boolean",
-                    "Use Calculated Power",
-                    45,
-                    False,
-                    "",
-                    0,
-                    self.GENMON_CONFIG,
-                    self.GENMON_SECTION,
-                    "usecalculatedpower",
-                ]
-
-            ConfigSettings["half_rate"] = [
-                "float",
-                "Fuel Rate Half Load",
-                55,
-                "0.0",
-                "",
-                "number",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "half_rate",
-            ]
-            ConfigSettings["full_rate"] = [
-                "float",
-                "Fuel Rate Full Load",
-                56,
-                "0.0",
-                "",
-                "number",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "full_rate",
-            ]
-            ConfigSettings["fuel_units"] = [
-                "list",
-                "Fuel Units",
-                57,
-                "gal",
-                "",
-                "gal,cubic feet",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "fuel_units",
-            ]
-            ConfigSettings["enable_fuel_log"] = [
-                "boolean",
-                "Log Fuel Level to File",
-                60,
-                False,
-                "",
-                0,
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "enable_fuel_log",
-            ]
-            ConfigSettings["fuel_log_freq"] = [
-                "float",
-                "Fuel Log Frequency",
-                61,
-                "15.0",
-                "",
-                "number",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "fuel_log_freq",
-            ]
-            # ConfigSettings["fuel_log"] = ['string', 'Fuel Log Path and File Name', 62, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "/etc/genmon/fuellog.txt"]
-
-            ConfigSettings["kwlogmax"] = [
-                "string",
-                "Maximum size Power Log (MB)",
-                70,
-                "",
-                "",
-                0,
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "kwlogmax",
-            ]
-            ConfigSettings["max_powerlog_entries"] = [
-                "int",
-                "Maximum Entries in Power Log",
-                71,
-                "8000",
-                "",
-                "digits",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "max_powerlog_entries",
-            ]
-
-            ConfigSettings["currentdivider"] = [
-                "float",
-                "Current Divider",
-                72,
-                "",
-                "",
-                "number",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "currentdivider",
-            ]
-            ConfigSettings["currentoffset"] = [
-                "float",
-                "Current Offset",
-                73,
-                "",
-                "",
-                "number",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "currentoffset",
-            ]
-            ConfigSettings["legacy_power"] = [
-                "boolean",
-                "Use Legacy Power Calculation",
-                74,
-                False,
-                "",
-                0,
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "legacy_power",
-            ]
-
-            ConfigSettings["disableplatformstats"] = [
-                "boolean",
-                "Disable Platform Stats",
-                80,
-                False,
-                "",
-                0,
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "disableplatformstats",
-            ]
-            ConfigSettings["https_port"] = [
-                "int",
-                "Override HTTPS port",
-                81,
-                "",
-                "",
-                "digits",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "https_port",
-            ]
-            ConfigSettings["user_url"] = [
-                "string",
-                "User URL",
-                82,
-                "",
-                "",
-                0,
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "user_url",
-            ]
-            ConfigSettings["extend_wait"] = [
-                "int",
-                "Extend email retry",
-                83,
-                "0",
-                "",
-                "digits",
-                self.MAIL_CONFIG,
-                self.MAIL_SECTION,
-                "extend_wait",
-            ]
-            ConfigSettings["multi_instance"] = [
-                "boolean",
-                "Allow Multiple Genmon Instances",
-                85,
-                False,
-                "",
-                0,
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "multi_instance",
-            ]
-
-            ConfigSettings["max_login_attempts"] = [
-                "int",
-                "Maxmum login attempts before temporary lockout",
-                96,
-                5,
-                "",
-                "digits",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "max_login_attempts",
-            ]
-            ConfigSettings["login_lockout_seconds"] = [
-                "int",
-                "Login lockout duration in seconds",
-                97,
-                (5 * 60),
-                "",
-                "digits",
-                self.GENMON_CONFIG,
-                self.GENMON_SECTION,
-                "login_lockout_seconds",
-            ]
-
-            try:
-                if self.GStartInfo["Linux"]:
-                    ConfigSettings["uselinuxwifisignalgauge"] = [
-                        "boolean",
-                        "Show Wifi Signal Strength Gauge",
-                        108,
-                        True,
-                        "",
-                        0,
-                        self.GENMON_CONFIG,
-                        self.GENMON_SECTION,
-                        "uselinuxwifisignalgauge",
-                    ]
-                if self.GStartInfo["Linux"]:
-                    ConfigSettings["wifiispercent"] = [
-                        "boolean",
-                        "Wifi Gauge is percentage",
-                        108,
-                        False,
-                        "",
-                        0,
-                        self.GENMON_CONFIG,
-                        self.GENMON_SECTION,
-                        "wifiispercent",
-                    ]
-                    ConfigSettings["preferred_network_adapter"] = [
-                        "string",
-                        "Preferred Network Adapter",
-                        108,
-                        "",
-                        "",
-                        0,
-                        self.GENMON_CONFIG,
-                        self.GENMON_SECTION,
-                        "preferred_network_adapter",
-                    ]
-                if self.GStartInfo["Linux"]:
-                    ConfigSettings["useraspberrypicputempgauge"] = [
-                        "boolean",
-                        "Show CPU Temperature Gauge",
-                        109,
-                        True,
-                        "",
-                        0,
-                        self.GENMON_CONFIG,
-                        self.GENMON_SECTION,
-                        "useraspberrypicputempgauge",
-                    ]
-            except:
-                pass
-
-            for entry, List in ConfigSettings.items():
-                if List[6] == self.GENMON_CONFIG:
-                    # filename, section = None, type = "string", entry, default = "", bounds = None):
-                    (ConfigSettings[entry])[3] = self.ReadSingleConfigValue(
-                        entry=List[8],
-                        filename=self.GENMON_CONFIG,
-                        section=List[7],
-                        type=List[0],
-                        default=List[3],
-                        bounds=List[5],
-                    )
-                elif List[6] == self.MAIL_CONFIG:
-                    (ConfigSettings[entry])[3] = self.ReadSingleConfigValue(
-                        entry=List[8],
-                        filename=self.MAIL_CONFIG,
-                        section=List[7],
-                        type=List[0],
-                        default=List[3],
-                        bounds=List[5],
-                    )
-                else:
-                    self.LogError(
-                        "Invaild Config File in ReadAdvancedSettingsFromFile: "
-                        + str(List[6])
-                    )
-
             self.GetToolTips(ConfigSettings)
         except Exception as e1:
-            self.LogErrorLine("Error in ReadAdvancedSettingsFromFile: " + str(e1))
+            self.LogErrorLine("Error in " + caller + ": " + str(e1))
         return ConfigSettings
 
     # -------------------------------------------------------------------------------
