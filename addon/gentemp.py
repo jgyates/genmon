@@ -96,7 +96,7 @@ class GenTemp(MySupport):
             self.config = MyConfig(filename=configfile, section="gentemp", log=self.log)
 
             self.UseMetric = self.config.ReadValue("use_metric", return_type=bool, default=False)
-            self.PollTime = self.config.ReadValue("poll_frequency", return_type=float, default=1)
+            self.PollTime = self.config.ReadValue("poll_frequency", return_type=float, default=2)
             self.debug = self.config.ReadValue("debug", return_type=bool, default=False)
             self.DeviceLabels = self.GetParamList(self.config.ReadValue("device_labels", default=None))
             self.DeviceNominalValues = self.GetParamList(self.config.ReadValue("device_nominal_values", default=None), bInteger=True)

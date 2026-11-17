@@ -335,7 +335,7 @@ WIKI = "https://github.com/jgyates/genmon/wiki/1----Software-Overview"
 # added to the description when a library in AddOn.libraries is not installed
 MISSING_LIBRARY_NOTE = (
     "<br/><font color='red'>The required libraries for this add on are not installed. "
-    "They will be installaled on the when the proram is restarted.</font>"
+    "They will be installed when the program is restarted.</font>"
 )
 # AddOn.checks: added to the description when the hardware is not found
 ADDON_CHECKS = {
@@ -350,7 +350,9 @@ NOTIFY_PARAMS = (
     Param("notify_error", "boolean", "Notify for Errors",
           "Send messages for errors (Generator Alarms).",
           True),
-    Param("notify_warn", "boolean", "Notify for Warnings",
+    # notify_warning is read by genmonlib/mynotify.py (before 2.0.3 the page saved
+    # it as notify_warn, which nothing read)
+    Param("notify_warning", "boolean", "Notify for Warnings",
           "Send messages for warnings (service due, fuel low).",
           True),
     Param("notify_info", "boolean", "Notify for Information",
@@ -473,7 +475,7 @@ ADDONS = (
               Param("port", "string", "Modem Serial Port",
                     "This is the serial device to send AT modem commands. This *must* be "
                     "different from the serial port used by the generator monitor software.",
-                    "", "required UnixDevice"),
+                    "/dev/ttyAMA0", "required UnixDevice"),
               Param("rate", "int", "Modem Serial Rate",
                     "The baud rate for the port. Use 115200 for the LTEPiHat.",
                     115200, "required digits"),
@@ -589,7 +591,7 @@ ADDONS = (
                     "", "required InternetAddress"),
               Param("mqtt_port", "int", "MQTT Server Port Number",
                     "The port of the MQTT server in a decimal number.",
-                    1833, "required digits"),
+                    1883, "required digits"),
               Param("username", "string", "MQTT Authentication Username",
                     "This value is used for the username if your MQTT server requires "
                     "authentication. Leave blank for no authentication.",
@@ -711,7 +713,7 @@ ADDONS = (
                     "", "required InternetAddress"),
               Param("mqtt_port", "int", "MQTT Server Port Number",
                     "The port of the MQTT server in a decimal number.",
-                    1833, "required digits"),
+                    1883, "required digits"),
               Param("username", "string", "MQTT Authentication Username",
                     "This value is used for the username if your MQTT server requires "
                     "authentication. Leave blank for no authentication.",
@@ -872,7 +874,7 @@ ADDONS = (
                     "spaces and start with a plus. For Signal this must be the numeric key "
                     "sent to your signal account when registering with CallMeBot (in the form "
                     "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)",
-                    "+1XXXXXXXXXX"),
+                    ""),
           )
           + NOTIFY_PARAMS
           + RETRY_PARAMS),
@@ -947,7 +949,7 @@ ADDONS = (
                     "The duration in minutes between poll of tank data. Note this must be "
                     "equal or larger than 288 minutes as the maximum number of polls per day "
                     "is around 5.",
-                    0, "number range:288:20000", read=float),
+                    288, "number range:288:20000", read=float),
               Param("check_battery", "boolean", "Check Sensor Battery",
                     "If enabled, and email will be sent if the battery level on the sensor is "
                     "critical. Outbound email must be enabled for this to function.",
@@ -976,7 +978,7 @@ ADDONS = (
                     "", "minmax:4:50"),
               Param("poll_frequency", "float", "Poll Frequency",
                     "The duration in minutes between poll of tank data.",
-                    0, "number"),
+                    60, "number"),
               Param("check_battery", "boolean", "Check Sensor Battery",
                     "If enabled, and email will be sent if the battery level on the sensor is "
                     "critical. Outbound email must be enabled for this to function.",
@@ -993,7 +995,7 @@ ADDONS = (
           params=(
               Param("tank_name", "string", "Tank Name",
                     "Tank name",
-                    "", "minmax:1:50"),
+                    "Propane Tank", "minmax:1:50"),
               Param("username", "string", "Username",
                     "Username from Nee-vo app",
                     "", "required email"),
@@ -1009,7 +1011,7 @@ ADDONS = (
                     ""),
               Param("poll_frequency", "float", "Poll Frequency",
                     "The duration in minutes between poll of tank data.",
-                    0, "number"),
+                    60, "number"),
           )),
     AddOn("gentankdiy", "DIY Fuel Tank Gauge Sensor",
           "Integrates DIY tank gauge sensor for Genmon",
@@ -1017,7 +1019,7 @@ ADDONS = (
           params=(
               Param("poll_frequency", "float", "Poll Frequency",
                     "The duration in minutes between poll of tank data.",
-                    0, "number"),
+                    60, "number"),
               Param("gauge_type", "list", "Sensor Type",
                     "DIY sensor type. Valid options are Type 1 and Type 2.",
                     "1", "1,2"),
@@ -1028,7 +1030,7 @@ ADDONS = (
           params=(
               Param("name", "string", "Name for generator device",
                     "Name to call the generator device, i.e. 'generator'",
-                    "", "minmax:4:50"),
+                    "generator", "minmax:4:50"),
           )),
     AddOn("gensnmp", "SNMP Support",
           "Allow Genmon to respond to SNMP requests",
@@ -1102,7 +1104,7 @@ ADDONS = (
               Param("poll_frequency", "float", "Poll Interval",
                     "The time in seconds that the sensors are polled. The default value is 15 "
                     "seconds.",
-                    2.0, "number"),
+                    15.0, "number"),
               Param("strict", "boolean", "Strict Usage of CT data",
                     "Set to true to only use the CT data if the generator utility line is in "
                     "an outage.",
@@ -1125,7 +1127,7 @@ ADDONS = (
               Param("tank_type", "list", "Tank Size",
                     "Type of tank used. If Custom is used then Max and Min values must be "
                     "setup in /etc/genmon/genmopeka.conf",
-                    "1",
+                    "",
                     "20_LB,30_LB,40_LB,100_LB,200_LB,120_GAL,120_GAL_HORIZ,250_GAL,500_GAL,"
                     "1000_GAL,Custom"),
               Param("send_notices", "boolean", "Send Notices",

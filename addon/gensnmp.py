@@ -181,7 +181,7 @@ class GenSNMP(MySupport):
 
             self.UseNumeric = self.config.ReadValue("use_numeric", return_type=bool, default=False)
             self.UseIntegerValues = self.config.ReadValue("use_integer", return_type=bool, default=False)
-            self.PollTime = self.config.ReadValue("poll_frequency", return_type=float, default=1)
+            self.PollTime = self.config.ReadValue("poll_frequency", return_type=float, default=2)
             self.debug = self.config.ReadValue("debug", return_type=bool, default=False)
             self.community = self.config.ReadValue("community", default="public")
             self.enterpriseID = self.config.ReadValue("enterpriseid", return_type=int, default=58399)

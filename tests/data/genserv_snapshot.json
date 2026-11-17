@@ -10,7 +10,7 @@
    "@@ -120 +120 @@",
    "-enable = False",
    "+enable = false",
-   "@@ -224 +224 @@",
+   "@@ -232 +232 @@",
    "-enable = False",
    "+enable = true"
   ],
@@ -139,7 +139,7 @@
       "type": "boolean",
       "value": true
      },
-     "notify_warn": {
+     "notify_warning": {
       "bounds": "",
       "description": "Send messages for warnings (service due, fuel low).",
       "display_name": "Notify for Warnings",
@@ -285,7 +285,7 @@
       "type": "boolean",
       "value": true
      },
-     "notify_warn": {
+     "notify_warning": {
       "bounds": "",
       "description": "Send messages for warnings (service due, fuel low).",
       "display_name": "Notify for Warnings",
@@ -1257,7 +1257,7 @@
       "type": "boolean",
       "value": true
      },
-     "notify_warn": {
+     "notify_warning": {
       "bounds": "",
       "description": "Send messages for warnings (service due, fuel low).",
       "display_name": "Notify for Warnings",
@@ -1399,7 +1399,7 @@
       "type": "boolean",
       "value": true
      },
-     "notify_warn": {
+     "notify_warning": {
       "bounds": "",
       "description": "Send messages for warnings (service due, fuel low).",
       "display_name": "Notify for Warnings",
@@ -1506,7 +1506,7 @@
       "type": "boolean",
       "value": true
      },
-     "notify_warn": {
+     "notify_warning": {
       "bounds": "",
       "description": "Send messages for warnings (service due, fuel low).",
       "display_name": "Notify for Warnings",
@@ -1571,7 +1571,7 @@
       "type": "boolean",
       "value": true
      },
-     "notify_warn": {
+     "notify_warning": {
       "bounds": "",
       "description": "Send messages for warnings (service due, fuel low).",
       "display_name": "Notify for Warnings",
@@ -3238,7 +3238,7 @@
       "type": "boolean",
       "value": true
      },
-     "notify_warn": {
+     "notify_warning": {
       "bounds": "",
       "description": "Send messages for warnings (service due, fuel low).",
       "display_name": "Notify for Warnings",

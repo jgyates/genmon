@@ -169,7 +169,7 @@ class GenCTHat(MySupport):
                 "multiplier", return_type=float, default=0.488
             )
             self.PollTime = self.config.ReadValue(
-                "poll_frequency", return_type=float, default=60
+                "poll_frequency", return_type=float, default=15
             )
             self.powerfactor = self.config.ReadValue(
                 "powerfactor", return_type=float, default=1.0

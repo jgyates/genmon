@@ -708,7 +708,7 @@ if __name__ == "__main__":
             section="genalexa",
             log=log,
         )
-        FauxmoName = config.ReadValue("name", default=" generator")
+        FauxmoName = config.ReadValue("name", default="generator")
         FauxmoPort = config.ReadValue("port", return_type=int, default=52004)
         Debug = config.ReadValue("debug", return_type=bool, default=False)
 
