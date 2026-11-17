@@ -6803,7 +6803,7 @@ class GenServ(MySupport):
         except Exception:
             return None
 
-    # -------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def mfa_auth(self):
 
         try:
@@ -6949,14 +6949,17 @@ class GenServ(MySupport):
                 pass
         return {}
 
+    # --------------------------------------------------------------------------
     def _save_backup_codes(self, data):
         # owner-only; contains hashed backup codes. The file is created 0600 before
         # any data is written, so the contents are never readable by others.
         AtomicWrite(self._backup_codes_path(), json.dumps(data, indent=2), mode=0o600)
 
+    # --------------------------------------------------------------------------
     def _hash_code(self, code):
         return hashlib.sha256(code.encode("utf-8")).hexdigest()
 
+    # --------------------------------------------------------------------------
     def GenerateBackupCodes(self, username):
         codes = [secrets.token_hex(4) for _ in range(10)]
         hashed = [self._hash_code(c) for c in codes]
@@ -6965,6 +6968,7 @@ class GenServ(MySupport):
         self._save_backup_codes(data)
         return codes
 
+    # --------------------------------------------------------------------------
     def _validate_backup_code(self, username, code):
         data = self._load_backup_codes()
         user = username.lower()
@@ -6977,6 +6981,7 @@ class GenServ(MySupport):
             return True
         return False
 
+    # --------------------------------------------------------------------------
     def generate_backup_codes(self):
         try:
             if not session.get("logged_in") or not session.get("write_access"):
@@ -6988,6 +6993,7 @@ class GenServ(MySupport):
             self.LogErrorLine("Error in generate_backup_codes: " + str(e1))
             return jsonify(status="error", msg="Failed to generate codes"), 500
 
+    # --------------------------------------------------------------------------
     def backup_codes_count(self):
         try:
             if not session.get("logged_in"):
@@ -7000,11 +7006,13 @@ class GenServ(MySupport):
             self.LogErrorLine("Error in backup_codes_count: " + str(e1))
             return jsonify(status="error", msg="Error"), 500
 
+    # --------------------------------------------------------------------------
     def _passkeys_path(self):
         if self.PASSKEYS_PATH is None:
             self.PASSKEYS_PATH = os.path.join(self.ConfigFilePath, "passkeys.json")
         return self.PASSKEYS_PATH
 
+    # --------------------------------------------------------------------------
     def _load_passkeys(self):
         path = self._passkeys_path()
         if os.path.isfile(path):
@@ -7015,6 +7023,7 @@ class GenServ(MySupport):
                 pass
         return {}
 
+    # --------------------------------------------------------------------------
     def _save_passkeys(self, data):
         # owner-only; contains passkey public keys. The file is created 0600 before
         # any data is written, so the contents are never readable by others.
@@ -7032,6 +7041,7 @@ class GenServ(MySupport):
                     return username, pk, data
         return None, None, data
 
+    # --------------------------------------------------------------------------
     def passkey_register_begin(self):
         try:
             if not (self.bUseMFA and self.bUseSecureHTTP):
@@ -7070,7 +7080,7 @@ class GenServ(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in passkey_register_begin: " + str(e1))
             return jsonify(error="Registration failed"), 500
-
+    # --------------------------------------------------------------------------
     def passkey_register_complete(self):
         try:
             if not (self.bUseMFA and self.bUseSecureHTTP):
@@ -7112,6 +7122,7 @@ class GenServ(MySupport):
             self.LogErrorLine("Error in passkey_register_complete: " + str(e1))
             return jsonify(error="Registration verification failed"), 500
 
+    # --------------------------------------------------------------------------
     def passkey_auth_begin(self):
         try:
             if not (self.bUseMFA and self.bUseSecureHTTP):
@@ -7140,6 +7151,7 @@ class GenServ(MySupport):
             self.LogErrorLine("Error in passkey_auth_begin: " + str(e1))
             return jsonify(error="Authentication failed"), 500
 
+    # --------------------------------------------------------------------------
     def passkey_auth_complete(self):
         try:
             if not (self.bUseMFA and self.bUseSecureHTTP):
@@ -7182,6 +7194,7 @@ class GenServ(MySupport):
             self.LogErrorLine("Error in passkey_auth_complete: " + str(e1))
             return jsonify(error="Passkey verification failed"), 500
 
+    # --------------------------------------------------------------------------
     def passkey_list(self):
         try:
             if not session.get("logged_in"):
@@ -7195,6 +7208,7 @@ class GenServ(MySupport):
             self.LogErrorLine("Error in passkey_list: " + str(e1))
             return jsonify(error="Error"), 500
 
+    # --------------------------------------------------------------------------
     def passkey_delete(self):
         try:
             if not session.get("logged_in") or not session.get("write_access"):
@@ -7210,6 +7224,7 @@ class GenServ(MySupport):
             self.LogErrorLine("Error in passkey_delete: " + str(e1))
             return jsonify(error="Error"), 500
 
+    # --------------------------------------------------------------------------
     def passkey_login_begin(self):
         try:
             if self.WebUILocked:  # shared lockout with password login
@@ -7240,6 +7255,7 @@ class GenServ(MySupport):
             self.LogErrorLine("Error in passkey_login_begin: " + str(e1))
             return jsonify(error="Authentication failed"), 500
 
+    # --------------------------------------------------------------------------
     def passkey_login_complete(self):
         try:
             if self.WebUILocked:  # shared lockout with password login
