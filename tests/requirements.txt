@@ -1,0 +1,7 @@
+# Libraries the tests in tests/ need. genmon itself needs ../requirements.txt;
+# the tests only use part of it (no Raspberry Pi hardware or add-on libraries).
+# The simulator tests also need requirements-sim.txt.
+flask
+pyotp
+pyopenssl
+requests

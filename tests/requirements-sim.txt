@@ -1,0 +1,6 @@
+# Libraries the simulator tests (test_genmon_sim.py) need in addition to
+# requirements.txt: they run genmon.py and tests/sim/gensim.py.
+-r requirements.txt
+crcmod
+pyserial
+psutil

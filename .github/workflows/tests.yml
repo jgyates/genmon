@@ -1,0 +1,47 @@
+# Runs the tests in tests/ on each Python version genmon supports (Raspberry Pi
+# OS: 3.9 Bullseye, 3.11 Bookworm, 3.13 Trixie) for every push and pull request.
+# Results are in the Actions tab and next to each commit and pull request.
+#
+# The simulator tests (tests/test_genmon_sim.py) are skipped: they need register
+# captures, which are not in the repository.
+
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:   # run by hand from the Actions tab
+
+# the tests only read the code
+permissions:
+  contents: read
+
+# a newer push to the same branch cancels the older run
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false   # finish the other versions when one fails
+      matrix:
+        python-version: ["3.9", "3.11", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - uses: actions/setup-python@v5.6.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: tests/requirements.txt
+
+      - name: Install the libraries the tests need
+        run: python -m pip install -r tests/requirements.txt
+
+      - name: Run the tests
+        run: python -m unittest discover -s tests -v
