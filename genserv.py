@@ -1060,7 +1060,7 @@ class GenServ(MySupport):
             os.write(pkey_handle, crypto.dump_privatekey(crypto.FILETYPE_PEM, pkey))
             os.close(cert_handle)
             os.close(pkey_handle)
-            ctx = ssl.SSLContext(ssl.PROTOCOL_TLS)
+            ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
             ctx.load_cert_chain(cert_file, pkey_file)
@@ -1129,7 +1129,7 @@ class GenServ(MySupport):
                 return None
 
         try:
-            ctx = ssl.SSLContext(ssl.PROTOCOL_TLS)
+            ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
             ctx.load_cert_chain(crt_path, key_path)
