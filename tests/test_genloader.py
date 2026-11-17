@@ -72,8 +72,23 @@ class GenLoaderTests(unittest.TestCase):
         self.loader.console, _ = make_logger("console")
         self.loader.HardStop = False
         self.loader.bSystemIsNotLinux = False
-        self.loader.bSysetmIsWindows = False
+        self.loader.bSystemIsWindows = False
         self.loader.ConfigFilePath = "/etc/genmon/"
+
+    def test_python_version(self):
+        with mock.patch.object(genloader.sys, "version_info", (3, 9, 2)):
+            self.assertTrue(self.loader.PythonSupported())
+        self.assertEqual(self.log.messages, [])
+        with mock.patch.object(genloader.sys, "version_info", (3, 7, 3)):
+            self.assertFalse(self.loader.PythonSupported())
+        self.assertIn("ERROR: genmon needs Python 3.9 or higher, this is Python 3.7. "
+                      "The genmon modules were not started.", self.log.messages)
+
+    def test_is_windows(self):
+        for platform, expected in [("win32", True), ("darwin", False), ("linux", False)]:
+            with self.subTest(platform=platform):
+                with mock.patch.object(genloader.sys, "platform", platform):
+                    self.assertEqual(genloader.Loader.IsWindows(), expected)
 
     # ---- LoadModule ---------------------------------------------------------
     def start(self, args):
@@ -347,6 +362,71 @@ class GenLoaderConfigTests(unittest.TestCase):
     def test_get_config_missing_genmon_section(self):
         self.remove_section("genmon")
         self.assertFalse(self.loader.GetConfig())
+
+    def edit_conf(self, section, option, value):
+        # set (or with value None remove) an option in the test genloader.conf
+        with open(self.loader.configfile) as f:
+            lines = f.read().split("\n")
+        out, current = [], None
+        for line in lines:
+            if line.startswith("["):
+                current = line.strip()[1:-1]
+            elif current == section and line.split("=")[0].strip() == option:
+                if value is not None:
+                    out.append(option + " = " + value)
+                continue
+            out.append(line)
+        with open(self.loader.configfile, "w") as f:
+            f.write("\n".join(out))
+        self.loader.config = self.MyConfig(filename=self.loader.configfile, section="genmon",
+                                           log=self.loader.log)
+
+    def test_get_config_adds_any_missing_template_section(self):
+        # gensms was not in the old list of sections to add
+        self.remove_section("gensms")
+        self.assertTrue(self.loader.GetConfig())
+        self.assertEqual(self.loader.CachedConfig["gensms"]["module"], "gensms.py")
+        self.assertEqual(self.loader.CachedConfig["gensms"]["conffile"], "gensms.conf")
+        self.assertEqual(self.loader.CachedConfig["gensms"]["priority"], 2)
+
+    def test_get_config_adds_missing_option(self):
+        self.edit_conf("genslack", "priority", None)
+        self.assertTrue(self.loader.GetConfig())
+        self.assertEqual(self.loader.CachedConfig["genslack"]["priority"], 2)
+        self.assertIn("Adding priority to genslack", self.log.messages)
+
+    def test_get_config_fills_empty_conffile(self):
+        # an old genloader.conf had an empty conffile for gengpio
+        self.edit_conf("gengpio", "conffile", "")
+        self.edit_conf("genlog", "conffile", "")  # genlog has no config file
+        self.assertTrue(self.loader.GetConfig())
+        self.assertEqual(self.loader.CachedConfig["gengpio"]["conffile"], "gengpio.conf")
+        self.assertEqual(self.loader.CachedConfig["genlog"]["conffile"], "")
+
+    def test_get_config_keeps_user_values_and_sections(self):
+        self.edit_conf("genslack", "enable", "True")
+        self.edit_conf("genlog", "args", "-f /data/log.csv")
+        with open(self.loader.configfile, "a") as f:
+            f.write("\n[mymodule]\nmodule = mymodule.py\nenable = False\nhardstop = False\n"
+                    "conffile =\nargs =\npriority = 5\n")
+        self.loader.config = self.MyConfig(filename=self.loader.configfile, section="genmon",
+                                           log=self.loader.log)
+        self.assertTrue(self.loader.GetConfig())
+        self.assertIs(self.loader.CachedConfig["genslack"]["enable"], True)
+        self.assertEqual(self.loader.CachedConfig["genlog"]["args"], "-f /data/log.csv")
+        self.assertEqual(self.loader.CachedConfig["mymodule"]["priority"], 5)
+
+    def test_get_config_without_template(self):
+        self.loader.ConfPath = os.path.join(self.folder, "no_conf_folder")
+        self.assertTrue(self.loader.GetConfig())
+        self.assertIn("genslack", self.loader.CachedConfig)
+
+    def test_maintenance_uses_config_folder(self):
+        # renames <config folder>/templogs/templog* to sensordata/sensor*
+        os.mkdir(os.path.join(self.folder, "templogs"))
+        open(os.path.join(self.folder, "templogs", "templog_test.csv"), "w").close()
+        self.loader.Maintenance()
+        self.assertTrue(os.path.isfile(os.path.join(self.folder, "sensordata", "sensor_test.csv")))
 
     # ---- ValidateConfig ---------------------------------------------------
     def test_validate_config_copies_missing_conf_files(self):

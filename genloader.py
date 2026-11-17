@@ -8,6 +8,8 @@
 # MODIFICATIONS:
 # -------------------------------------------------------------------------------
 
+import collections
+import configparser
 import getopt
 import os
 import subprocess
@@ -74,9 +76,7 @@ class Loader(MySupport):
         self.bSystemIsNotLinux = False
         if not "linux" in sys.platform:
             self.bSystemIsNotLinux = True
-        self.bSysetmIsWindows = False
-        if "win" in sys.platform:
-            self.bSysetmIsWindows = True
+        self.bSystemIsWindows = self.IsWindows()
 
         # log errors in this module to a file
         if log == None:
@@ -89,8 +89,9 @@ class Loader(MySupport):
         self.console = SetupLogger("genloader_console", log_file="", stream=True)
 
         try:
-            if sys.version_info < (3, 9):
-                self.LogError(f"ERROR: Python version 3.9 or higher required.")
+            if self.Start and not self.PythonSupported():
+                # stopping still works, so a restart leaves nothing half running
+                self.Start = False
 
             self.pipProgram = "pip3"
             self.CachedConfig = {}
@@ -160,6 +161,29 @@ class Loader(MySupport):
                 self.StartModules()
         except Exception as e1:
             self.LogErrorLine("Error in init: " + str(e1))
+
+    # ---------------------------------------------------------------------------
+    # genmon 2.0 and later need Python 3.9 or later (see README.md)
+    MIN_PYTHON = (3, 9)
+
+    def PythonSupported(self):
+
+        if sys.version_info >= self.MIN_PYTHON:
+            return True
+        Message = (
+            "ERROR: genmon needs Python %d.%d or higher, this is Python %d.%d. "
+            "The genmon modules were not started." % (self.MIN_PYTHON + tuple(sys.version_info[:2]))
+        )
+        self.LogError(Message)
+        self.LogConsole(Message)
+        return False
+
+    # ---------------------------------------------------------------------------
+    # sys.platform is "win32" on Windows ("darwin", macOS, also has "win" in it)
+    @staticmethod
+    def IsWindows():
+
+        return sys.platform.startswith("win")
 
     # ---------------------------------------------------------------------------
     # Copy the default genloader.conf from the genmon conf folder. An existing
@@ -246,10 +270,6 @@ class Loader(MySupport):
         # Keep optional or unusually large packages out of base. For example,
         # fluids is only needed by genmopeka, and zeroconf is only needed when
         # genhalink mDNS discovery is enabled.
-        #
-        # we will not use the check for configparser as this look like it is in backports on 2.7
-        # and our myconfig modules uses the default so this generates an error that is not warranted
-        # ['configparser','configparser',None],   # reading config files
         return {
             "base": [
                 self.LibraryDependency("flask"),  # Web server
@@ -660,70 +680,10 @@ class Loader(MySupport):
                         if not os.access(ConfigFilePath + File, os.R_OK):
                             pass
                 except Exception as e1:
-                    log.error("Error moving " + SourceFile)
+                    log.error("Error moving " + SourceFile + ": " + str(e1))
         except Exception as e1:
             log.error("Error moving files: " + str(e1))
         return True
-
-    # ---------------------------------------------------------------------------
-    def GetLibararyVersion(self, libraryname, importonly=False):
-
-        try:
-
-            try:
-                import importlib
-
-                my_module = importlib.import_module(libraryname)
-                return my_module.__version__
-            except:
-
-                if importonly:
-                    return None
-                # if we get here then the libarary does not support a __version__ attribute
-                # lets use pip to get the version
-                try:
-                    # This will check if pip is installed
-                    if "linux" in sys.platform:
-                        self.CheckBaseSoftware()
-
-                    install_list = [sys.executable, "-m", "pip", "freeze", libraryname]
-
-                    process = Popen(install_list, stdout=PIPE, stderr=PIPE)
-                    output, _error = process.communicate()
-
-                    if _error:
-                        self.LogInfo(
-                            "Error in GetLibararyVersion using pip : "
-                            + libraryname
-                            + ": "
-                            + str(_error)
-                        )
-                    rc = process.returncode
-
-                    # process output of pip freeze
-                    lines = output.splitlines()
-
-                    for line in lines:
-                        line = line.decode("utf-8")
-                        line = line.strip()
-                        if line.startswith(libraryname):
-                            items = line.split("==")
-                            if len(items) <= 2:
-                                return items[1]
-                    return None
-
-                except Exception as e1:
-                    self.LogInfo(
-                        "Error getting version of module: "
-                        + libraryname
-                        + ": "
-                        + str(e1),
-                        LogLine=True,
-                    )
-                    return None
-        except Exception as e1:
-            self.LogErrorLine("Error in GetLibararyVersion: " + str(e1))
-            return None
 
     # ---------------------------------------------------------------------------
     def LibraryIsInstalled(self, libraryname, version = None):
@@ -736,17 +696,16 @@ class Loader(MySupport):
             if version != None:
                 try:
                     version_installed = tuple(int(x) for x in my_module.__version__.split('.'))
-                except Exception as e1:
+                except Exception:
                     # probably no version exported in this library
-                    #self.LogErrorLine(f"Error in LibraryIsInstalled, failure getting version: {libraryname}, version: {version}: {e1}")
                     return True
                 version_needed = tuple(int(x) for x in version.split('.'))
                 if version_installed < version_needed:
                     self.LogError(f"Need update on {libraryname} from {version_installed} to {version_needed}")
                     return False
-                
+
             return True
-        except Exception as e1:
+        except Exception:
             return False
 
     # ---------------------------------------------------------------------------
@@ -799,7 +758,7 @@ class Loader(MySupport):
             self.LogInfo("Error: Empty configruation found.")
             return False
 
-        for Module, Settiings in self.CachedConfig.items():
+        for Module, Settings in self.CachedConfig.items():
             try:
                 if self.CachedConfig[Module]["enable"]:
                     modulepath = self.GetModulePath(
@@ -860,52 +819,55 @@ class Loader(MySupport):
         return not ErrorOccured
 
     # ---------------------------------------------------------------------------
-    def AddEntry(self, section=None, module=None, conffile="", args="", priority="2"):
+    # The default genloader.conf in the genmon conf folder:
+    # {section: {option: value}}, in file order. Empty if it can not be read.
+    def ReadTemplate(self):
+
+        Template = collections.OrderedDict()
+        try:
+            parser = configparser.RawConfigParser(strict=False)
+            if not parser.read(os.path.join(self.ConfPath, self.ConfigFileName)):
+                self.LogError("Unable to read the default " + self.ConfigFileName)
+                return Template
+            for section in parser.sections():
+                Template[section] = collections.OrderedDict(parser.items(section))
+        except Exception as e1:
+            self.LogInfo("Error in ReadTemplate: " + str(e1), LogLine=True)
+        return Template
+
+    # ---------------------------------------------------------------------------
+    # Bring genloader.conf up to date with the default file: add the sections of
+    # modules added since it was made, and options missing from a section.
+    def UpdateFromTemplate(self, Sections):
 
         try:
-            if section == None or module == None:
-                return
-            self.config.WriteSection(section)
-            self.config.WriteValue("module", module, section=section)
-            self.config.WriteValue("enable", "False", section=section)
-            self.config.WriteValue("hardstop", "False", section=section)
-            self.config.WriteValue("conffile", conffile, section=section)
-            self.config.WriteValue("args", args, section=section)
-            self.config.WriteValue("priority", priority, section=section)
+            Template = self.ReadTemplate()
+            for section, options in Template.items():
+                if section == "genloader":
+                    continue
+                if section not in Sections:
+                    self.LogError("Warning: Missing entry: " + section + ", adding entry")
+                    self.config.WriteSection(section)
+                    for option, value in options.items():
+                        self.config.WriteValue(option, value, section=section)
+                    continue
+                self.config.SetSection(section)
+                for option, value in options.items():
+                    if not self.config.HasOption(option):
+                        self.LogError("Adding " + option + " to " + section)
+                        self.config.WriteValue(option, value, section=section)
+                    elif option == "conffile" and len(value):
+                        # an old genloader.conf may have an empty conffile
+                        if not len(self.config.ReadValue("conffile", default="")):
+                            self.LogError("Updated entry " + value)
+                            self.config.WriteValue(option, value, section=section)
         except Exception as e1:
-            self.LogInfo("Error in AddEntry: " + str(e1), LogLine=True)
-        return
+            self.LogInfo("Error in UpdateFromTemplate: " + str(e1), LogLine=True)
 
     # ---------------------------------------------------------------------------
     def UpdateIfNeeded(self):
 
         try:
-            self.config.SetSection("gengpioin")
-            if not self.config.HasOption("conffile"):
-                self.config.WriteValue(
-                    "conffile", "gengpioin.conf", section="gengpioin"
-                )
-                self.LogError("Updated entry gengpioin.conf")
-            else:
-                defValue = self.config.ReadValue("conffile", default="")
-                if not len(defValue):
-                    self.config.WriteValue(
-                        "conffile", "gengpioin.conf", section="gengpioin"
-                    )
-                    self.LogError("Updated entry gengpioin.conf")
-
-            self.config.SetSection("gengpio")
-            if not self.config.HasOption("conffile"):
-                self.config.WriteValue("conffile", "gengpio.conf", section="gengpio")
-                self.LogError("Updated entry gengpio.conf")
-            else:
-                defValue = self.config.ReadValue("conffile", default="")
-                if not len(defValue):
-                    self.config.WriteValue(
-                        "conffile", "gengpio.conf", section="gengpio"
-                    )
-                    self.LogError("Updated entry gengpio.conf")
-
             # check version info
             self.config.SetSection("genloader")
             self.version = self.config.ReadValue("version", default="0.0.0")
@@ -938,9 +900,9 @@ class Loader(MySupport):
     def Maintenance(self):
 
         # rename templogs folder to sensordata
-        self.OldSensorLogPath = os.path.join(ConfigFilePath, "templogs")
+        self.OldSensorLogPath = os.path.join(self.ConfigFilePath, "templogs")
         if os.path.isdir(self.OldSensorLogPath):
-            self.NewSensorLogPath = os.path.join(ConfigFilePath, "sensordata")
+            self.NewSensorLogPath = os.path.join(self.ConfigFilePath, "sensordata")
             os.rename(self.OldSensorLogPath, self.NewSensorLogPath)
             try:
                 from pathlib import Path
@@ -969,68 +931,18 @@ class Loader(MySupport):
         try:
 
             Sections = self.config.GetSections()
-            ValidSections = [
-                "genmon",
-                "genserv",
-                "gengpio",
-                "gengpioin",
-                "genlog",
-                "gensms",
-                "gensms_modem",
-                "genpushover",
-                "gensyslog",
-                "genmqtt",
-                "genmqttin",
-                "genslack",
-                "gencallmebot",
-                "genexercise",
-                "genemail2sms",
-                "gentankutil",
-                "genneevo",
-                "gencentriconnect",
-                "gentankdiy",
-                "genalexa",
-                "gensnmp",
-                "gentemp",
-                "gengpioledblink",
-                "gencthat",
-                "genmopeka",
-                "genotodata",
-                "genhubitat",
-                "gencustomgpio",
-                "gensms_voip",
-                "genloader",
-                "genhomeassistant",
-                "genhalink",
-            ]
-            entries_to_add = ["genslack", "gencallmebot", "genexercise", 
-                              "genemail2sms","gencentriconnect","genhomeassistant",
-                              "genhalink", "gentankutil", "genneevo", "genalexa",
-                              "gensnmp", "gentemp", "gentankdiy", "gengpioledblink",
-                              "gencthat", "genmopeka", "genotodata", "genhubitat",
-                              "gensms_voip", "genmqttin", "gencustomgpio"]
-            for entry in ValidSections:
+            for entry in ["genmon", "genserv"]:
                 if not entry in Sections:
-                    if entry == "genmon" or entry == "genserv":
-                        self.LogError(
-                            "Warning: Missing entry: " + entry + " , file corruption. "
-                        )
-                        return False
-                    elif entry in entries_to_add:
-                        self.LogError(
-                            f"Warning: Missing entry: {entry}, adding entry"
-                        )
-                        self.AddEntry(
-                            section=entry,
-                            module=f"{entry}.py",
-                            conffile=f"{entry}.conf",
-                        )
-                    elif entry == "genloader":
-                        self.LogError("Adding entry: " + entry)
-                        self.config.WriteSection(entry)
-                    else:
-                        self.LogError("Warning: Missing entry: " + entry)
+                    self.LogError(
+                        "Warning: Missing entry: " + entry + " , file corruption. "
+                    )
+                    return False
+            if not "genloader" in Sections:
+                self.LogError("Adding entry: genloader")
+                self.config.WriteSection("genloader")
 
+            # sections in the default genloader.conf are the known modules
+            self.UpdateFromTemplate(Sections)
             self.UpdateIfNeeded()
 
             Sections = self.config.GetSections()
@@ -1122,20 +1034,12 @@ class Loader(MySupport):
         return True
 
     # ---------------------------------------------------------------------------
-    def ConvertToInt(self, value, default=None):
-
-        try:
-            return int(str(value))
-        except:
-            return default
-
-    # ---------------------------------------------------------------------------
     def GetLoadOrder(self):
 
         LoadOrder = []
         LoadDict = {}
         try:
-            for Module, Settiings in self.CachedConfig.items():
+            for Module, Settings in self.CachedConfig.items():
                 # get the load order of all modules, even if they are disabled
                 # since we need to stop all modules (even disabled ones) if the
                 # conf file changed
@@ -1270,23 +1174,6 @@ class Loader(MySupport):
         return not ErrorOccured
 
     # ---------------------------------------------------------------------------
-    def LoadModuleAlt(self, modulename, args=None):
-        try:
-            self.LogConsole("Starting " + modulename)
-            # to load as a background process we just use os.system since Popen
-            # is problematic in doing this
-            CommandString = sys.executable + " " + modulename
-            if args != None and len(args):
-                CommandString += " " + args
-            CommandString += " &"
-            os.system(CommandString)
-            return True
-
-        except Exception as e1:
-            self.LogInfo("Error loading module: " + str(e1), LogLine=True)
-            return False
-
-    # ---------------------------------------------------------------------------
     def LoadModule(self, path, modulename, args=None):
         try:
             fullmodulename = os.path.join(path, modulename)
@@ -1340,7 +1227,7 @@ class Loader(MySupport):
                     )
                     return self.UpdatePID(modulename, "")
                 if self.bSystemIsNotLinux:
-                    if self.bSysetmIsWindows:
+                    if self.bSystemIsWindows:
                         LoadInfo.append("taskkill")
                         LoadInfo.append("/PID")
                         LoadInfo.append(str(pid))
@@ -1368,8 +1255,7 @@ class Loader(MySupport):
 
             self.LogConsole("Stopping " + modulename)
             process = Popen(LoadInfo, stdout=PIPE)
-            output, _error = process.communicate()
-            rc = process.returncode
+            process.communicate()
             return self.UpdatePID(modulename, "")
 
         except Exception as e1:
@@ -1490,7 +1376,7 @@ if __name__ == "__main__":
         print(HelpStr)
         sys.exit(2)
 
-    if not "win" in sys.platform:
+    if not Loader.IsWindows():
         tmplog = SetupLogger("genloader", "/var/log/" + "genloader.log")
         if Loader.OneTimeMaint(ConfigFilePath, tmplog):
             time.sleep(1.5)
