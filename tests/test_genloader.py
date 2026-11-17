@@ -1,0 +1,441 @@
+#!/usr/bin/env python3
+# -------------------------------------------------------------------------------
+#    FILE: test_genloader.py
+# PURPOSE: Tests for genloader.py: reading and checking genloader.conf, the
+#          load order, which libraries are needed, starting and stopping
+#          modules, running pip and other commands, replacing genloader.conf,
+#          and the one time file move.
+#
+#          The tests make a Loader without running its __init__ (which would
+#          read /etc/genmon and start programs) and replace the calls that start
+#          processes with fakes, so nothing is installed, started or killed.
+#
+#   USAGE: from the root of the repository:
+#              python3 -m unittest discover -s tests
+#          or only these tests:
+#              python3 -m unittest tests.test_genloader
+#
+# -------------------------------------------------------------------------------
+
+import glob
+import logging
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import types
+import unittest
+from unittest import mock
+
+REPO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, REPO_DIR)
+
+import genloader
+
+
+class ListHandler(logging.Handler):
+    def __init__(self):
+        super(ListHandler, self).__init__()
+        self.messages = []
+
+    def emit(self, record):
+        self.messages.append(record.getMessage())
+
+
+class FakeProcess(object):
+    def __init__(self, returncode=0, stdout=b"", stderr=b""):
+        self.returncode = returncode
+        self.output = (stdout, stderr)
+        self.pid = 4321
+
+    def communicate(self):
+        return self.output
+
+
+def make_logger(name):
+    logger = logging.getLogger("test_genloader_" + name)
+    logger.propagate = False
+    for handler in list(logger.handlers):
+        logger.removeHandler(handler)
+    handler = ListHandler()
+    logger.addHandler(handler)
+    return logger, handler
+
+
+# -------------------------------------------------------------------------------
+class GenLoaderTests(unittest.TestCase):
+
+    def setUp(self):
+        self.loader = genloader.Loader.__new__(genloader.Loader)
+        self.loader.log, self.log = make_logger("log")
+        self.loader.console, _ = make_logger("console")
+        self.loader.HardStop = False
+        self.loader.bSystemIsNotLinux = False
+        self.loader.bSysetmIsWindows = False
+        self.loader.ConfigFilePath = "/etc/genmon/"
+
+    # ---- LoadModule ---------------------------------------------------------
+    def start(self, args):
+        with mock.patch.object(genloader.subprocess, "Popen", return_value=FakeProcess()) as popen, \
+                mock.patch.object(self.loader, "UpdatePID", return_value=True):
+            self.assertTrue(self.loader.LoadModule("/genmon/addon", "genlog.py", args=args))
+        return popen.call_args
+
+    def test_start_module_without_args(self):
+        # a section with no args entry gives None
+        for args in [None, "", "   "]:
+            with self.subTest(args=args):
+                call = self.start(args)
+                self.assertEqual(call[0][0], [sys.executable, "/genmon/addon/genlog.py",
+                                              "-c", "/etc/genmon/"])
+
+    def test_start_module_with_args(self):
+        call = self.start("  -f   /home/pi/LogFile.csv ")
+        self.assertEqual(call[0][0], [sys.executable, "/genmon/addon/genlog.py",
+                                      "-f", "/home/pi/LogFile.csv", "-c", "/etc/genmon/"])
+
+    def test_module_output_not_piped(self):
+        # genloader exits after starting the modules, nothing would read a pipe
+        call = self.start(None)
+        for stream in ["stdout", "stderr", "stdin"]:
+            self.assertEqual(call[1][stream], subprocess.DEVNULL)
+
+    # ---- InstallLibrary / ExecuteCommandList ------------------------------
+    def run_pip(self, process):
+        with mock.patch.object(genloader, "Popen", return_value=process), \
+                mock.patch.object(self.loader, "CheckBaseSoftware", return_value=True):
+            return self.loader.InstallLibrary("chump")
+
+    def test_install_library_ok_with_warning(self):
+        # pip writes warnings to stderr even when the install works
+        self.assertTrue(self.run_pip(FakeProcess(0, stderr=b"WARNING: Running pip as root")))
+        self.assertEqual(self.log.messages, [])
+
+    def test_install_library_failed(self):
+        self.assertFalse(self.run_pip(FakeProcess(1, stderr=b"ERROR: No matching distribution")))
+        self.assertTrue(any("No matching distribution" in m for m in self.log.messages))
+
+    def test_execute_command_list(self):
+        cases = [(FakeProcess(0, stderr=b"W: some warning"), True),
+                 (FakeProcess(100, stderr=b"E: failed"), False)]
+        for process, expected in cases:
+            with self.subTest(returncode=process.returncode):
+                with mock.patch.object(genloader, "Popen", return_value=process):
+                    self.assertEqual(self.loader.ExecuteCommandList(["apt-get", "update"]), expected)
+        with mock.patch.object(genloader, "Popen", side_effect=FileNotFoundError("cmake")):
+            self.assertFalse(self.loader.ExecuteCommandList(["cmake", "--version"]))
+
+    # ---- StopModules ------------------------------------------------------
+    def test_stop_continues_after_an_error(self):
+        self.loader.LoadOrder = ["genslack", "genlog", "genmon"]
+        self.loader.CachedConfig = {
+            name: {"module": name + ".py", "pid": 100 + n, "hardstop": False}
+            for n, name in enumerate(self.loader.LoadOrder)
+        }
+        stopped = []
+
+        def unload(module, **kwargs):
+            stopped.append(module)
+            if module == "genlog.py":
+                raise RuntimeError("test error")
+            return True
+
+        with mock.patch.object(self.loader, "UnloadModule", side_effect=unload):
+            self.assertFalse(self.loader.StopModules())
+        self.assertEqual(stopped, ["genslack.py", "genlog.py", "genmon.py"])
+
+    # ---- OneTimeMaint -----------------------------------------------------
+    def test_one_time_maint_logs_errors(self):
+        # an error moving the old files is logged (a plain logger, no LogLine)
+        log, handler = make_logger("maint")
+        with mock.patch.object(genloader.os.path, "isfile", return_value=True), \
+                mock.patch.object(genloader.os.path, "isdir", return_value=False), \
+                mock.patch.object(genloader.os, "mkdir", side_effect=OSError("read only")), \
+                mock.patch.object(genloader.MySupport, "CopyFile", side_effect=OSError("copy")):
+            self.assertTrue(genloader.Loader.OneTimeMaint("/nonexistent/genmon/", log))
+        self.assertIn("Error validating target directory: read only", handler.messages)
+
+
+    # ---- CopyConfFile / GetConfig -----------------------------------------
+    def conf_dirs(self):
+        folder = tempfile.mkdtemp(prefix="genloader_test_")
+        self.addCleanup(shutil.rmtree, folder, ignore_errors=True)
+        self.loader.ConfPath = os.path.join(REPO_DIR, "conf")
+        self.loader.ConfigFileName = "genloader.conf"
+        self.loader.configfile = os.path.join(folder, "genloader.conf")
+        return folder
+
+    def test_replacing_conf_file_keeps_a_backup(self):
+        folder = self.conf_dirs()
+        with open(self.loader.configfile, "w") as f:
+            f.write("[genmon]\nmodule = genmon.py\n# the user's file\n")
+        self.assertTrue(self.loader.CopyConfFile())
+        backups = glob.glob(os.path.join(folder, "genloader.conf.bak-*"))
+        self.assertEqual(len(backups), 1)
+        with open(backups[0]) as f:
+            self.assertIn("# the user's file", f.read())
+        with open(self.loader.configfile) as f, \
+                open(os.path.join(REPO_DIR, "conf", "genloader.conf")) as default:
+            self.assertEqual(f.read(), default.read())
+        self.assertTrue(any(backups[0] in m for m in self.log.messages))
+
+    def test_copying_missing_conf_file_makes_no_backup(self):
+        folder = self.conf_dirs()
+        self.assertTrue(self.loader.CopyConfFile())
+        self.assertTrue(os.path.isfile(self.loader.configfile))
+        self.assertEqual(glob.glob(os.path.join(folder, "genloader.conf.bak-*")), [])
+
+    def test_get_config_starts_over(self):
+        from genmonlib.myconfig import MyConfig
+
+        self.conf_dirs()
+        self.loader.CopyConfFile()
+        self.loader.config = MyConfig(filename=self.loader.configfile, section="genmon",
+                                      log=self.loader.log)
+        self.loader.NewInstall = False
+        self.loader.Upgrade = False
+        self.loader.CachedConfig = {"old_module": {"enable": True}}
+        self.assertTrue(self.loader.GetConfig())
+        self.assertNotIn("old_module", self.loader.CachedConfig)
+        self.assertIn("genserv", self.loader.CachedConfig)
+
+    # ---- PIDIsModule / UnloadModule ---------------------------------------
+    def fake_psutil(self, cmdline=None, error=None):
+        module = types.ModuleType("psutil")
+
+        class NoSuchProcess(Exception):
+            pass
+
+        class AccessDenied(Exception):
+            pass
+
+        class Process(object):
+            def __init__(self, pid):
+                if error == "gone":
+                    raise NoSuchProcess(pid)
+                self.pid = pid
+
+            def cmdline(self):
+                if error == "denied":
+                    raise AccessDenied(self.pid)
+                return cmdline
+
+        module.NoSuchProcess = NoSuchProcess
+        module.AccessDenied = AccessDenied
+        module.Process = Process
+        return mock.patch.dict(sys.modules, {"psutil": module})
+
+    def test_pid_is_module(self):
+        cmdline = [sys.executable, "/home/pi/genmon/addon/genlog.py", "-c", "/etc/genmon/"]
+        with self.fake_psutil(cmdline):
+            self.assertTrue(self.loader.PIDIsModule(123, "genlog.py"))
+            self.assertTrue(self.loader.PIDIsModule("123", "genlog.py"))
+            self.assertFalse(self.loader.PIDIsModule(123, "genslack.py"))
+            self.assertFalse(self.loader.PIDIsModule("", "genlog.py"))
+        with self.fake_psutil(error="gone"):
+            self.assertFalse(self.loader.PIDIsModule(123, "genlog.py"))
+        with self.fake_psutil(error="denied"):
+            self.assertTrue(self.loader.PIDIsModule(123, "genlog.py"))  # can not tell
+
+    def test_pid_is_module_without_psutil(self):
+        data = b"/usr/bin/python3\0/home/pi/genmon/genserv.py\0-c\0/etc/genmon/\0"
+        with mock.patch.dict(sys.modules, {"psutil": None}), \
+                mock.patch.object(genloader.os.path, "isdir", return_value=True), \
+                mock.patch.object(genloader.os.path, "isfile", return_value=True), \
+                mock.patch("builtins.open", mock.mock_open(read_data=data)):
+            self.assertTrue(self.loader.PIDIsModule(123, "genserv.py"))
+            self.assertFalse(self.loader.PIDIsModule(123, "genmon.py"))
+        with mock.patch.dict(sys.modules, {"psutil": None}), \
+                mock.patch.object(genloader.os.path, "isdir", return_value=True), \
+                mock.patch.object(genloader.os.path, "isfile", return_value=False):
+            self.assertFalse(self.loader.PIDIsModule(123, "genserv.py"))
+
+    def unload(self, cmdline):
+        with self.fake_psutil(cmdline), \
+                mock.patch.object(genloader, "Popen", return_value=FakeProcess()) as popen, \
+                mock.patch.object(self.loader, "UpdatePID", return_value=True) as update:
+            self.assertTrue(self.loader.UnloadModule("genlog.py", pid=123, UsePID=True))
+        update.assert_called_once_with("genlog.py", "")
+        return popen
+
+    def test_stop_module_by_pid(self):
+        popen = self.unload([sys.executable, "/home/pi/genmon/addon/genlog.py"])
+        self.assertEqual(popen.call_args[0][0], ["kill", "123"])
+
+    def test_old_pid_is_not_killed(self):
+        # the PID now belongs to another program
+        popen = self.unload(["/usr/sbin/sshd", "-D"])
+        popen.assert_not_called()
+
+
+
+# -------------------------------------------------------------------------------
+class GenLoaderConfigTests(unittest.TestCase):
+    """GetConfig, ValidateConfig, GetLoadOrder, GetModuleList and StartModules,
+    with a copy of conf/genloader.conf in a temporary config folder."""
+
+    def setUp(self):
+        from genmonlib.myconfig import MyConfig
+
+        self.folder = tempfile.mkdtemp(prefix="genloader_conf_") + os.sep
+        self.addCleanup(shutil.rmtree, self.folder, ignore_errors=True)
+        loader = genloader.Loader.__new__(genloader.Loader)
+        loader.log, self.log = make_logger("conf_log")
+        loader.console, _ = make_logger("conf_console")
+        loader.ConfigFilePath = self.folder
+        loader.ConfigFileName = "genloader.conf"
+        loader.configfile = os.path.join(self.folder, "genloader.conf")
+        loader.ConfPath = os.path.join(REPO_DIR, "conf")
+        loader.ModulePath = REPO_DIR
+        loader.bSystemIsNotLinux = False
+        loader.MultiInstance = False
+        loader.NewInstall = False
+        loader.Upgrade = False
+        loader.CachedConfig = {}
+        shutil.copy(os.path.join(REPO_DIR, "conf", "genloader.conf"), loader.configfile)
+        loader.config = MyConfig(filename=loader.configfile, section="genmon", log=loader.log)
+        self.loader = loader
+        self.MyConfig = MyConfig
+
+    def remove_section(self, section):
+        with open(self.loader.configfile) as f:
+            lines = f.read().split("\n")
+        out, skip = [], False
+        for line in lines:
+            if line.startswith("["):
+                skip = line.strip() == "[" + section + "]"
+            if not skip:
+                out.append(line)
+        with open(self.loader.configfile, "w") as f:
+            f.write("\n".join(out))
+        self.loader.config = self.MyConfig(filename=self.loader.configfile, section="genmon",
+                                           log=self.loader.log)
+
+    def write_conf(self, filename, section, values):
+        with open(os.path.join(self.folder, filename), "w") as f:
+            f.write("[" + section + "]\n")
+            for key, value in values.items():
+                f.write("%s = %s\n" % (key, value))
+
+    # ---- GetConfig --------------------------------------------------------
+    def test_get_config(self):
+        import configparser
+
+        template = configparser.RawConfigParser()
+        template.read(self.loader.configfile)
+        self.assertTrue(self.loader.GetConfig())
+        self.assertEqual(sorted(self.loader.CachedConfig),
+                         sorted(s for s in template.sections() if s != "genloader"))
+        genmon = self.loader.CachedConfig["genmon"]
+        self.assertEqual(genmon["module"], "genmon.py")
+        self.assertIs(genmon["enable"], True)
+        self.assertEqual(genmon["priority"], 0)
+        self.assertEqual(genmon["postloaddelay"], 4)
+        self.assertEqual(genmon["conffile"], "genmon.conf,mymail.conf")
+        self.assertIs(self.loader.CachedConfig["genslack"]["enable"], False)
+
+    def test_get_config_adds_missing_add_on(self):
+        self.remove_section("genslack")
+        self.assertTrue(self.loader.GetConfig())
+        genslack = self.loader.CachedConfig["genslack"]
+        self.assertEqual(genslack["module"], "genslack.py")
+        self.assertEqual(genslack["conffile"], "genslack.conf")
+        self.assertIs(genslack["enable"], False)
+        self.assertIn("Warning: Missing entry: genslack, adding entry", self.log.messages)
+
+    def test_get_config_missing_genmon_section(self):
+        self.remove_section("genmon")
+        self.assertFalse(self.loader.GetConfig())
+
+    # ---- ValidateConfig ---------------------------------------------------
+    def test_validate_config_copies_missing_conf_files(self):
+        self.loader.GetConfig()
+        self.assertTrue(self.loader.ValidateConfig())
+        for name in ["genmon.conf", "mymail.conf", "genslack.conf", "mymodem.conf"]:
+            with self.subTest(file=name):
+                self.assertTrue(os.path.isfile(os.path.join(self.folder, name)))
+
+    def test_validate_config_enabled_module_missing(self):
+        self.loader.GetConfig()
+        self.loader.CachedConfig["genslack"].update(enable=True, module="no_such_module.py")
+        self.assertFalse(self.loader.ValidateConfig())
+
+    def test_validate_config_genmon_not_enabled(self):
+        self.loader.GetConfig()
+        self.loader.CachedConfig["genmon"]["enable"] = False
+        self.assertFalse(self.loader.ValidateConfig())
+
+    # ---- GetLoadOrder -----------------------------------------------------
+    def test_load_order(self):
+        # highest priority number first (genloader stops in this order and
+        # starts in the reverse order); no priority counts as 99
+        self.loader.CachedConfig = {
+            "genmon": {"priority": 0}, "genserv": {"priority": 1}, "genlog": {"priority": 2},
+            "genslack": {"priority": 2}, "custom": {"priority": None}, "bad": {"priority": -1},
+        }
+        self.assertEqual(self.loader.GetLoadOrder(),
+                         ["bad", "custom", "genlog", "genslack", "genserv", "genmon"])
+
+    # ---- GetModuleList ----------------------------------------------------
+    def libraries(self, enabled):
+        self.loader.GetConfig()
+        for name in enabled:
+            self.loader.CachedConfig[name]["enable"] = True
+        return [m["install"] for m in self.loader.GetModuleList()]
+
+    def test_libraries_for_base_only(self):
+        self.write_conf("genmon.conf", "GenMon", {"usemfa": "False"})
+        libraries = self.libraries([])
+        self.assertIn("flask", libraries)
+        self.assertIn("pyserial", libraries)
+        for name in ["paho-mqtt", "chump", "aiohttp", "zeroconf", "webauthn"]:
+            self.assertNotIn(name, libraries)
+
+    def test_libraries_for_enabled_add_ons(self):
+        self.write_conf("genhalink.conf", "genhalink", {"zeroconf_enabled": "True"})
+        self.write_conf("genhubitat.conf", "genhubitat", {"zeroconf_enabled": "True"})
+        libraries = self.libraries(["genmqtt", "genhomeassistant", "genhalink", "genhubitat"])
+        # each library once, even when several add-ons need it
+        self.assertEqual(libraries.count("paho-mqtt"), 1)
+        self.assertEqual(libraries.count("aiohttp"), 1)
+        self.assertEqual(libraries.count("zeroconf"), 1)
+        self.assertNotIn("chump", libraries)
+
+    def test_libraries_for_features(self):
+        # zeroconf only when the add-on is enabled and its option is on
+        self.write_conf("genhalink.conf", "genhalink", {"zeroconf_enabled": "False"})
+        self.assertNotIn("zeroconf", self.libraries(["genhalink"]))
+        self.write_conf("genhalink.conf", "genhalink", {"zeroconf_enabled": "True"})
+        self.assertNotIn("zeroconf", self.libraries([]))
+        self.assertIn("zeroconf", self.libraries(["genhalink"]))
+        # webauthn (passkeys) only with MFA
+        self.write_conf("genmon.conf", "GenMon", {"usemfa": "True"})
+        self.assertIn("webauthn", self.libraries([]))
+
+    # ---- StartModules -----------------------------------------------------
+    def test_start_modules(self):
+        # the class works without genloader.py's __main__ (multi_instance is
+        # an attribute, not a global)
+        self.loader.GetConfig()
+        self.loader.CachedConfig["genslack"]["enable"] = True
+        self.loader.LoadOrder = self.loader.GetLoadOrder()
+        self.loader.HardStop = False
+        started = []
+
+        def load(path, module, args=None):
+            started.append(module)
+            return True
+
+        with mock.patch.object(genloader.MySupport, "IsRunning", return_value=False), \
+                mock.patch.object(self.loader, "LoadModule", side_effect=load), \
+                mock.patch.object(genloader.time, "sleep"):
+            self.assertTrue(self.loader.StartModules())
+        enabled = [m for m in reversed(self.loader.LoadOrder) if self.loader.CachedConfig[m]["enable"]]
+        self.assertEqual(started, [self.loader.CachedConfig[m]["module"] for m in enabled])
+        self.assertEqual(started[0], "genmon.py")
+        self.assertIn("genslack.py", started)
+
+
+if __name__ == "__main__":
+    unittest.main()

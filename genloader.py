@@ -43,9 +43,12 @@ class Loader(MySupport):
         log=None,
         localinit=False,
         ConfigFilePath=ProgramDefaults.ConfPath,
+        multi_instance=False,
     ):
 
         self.Start = start
+        # True if more than one copy of genmon may run (multi_instance in genmon.conf)
+        self.MultiInstance = multi_instance
         self.Stop = stop
         self.HardStop = hardstop
         self.PipChecked = False
@@ -142,8 +145,8 @@ class Loader(MySupport):
 
             if self.Start:
                 if not self.CheckSystem():
-                    self.LogInfo("Error check system readiness. Exiting")
-                    sys.exit(2)
+                    # start anyway: the add-ons that need a missing library log it
+                    self.LogInfo("Warning: one or more required libraries could not be installed")
 
             self.LoadOrder = self.GetLoadOrder()
 
@@ -159,15 +162,27 @@ class Loader(MySupport):
             self.LogErrorLine("Error in init: " + str(e1))
 
     # ---------------------------------------------------------------------------
+    # Copy the default genloader.conf from the genmon conf folder. An existing
+    # file is saved first (genloader.conf.bak-<date-time>), since the default
+    # has every add-on disabled.
     def CopyConfFile(self):
 
-        if os.path.isfile(os.path.join(self.ConfPath, self.ConfigFileName)):
-            copyfile(os.path.join(self.ConfPath, self.ConfigFileName), self.configfile)
-            return True
-        else:
+        DefaultFile = os.path.join(self.ConfPath, self.ConfigFileName)
+        if not os.path.isfile(DefaultFile):
             self.LogInfo("Unable to find config file.")
             return False
-            sys.exit(2)
+        if os.path.isfile(self.configfile):
+            Backup = self.configfile + ".bak-" + time.strftime("%Y%m%d-%H%M%S")
+            try:
+                copyfile(self.configfile, Backup)
+                self.LogInfo(
+                    "Replacing " + self.configfile + " with the default file. "
+                    "The old file was saved as " + Backup
+                )
+            except Exception as e1:
+                self.LogInfo("Error saving " + self.configfile + ": " + str(e1))
+        copyfile(DefaultFile, self.configfile)
+        return True
 
     # ---------------------------------------------------------------------------
     def IsModuleEnabled(self, ModuleList):
@@ -487,12 +502,14 @@ class Loader(MySupport):
             process = Popen(execute_list, stdout=PIPE, stderr=PIPE, env=env)
             output, _error = process.communicate()
 
-            if _error:
-                self.LogInfo("Error in ExecuteCommandList  : " + str(_error))
+            # many tools write warnings to stderr, so only the return code is used
+            if process.returncode != 0:
+                self.LogInfo(
+                    "Error in ExecuteCommandList: " + str(execute_list) + ": " + str(_error)
+                )
                 return False
-            rc = process.returncode
             return True
-        except:
+        except Exception:
             return False
 
     # ---------------------------------------------------------------------------
@@ -627,9 +644,7 @@ class Loader(MySupport):
                     if not os.access(ConfigFilePath, os.R_OK):
                         pass
                 except Exception as e1:
-                    log.error(
-                        "Error validating target directory: " + str(e1), LogLine=True
-                    )
+                    log.error("Error validating target directory: " + str(e1))
 
             # move files
             for File, Path in FileList.items():
@@ -647,7 +662,7 @@ class Loader(MySupport):
                 except Exception as e1:
                     log.error("Error moving " + SourceFile)
         except Exception as e1:
-            log.error("Error moving files: " + str(e1), LogLine=True)
+            log.error("Error moving files: " + str(e1))
         return True
 
     # ---------------------------------------------------------------------------
@@ -755,14 +770,15 @@ class Loader(MySupport):
             process = Popen(install_list, stdout=PIPE, stderr=PIPE)
             output, _error = process.communicate()
 
-            if _error:
+            # pip writes warnings to stderr, so only the return code is used
+            if process.returncode != 0:
                 self.LogInfo(
                     "Error in InstallLibrary using pip : "
                     + str(install_list)
                     + ": "
                     + str(_error)
                 )
-            rc = process.returncode
+                return False
             return True
 
         except Exception as e1:
@@ -948,6 +964,8 @@ class Loader(MySupport):
     # ---------------------------------------------------------------------------
     def GetConfig(self):
 
+        # start over, this is also called again after the file is replaced
+        self.CachedConfig = {}
         try:
 
             Sections = self.config.GetSections()
@@ -1163,7 +1181,7 @@ class Loader(MySupport):
                 self.LogInfo(
                     "Error stopping module " + Module + " : " + str(e1), LogLine=True
                 )
-                return False
+                ErrorOccured = True
         return not ErrorOccured
 
     # ---------------------------------------------------------------------------
@@ -1204,14 +1222,14 @@ class Loader(MySupport):
                     if modulepath == None:
                         continue
 
-                    if not multi_instance:
+                    if not self.MultiInstance:
                         # check that module is not loaded already, if it is then force it (hard) to unload
                         attempts = 0
                         while True:
                             if MySupport.IsRunning(
                                 prog_name=self.CachedConfig[Module]["module"],
                                 log=self.log,
-                                multi_instance=multi_instance,
+                                multi_instance=self.MultiInstance,
                             ):
                                 # if loaded then kill it
                                 if attempts >= 4:
@@ -1271,35 +1289,24 @@ class Loader(MySupport):
     # ---------------------------------------------------------------------------
     def LoadModule(self, path, modulename, args=None):
         try:
-            try:
-                import os
+            fullmodulename = os.path.join(path, modulename)
 
-                fullmodulename = os.path.join(path, modulename)
-            except Exception as e1:
-                fullmodulename = path + "/" + modulename
+            # args is None if the section in genloader.conf has no args entry
+            if args != None and not len(args.strip()):
+                args = None
 
             if args != None:
                 self.LogConsole("Starting " + fullmodulename + " " + args)
             else:
                 self.LogConsole("Starting " + fullmodulename)
-            try:
-                from subprocess import DEVNULL  # py3k
-            except ImportError:
-                import os
 
-                DEVNULL = open(os.devnull, "wb")
-
-            if not len(args):
-                args = None
-
-            if "genserv.py" in modulename:
-                OutputStream = DEVNULL
-            else:
-                OutputStream = subprocess.PIPE
+            # genloader exits after starting the modules, so nothing would read a
+            # pipe; a module writing to a closed pipe gets BrokenPipeError
+            OutputStream = subprocess.DEVNULL
 
             executelist = [sys.executable, fullmodulename]
             if args != None:
-                executelist.extend(args.split(" "))
+                executelist.extend(args.split())
             # This will make all the programs use the same config files
             executelist.extend(["-c", self.ConfigFilePath])
             # close_fds=True
@@ -1325,6 +1332,13 @@ class Loader(MySupport):
             if UsePID:
                 if pid == None or pid == "" or pid == 0:
                     return True
+                if not self.PIDIsModule(pid, modulename):
+                    # the module is not running, and the PID may now belong
+                    # to another program
+                    self.LogInfo(
+                        "Not stopping PID " + str(pid) + ", it is not " + modulename
+                    )
+                    return self.UpdatePID(modulename, "")
                 if self.bSystemIsNotLinux:
                     if self.bSysetmIsWindows:
                         LoadInfo.append("taskkill")
@@ -1362,6 +1376,44 @@ class Loader(MySupport):
             self.LogInfo("Error unoading module: (" + str(modulename) +"): " + str(e1), LogLine=True)
             self.LogInfo(f"Module: {modulename} PID: {pid}, UsePID: {UsePID} Hardstop: {HardStop}")
             return False
+
+    # ---------------------------------------------------------------------------
+    # True if process pid is running modulename. The PID saved in genloader.conf
+    # is old if the module stopped or crashed, and the system may have given the
+    # PID to another program since.
+    def PIDIsModule(self, pid, modulename):
+
+        try:
+            pid = int(pid)
+        except (TypeError, ValueError):
+            return False
+        try:
+            import psutil
+
+            try:
+                CommandLine = psutil.Process(pid).cmdline()
+            except psutil.NoSuchProcess:  # also a zombie process
+                return False
+            except psutil.AccessDenied:
+                return True  # can not tell, stop it as before
+        except ImportError:
+            ProcFile = "/proc/%d/cmdline" % pid
+            if not os.path.isdir("/proc"):
+                return True  # can not tell, stop it as before
+            if not os.path.isfile(ProcFile):
+                return False
+            try:
+                with open(ProcFile, "rb") as f:
+                    CommandLine = [
+                        a.decode("utf-8", "replace") for a in f.read().split(b"\0") if a
+                    ]
+            except Exception:
+                return True  # can not tell, stop it as before
+        except Exception as e1:
+            self.LogInfo("Error in PIDIsModule: " + str(e1), LogLine=True)
+            return True
+        # e.g. python3 /home/pi/genmon/addon/genlog.py -c /etc/genmon/
+        return any(os.path.basename(arg) == modulename for arg in CommandLine)
 
     # ---------------------------------------------------------------------------
     def UpdatePID(self, modulename, pid=None):
@@ -1456,4 +1508,5 @@ if __name__ == "__main__":
         hardstop=HardStop,
         ConfigFilePath=ConfigFilePath,
         loglocation=loglocation,
+        multi_instance=multi_instance,
     )

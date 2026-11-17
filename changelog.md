@@ -30,6 +30,7 @@ All notable changes to this project will be documented in this file.
 - Added Ambient Temp gauge for Evo 2.0
 - Maintenance updates for some older addon program to convert to a class architecture
 - Maintenance updates for genserv.py to convert to a class architecture
+- Maintenande updates for genloader.py, bug fixes
 
 ## 2.0.02 -2026-08-04
 - New add on for Hubitat Elevation hub, Thanks @bdwilson
