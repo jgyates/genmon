@@ -125,9 +125,9 @@
       "weather": false
     },
     {
-      "entity_id": "current_leg1",
+      "entity_id": "status_engine_current_l1",
       "name": "Current Leg 1",
-      "path": "Status/Engine/Current Leg 1",
+      "path": "Status/Engine/Current L1",
       "device_class": "current",
       "unit": "A",
       "icon": "mdi:current-ac",
@@ -141,9 +141,9 @@
       "weather": false
     },
     {
-      "entity_id": "current_leg2",
+      "entity_id": "status_engine_current_l2",
       "name": "Current Leg 2",
-      "path": "Status/Engine/Current Leg 2",
+      "path": "Status/Engine/Current L2",
       "device_class": "current",
       "unit": "A",
       "icon": "mdi:current-ac",

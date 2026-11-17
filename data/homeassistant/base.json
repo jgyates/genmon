@@ -281,9 +281,9 @@
       "weather": false
     },
     {
-      "entity_id": "weather_temp",
+      "entity_id": "monitor_weather_current_temperature",
       "name": "Weather Temperature",
-      "path": "Monitor/Weather/Temperature",
+      "path": "Monitor/Weather/Current Temperature",
       "device_class": "temperature",
       "icon": "mdi:thermometer",
       "state_class": "measurement",

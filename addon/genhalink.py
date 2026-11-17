@@ -97,7 +97,10 @@ class GenHALink(MySupport):
         self.ZeroconfInstance = None
         self.ZeroconfInfo = None
         self.LoopThread = None
-        self._entities_pruned = False
+        # Set once genmon delivers complete data; /api/entities waits for it
+        # so Home Assistant never gets the raw, unfiltered entity list.
+        self._data_ready = threading.Event()
+        self._first_data_time = None
         self._last_resource_check_time = 0
         self._cached_resource_info = {}
         self._skipped_paths = set()  # paths suppressed as name-duplicates
@@ -515,13 +518,17 @@ class GenHALink(MySupport):
 
         # GUI status for tiles / base status
         gui_data = self._send_command("generator: gui_status_json")
+        raw_gui = None
         if gui_data:
             try:
-                new_state["gui_status"] = self._normalize_genmon_data(
-                    json.loads(gui_data)
-                )
+                raw_gui = json.loads(gui_data)
+                new_state["gui_status"] = self._normalize_genmon_data(raw_gui)
             except (json.JSONDecodeError, ValueError):
                 pass
+
+        # Checked before filtering: the blacklist or Include Monitor Stats = off
+        # can remove the Monitor Health value this relies on.
+        data_complete = self._is_data_complete(new_state)
 
         # Inject defaults for optional fields that genmon omits when inactive
         self._inject_optional_defaults(new_state)
@@ -532,7 +539,7 @@ class GenHALink(MySupport):
         # Inject CPU temperature from gui_status indicators into the
         # Tiles path that base.json expects.  This must happen AFTER
         # _filter_state so the blacklist on "Tiles" doesn't remove it.
-        self._inject_cpu_temp(new_state)
+        self._inject_cpu_temp(new_state, raw_gui)
 
         # Inject platform resource metrics (memory, disk) on Raspberry Pi
         self._inject_platform_resources(new_state)
@@ -557,14 +564,36 @@ class GenHALink(MySupport):
             self.CurrentState = new_state
 
         self.LogDebug("Poll complete: %d paths, %d changes" % (len(flat_new), len(changes)))
+        # Set after LastValues is updated: /api/entities uses it to drop
+        # entities without data.
+        if data_complete and not self._data_ready.is_set():
+            self.LogDebug("genmon data complete, serving entity definitions")
+            self._data_ready.set()
+
         if changes:
             self._notify_ws_clients({"type": "state_update", "state": new_state})
 
-        # After first poll with data, prune entity definitions that have no
-        # matching data from the current controller
-        if not self._entities_pruned and flat_new:
-            self._prune_unsupported_entities(flat_new)
-            self._entities_pruned = True
+    # Seconds after the first status data before entities are served even if
+    # genmon still reports "System Initializing" (e.g. no generator comms).
+    DATA_READY_TIMEOUT = 60
+
+    def _is_data_complete(self, state):
+        """True once genmon returns status data and has finished initializing.
+
+        Until the controller has read its registers, genmon answers with
+        partial data. Entity definitions built from that would miss sensors.
+        """
+        if not state.get("Status"):
+            return False
+        if self._first_data_time is None:
+            self._first_data_time = time.time()
+        try:
+            health = state["Monitor"]["Generator Monitor Stats"]["Monitor Health"]
+            if "initializing" not in str(health).lower():
+                return True
+        except (KeyError, TypeError):
+            pass
+        return time.time() - self._first_data_time >= self.DATA_READY_TIMEOUT
 
     # Paths that genmon omits entirely when inactive — provide defaults
     OPTIONAL_DEFAULTS = {
@@ -666,7 +695,7 @@ class GenHALink(MySupport):
     # Parent path the locally-computed platform metrics are injected under.
     PLATFORM_STATS_PATH = "Monitor/Platform Stats"
 
-    def _inject_cpu_temp(self, state):
+    def _inject_cpu_temp(self, state, raw_gui=None):
         """Extract CPU temperature from gui_status and inject into the
         Tiles/CPU Temp/value path that the base entity definition expects.
 
@@ -676,6 +705,9 @@ class GenHALink(MySupport):
         gui_status/indicators/cpuTemp in Celsius. Both are supported here for
         backwards compatibility, and the value is normalized to include the
         degree symbol so Home Assistant's temperature device_class accepts it.
+        PlatformStats only has the value when genmon detects a Raspberry Pi,
+        so the CPU Temp gauge tile in the raw gui_status (raw_gui) is the
+        last fallback.
         """
         if not self.IncludeMonitorStats:
             return
@@ -693,15 +725,7 @@ class GenHALink(MySupport):
             if isinstance(pstats, dict):
                 raw = pstats.get("CPU Temperature")
                 if raw is not None and str(raw).strip():
-                    s = str(raw).strip()
-                    # Normalize bare "C"/"F" suffix to "°C"/"°F".
-                    if s.endswith(" C") or s.endswith(" F"):
-                        s = s[:-2] + " °" + s[-1]
-                    elif s.endswith("C") and not s.endswith("°C"):
-                        s = s[:-1] + "°C"
-                    elif s.endswith("F") and not s.endswith("°F"):
-                        s = s[:-1] + "°F"
-                    temp_str = s
+                    temp_str = self._normalize_temp_str(raw)
 
             # Fallback: older indicators.cpuTemp (numeric Celsius).
             if temp_str is None:
@@ -709,6 +733,16 @@ class GenHALink(MySupport):
                 cpu_temp = indicators.get("cpuTemp") if isinstance(indicators, dict) else None
                 if cpu_temp is not None:
                     temp_str = "%.1f °C" % float(cpu_temp)
+
+            # Fallback: the CPU Temp gauge tile ("text" is e.g. "82.04 F").
+            # Read from the raw data: normalizing merges the tiles list.
+            if temp_str is None and isinstance(raw_gui, dict):
+                for tile in raw_gui.get("tiles", None) or []:
+                    if isinstance(tile, dict) and tile.get("title") == "CPU Temp":
+                        text = str(tile.get("text", "")).strip()
+                        if text:
+                            temp_str = self._normalize_temp_str(text)
+                        break
 
             if temp_str is not None:
                 node = state
@@ -719,6 +753,18 @@ class GenHALink(MySupport):
                 self.LogDebug("Injected CPU temp: " + temp_str)
         except Exception as e1:
             self.LogErrorLine("Error in _inject_cpu_temp: " + str(e1))
+
+    @staticmethod
+    def _normalize_temp_str(value):
+        """Normalize a bare "C"/"F" suffix to "°C"/"°F"."""
+        s = str(value).strip()
+        if s.endswith(" C") or s.endswith(" F"):
+            s = s[:-2] + " °" + s[-1]
+        elif s.endswith("C") and not s.endswith("°C"):
+            s = s[:-1] + "°C"
+        elif s.endswith("F") and not s.endswith("°F"):
+            s = s[:-1] + "°F"
+        return s
 
     def _inject_platform_resources(self, state):
         """Inject memory and disk utilization into state (Raspberry Pi only).
@@ -801,32 +847,31 @@ class GenHALink(MySupport):
         except Exception:
             pass
 
-    def _prune_unsupported_entities(self, flat_state):
-        """Remove entity definitions whose path has no data after the first poll.
+    def _drop_entities_without_data(self, entities):
+        """Drop sensor definitions whose path has never had data, in place.
 
-        This ensures only entities actually supported by the current controller
-        are exposed to Home Assistant.
+        Only entities the current controller actually reports are exposed to
+        Home Assistant. Checked per request against every path seen so far
+        (LastValues), so a value genmon reports later is still declared under
+        its predefined entity_id instead of becoming a dynamic sensor.
         """
         try:
-            known_paths = set(flat_state.keys())
+            with self.AccessLock:
+                known_paths = set(self.LastValues.keys())
+            dropped = 0
             for category in ["sensors", "binary_sensors"]:
-                original = self.EntityDefinitions.get(category, [])
                 kept = []
-                for entity in original:
+                for entity in entities.get(category, []):
                     path = entity.get("path", "")
-                    if not path:
-                        kept.append(entity)
-                        continue
-                    if path in known_paths:
+                    if not path or path in known_paths:
                         kept.append(entity)
                     else:
-                        self.LogDebug(
-                            "Pruned entity '%s' — path '%s' not in current data"
-                            % (entity.get("entity_id", "?"), path)
-                        )
-                self.EntityDefinitions[category] = kept
+                        dropped += 1
+                entities[category] = kept
+            if dropped:
+                self.LogDebug("Omitted %d entities without data" % dropped)
         except Exception as e1:
-            self.LogErrorLine("Error in _prune_unsupported_entities: " + str(e1))
+            self.LogErrorLine("Error in _drop_entities_without_data: " + str(e1))
 
     def _normalize_genmon_data(self, data):
         """Convert genmon's array-of-single-key-dict format to nested dicts.
@@ -1163,9 +1208,25 @@ class GenHALink(MySupport):
             }
         return web.json_response(state)
 
+    # Below the 10 s request timeout of the HA integration (genmon-ha api.py).
+    ENTITIES_WAIT_SECONDS = 8
+
     async def _handle_entities(self, request):
         if not self._check_auth(request):
             return web.json_response({"error": "unauthorized"}, status=401)
+
+        # Right after a (re)start genmon may still be initializing. An early
+        # answer would be the raw definition list without dynamic sensors, and
+        # Home Assistant would replace its complete list with it. 503 makes the
+        # integration keep its current list and ask again later.
+        deadline = time.time() + self.ENTITIES_WAIT_SECONDS
+        while not self._data_ready.is_set():
+            if time.time() >= deadline:
+                return web.json_response(
+                    {"error": "not_ready", "message": "Waiting for data from genmon"},
+                    status=503,
+                )
+            await asyncio.sleep(0.5)
 
         # Include capabilities from StartInfo
         capabilities = {
@@ -1185,6 +1246,7 @@ class GenHALink(MySupport):
         entities = self._filter_entities_for_controller(
             self.EntityDefinitions, controller_type, capabilities
         )
+        self._drop_entities_without_data(entities)
 
         # Merge dynamic sensors into the sensors list so the HA
         # component creates entities for them (they share the same platform)
