@@ -32,16 +32,24 @@ jobs:
         python-version: ["3.9", "3.11", "3.13"]
 
     steps:
-      - uses: actions/checkout@v4.2.2
+      # actions are pinned to a commit (a tag can be moved), with the version
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-python@v5.6.0
+      # uv provides every Python version on any Ubuntu (GitHub's setup-python
+      # has no Python 3.9 for Ubuntu 26.04) and puts a virtual environment
+      # with that version first on the PATH
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
+          version: "0.13.9"
           python-version: ${{ matrix.python-version }}
-          cache: pip
-          cache-dependency-path: tests/requirements.txt
+          activate-environment: true
+          enable-cache: true
+          cache-dependency-glob: tests/requirements.txt
 
       - name: Install the libraries the tests need
-        run: python -m pip install -r tests/requirements.txt
+        run: uv pip install -r tests/requirements.txt
 
       - name: Run the tests
-        run: python -m unittest discover -s tests -v
+        run: |
+          python --version
+          python -m unittest discover -s tests -v
