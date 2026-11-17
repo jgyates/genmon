@@ -1,0 +1,3420 @@
+{
+ "config_changes": {
+  "genloader.conf": [
+   "@@ -56 +56 @@",
+   "-enable = False",
+   "+enable = true",
+   "@@ -59 +59 @@",
+   "-args = -f /home/pi/genmon/LogFile.csv",
+   "+args = -f /home/pi/snapshot.csv",
+   "@@ -120 +120 @@",
+   "-enable = False",
+   "+enable = false",
+   "@@ -224 +224 @@",
+   "-enable = False",
+   "+enable = true"
+  ],
+  "genmon.conf": [
+   "@@ -4 +4 @@",
+   "-sitename = SiteName",
+   "+sitename = SnapshotSite",
+   "@@ -49 +49 @@",
+   "-address = 9d",
+   "+address = 64",
+   "@@ -62 +62 @@",
+   "-displayunknown = False",
+   "+displayunknown = true",
+   "@@ -276 +276 @@",
+   "-kwlogmax = 15",
+   "+kwlogmax = 2.0",
+   "@@ -406,0 +407,2 @@",
+   "+nominalfrequency = 50",
+   "+ui_prefs = {\"theme\":\"light\"}"
+  ],
+  "genslack.conf": [
+   "@@ -4 +4 @@",
+   "-webhook_url = https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX",
+   "+webhook_url = https://hooks.slack.com/x",
+   "@@ -7 +7 @@",
+   "-channel =",
+   "+channel = snapshot"
+  ],
+  "gensms_voip.conf": [
+   "@@ -11 +11 @@",
+   "-did = ",
+   "+did = 555-1234"
+  ],
+  "mymail.conf": [
+   "@@ -19 +19 @@",
+   "-email_recipient = myrecipent@gmail.com",
+   "+email_recipient = a@example.com,b@example.com",
+   "@@ -57,0 +58,2 @@",
+   "+a@example.com = outage,info",
+   "+b@example.com = error"
+  ]
+ },
+ "pages": {
+  "get_add_on_settings": {
+   "genalexa": {
+    "description": "Allow Amazon Alexa to start and stop the generator",
+    "enable": false,
+    "icon": "alexa",
+    "parameters": {
+     "name": {
+      "bounds": "minmax:4:50",
+      "description": "Name to call the generator device, i.e. 'generator'",
+      "display_name": "Name for generator device",
+      "type": "string",
+      "value": "generator"
+     }
+    },
+    "title": "Amazon Alexa voice commands",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genalexapy-optional"
+   },
+   "gencallmebot": {
+    "description": "Send Genmon and utility state changes via CallMeBot service",
+    "enable": false,
+    "icon": "callmebot",
+    "parameters": {
+     "api_key": {
+      "bounds": "",
+      "description": "API Key required for WhatsApp Notifications.",
+      "display_name": "API Key",
+      "type": "string",
+      "value": ""
+     },
+     "default_wait": {
+      "bounds": "",
+      "description": "The number of seconds to wait before retrying a failed message.",
+      "display_name": "Retry Interval (seconds)",
+      "type": "int",
+      "value": 120
+     },
+     "max_retry_time": {
+      "bounds": "",
+      "description": "Maximum number of seconds to retry a failed message before dropping the message.",
+      "display_name": "Max Retry Duration (seconds)",
+      "type": "int",
+      "value": 600
+     },
+     "notification_type": {
+      "bounds": "WhatsApp,Telegram,Signal",
+      "description": "Type of CallMeBot Notifications. For more information, see http://www.callmebot.com.",
+      "display_name": "Notification Type",
+      "type": "list",
+      "value": "WhatsApp"
+     },
+     "notify_error": {
+      "bounds": "",
+      "description": "Send messages for errors (Generator Alarms).",
+      "display_name": "Notify for Errors",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_info": {
+      "bounds": "",
+      "description": "Send messages for information (switch state change, engine state change, exercising).",
+      "display_name": "Notify for Information",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_outage": {
+      "bounds": "",
+      "description": "Send messages for outages.",
+      "display_name": "Notify for Outages",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_pi_state": {
+      "bounds": "",
+      "description": "Send messages for Pi hardware sensor status (CPU throttling, undervoltage, etc).",
+      "display_name": "Notify for Pi Hardware Issues",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_sw_update": {
+      "bounds": "",
+      "description": "Send messages for software updates.",
+      "display_name": "Notify for Software Updates",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_warn": {
+      "bounds": "",
+      "description": "Send messages for warnings (service due, fuel low).",
+      "display_name": "Notify for Warnings",
+      "type": "boolean",
+      "value": true
+     },
+     "recipient_number": {
+      "bounds": "",
+      "description": "Recipient Number requried for WhatsApp Notification. Must be without spaces and start with a plus. For Signal this must be the numeric key sent to your signal account when registering with CallMeBot (in the form xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)",
+      "display_name": "Recipient Number",
+      "type": "string",
+      "value": ""
+     },
+     "username": {
+      "bounds": "required username",
+      "description": "CallMeBot username required for Telegram Notifications.",
+      "display_name": "Username",
+      "type": "string",
+      "value": ""
+     }
+    },
+    "title": "Notifications via CallMeBot",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gencallmebotpy-optional"
+   },
+   "gencentriconnect": {
+    "description": "Integrates Centriconnect.com propane tank sensor data",
+    "enable": false,
+    "icon": "centri",
+    "parameters": {
+     "check_battery": {
+      "bounds": "",
+      "description": "If enabled, and email will be sent if the battery level on the sensor is critical. Outbound email must be enabled for this to function.",
+      "display_name": "Check Sensor Battery",
+      "type": "boolean",
+      "value": false
+     },
+     "check_reading": {
+      "bounds": "",
+      "description": "If enabled, and email will be sent if the sensor has not performed a reading within 50 hours. Outbound email must be enabled for this to function.",
+      "display_name": "Check for Missed Readings",
+      "type": "boolean",
+      "value": false
+     },
+     "device_auth": {
+      "bounds": "required min:6",
+      "description": "Device Auth for Centri propane tank sensor. This number is provided in the box with the sensor.",
+      "display_name": "Device Authentication Code",
+      "type": "password",
+      "value": ""
+     },
+     "device_id": {
+      "bounds": "required min:36",
+      "description": "Device ID. Note that this is a long series of numbers and dashes in this format: <UUID>",
+      "display_name": "Device ID",
+      "type": "string",
+      "value": ""
+     },
+     "poll_frequency": {
+      "bounds": "number range:288:20000",
+      "description": "The duration in minutes between poll of tank data. Note this must be equal or larger than 288 minutes as the maximum number of polls per day is around 5.",
+      "display_name": "Poll Frequency",
+      "type": "int",
+      "value": 288.0
+     },
+     "user_id": {
+      "bounds": "required min:36",
+      "description": "User ID. Note that this is a long series of numbers and dashes in this format: <UUID>",
+      "display_name": "User ID",
+      "type": "string",
+      "value": ""
+     }
+    },
+    "title": "Centri My Propane External Tank Fuel Monitor",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gencentriconnectpy-optional"
+   },
+   "gencthat": {
+    "description": "Support for Raspberry pi HAT with CTs from PintSize.me.<br/><font color='red'>The SPI bus number one is not enabled but required for this add-on to function.</font>",
+    "enable": false,
+    "icon": "rpi",
+    "parameters": {
+     "poll_frequency": {
+      "bounds": "number",
+      "description": "The time in seconds that the sensors are polled. The default value is 15 seconds.",
+      "display_name": "Poll Interval",
+      "type": "float",
+      "value": 15.0
+     },
+     "strict": {
+      "bounds": "",
+      "description": "Set to true to only use the CT data if the generator utility line is in an outage.",
+      "display_name": "Strict Usage of CT data",
+      "type": "boolean",
+      "value": false
+     }
+    },
+    "title": "External Current Transformer (CT) Sensors",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gencthatpy-optional"
+   },
+   "genemail2sms": {
+    "description": "Send Genmon and utility state changes via carrier email to SMS service",
+    "enable": false,
+    "icon": "text",
+    "parameters": {
+     "destination": {
+      "bounds": "required email",
+      "description": "Email to SMS email recipient. Must be a valid email address",
+      "display_name": "Email to SMS address",
+      "type": "string",
+      "value": ""
+     },
+     "notify_error": {
+      "bounds": "",
+      "description": "Send messages for errors (Generator Alarms).",
+      "display_name": "Notify for Errors",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_info": {
+      "bounds": "",
+      "description": "Send messages for information (switch state change, engine state change, exercising).",
+      "display_name": "Notify for Information",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_outage": {
+      "bounds": "",
+      "description": "Send messages for outages.",
+      "display_name": "Notify for Outages",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_pi_state": {
+      "bounds": "",
+      "description": "Send messages for Pi hardware sensor status (CPU throttling, undervoltage, etc).",
+      "display_name": "Notify for Pi Hardware Issues",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_sw_update": {
+      "bounds": "",
+      "description": "Send messages for software updates.",
+      "display_name": "Notify for Software Updates",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_warn": {
+      "bounds": "",
+      "description": "Send messages for warnings (service due, fuel low).",
+      "display_name": "Notify for Warnings",
+      "type": "boolean",
+      "value": true
+     }
+    },
+    "title": "Mobile Carrier Email to SMS",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genemail2smspy-optional"
+   },
+   "genexercise": {
+    "description": "Add additional exercise cycles with new functionality for Evolution/Nexus Controllers",
+    "enable": false,
+    "icon": "selftest",
+    "parameters": {
+     "exercise_day_of_month": {
+      "bounds": "required digits range:1:28",
+      "description": "The day of month if monthly exercise is selected.",
+      "display_name": "Exercise Day of Month",
+      "type": "int",
+      "value": 1
+     },
+     "exercise_day_of_week": {
+      "bounds": "Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday",
+      "description": "Exercise day of the week, if Weekly or Biweekly exercise frequency is selected.",
+      "display_name": "Exercise Day of the Week",
+      "type": "list",
+      "value": "Monday"
+     },
+     "exercise_duration": {
+      "bounds": "number range:5:60",
+      "description": "The duration of the exercise time. Note: this time does not include warmup time for Transfer type exercise cycles.",
+      "display_name": "Exercise Duration",
+      "type": "float",
+      "value": 12.0
+     },
+     "exercise_frequency": {
+      "bounds": "Daily,Weekly,Biweekly,Monthly,Post-Controller",
+      "description": "Exercise Frequency options are Daily, Weekly, Biweekly,Monthly  or Post-Controller (immediately after the controller exercise cycle). Hour, Minute, Month, Day of Week are ignored if Post-Controller exercise frequency is enabled.",
+      "display_name": "Exercise Frequency",
+      "type": "list",
+      "value": "Monthly"
+     },
+     "exercise_hour": {
+      "bounds": "required digits range:0:23",
+      "description": "The hour of the exercise time. Valid input is 0 - 23.",
+      "display_name": "Exercise Time Hour",
+      "type": "int",
+      "value": 12
+     },
+     "exercise_minute": {
+      "bounds": "required digits range:0:59",
+      "description": "The minute of the exercise time.  Valid input is 0 - 59",
+      "display_name": "Exercise Time Minute",
+      "type": "int",
+      "value": 0
+     },
+     "exercise_type": {
+      "bounds": "Quiet,Normal,Transfer",
+      "description": "Quiet Exercise (reduced RPM, Hz and Voltage), Normal Exercise, Exercise with Transfer Switch Activated.",
+      "display_name": "Exercise Type",
+      "type": "list",
+      "value": "normal"
+     },
+     "exercise_warmup": {
+      "bounds": "number range:0:30",
+      "description": "The duration of the warmup time. Note: this time only appies to the transfer type of exercise cycle. Zero will disable the warmup period.",
+      "display_name": "Warmup Duration",
+      "type": "float",
+      "value": 0.0
+     },
+     "use_gen_time": {
+      "bounds": "",
+      "description": "Enable to use the generator time for the exercise cycle, otherwise it will use the system time.",
+      "display_name": "Use Generator Time",
+      "type": "boolean",
+      "value": false
+     }
+    },
+    "title": "Enhanced Exercise",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genexercisepy-optional"
+   },
+   "gengpio": {
+    "description": "Genmon will set Raspberry Pi GPIO outputs (see documentation for details)",
+    "enable": false,
+    "icon": "rpi",
+    "parameters": null,
+    "title": "Genmon GPIO Outputs",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gengpiopy-optional"
+   },
+   "gengpioin": {
+    "description": "Genmon will set Raspberry Pi GPIO inputs (see documentation for details)",
+    "enable": false,
+    "icon": "rpi",
+    "parameters": {
+     "bounce": {
+      "bounds": "number",
+      "description": "Minimum interval in milliseconds between valid input changes. Zero to disable, or positive whole number.",
+      "display_name": "Software Debounce",
+      "type": "int",
+      "value": 200
+     },
+     "resistorpull": {
+      "bounds": "up,down,off",
+      "description": "Set GPIO input internal pull up or pull down resistor.",
+      "display_name": "Internal resistor pull",
+      "type": "list",
+      "value": "up"
+     },
+     "trigger": {
+      "bounds": "falling,rising,both",
+      "description": "Set GPIO input to trigger on rising or falling edge.",
+      "display_name": "GPIO Edge Trigger",
+      "type": "list",
+      "value": "falling"
+     }
+    },
+    "title": "Genmon GPIO Inputs",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gengpioinpy-optional"
+   },
+   "gengpioledblink": {
+    "description": "Genmon will blink LED connected to GPIO pin to indicate genmon status",
+    "enable": false,
+    "icon": "rpi",
+    "parameters": {
+     "ledpin": {
+      "bounds": "required digits range:0:27",
+      "description": "GPIO pin number that an LED is connected (valid numbers are 0 - 27)",
+      "display_name": "GPIO LED pin",
+      "type": "int",
+      "value": 12
+     }
+    },
+    "title": "Genmon GPIO Output to blink LED",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gengpioledblinkpy-optional"
+   },
+   "genhalink": {
+    "description": "Native Home Assistant integration via REST/WebSocket API. No MQTT broker required.",
+    "enable": false,
+    "icon": "homeassistant",
+    "parameters": {
+     "api_key": {
+      "bounds": "",
+      "description": "API key for authentication (auto-generated). Copy this value into Home Assistant when adding the integration.",
+      "display_name": "API Key (read-only)",
+      "type": "readonly",
+      "value": "<UUID>"
+     },
+     "blacklist": {
+      "bounds": "",
+      "description": "Comma-separated keywords to exclude from the API. Matches any data path containing the keyword (case-insensitive). Top-level sections: Status, Maintenance, Outage, Monitor, Tiles. Examples: 'Tiles' (UI tiles), 'Weather' (weather data), 'Platform Stats' (CPU/memory), 'Last Log Entries' (log snippets). You can also target specific values like 'Serial Number' or 'CRC Errors'.",
+      "display_name": "Excluded Data Paths",
+      "type": "string",
+      "value": ""
+     },
+     "include_monitor_stats": {
+      "bounds": "",
+      "description": "Include monitor/platform statistics (CPU temp, WiFi, memory).",
+      "display_name": "Include Monitor Stats",
+      "type": "boolean",
+      "value": true
+     },
+     "include_weather": {
+      "bounds": "",
+      "description": "Include weather data if available.",
+      "display_name": "Include Weather",
+      "type": "boolean",
+      "value": true
+     },
+     "poll_interval": {
+      "bounds": "number",
+      "description": "Interval in seconds between polling genmon for status updates. Default is 3.",
+      "display_name": "Poll Interval",
+      "type": "int",
+      "value": 3.0
+     },
+     "port": {
+      "bounds": "required digits range:1024:65535",
+      "description": "Port for the REST/WebSocket API server.",
+      "display_name": "API Server Port",
+      "type": "int",
+      "value": 9083
+     },
+     "zeroconf_enabled": {
+      "bounds": "",
+      "description": "Enable Zeroconf/mDNS broadcasting so Home Assistant can auto-discover this generator. Disable for manual/fixed IP setup only.",
+      "display_name": "Zeroconf Discovery",
+      "type": "boolean",
+      "value": true
+     }
+    },
+    "title": "Home Assistant Integration (Native)",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genhalinkpy-optional"
+   },
+   "genhomeassistant": {
+    "description": "Publish MQTT auto-discovery messages for Home Assistant integration",
+    "enable": false,
+    "icon": "homeassistant",
+    "parameters": {
+     "base_topic": {
+      "bounds": "",
+      "description": "Base topic for state and command messages. Default is 'genmon'.",
+      "display_name": "Base Topic",
+      "type": "string",
+      "value": "genmon"
+     },
+     "blacklist": {
+      "bounds": "",
+      "description": "Comma-separated list of strings. Entities with names containing these strings will not be created. Matches against entity name, ID, and data path.",
+      "display_name": "Entity Blacklist",
+      "type": "string",
+      "value": "Tiles"
+     },
+     "button_passcode": {
+      "bounds": "",
+      "description": "Passcode for controllers that require authentication for remote commands (e.g. MEBAY). Leave empty if not required.",
+      "display_name": "Button Passcode",
+      "type": "password",
+      "value": ""
+     },
+     "cert_authority_path": {
+      "bounds": "",
+      "description": "Full path to Certificate Authority file. Leave empty to not use SSL/TLS.",
+      "display_name": "CA Certificate Path",
+      "type": "string",
+      "value": ""
+     },
+     "cert_reqs": {
+      "bounds": "None,Optional,Required",
+      "description": "Certificate requirements that the client imposes on the broker.",
+      "display_name": "Certificate Requirements",
+      "type": "list",
+      "value": "Required"
+     },
+     "client_cert_path": {
+      "bounds": "",
+      "description": "Full path to client certificate file for MTLS.",
+      "display_name": "Client Certificate Path",
+      "type": "string",
+      "value": ""
+     },
+     "client_id": {
+      "bounds": "",
+      "description": "Unique MQTT client identifier. Must be unique per genmon instance.",
+      "display_name": "Client ID",
+      "type": "string",
+      "value": "genmon_ha"
+     },
+     "client_key_path": {
+      "bounds": "",
+      "description": "Full path to client key file for MTLS.",
+      "display_name": "Client Key Path",
+      "type": "string",
+      "value": ""
+     },
+     "device_id": {
+      "bounds": "",
+      "description": "Unique device identifier used in entity IDs. Change if running multiple genmon instances.",
+      "display_name": "Device ID",
+      "type": "string",
+      "value": "generator"
+     },
+     "device_name": {
+      "bounds": "",
+      "description": "Friendly device name shown in Home Assistant.",
+      "display_name": "Device Name",
+      "type": "string",
+      "value": "Generator"
+     },
+     "discovery_interval": {
+      "bounds": "",
+      "description": "Interval in seconds to republish discovery messages. Set to 0 to only publish on startup. Default is 300.",
+      "display_name": "Discovery Interval",
+      "type": "int",
+      "value": 300
+     },
+     "discovery_prefix": {
+      "bounds": "",
+      "description": "Home Assistant MQTT discovery prefix. Default is 'homeassistant'. Only change if you configured a different prefix in HA.",
+      "display_name": "Discovery Prefix",
+      "type": "string",
+      "value": "homeassistant"
+     },
+     "include_logs": {
+      "bounds": "",
+      "description": "Include log entries as sensor attributes.",
+      "display_name": "Include Logs",
+      "type": "boolean",
+      "value": false
+     },
+     "include_monitor_stats": {
+      "bounds": "",
+      "description": "Include platform/monitor statistics (CPU, memory, etc.) as entities.",
+      "display_name": "Include Monitor Stats",
+      "type": "boolean",
+      "value": true
+     },
+     "include_weather": {
+      "bounds": "",
+      "description": "Include weather data entities if weather is configured in genmon.",
+      "display_name": "Include Weather",
+      "type": "boolean",
+      "value": true
+     },
+     "monitor_address": {
+      "bounds": "InternetAddress",
+      "description": "IP address of genmon if running on a different system. Leave empty for localhost.",
+      "display_name": "Genmon Address",
+      "type": "string",
+      "value": ""
+     },
+     "mqtt_address": {
+      "bounds": "required InternetAddress",
+      "description": "Address of your MQTT broker server (IP address or hostname).",
+      "display_name": "MQTT Server Address",
+      "type": "string",
+      "value": "192.168.1.20"
+     },
+     "mqtt_port": {
+      "bounds": "required digits",
+      "description": "Port of the MQTT broker. Default is 1883 (or 8883 for TLS).",
+      "display_name": "MQTT Port",
+      "type": "int",
+      "value": 1883
+     },
+     "numeric_json": {
+      "bounds": "",
+      "description": "Use numeric JSON format when querying genmon (cleaner values without embedded units).",
+      "display_name": "Use Numeric JSON",
+      "type": "boolean",
+      "value": true
+     },
+     "password": {
+      "bounds": "",
+      "description": "Password for MQTT broker authentication (leave empty if not required).",
+      "display_name": "Password",
+      "type": "password",
+      "value": ""
+     },
+     "poll_interval": {
+      "bounds": "",
+      "description": "Interval in seconds between polling genmon for status updates. Default is 3.",
+      "display_name": "Poll Interval",
+      "type": "int",
+      "value": 3.0
+     },
+     "tls_version": {
+      "bounds": "1.0,1.1,1.2",
+      "description": "TLS version to use. Default is 1.2. Ignored if CA certificate is not used.",
+      "display_name": "TLS Version",
+      "type": "list",
+      "value": "1.2"
+     },
+     "username": {
+      "bounds": "minmax:4:50",
+      "description": "Username for MQTT broker authentication (leave empty if not required).",
+      "display_name": "Username",
+      "type": "string",
+      "value": ""
+     }
+    },
+    "title": "Home Assistant MQTT Discovery",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genhomeassistantpy-optional"
+   },
+   "genhubitat": {
+    "description": "Native Hubitat integration via REST/WebSocket API. No MQTT broker required.",
+    "enable": false,
+    "icon": "hubitat",
+    "parameters": {
+     "api_key": {
+      "bounds": "",
+      "description": "API key for authentication (auto-generated). Copy this value into Hubitat when adding the integration.",
+      "display_name": "API Key (read-only)",
+      "type": "readonly",
+      "value": "<UUID>"
+     },
+     "blacklist": {
+      "bounds": "",
+      "description": "Comma-separated keywords to exclude from the API, matching any data path containing the keyword (case-insensitive). For the noisy diagnostics that dominate the Hubitat event count (CPU temperature/usage, memory, disk, WiFi signal), use the 'Include Monitor Stats' toggle instead; for outside temperature and conditions, use 'Include Weather'. Use this field for individual values those toggles don't cover, such as 'Battery Voltage' or 'Battery Charger Current', or to drop a single field while keeping the rest of the monitor stats. The default 'Tiles' excludes the web UI's tile data, which Hubitat does not use.",
+      "display_name": "Excluded Data Paths",
+      "type": "string",
+      "value": "Tiles"
+     },
+     "include_monitor_stats": {
+      "bounds": "",
+      "description": "Include monitor/platform statistics (CPU temp, WiFi, memory).",
+      "display_name": "Include Monitor Stats",
+      "type": "boolean",
+      "value": true
+     },
+     "include_weather": {
+      "bounds": "",
+      "description": "Include weather data if available.",
+      "display_name": "Include Weather",
+      "type": "boolean",
+      "value": true
+     },
+     "poll_interval": {
+      "bounds": "number",
+      "description": "Interval in seconds between polling genmon for status updates. Default is 3.",
+      "display_name": "Poll Interval",
+      "type": "int",
+      "value": 3.0
+     },
+     "port": {
+      "bounds": "required digits range:1024:65535",
+      "description": "Port for the REST/WebSocket API server.",
+      "display_name": "API Server Port",
+      "type": "int",
+      "value": 9084
+     }
+    },
+    "title": "Native Hubitat Integration via REST/WebSocket API",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genhubitatpy-optional"
+   },
+   "genlog": {
+    "description": "Log Genmon and utility state changes to a file. Log file is in text CSV format.",
+    "enable": false,
+    "icon": "csv",
+    "parameters": {
+     "Log File Name": {
+      "bounds": "required UnixFile",
+      "description": "Filename for log. Full path of the file must be included (i.e. /home/pi/genmon/LogFile.csv)",
+      "display_name": "Log File Name",
+      "type": "string",
+      "value": "/home/pi/genmon/LogFile.csv"
+     }
+    },
+    "title": "Notifications to CSV Log",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genlogpy-optional"
+   },
+   "genmopeka": {
+    "description": "Support Mopeka Pro Propane Tanks Sensor<br/><font color='red'>The required libraries for this add on are not installed. They will be installaled on the when the proram is restarted.</font>",
+    "enable": false,
+    "icon": "mopeka",
+    "parameters": {
+     "poll_frequency": {
+      "bounds": "number",
+      "description": "The time in minutes that the sensors are polled. The default value is 60 minutes.",
+      "display_name": "Poll Interval",
+      "type": "float",
+      "value": 60.0
+     },
+     "send_notices": {
+      "bounds": "",
+      "description": "Send email notices if unable to communicate with the senor or the sensor battery is low. Note: outbound email must be setup for this to work.",
+      "display_name": "Send Notices",
+      "type": "boolean",
+      "value": false
+     },
+     "tank_address": {
+      "bounds": "",
+      "description": "This value is MAC address of the sensor. It must be in a format using hex numbers separated by colons (i.e. 9a:03:2b:67:25:12). Multiple tank sensors (up to 4) may be used with commas between each address",
+      "display_name": "Sensor Address",
+      "type": "string",
+      "value": ""
+     },
+     "tank_type": {
+      "bounds": "20_LB,30_LB,40_LB,100_LB,200_LB,120_GAL,120_GAL_HORIZ,250_GAL,500_GAL,1000_GAL,Custom",
+      "description": "Type of tank used. If Custom is used then Max and Min values must be setup in /etc/genmon/genmopeka.conf",
+      "display_name": "Tank Size",
+      "type": "list",
+      "value": ""
+     }
+    },
+    "title": "Mopeka Pro Propane Tank Sensor",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genmopekapy-optional"
+   },
+   "genmqtt": {
+    "description": "Export Genmon data and status to MQTT server for automation integration",
+    "enable": false,
+    "icon": "mqtt",
+    "parameters": {
+     "blacklist": {
+      "bounds": "",
+      "description": "(Optional) Names of data not exported to the MQTT server, separated by commas.",
+      "display_name": "Blacklist Filter",
+      "type": "string",
+      "value": "Monitor,Run Time,Monitor Time,Generator Time,External Data"
+     },
+     "cert_authority_path": {
+      "bounds": "",
+      "description": "(Optional) Full path to Certificate Authority file. Leave empty to not use SSL/TLS. If used port will be forced to 8883.",
+      "display_name": "SSL/TLS CA certificate file",
+      "type": "string",
+      "value": ""
+     },
+     "cert_reqs": {
+      "bounds": "None,Optional,Required",
+      "description": "(Optional) Defines the certificate requirements that the client imposes on the broker. Used if Certificate Authority file is used.",
+      "display_name": "Certificate Requirements",
+      "type": "list",
+      "value": "Required"
+     },
+     "client_cert_path": {
+      "bounds": "",
+      "description": "Optional. Full path the client certificate file. Leave empty to not use MTLS.",
+      "display_name": "Client Certificate File",
+      "type": "string",
+      "value": ""
+     },
+     "client_id": {
+      "bounds": "",
+      "description": "Unique identifier. Must be unique for each instance of genmon and add on running on a given system. ",
+      "display_name": "Client ID",
+      "type": "string",
+      "value": "genmon"
+     },
+     "client_key_path": {
+      "bounds": "",
+      "description": "Optional. Full path the client key file. Leave empty to not use MTLS.",
+      "display_name": "Client Key File",
+      "type": "string",
+      "value": ""
+     },
+     "flush_interval": {
+      "bounds": "number",
+      "description": "(Optional) Time in seconds where even unchanged values will be published to their MQTT topic. Set to zero to disable flushing.",
+      "display_name": "Flush Interval",
+      "type": "float",
+      "value": 0.0
+     },
+     "mqtt_address": {
+      "bounds": "required InternetAddress",
+      "description": "Address of your MQTT server.",
+      "display_name": "MQTT Server Address",
+      "type": "string",
+      "value": "192.168.1.20"
+     },
+     "mqtt_port": {
+      "bounds": "required digits",
+      "description": "The port of the MQTT server in a decimal number.",
+      "display_name": "MQTT Server Port Number",
+      "type": "int",
+      "value": 1883
+     },
+     "numeric_json": {
+      "bounds": "",
+      "description": "If enabled will return numeric values in the Status, Maintenance and Outage topics as separate topics for unit, type and value.",
+      "display_name": "Numeric Topics",
+      "type": "boolean",
+      "value": false
+     },
+     "numeric_json_object": {
+      "bounds": "",
+      "description": "If enabled will return a JSON object for numeric values in the Status, Maintenance and Outage topics as an object with unit, type and value members.",
+      "display_name": "JSON for Numerics",
+      "type": "boolean",
+      "value": false
+     },
+     "password": {
+      "bounds": "minmax:4:50",
+      "description": "This value is used for the password if your MQTT server requires authentication. Leave blank for no authentication or no password.",
+      "display_name": "MQTT Authentication Password",
+      "type": "password",
+      "value": ""
+     },
+     "poll_interval": {
+      "bounds": "number",
+      "description": "The time in seconds between requesting status from genmon. The default value is 2 seconds.",
+      "display_name": "Poll Interval",
+      "type": "float",
+      "value": 2.0
+     },
+     "remove_spaces": {
+      "bounds": "",
+      "description": "If enabled any spaces in the topic path will be converted to underscores",
+      "display_name": "Remove Spaces in Topic Path",
+      "type": "boolean",
+      "value": false
+     },
+     "retain": {
+      "bounds": "",
+      "description": "If enabled, published messages will be retained by the MQTT broker server after a the Add On disconnects from the server.",
+      "display_name": "Retain Data",
+      "type": "boolean",
+      "value": false
+     },
+     "root_topic": {
+      "bounds": "minmax:1:50",
+      "description": "(Optional) Prepend this value to the MQTT data path i.e. 'Home' would result in 'Home/generator/...''",
+      "display_name": "Root Topic",
+      "type": "string",
+      "value": ""
+     },
+     "strlist_json": {
+      "bounds": "",
+      "description": "If enabled will return a JSON list for any list of strings like the Outage log. Does not apply if JSON for Numerics is enabled.",
+      "display_name": "JSON for String Lists",
+      "type": "boolean",
+      "value": false
+     },
+     "tls_version": {
+      "bounds": "1.0,1.1,1.2",
+      "description": "(Optional) TLS version used (integer). Default is 1.0. Must be 1.0, 1.1, or 1.2. This is ignored if a CA cert file is not used. ",
+      "display_name": "TLS Version",
+      "type": "list",
+      "value": "1.0"
+     },
+     "username": {
+      "bounds": "minmax:4:50",
+      "description": "This value is used for the username if your MQTT server requires authentication. Leave blank for no authentication.",
+      "display_name": "MQTT Authentication Username",
+      "type": "string",
+      "value": ""
+     }
+    },
+    "title": "MQTT integration",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genmqttpy-optional"
+   },
+   "genmqttin": {
+    "description": "Import data from MQTT broker for genmon use",
+    "enable": false,
+    "icon": "mqtt",
+    "parameters": {
+     "cert_authority_path": {
+      "bounds": "",
+      "description": "(Optional) Full path to Certificate Authority file. Leave empty to not use SSL/TLS. If used port will be forced to 8883.",
+      "display_name": "SSL/TLS CA certificate file",
+      "type": "string",
+      "value": ""
+     },
+     "cert_reqs": {
+      "bounds": "None,Optional,Required",
+      "description": "(Optional) Defines the certificate requirements that the client imposes on the broker. Used if Certificate Authority file is used.",
+      "display_name": "Certificate Requirements",
+      "type": "list",
+      "value": "Required"
+     },
+     "client_cert_path": {
+      "bounds": "",
+      "description": "Optional. Full path the client certificate file. Leave empty to not use MTLS.",
+      "display_name": "Client Certificate File",
+      "type": "string",
+      "value": ""
+     },
+     "client_id": {
+      "bounds": "",
+      "description": "Unique identifier. Must be unique for each instance of genmon and add on running on a given system. ",
+      "display_name": "Client ID",
+      "type": "string",
+      "value": "genmon_sensor_input"
+     },
+     "client_key_path": {
+      "bounds": "",
+      "description": "Optional. Full path the client key file. Leave empty to not use MTLS.",
+      "display_name": "Client Key File",
+      "type": "string",
+      "value": ""
+     },
+     "exclude_gauge": {
+      "bounds": "",
+      "description": "Comma separated list of Displayed Names that will not be displayed as a gauge. If you enable 'Use Data for Calculations' then you can remove duplicate gagues with this setting if they show up in the user interface.",
+      "display_name": "Exclude Gauge",
+      "type": "string",
+      "value": ""
+     },
+     "labels": {
+      "bounds": "",
+      "description": "Comma separated list of display names for each topic listed above. These will be the displayed label for each topic value.",
+      "display_name": "Displayed Name",
+      "type": "string",
+      "value": ""
+     },
+     "maximum_values": {
+      "bounds": "",
+      "description": "Comma separated list of maximum values for each topic listed above.",
+      "display_name": "Maximum Values",
+      "type": "string",
+      "value": ""
+     },
+     "mqtt_address": {
+      "bounds": "required InternetAddress",
+      "description": "Address of your MQTT server.",
+      "display_name": "MQTT Server Address",
+      "type": "string",
+      "value": "192.168.1.20"
+     },
+     "mqtt_port": {
+      "bounds": "required digits",
+      "description": "The port of the MQTT server in a decimal number.",
+      "display_name": "MQTT Server Port Number",
+      "type": "int",
+      "value": 1883
+     },
+     "nominal_values": {
+      "bounds": "",
+      "description": "Comma separated list of nominal values for each topic listed above.",
+      "display_name": "Nominal Values",
+      "type": "string",
+      "value": ""
+     },
+     "password": {
+      "bounds": "minmax:4:50",
+      "description": "This value is used for the password if your MQTT server requires authentication. Leave blank for no authentication or no password.",
+      "display_name": "MQTT Authentication Password",
+      "type": "password",
+      "value": ""
+     },
+     "strict": {
+      "bounds": "",
+      "description": "If enabled, genmon will only use Data for Calculations if the generator utility line is in an outage. If your sensors are connected after the transfer switch (i.e. utility and generator are monitored) the you will want to enable this setting to keep genmon from using the sensor readings when there is not an outage.",
+      "display_name": "Strict Import Rules",
+      "type": "boolean",
+      "value": false
+     },
+     "tls_version": {
+      "bounds": "1.0,1.1,1.2",
+      "description": "(Optional) TLS version used (integer). Default is 1.0. Must be 1.0, 1.1, or 1.2. This is ignored if a CA cert file is not used. ",
+      "display_name": "TLS Version",
+      "type": "list",
+      "value": "1.0"
+     },
+     "topics": {
+      "bounds": "",
+      "description": "Comma separated list of MQTT topics to subscribe and import into genmon. All topics must return a numeric value or a string representation of a numeric value.",
+      "display_name": "Topics",
+      "type": "string",
+      "value": ""
+     },
+     "types": {
+      "bounds": "",
+      "description": "Comma separated list of value types for each topic listed above. Valid types are: ct1,ct2,ctpower1,ctpower2,fuel,temperature,power,current,voltage or pressure. See the wiki entry for this add on for more details.",
+      "display_name": "Sensor Type",
+      "type": "string",
+      "value": ""
+     },
+     "units": {
+      "bounds": "",
+      "description": "Comma separated list of units for each topic listed above. If no labled is used for a given topic, use a space. If using the imported MQTT data for genmon calculations, for power use W or kW, for current use A, for voltage use V. ",
+      "display_name": "Units",
+      "type": "string",
+      "value": ""
+     },
+     "use_for_power_fuel": {
+      "bounds": "",
+      "description": "If enabled, the data from sensor types fuel,power,current,ct1,ct2,voltageleg1, voltageleg2, ctpower1 and ctpower2 will be imported and used for power and fuel calculations (instead of just displaying) within genmon.",
+      "display_name": "Use Data for Calculations",
+      "type": "boolean",
+      "value": false
+     },
+     "username": {
+      "bounds": "minmax:4:50",
+      "description": "This value is used for the username if your MQTT server requires authentication. Leave blank for no authentication.",
+      "display_name": "MQTT Authentication Username",
+      "type": "string",
+      "value": ""
+     }
+    },
+    "title": "MQTT Sensor Input",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genmqttinpy-optional"
+   },
+   "genneevo": {
+    "description": "Integrates Nee-Vo propane tank sensor data",
+    "enable": false,
+    "icon": "neevo",
+    "parameters": {
+     "capacity": {
+      "bounds": "number",
+      "description": "Tank capacity in gallons. Set to 0 to use on line data.",
+      "display_name": "Tank Capacity (gallons)",
+      "type": "int",
+      "value": 250
+     },
+     "password": {
+      "bounds": "minmax:4:50",
+      "description": "Password from Nee-vo app",
+      "display_name": "Password",
+      "type": "password",
+      "value": ""
+     },
+     "poll_frequency": {
+      "bounds": "number",
+      "description": "The duration in minutes between poll of tank data.",
+      "display_name": "Poll Frequency",
+      "type": "float",
+      "value": 60.0
+     },
+     "serial_number": {
+      "bounds": "",
+      "description": "Optional: only use a specific tank by serial number (leave blank for first tank)",
+      "display_name": "Serial Number",
+      "type": "string",
+      "value": ""
+     },
+     "tank_name": {
+      "bounds": "minmax:1:50",
+      "description": "Tank name",
+      "display_name": "Tank Name",
+      "type": "string",
+      "value": "Propane Tank"
+     },
+     "username": {
+      "bounds": "required email",
+      "description": "Username from Nee-vo app",
+      "display_name": "Username",
+      "type": "string",
+      "value": ""
+     }
+    },
+    "title": "Nee Vo Tank Fuel Monitor",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genneevopy-optional"
+   },
+   "genotodata": {
+    "description": "Support Otodata TM6030 Propane Tank Sensor<br/><font color='red'>The required libraries for this add on are not installed. They will be installaled on the when the proram is restarted.</font>",
+    "enable": false,
+    "icon": "otodata",
+    "parameters": {
+     "capacity": {
+      "bounds": "number",
+      "description": "Tank capacity in gallons. Set to 0 to omit from genmon data.",
+      "display_name": "Tank Capacity (gallons)",
+      "type": "int",
+      "value": 0
+     },
+     "mac_address": {
+      "bounds": "",
+      "description": "Optional: restrict readings to a specific sensor MAC address (e.g. aa:bb:cc:dd:ee:ff). Leave blank to use the first Otodata device found.",
+      "display_name": "Sensor MAC Address",
+      "type": "string",
+      "value": ""
+     },
+     "poll_frequency": {
+      "bounds": "number",
+      "description": "The time in minutes between BLE scan cycles. Default is 5 minutes.",
+      "display_name": "Poll Interval (minutes)",
+      "type": "int",
+      "value": 5
+     },
+     "scan_time": {
+      "bounds": "number",
+      "description": "Seconds to listen for BLE advertisements per scan cycle. Increase if the sensor is far from the Pi.",
+      "display_name": "Scan Duration (seconds)",
+      "type": "float",
+      "value": 30.0
+     },
+     "tank_name": {
+      "bounds": "",
+      "description": "Display name for this tank in the genmon web interface.",
+      "display_name": "Tank Name",
+      "type": "string",
+      "value": "Propane Tank"
+     }
+    },
+    "title": "Otodata TM6030 Propane Tank Sensor",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genotodatapy-optional"
+   },
+   "genpushover": {
+    "description": "Send Genmon and utility state changes via Pushover service",
+    "enable": false,
+    "icon": "pushover",
+    "parameters": {
+     "alarm_priority": {
+      "bounds": "LOWEST,LOW,NORMAL,HIGH,EMERGENCY",
+      "description": "Alarm Notification priority identifier. See https://pushover.net/api#priority",
+      "display_name": "Alarm Priority",
+      "type": "list",
+      "value": "NORMAL"
+     },
+     "appid": {
+      "bounds": "required minmax:30:30",
+      "description": "Pushover app ID. This is generated by pushover.net when an application is created for your account.",
+      "display_name": "Application ID",
+      "type": "string",
+      "value": "abc123"
+     },
+     "default_wait": {
+      "bounds": "",
+      "description": "The number of seconds to wait before retrying a failed message.",
+      "display_name": "Retry Interval (seconds)",
+      "type": "int",
+      "value": 120
+     },
+     "extra_notify_error": {
+      "bounds": "",
+      "description": "Send messages for errors (Generator Alarms) to the Additional Recipient(s) above.",
+      "display_name": "Additional Recipient(s) Notify for Errors",
+      "type": "boolean",
+      "value": true
+     },
+     "extra_notify_info": {
+      "bounds": "",
+      "description": "Send messages for information (switch state change, engine state change, exercising) to the Additional Recipient(s) above.",
+      "display_name": "Additional Recipient(s) Notify for Information",
+      "type": "boolean",
+      "value": true
+     },
+     "extra_notify_outage": {
+      "bounds": "",
+      "description": "Send messages for outages to the Additional Recipient(s) above.",
+      "display_name": "Additional Recipient(s) Notify for Outages",
+      "type": "boolean",
+      "value": true
+     },
+     "extra_notify_pi_state": {
+      "bounds": "",
+      "description": "Send messages for Pi hardware sensor status to the Additional Recipient(s) above.",
+      "display_name": "Additional Recipient(s) Notify for Pi Hardware Issues",
+      "type": "boolean",
+      "value": true
+     },
+     "extra_notify_sw_update": {
+      "bounds": "",
+      "description": "Send messages for software updates to the Additional Recipient(s) above.",
+      "display_name": "Additional Recipient(s) Notify for Software Updates",
+      "type": "boolean",
+      "value": true
+     },
+     "extra_notify_warn": {
+      "bounds": "",
+      "description": "Send messages for warnings (service due, fuel low) to the Additional Recipient(s) above.",
+      "display_name": "Additional Recipient(s) Notify for Warnings",
+      "type": "boolean",
+      "value": true
+     },
+     "extra_userid": {
+      "bounds": "minmax:0:500",
+      "description": "Optional additional Pushover user (or group) key(s), separated by spaces and/or commas, for recipients who should only receive some notification categories (e.g. a family member who only wants outage alerts). Use the 'Additional Recipient(s)' Notify settings below to choose which categories they receive. A category must also be enabled above for it to be sent to these recipients.",
+      "display_name": "Additional Recipient(s) User Key",
+      "type": "string",
+      "value": ""
+     },
+     "fuel_priority": {
+      "bounds": "LOWEST,LOW,NORMAL,HIGH,EMERGENCY",
+      "description": "Fuel Level Notification priority identifier. See https://pushover.net/api#priority",
+      "display_name": "Fuel Level Priority",
+      "type": "list",
+      "value": "NORMAL"
+     },
+     "max_retry_time": {
+      "bounds": "",
+      "description": "Maximum number of seconds to retry a failed message before dropping the message.",
+      "display_name": "Max Retry Duration (seconds)",
+      "type": "int",
+      "value": 600
+     },
+     "notify_error": {
+      "bounds": "",
+      "description": "Send messages for errors (Generator Alarms).",
+      "display_name": "Notify for Errors",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_info": {
+      "bounds": "",
+      "description": "Send messages for information (switch state change, engine state change, exercising).",
+      "display_name": "Notify for Information",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_outage": {
+      "bounds": "",
+      "description": "Send messages for outages.",
+      "display_name": "Notify for Outages",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_pi_state": {
+      "bounds": "",
+      "description": "Send messages for Pi hardware sensor status (CPU throttling, undervoltage, etc).",
+      "display_name": "Notify for Pi Hardware Issues",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_sw_update": {
+      "bounds": "",
+      "description": "Send messages for software updates.",
+      "display_name": "Notify for Software Updates",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_warn": {
+      "bounds": "",
+      "description": "Send messages for warnings (service due, fuel low).",
+      "display_name": "Notify for Warnings",
+      "type": "boolean",
+      "value": true
+     },
+     "outage_priority": {
+      "bounds": "LOWEST,LOW,NORMAL,HIGH,EMERGENCY",
+      "description": "Outage Notification priority identifier. See https://pushover.net/api#priority",
+      "display_name": "Outage Priority",
+      "type": "list",
+      "value": "NORMAL"
+     },
+     "pi_state_priority": {
+      "bounds": "LOWEST,LOW,NORMAL,HIGH,EMERGENCY",
+      "description": "Pi Hardware Sensor State Notification priority identifier. See https://pushover.net/api#priority",
+      "display_name": "Pi Hardware Sensor State Priority",
+      "type": "list",
+      "value": "NORMAL"
+     },
+     "pushsound": {
+      "bounds": "minmax:3:20",
+      "description": "Notification sound identifier. See https://pushover.net/api#sounds for a full list of sound IDs. All sounds must be lower case.",
+      "display_name": "Push Sound",
+      "type": "string",
+      "value": "updown"
+     },
+     "run_state_priority": {
+      "bounds": "LOWEST,LOW,NORMAL,HIGH,EMERGENCY",
+      "description": "Run State Notification priority identifier. See https://pushover.net/api#priority",
+      "display_name": "Run State Priority",
+      "type": "list",
+      "value": "NORMAL"
+     },
+     "service_state_priority": {
+      "bounds": "LOWEST,LOW,NORMAL,HIGH,EMERGENCY",
+      "description": "Service State Notification priority identifier. See https://pushover.net/api#priority",
+      "display_name": "Service State Priority",
+      "type": "list",
+      "value": "NORMAL"
+     },
+     "sw_update_priority": {
+      "bounds": "LOWEST,LOW,NORMAL,HIGH,EMERGENCY",
+      "description": "Software Update Notification priority identifier. See https://pushover.net/api#priority",
+      "display_name": "Software Update Priority",
+      "type": "list",
+      "value": "NORMAL"
+     },
+     "switch_state_priority": {
+      "bounds": "LOWEST,LOW,NORMAL,HIGH,EMERGENCY",
+      "description": "Switch State Notification priority identifier. See https://pushover.net/api#priority",
+      "display_name": "Switch State Priority",
+      "type": "list",
+      "value": "NORMAL"
+     },
+     "system_health_priority": {
+      "bounds": "LOWEST,LOW,NORMAL,HIGH,EMERGENCY",
+      "description": "System Health Notification priority identifier. See https://pushover.net/api#priority",
+      "display_name": "System Health Priority",
+      "type": "list",
+      "value": "NORMAL"
+     },
+     "userid": {
+      "bounds": "required minmax:30:500",
+      "description": "Pushover User Key. Note: this is not your login user name but a key generated by pushover.net for your account. To send notifications to more than one person, enter multiple user (or group) keys separated by spaces and/or commas, e.g. 'key1 key2 key3'. These keys all receive the same notifications. If you wish to send different notification types to other users, please use the Additional Recipient(s) key and adjust the settings for that user.",
+      "display_name": "Pushover User Key",
+      "type": "string",
+      "value": "123abc"
+     }
+    },
+    "title": "Notifications via Pushover",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genpushoverpy-optional"
+   },
+   "genslack": {
+    "description": "Send Genmon and utility state changes via Slack service",
+    "enable": false,
+    "icon": "slack",
+    "parameters": {
+     "channel": {
+      "bounds": "",
+      "description": "Slack channel to which the message will be sent.",
+      "display_name": "Channel",
+      "type": "string",
+      "value": ""
+     },
+     "default_wait": {
+      "bounds": "",
+      "description": "The number of seconds to wait before retrying a failed message.",
+      "display_name": "Retry Interval (seconds)",
+      "type": "int",
+      "value": 120
+     },
+     "icon_emoji": {
+      "bounds": "",
+      "description": "Emoji that appears as the icon of the user who sent the message i.e. :red_circle:n",
+      "display_name": "Icon Emoji",
+      "type": "string",
+      "value": ":red_circle:"
+     },
+     "max_retry_time": {
+      "bounds": "",
+      "description": "Maximum number of seconds to retry a failed message before dropping the message.",
+      "display_name": "Max Retry Duration (seconds)",
+      "type": "int",
+      "value": 600
+     },
+     "notify_error": {
+      "bounds": "",
+      "description": "Send messages for errors (Generator Alarms).",
+      "display_name": "Notify for Errors",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_info": {
+      "bounds": "",
+      "description": "Send messages for information (switch state change, engine state change, exercising).",
+      "display_name": "Notify for Information",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_outage": {
+      "bounds": "",
+      "description": "Send messages for outages.",
+      "display_name": "Notify for Outages",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_pi_state": {
+      "bounds": "",
+      "description": "Send messages for Pi hardware sensor status (CPU throttling, undervoltage, etc).",
+      "display_name": "Notify for Pi Hardware Issues",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_sw_update": {
+      "bounds": "",
+      "description": "Send messages for software updates.",
+      "display_name": "Notify for Software Updates",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_warn": {
+      "bounds": "",
+      "description": "Send messages for warnings (service due, fuel low).",
+      "display_name": "Notify for Warnings",
+      "type": "boolean",
+      "value": true
+     },
+     "title_link": {
+      "bounds": "HTTPAddress",
+      "description": "Use this to make the title of the message a link i.e. link to the genmon web interface.",
+      "display_name": "Title Link",
+      "type": "string",
+      "value": ""
+     },
+     "username": {
+      "bounds": "required username",
+      "description": "Slack username.",
+      "display_name": "Username",
+      "type": "string",
+      "value": "GenMon"
+     },
+     "webhook_url": {
+      "bounds": "required HTTPAddress",
+      "description": "Full Slack Webhook URL. Retrieve from Slack custom integration configuration.",
+      "display_name": "Web Hook URL",
+      "type": "string",
+      "value": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+     }
+    },
+    "title": "Notifications via Slack",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genslackpy-optional"
+   },
+   "gensms": {
+    "description": "Send Genmon and utility state changes via Twilio SMS",
+    "enable": false,
+    "icon": "twilio",
+    "parameters": {
+     "accountsid": {
+      "bounds": "required minmax:10:50",
+      "description": "Twilio account SID. This can be obtained from a valid Twilio account",
+      "display_name": "Twilio Account SID",
+      "type": "string",
+      "value": "ACXXXXXXXXXXXXXXXXXXXXXXX"
+     },
+     "authtoken": {
+      "bounds": "required minmax:10:50",
+      "description": "Twilio authentication token. This can be obtained from a valid Twilio account",
+      "display_name": "Twilio Authentication Token",
+      "type": "string",
+      "value": "XXXXXXXXXXXXXXXXXX"
+     },
+     "default_wait": {
+      "bounds": "",
+      "description": "The number of seconds to wait before retrying a failed message.",
+      "display_name": "Retry Interval (seconds)",
+      "type": "int",
+      "value": 120
+     },
+     "from_number": {
+      "bounds": "required InternationalPhone",
+      "description": "Number to send SMS message from. This should be a twilio phone number.",
+      "display_name": "Twilio Phone Number",
+      "type": "string",
+      "value": "+1555XXXXXXX"
+     },
+     "max_retry_time": {
+      "bounds": "",
+      "description": "Maximum number of seconds to retry a failed message before dropping the message.",
+      "display_name": "Max Retry Duration (seconds)",
+      "type": "int",
+      "value": 600
+     },
+     "notify_error": {
+      "bounds": "",
+      "description": "Send messages for errors (Generator Alarms).",
+      "display_name": "Notify for Errors",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_info": {
+      "bounds": "",
+      "description": "Send messages for information (switch state change, engine state change, exercising).",
+      "display_name": "Notify for Information",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_outage": {
+      "bounds": "",
+      "description": "Send messages for outages.",
+      "display_name": "Notify for Outages",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_pi_state": {
+      "bounds": "",
+      "description": "Send messages for Pi hardware sensor status (CPU throttling, undervoltage, etc).",
+      "display_name": "Notify for Pi Hardware Issues",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_sw_update": {
+      "bounds": "",
+      "description": "Send messages for software updates.",
+      "display_name": "Notify for Software Updates",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_warn": {
+      "bounds": "",
+      "description": "Send messages for warnings (service due, fuel low).",
+      "display_name": "Notify for Warnings",
+      "type": "boolean",
+      "value": true
+     },
+     "to_number": {
+      "bounds": "required InternationalPhone",
+      "description": "Mobile number to send SMS message to. This can be any mobile number. Separate multilpe recipients with commas.",
+      "display_name": "Recipient Phone Number",
+      "type": "string",
+      "value": "+15551234567"
+     }
+    },
+    "title": "Notifications via SMS - Twilio",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensmspy-optional"
+   },
+   "gensms_modem": {
+    "description": "Send Genmon and utility state changes via cellular SMS (additional hardware required)",
+    "enable": false,
+    "icon": "sms",
+    "parameters": {
+     "log_at_commands": {
+      "bounds": "",
+      "description": "Enable to log at commands to the log file.",
+      "display_name": "Log AT Commands",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_error": {
+      "bounds": "",
+      "description": "Send messages for errors (Generator Alarms).",
+      "display_name": "Notify for Errors",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_info": {
+      "bounds": "",
+      "description": "Send messages for information (switch state change, engine state change, exercising).",
+      "display_name": "Notify for Information",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_outage": {
+      "bounds": "",
+      "description": "Send messages for outages.",
+      "display_name": "Notify for Outages",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_pi_state": {
+      "bounds": "",
+      "description": "Send messages for Pi hardware sensor status (CPU throttling, undervoltage, etc).",
+      "display_name": "Notify for Pi Hardware Issues",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_sw_update": {
+      "bounds": "",
+      "description": "Send messages for software updates.",
+      "display_name": "Notify for Software Updates",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_warn": {
+      "bounds": "",
+      "description": "Send messages for warnings (service due, fuel low).",
+      "display_name": "Notify for Warnings",
+      "type": "boolean",
+      "value": true
+     },
+     "port": {
+      "bounds": "required UnixDevice",
+      "description": "This is the serial device to send AT modem commands. This *must* be different from the serial port used by the generator monitor software.",
+      "display_name": "Modem Serial Port",
+      "type": "string",
+      "value": "/dev/ttyAMA0"
+     },
+     "rate": {
+      "bounds": "required digits",
+      "description": "The baud rate for the port. Use 115200 for the LTEPiHat.",
+      "display_name": "Modem Serial Rate",
+      "type": "int",
+      "value": 115200
+     },
+     "recipient": {
+      "bounds": "required InternationalPhone",
+      "description": "Mobile number to send SMS message. This can be any mobile number. No dashes or spaces.",
+      "display_name": "Recipient Phone Number",
+      "type": "string",
+      "value": "5551234567"
+     }
+    },
+    "title": "Notifications via SMS - LTE Hat",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensms_modempy-optional"
+   },
+   "gensms_voip": {
+    "description": "SMS Support vis VoIP using voip.ms",
+    "enable": false,
+    "icon": "voipms",
+    "parameters": {
+     "destination": {
+      "bounds": "required InternationalPhone",
+      "description": "Mobile number to send SMS message to. This can be any mobile number. Separate multilpe recipients with commas.",
+      "display_name": "Recipient Phone Number",
+      "type": "string",
+      "value": ""
+     },
+     "did": {
+      "bounds": "required InternationalPhone",
+      "description": "DID number for your voip.ms account to send the SMS.",
+      "display_name": "Sender DID Number",
+      "type": "string",
+      "value": ""
+     },
+     "password": {
+      "bounds": "required minmax:8:50",
+      "description": "VoIP.ms API password. This is NOT the account login, but rather then API password",
+      "display_name": "VoIP.ms API password",
+      "type": "password",
+      "value": ""
+     },
+     "username": {
+      "bounds": "required minmax:5:50",
+      "description": "Voip.ms account username",
+      "display_name": "VoIP.ms User Name",
+      "type": "string",
+      "value": ""
+     }
+    },
+    "title": "SMS via VoIP using voip.ms",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensms_voippy-optional"
+   },
+   "gensnmp": {
+    "description": "Allow Genmon to respond to SNMP requests",
+    "enable": false,
+    "icon": "snmp",
+    "parameters": {
+     "community": {
+      "bounds": "minmax:4:50",
+      "description": "SNMP Community string",
+      "display_name": "SNMP Community",
+      "type": "string",
+      "value": "public"
+     },
+     "enterpriseid": {
+      "bounds": "required digits",
+      "description": "The enterprise ID used in the SNMP Object Identifier (OID). The genmon SNMP enterprise ID is 58399.",
+      "display_name": "Enterprise ID",
+      "type": "int",
+      "value": 58399
+     },
+     "poll_frequency": {
+      "bounds": "number",
+      "description": "The time in seconds between requesting status from genmon. The default value is 2 seconds.",
+      "display_name": "Poll Interval",
+      "type": "float",
+      "value": 2.0
+     },
+     "use_integer": {
+      "bounds": "",
+      "description": "If enabled, integer values (no units) will be returned when applicable in the Status, Maintenance (Evo/Nexus only) and Outage data. Enabling this value also enables 'Use Numerics'. Floating point numberic values are returned as strings",
+      "display_name": "Force Integers",
+      "type": "boolean",
+      "value": false
+     },
+     "use_numeric": {
+      "bounds": "",
+      "description": "If enabled will return numeric values (no units) in the Status, Maintenance (Evo/Nexus only) and Outage data.",
+      "display_name": "Numerics only",
+      "type": "boolean",
+      "value": false
+     }
+    },
+    "title": "SNMP Support",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensnmppy-optional"
+   },
+   "gensyslog": {
+    "description": "Write generator and utility state changes to system log (/var/log/syslog)",
+    "enable": false,
+    "icon": "linux",
+    "parameters": null,
+    "title": "Linux System Logging",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensyslogpy-optional"
+   },
+   "gentankdiy": {
+    "description": "Integrates DIY tank gauge sensor for Genmon<br/><font color='red'>The I2C bus not enabled but required for this add-on to function.</font>",
+    "enable": false,
+    "icon": "rpi",
+    "parameters": {
+     "gauge_type": {
+      "bounds": "1,2",
+      "description": "DIY sensor type. Valid options are Type 1 and Type 2.",
+      "display_name": "Sensor Type",
+      "type": "list",
+      "value": "1"
+     },
+     "poll_frequency": {
+      "bounds": "number",
+      "description": "The duration in minutes between poll of tank data.",
+      "display_name": "Poll Frequency",
+      "type": "float",
+      "value": 60.0
+     }
+    },
+    "title": "DIY Fuel Tank Gauge Sensor",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gentankdiypy-optional"
+   },
+   "gentankutil": {
+    "description": "Integrates tankutility.com propane tank sensor data",
+    "enable": false,
+    "icon": "tankutility",
+    "parameters": {
+     "check_battery": {
+      "bounds": "",
+      "description": "If enabled, and email will be sent if the battery level on the sensor is critical. Outbound email must be enabled for this to function.",
+      "display_name": "Check Sensor Battery",
+      "type": "boolean",
+      "value": false
+     },
+     "check_reading": {
+      "bounds": "",
+      "description": "If enabled, and email will be sent if the sensor has not performed a reading within 50 hours. Outbound email must be enabled for this to function.",
+      "display_name": "Check for Missed Readings",
+      "type": "boolean",
+      "value": false
+     },
+     "password": {
+      "bounds": "minmax:4:50",
+      "description": "Password at tankutility.com",
+      "display_name": "Password",
+      "type": "password",
+      "value": ""
+     },
+     "poll_frequency": {
+      "bounds": "number",
+      "description": "The duration in minutes between poll of tank data.",
+      "display_name": "Poll Frequency",
+      "type": "float",
+      "value": 60.0
+     },
+     "tank_name": {
+      "bounds": "minmax:1:50",
+      "description": "Tank name as defined in tankutility.com",
+      "display_name": "Tank Name",
+      "type": "string",
+      "value": ""
+     },
+     "tank_name_2": {
+      "bounds": "minmax:1:50",
+      "description": "Second tank name, if applicable",
+      "display_name": "Tank Name 2 (Optional)",
+      "type": "string",
+      "value": ""
+     },
+     "username": {
+      "bounds": "required email",
+      "description": "Username at tankutility.com",
+      "display_name": "Username",
+      "type": "string",
+      "value": ""
+     }
+    },
+    "title": "External Tank Fuel Monitor",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gentankutilpy-optional"
+   },
+   "gentemp": {
+    "description": "Allow the display of external temperature sensor data<br/><font color='red'>1-wire is not enabled but is required</font>",
+    "enable": false,
+    "icon": "rpi",
+    "parameters": {
+     "blacklist": {
+      "bounds": "",
+      "description": "Comma separated blacklist. If these vaues are found in 1 wire temperature sensor device names the sensor will be ignored.",
+      "display_name": "Sensor Device Blacklist",
+      "type": "string",
+      "value": ""
+     },
+     "device_labels": {
+      "bounds": "",
+      "description": "Comma separated list of sensor names. These names will be displayed for each sensor. DS18B20 sensors are first, then type K thermocouples. Blacklisted devices are skipped.",
+      "display_name": "Sensor Names",
+      "type": "string",
+      "value": ""
+     },
+     "device_max_values": {
+      "bounds": "",
+      "description": "Comma separated list of maximum temperature values for the sensor. This is the maximum gauge value. The order of these values must match the order of the Sensor Names. Leave blank to disable External Temp Sensor gauges.",
+      "display_name": "Sensor Maximum Values",
+      "type": "string",
+      "value": ""
+     },
+     "device_min_values": {
+      "bounds": "",
+      "description": "Comma separated list of minimum temperature values for the sensor. This is the minimum gauge value. The order of these values must match the order of the Sensor Names. Leave blank to set all sensors minimum value to zero.",
+      "display_name": "Sensor Minimum Values",
+      "type": "string",
+      "value": ""
+     },
+     "device_nominal_values": {
+      "bounds": "",
+      "description": "Comma separated list of nominal temperature values for the sensor. Nominal values help determine where the gauge green area ends and the yellow begins. The order of these values must match the order of the Sensor Names. Leave blank to disable External Temp Sensor gauges.",
+      "display_name": "Sensor Nominal Values",
+      "type": "string",
+      "value": ""
+     },
+     "poll_frequency": {
+      "bounds": "number",
+      "description": "The time in seconds that the temperature data is polled. The default value is 2 seconds.",
+      "display_name": "Poll Interval",
+      "type": "float",
+      "value": 2.0
+     },
+     "use_metric": {
+      "bounds": "",
+      "description": "enable to use Celsius, disable for Fahrenheit",
+      "display_name": "Use Metric",
+      "type": "boolean",
+      "value": false
+     }
+    },
+    "title": "External Temperature Sensors",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gentemppy-optional"
+   }
+  },
+  "get_advanced_settings": {
+   "additional_modbus_timeout": [
+    "float",
+    "Additional Modbus Timeout (sec)",
+    8,
+    0.0,
+    "Add this value (in seconds) to the modbus timeout value. Floating point value.",
+    "number",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "additional_modbus_timeout"
+   ],
+   "additionalrunhours": [
+    "float",
+    "Additional Run Hours",
+    37,
+    0.0,
+    "Nexus controllers (not Evolution) do not have the ability to set the run hours. If your controller has been replaced you can use this entry to add hours to the Run Hours reported by the in the UI. Note: If this option is used it will only modify the run hours displayed in the web interface. It will not affect the controllers internal maintenance counters. This value must be a numeric value.",
+    "number",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "additionalrunhours"
+   ],
+   "address": [
+    "string",
+    "Modbus slave address",
+    6,
+    "9d",
+    "The Modbus slave address in hexadecimal. This value is 9d for Evolution / Nexus, and typically 64 for industrial generators.",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "address"
+   ],
+   "allow_local_access": [
+    "boolean",
+    "Allow LAN access to genmon",
+    12,
+    false,
+    "If enabled, genmon will allow LAN access to the genmon socket interface. This setting is disabled by default if the web UI enabled authentication to increase the security of genmon. If you want to access genmon via the socket interface or run an add on on a different computer then enable this option.",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "allow_local_access"
+   ],
+   "alternate_date_format": [
+    "boolean",
+    "Alternate Date Format",
+    26,
+    false,
+    "Use dd/mm/yyyy for date format instead of mm/dd/yyyy where applicable",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "alternate_date_format"
+   ],
+   "controllertype": [
+    "list",
+    "Controller Type",
+    14,
+    "generac_evo_nexus",
+    "Set to h_100 for H-100 mode or powerzone for PowerZone or custom to use an imported controller configuration, otherwise the software will default to Nexus/Evolution Mode",
+    "generac_evo_nexus,h_100,powerzone_pro,custom",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "controllertype"
+   ],
+   "currentdivider": [
+    "float",
+    "Current Divider",
+    72,
+    "",
+    "This is a value to override the divisor used to calculate the current for Evolution units. This value is expressed in floating point. Leave blank to use the default value.",
+    "number",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "currentdivider"
+   ],
+   "currentoffset": [
+    "float",
+    "Current Offset",
+    73,
+    "",
+    "This value provides an offset to compensate for mis-calibrated current transformers in Evolution generators. This may need to be used if you you see a negative current value displayed for Evolution Air Cooled Generators. The default value is zero. Leave blank to use the default value.",
+    "number",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "currentoffset"
+   ],
+   "disableplatformstats": [
+    "boolean",
+    "Disable Platform Stats",
+    80,
+    false,
+    "If enabled, platform statistics will not be displayed in the user interface",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "disableplatformstats"
+   ],
+   "enable_fuel_log": [
+    "boolean",
+    "Log Fuel Level to File",
+    60,
+    false,
+    "If enabled, the fuel level will be logged to a file periodically if the fuel level changes. The default filename is /etc/genmon/fuellog.txt",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "enable_fuel_log"
+   ],
+   "estimated_load": [
+    "float",
+    "Estimated Load",
+    38,
+    "0.0",
+    "The percent load (expresses a a decimal value i.e. .5 = 50 percent) used when estimating the run hours left until the tank is empty.",
+    "required range:0:1",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "estimated_load"
+   ],
+   "extend_wait": [
+    "int",
+    "Extend email retry",
+    83,
+    0,
+    "Number of additional seconds to wait to retry sending failed emails.",
+    "digits",
+    "<CONF>/mymail.conf",
+    "MyMail",
+    "extend_wait"
+   ],
+   "forceserialuse": [
+    "boolean",
+    "Force Use of Serial Port on Errors",
+    12,
+    false,
+    "If enabled, the software will try continue attempt use the serial port even if it is not found when the software is initially loaded. This may be needed for some serial USB devices.",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "forceserialuse"
+   ],
+   "fuel_log_freq": [
+    "float",
+    "Fuel Log Frequency",
+    61,
+    "15.0",
+    "The frequency in minutes to log the fuel level to a file.",
+    "number",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "fuel_log_freq"
+   ],
+   "fuel_units": [
+    "list",
+    "Fuel Units",
+    57,
+    "gal",
+    "The unit of the Half and Full consumption rate. Use this fuel consumption stats for non Evolution units or to override the fuel consumption defaults for Evolution controllers.",
+    "gal,cubic feet",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "fuel_units"
+   ],
+   "full_rate": [
+    "float",
+    "Fuel Rate Full Load",
+    56,
+    0.0,
+    "The number of units of fuel consumed by your generator at a full load. Use this fuel consumption stats for non Evolution units or to override the fuel consumption defaults for Evolution controllers.",
+    "number",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "full_rate"
+   ],
+   "half_rate": [
+    "float",
+    "Fuel Rate Half Load",
+    55,
+    0.0,
+    "The unit of fuel for Half and Full Rate parameters. Use this fuel consumption stats for non Evolution units or to override the fuel consumption defaults for Evolution controllers.",
+    "number",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "half_rate"
+   ],
+   "https_port": [
+    "int",
+    "Override HTTPS port",
+    81,
+    443,
+    "Port to override the secure web server port (https). The default value is 443.",
+    "digits",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "https_port"
+   ],
+   "ignore_unknown": [
+    "boolean",
+    "Ignore Unknown Values",
+    25,
+    false,
+    "Ignore unknown values for modbus register 0001 for Evolution 2.0",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "ignore_unknown"
+   ],
+   "import_config_file": [
+    "list",
+    "Custom Controller Config File",
+    21,
+    "Evolution_Liquid_Cooled.json",
+    "Only used for custom controller type. Select the controller configuration to use for the custom controller type. See the project wiki for more info on custom controller support",
+    ".DS_Store,Basler_DGC_2020HD.json,Briggs_Stratton_GC-1032.json,ComAp.json,Deepsea_controller.json,Evolution_Liquid_Cooled.json,Kohler_APM402.json,Kohler_APM603.json,MEBAY_DCxx.json,Power_Zone_410.json,SmartGen_HGM4000.json",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "import_config_file"
+   ],
+   "kwlogmax": [
+    "string",
+    "Maximum size Power Log (MB)",
+    70,
+    "15",
+    "Override the maximum size of the kW log. The default is 15MB.",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "kwlogmax"
+   ],
+   "legacy_power": [
+    "boolean",
+    "Use Legacy Power Calculation",
+    74,
+    false,
+    "If enabled this will allow the use of the older method to calculate current / power for Evolution Air Cooled controllers",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "legacy_power"
+   ],
+   "login_lockout_seconds": [
+    "int",
+    "Login lockout duration in seconds",
+    97,
+    300,
+    "The number of seconds to perform a lockout if failed logins exceed Maximum Login Attempts. For example if this value is 300 seconds (5 min) and max attempt is 5, then if 5 logins failures occur in a row within 5 minutes, the a lockout will occur for 5 minutes.",
+    "digits",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "login_lockout_seconds"
+   ],
+   "loglocation": [
+    "string",
+    "Log Directory",
+    23,
+    "/var/log/",
+    "Location of log files. Full path must be specified.",
+    "required UnixDir",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "loglocation"
+   ],
+   "max_login_attempts": [
+    "int",
+    "Maxmum login attempts before temporary lockout",
+    96,
+    5,
+    "The maximum number of failed login attempts to the web interface before a temporary lockout is started. A lockout will prevent any login attempts. If the login failures occur within the time frame of lockout duration then then logins will be blocked for the number of seconds of lockout duration. Set to zero to disable.",
+    "digits",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "max_login_attempts"
+   ],
+   "max_powerlog_entries": [
+    "int",
+    "Maximum Entries in Power Log",
+    71,
+    "8000",
+    "The maximum number of entries in the working power log. Note the log file will not be truncated until the maximum file size is reached. In most cases the default is the preferred value.",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "min_powerlog_entries"
+   ],
+   "min_outage_duration": [
+    "int",
+    "Minimum Outage Duration",
+    48,
+    "0",
+    "Outages less than this time in seconds will not be logged. Notifications will still be sent if enabled.",
+    "digits",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "min_outage_duration"
+   ],
+   "modbus_between_frame_delay": [
+    "float",
+    "Modbus Between Frame Delay (sec)",
+    8,
+    "0.0",
+    "This value will add a delay between modbus requests. For most controllers this value should be zero (disabled). This is a floating point value. To add a 10 mS delay use the value 0.01. Values above 0.2 may cause very slow performance.",
+    "number",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "modbus_between_frame_delay"
+   ],
+   "multi_instance": [
+    "boolean",
+    "Allow Multiple Genmon Instances",
+    85,
+    false,
+    "If Enabled this setting will allow multiple instances of genmon to be used on one system. Note that other settings will also need to be changed. See the wiki for additional details.",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "multi_instance"
+   ],
+   "nominallinevolts": [
+    "int",
+    "Override nominal line voltage in UI",
+    46,
+    240,
+    "Override nominal line voltage value for UI (i.e. 220, 230 in stead of 240)",
+    "digits",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "nominallinevolts"
+   ],
+   "outage_notice_delay": [
+    "int",
+    "Outage Notice Delay",
+    47,
+    "0",
+    "The delay in seconds between a detected loss in utility voltage and a notification of an outage. This value must be an integer.",
+    "digits",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "outage_notice_delay"
+   ],
+   "outage_notice_interval": [
+    "int",
+    "Outage Recurring Notice Interval (minutes)",
+    49,
+    "0",
+    "To enable recurring outage notices set this to a positive non zero integer value. This represents the number of minutes to send a recurring outage notice.",
+    "digits",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "outage_notice_interval"
+   ],
+   "outagelog_max_entries": [
+    "int",
+    "Maximum Entries in Outage Log",
+    46,
+    "100",
+    "The maximimum number of entries allowed in the outage log. You may increase this value from the default of 100 however if you notice a drop in the web UI performance you should reduce this back to the default value.",
+    "digits",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "outagelog_max_entries"
+   ],
+   "phase": [
+    "list",
+    "Generator Phase",
+    22,
+    "1",
+    "Set the phase of the controller for genmon's use. This value is used only by genmon. It does not set the phase of the controller, but tells genmon the phase of the generator (e.g. 1 for single phase, 3 for three phase). For most controllers this value is ignored, however some custom config based controllers, like MEBAY can set this value based on the controller configuration.",
+    "1,3",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "phase"
+   ],
+   "preferred_network_adapter": [
+    "string",
+    "Preferred Network Adapter",
+    108,
+    "",
+    "If genmon failes to identify your network adapter correctly in cases where multiple adapaters are present, set this value to the adapater name that you would like genmon to report as the active network device. Note: only WLAN adapters display statistics.",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "preferred_network_adapter"
+   ],
+   "response_address": [
+    "string",
+    "Modbus slave transmit address",
+    7,
+    "",
+    "Only used for Pre Nexus 2008 Generac controllers. Should be 41 if Pre-Nexus controller is present.",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "response_address"
+   ],
+   "serial_parity": [
+    "list",
+    "Serial Parity",
+    11,
+    "None",
+    "The default for Generac is None. Some (Briggs and Stratton uses Odd) custom controllers may use Odd or Even parity. Note: this is only for direct serial, not for serial over TCP.",
+    "None,Even,Odd",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "serial_parity"
+   ],
+   "serial_rate": [
+    "int",
+    "Serial Data Rate",
+    10,
+    9600,
+    "The rate of the serial link used to communicate with the controller. In almost all cases this is 9600. Evolution 4.5L models may use 115200 for this value.",
+    "digits",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "serial_rate"
+   ],
+   "serialnumberifmissing": [
+    "string",
+    "Serial Number if Missing",
+    36,
+    "",
+    "If the serial number is not present due to the controller being replaced you can override the missing serial number and still have the software lookup model information. This is a numeric value that must be ten digits. Pad leading zeros if you serial number is less than 10 digits.",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "serialnumberifmissing"
+   ],
+   "server_port": [
+    "int",
+    "Server Port",
+    5,
+    9082,
+    "The TCP port used internally by genmon for communicating with the supporting applications. Some apps may not work without modification if this is changed.",
+    "digits",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "server_port"
+   ],
+   "show_hours_activation": [
+    "boolean",
+    "Time Since Activation Format",
+    47,
+    true,
+    "Enable to show Time Since Activation as hours, disable to show as Years, Days, Hours",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "show_hours_activation"
+   ],
+   "subtractfuel": [
+    "float",
+    "Subtract Fuel",
+    39,
+    "0.0",
+    "The amount of fuel (gal or L, depending on 'Use Metric' setting) to subtract from the fuel in tank estimate",
+    "number",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "subtractfuel"
+   ],
+   "threephaseutilitycompensation": [
+    "boolean",
+    "Three Phase Utility Volts Compensation",
+    23,
+    false,
+    "If enabled, the Utility Voltage will not be divided by 2 for three phase Evolution Air Cooled systems.",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "threephaseutilitycompensation"
+   ],
+   "unbalanced_capacity": [
+    "float",
+    "Unbalanced Load Capacity",
+    46,
+    "0",
+    "Disabled if zero. If non zero this will be the maximum allowable difference in the load on a generator leg, represented as a percent of the maximum load. A value of 0.50 (50%) would be an allowable difference of 100 amps between legs on a 200 amp rated generator. Lower values will be the most strict threshold. Higher values will be less strict. Valid values are 0 - 0.50. Unbalanced capacity notices are set via a warning email, once per day.",
+    "range:0:0.50",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "unbalanced_capacity"
+   ],
+   "use_aux_alarm_log": [
+    "boolean",
+    "Use Auxiliary Alarm Log",
+    27,
+    false,
+    "If enabled the sotware will log alarms that occur while the software is running. This log is separate from any alarm logging internal to the controller.",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "use_aux_alarm_log"
+   ],
+   "uselinuxwifisignalgauge": [
+    "boolean",
+    "Show Wifi Signal Strength Gauge",
+    108,
+    true,
+    "if enabled and running linux the WiFi signal will be displayed on a gauge in the web interface. Note, the gauge will not show if you are using Ethernet for your network.",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "uselinuxwifisignalgauge"
+   ],
+   "usenominallinevolts": [
+    "boolean",
+    "Use Nominal Volts Override",
+    45,
+    false,
+    "Enable overriding of the default of 240V for nominal line voltage in the UI",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "usenominallinevolts"
+   ],
+   "user_url": [
+    "string",
+    "User URL",
+    82,
+    "",
+    "A user defined URL link to include in status emails sent from the software when the generator status changes",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "user_url"
+   ],
+   "useraspberrypicputempgauge": [
+    "boolean",
+    "Show CPU Temperature Gauge",
+    109,
+    true,
+    "If enabled and running on a Linux system, the CPU temperature will be displayed on a gauge in the web interface.",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "useraspberrypicputempgauge"
+   ],
+   "userdatalocation": [
+    "string",
+    "User Defined Data Directory",
+    24,
+    "<RUN>",
+    "Location of user defined JSON data (userdefined.json) to be displayed on Monitor page. Full path must be specified.",
+    "required UnixDir",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "userdatalocation"
+   ],
+   "wait_for_init_seconds": [
+    "int",
+    "Initialization Wait Time (seconds)",
+    13,
+    15,
+    "The time in seconds to delay waiting for genmon intilization to complete. Some USB serial ports may be slow to open and this can be increased from the default value for greater compatiblity. Note that increasing this value could also cause an increase the time before the web interface is available if you have comms issues.",
+    "digits",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "wait_for_init_seconds"
+   ],
+   "watchdog_addition": [
+    "float",
+    "Additional Watchdog Timeout (sec)",
+    13,
+    "0.0",
+    "Additional delay before a communication timeout notification",
+    "number",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "watchdog_addition"
+   ],
+   "wifiispercent": [
+    "boolean",
+    "Wifi Gauge is percentage",
+    108,
+    false,
+    "Some Linux wifi drivers (like USB wifi adapters) may return a percentage instead of a raw signal strength. If your wifi gauge is not working as expected, try enabling this setting. Note, the built in raspberry pi driver returns signal strength, not percentage so if using the on board adapter this setting should be disabled.",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "wifiispercent"
+   ]
+  },
+  "get_ui_prefs": {},
+  "notifications": {
+   "myrecipent@gmail.com": [
+    1
+   ]
+  },
+  "settings": {
+   "allow_iframe": [
+    "boolean",
+    "Allow Embedding in an iframe",
+    216,
+    false,
+    "SECURITY RISK - keep this OFF unless you understand the risks. Off (default, recommended) blocks all iframe embedding for the web interface, which protects against clickjacking. Turning it On lets ANY website embed the genmon web page in an iframe, which can be abused to trick you into clicking controls. Only enable it if you are embedding genmon in your own trusted dashboard (e.g. Home Assistant) on a network you control.",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "allow_iframe"
+   ],
+   "autofeedback": [
+    "boolean",
+    "Automated Feedback",
+    29,
+    false,
+    "If enabled, an email will be sent to the software maintainer if critical data is missing in the software for your generator. The email will contain the contents of the generator registers. Enabling this option helps support the widest possible set of features and supported generators.",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "autofeedback"
+   ],
+   "cert_info": [
+    "string",
+    "Certificate Info",
+    203.5,
+    "{\"mode\": \"selfsigned\", \"detail\": \"Ephemeral \\u2014 regenerated on each restart\"}",
+    "",
+    "",
+    null,
+    null,
+    "cert_info"
+   ],
+   "cert_mode": [
+    "list",
+    "Certificate Mode",
+    203,
+    "selfsigned",
+    "Certificate mode for HTTPS. 'selfsigned' generates a temporary certificate on each restart (browser will show a warning). 'localca' creates a persistent local CA you can import into your browser for a trusted connection. 'custom' lets you supply your own certificate and key files.",
+    "selfsigned,localca,custom",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "cert_mode"
+   ],
+   "certfile": [
+    "string",
+    "https Certificate File",
+    205,
+    "",
+    "Path and filename of the certificate file for your own certificate (cert_mode = custom).",
+    "UnixFile",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "certfile"
+   ],
+   "disableimap": [
+    "boolean",
+    "Disable Receiving Email",
+    400,
+    true,
+    "Enable incoming email. See the project wiki Tips and Trick page for info on setting up inbound email.",
+    "",
+    "<CONF>/mymail.conf",
+    "MyMail",
+    "disableimap"
+   ],
+   "disableoutagecheck": [
+    "boolean",
+    "Do Not Check for Outages",
+    17,
+    false,
+    "If enabled and supported by the controller, this setting will disable the monitoring and notification of the utility line voltage for detecting power outages. If you have a 'smart' transfer switch, this may need to be enabled. For Evo/Nexus this is typically disabled. For Briggs an Stratton, if enabled this will disable the display of the Utility line information for off-grid mode.",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "disableoutagecheck"
+   ],
+   "disablepowerlog": [
+    "boolean",
+    "Disable Power / Current Display",
+    26,
+    false,
+    "Enable to disable the power log and current reading. Not supported on Nexus.",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "disablepowerlog"
+   ],
+   "disablesensorlog": [
+    "boolean",
+    "Disable Sensor Log",
+    27,
+    false,
+    "If enabled, the logging of sensor data will be disabled. This also disbles the graphs of sensors in the web interface.",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "disablesensorlog"
+   ],
+   "disablesmtp": [
+    "boolean",
+    "Disable Sending Email",
+    300,
+    false,
+    "Enable outgoing email. See the project wiki Tips and Trick page for info on setting up outbound email.",
+    "",
+    "<CONF>/mymail.conf",
+    "MyMail",
+    "disablesmtp"
+   ],
+   "disableweather": [
+    "boolean",
+    "Disable Weather Functionality",
+    500,
+    true,
+    "Enable the weather feature. Requires an OpenWeatherMap API key and location to be configured.",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "disableweather"
+   ],
+   "displayunknown": [
+    "boolean",
+    "Display Experimental Data",
+    111,
+    false,
+    "Display the contents of additional data that appear to be associated with an unknown modbus register or a calculated value not included with the default genmon data set.",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "displayunknown"
+   ],
+   "email_account": [
+    "string",
+    "Email Account",
+    301,
+    "mysender@gmail.com",
+    "Email account username",
+    "minmax:3:50",
+    "<CONF>/mymail.conf",
+    "MyMail",
+    "email_account"
+   ],
+   "email_configured": [
+    "boolean",
+    "Email Configured",
+    212.6,
+    true,
+    "",
+    "",
+    null,
+    null,
+    "email_configured"
+   ],
+   "email_pw": [
+    "password",
+    "Email Password",
+    302,
+    "mypassword",
+    "Password for the email account used for sending and receiving email",
+    "max:70",
+    "<CONF>/mymail.conf",
+    "MyMail",
+    "email_pw"
+   ],
+   "enhancedexercise": [
+    "boolean",
+    "Enhanced Exercise Time",
+    109,
+    false,
+    "Enable the functionality to support biweekly and monthly exercise times (weekly is the default). Note, your generator controller must support this before enabling this option. Evolution only and firmware version dependent.",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "enhancedexercise"
+   ],
+   "favicon": [
+    "string",
+    "FavIcon",
+    220,
+    "",
+    "favicon for website. This is an optional parameter and default is \"favicon.ico\". This may not work in older browsers",
+    "minmax:8:255",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "favicon"
+   ],
+   "fueltype": [
+    "list",
+    "Fuel Type",
+    104,
+    "Natural Gas",
+    "The type of fuel used by your generator (Natural Gas, Propane, Diesel, Gasoline). This value is used by for displaying the correct information to the user.",
+    "Natural Gas,Propane,Diesel,Gasoline",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "fueltype"
+   ],
+   "http_pass": [
+    "password",
+    "Web Password",
+    207,
+    "",
+    "Simple authentication will be used. Sets the password of the simple authentication. Leave blank to disable. 'Use Secure Web Settings' must be enabled to use this feature.",
+    "minmax:4:50",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "http_pass"
+   ],
+   "http_pass_ro": [
+    "password",
+    "Limited Rights User Password",
+    209,
+    "",
+    "Sets the password of the limited rights user. Leave blank to disable. 'Use Secure Web Settings' and full rights user must be enabled to use this feature.",
+    "minmax:4:50",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "http_pass_ro"
+   ],
+   "http_port": [
+    "int",
+    "Port of WebServer",
+    215,
+    8000,
+    "HTTP port to be used by the web server.",
+    "required digits",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "http_port"
+   ],
+   "http_user": [
+    "string",
+    "Web Username",
+    206,
+    "",
+    "Simple authentication will be used. Sets the username of the simple authentication. Leave blank to disable. 'Use Secure Web Settings' must be enabled to use this feature.",
+    "minmax:4:50",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "http_user"
+   ],
+   "http_user_ro": [
+    "string",
+    "Limited Rights User Username",
+    208,
+    "",
+    "Sets the username of the limited rights user. Leave blank to disable. 'Use Secure Web Settings' and full rights user must be enabled to use this feature.",
+    "minmax:4:50",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "http_user_ro"
+   ],
+   "imap_server": [
+    "string",
+    "IMAP Server",
+    401,
+    "imap.gmail.com",
+    "Server address used for receiving email, leave empty to disable IMAP. See the project wiki Tips and Trick page for info on setting up inbound email.",
+    "InternetAddress",
+    "<CONF>/mymail.conf",
+    "MyMail",
+    "imap_server"
+   ],
+   "incoming_mail_folder": [
+    "string",
+    "Incoming Mail Folder",
+    403,
+    "Generator",
+    "The name of the folder in the mailbox for searching for incoming email commands",
+    "minmax:1:1500",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "incoming_mail_folder"
+   ],
+   "keyfile": [
+    "string",
+    "https Key File",
+    204,
+    "",
+    "Path and filename of the key file for your own certificate (cert_mode = custom).",
+    "UnixFile",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "keyfile"
+   ],
+   "max_sensorlog_entries": [
+    "int",
+    "Maximum Entries in Sensor Log",
+    71,
+    "2000",
+    "The maximum number of entries in each sensor log. Note the log file will not be truncated until the maximum file size is reached. In most cases the default is the preferred value.",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "max_sensorlog_entries"
+   ],
+   "metricweather": [
+    "boolean",
+    "Use Metric Units",
+    24,
+    false,
+    "If enabled, metric units will be displayed when applicable.",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "metricweather"
+   ],
+   "mfa_enrolled": [
+    "boolean",
+    "MFA Enrolled",
+    212.5,
+    false,
+    "",
+    "",
+    null,
+    null,
+    "mfa_enrolled"
+   ],
+   "mfa_trust_days": [
+    "int",
+    "Days to remember (never use on shared computers)",
+    217,
+    90,
+    "",
+    "minmax:1:365",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "mfa_trust_days"
+   ],
+   "mfa_trust_extend": [
+    "boolean",
+    "Remember this browser & don't ask for MFA again",
+    216,
+    false,
+    "",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "mfa_trust_extend"
+   ],
+   "mfa_url": [
+    "qrcode",
+    "MFA QRCode",
+    212,
+    null,
+    "",
+    "",
+    null,
+    null,
+    "mfa_url"
+   ],
+   "minimumweatherinfo": [
+    "boolean",
+    "Display Minimum Weather Info",
+    504,
+    true,
+    "If enabled the minimum information regarding the weather will be displayed, otherwise the maximum info will be displayed",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "minimumweatherinfo"
+   ],
+   "modbus_tcp": [
+    "boolean",
+    "Use Modbus TCP protocol",
+    6,
+    false,
+    "If enabled, the modbus TCP protocol will be used. If disabled modbus RTU (serial) over TCP is used.",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "modbus_tcp"
+   ],
+   "nominalfrequency": [
+    "list",
+    "Rated Frequency",
+    101,
+    "60",
+    "Frequency your generator is running. Either 50Hz or 60Hz. This is used by the web interface.",
+    "50,60",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "nominalfrequency"
+   ],
+   "nominalkw": [
+    "int",
+    "Maximum kW Output",
+    103,
+    "22",
+    "The maximum kilowatt output of your generator. This is used by the web interface.",
+    "required digits range:0:1000",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "nominalkw"
+   ],
+   "nominalrpm": [
+    "int",
+    "Nominal RPM",
+    102,
+    "3600",
+    "The RPM of your generator. Typically 1800 or 3600 for 60Hz and 1500 or 3000 for 50Hz. Some models run at 2300. This is used by the web interface.",
+    "required digits range:1500:4000",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "nominalrpm"
+   ],
+   "optimizeforslowercpu": [
+    "boolean",
+    "Optimize for slower CPUs",
+    25,
+    false,
+    "If enabled, minor optimizations for slower CPUs will be used. Note that this is a design trade off for responsiveness vs CPU utilization.",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "optimizeforslowercpu"
+   ],
+   "port": [
+    "string",
+    "Port for Serial Communication",
+    3,
+    "/dev/serial0",
+    "Serial device name of your serial port. Normally  /dev/serial0 or /dev/ttyAMA0 for onboard Raspberry Pi Serial ports",
+    "required UnixDevice",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "port"
+   ],
+   "processed_mail_folder": [
+    "string",
+    "Mail Processed Folder",
+    404,
+    "Generator/Processed",
+    "Once an email command has been processed by the software the email is moved to this mailbox folder",
+    "minmax:1:255",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "processed_mail_folder"
+   ],
+   "readonlyemailcommands": [
+    "boolean",
+    "Disable Email Write Commands",
+    402,
+    false,
+    "If enabled, email commands that write to the controller will be disabled (settime, setexercise, setremote, etc.)",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "readonlyemailcommands"
+   ],
+   "remember_me_days": [
+    "int",
+    "Remember Me (days, 0 = browser session only)",
+    215,
+    0,
+    "Number of days the browser remembers your login when you check \"Remember me\". Set to 0 for a browser-session only \u2014 your login expires as soon as you close the browser.",
+    "minmax:0:365",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "remember_me_days"
+   ],
+   "sender_account": [
+    "string",
+    "Sender Address",
+    303,
+    "no-reply@gmail.com",
+    "Email address from which the emails are sent, can be blank if Email Account is a valid address.",
+    "email",
+    "<CONF>/mymail.conf",
+    "MyMail",
+    "sender_account"
+   ],
+   "sender_name": [
+    "string",
+    "Sender Name",
+    304,
+    "Genmon",
+    "Name of the sender (i.e. Genmon or John Doe)",
+    "max:50",
+    "<CONF>/mymail.conf",
+    "MyMail",
+    "sender_name"
+   ],
+   "sensorlogmax": [
+    "string",
+    "Maximum size Sensor Log (MB)",
+    70,
+    "5",
+    "Override the maximum size of each sensor log. The default is 5MB.",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "sensorlogmax"
+   ],
+   "serial_tcp_address": [
+    "string",
+    "Serial Server TCP/IP Address",
+    4,
+    "",
+    "If Serial over TCP/IP is enabled, this parameter sets the IP address (or fully qualified domain name) used for the serial server.",
+    "InternetAddress",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "serial_tcp_address"
+   ],
+   "serial_tcp_keepalive": [
+    "boolean",
+    "Enable TCP Keep Alive",
+    6,
+    false,
+    "If enabled, the TCP connection will set the keep alive flag within the TCP protocol.",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "serial_tcp_keepalive"
+   ],
+   "serial_tcp_port": [
+    "int",
+    "Serial Server TCP/IP Port",
+    5,
+    8899,
+    "If Serial over TCP/IP is enabled, this parameter sets the IP port used for the serial server.",
+    "digits",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "serial_tcp_port"
+   ],
+   "sitename": [
+    "string",
+    "Site Name",
+    1,
+    "SiteName",
+    "Site Name",
+    "required minmax:4:50",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "sitename"
+   ],
+   "smart_transfer_switch": [
+    "boolean",
+    "Smart Transfer Switch",
+    110,
+    false,
+    "If enabled a smart transfer switch is utilized and the generator controller will not be responsible for starting and stopping or or weekly exercise functions and these items will be disabled in the web interface.",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "smart_transfer_switch"
+   ],
+   "smtp_port": [
+    "int",
+    "SMTP Server Port",
+    307,
+    587,
+    "SMTP port used on the SMTP server for sending email. Typically port 587 is used for TLS and port 465 is used for SSL",
+    "digits",
+    "<CONF>/mymail.conf",
+    "MyMail",
+    "smtp_port"
+   ],
+   "smtp_server": [
+    "string",
+    "SMTP Server",
+    305,
+    "smtp.gmail.com",
+    "Mail server used for sending email, leave empty to disable SMTP. See the project wiki Tips and Trick page for info on setting up outbound email.",
+    "InternetAddress",
+    "<CONF>/mymail.conf",
+    "MyMail",
+    "smtp_server"
+   ],
+   "smtpauth_disable": [
+    "boolean",
+    "Disable SMTP Auth",
+    309,
+    false,
+    "If enabled, ignore SMTP authentication. Typically only used for locally administered SMTP servers",
+    "",
+    "<CONF>/mymail.conf",
+    "MyMail",
+    "smtpauth_disable"
+   ],
+   "ssl_enabled": [
+    "boolean",
+    "Use SSL Encryption",
+    308,
+    false,
+    "Use SSL encryption to send emails",
+    "",
+    "<CONF>/mymail.conf",
+    "MyMail",
+    "ssl_enabled"
+   ],
+   "syncdst": [
+    "boolean",
+    "Sync Daylight Savings Time",
+    22,
+    false,
+    "Enable to sync the generator time to the system time if there is a change in Daylight Savings Time. This does not change the system time, only the generator time.",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "syncdst"
+   ],
+   "synctime": [
+    "boolean",
+    "Sync Time",
+    23,
+    false,
+    "Enables syncing the generator time to the system time once every hour. This does not change the system time, only the generator time.",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "synctime"
+   ],
+   "system_theme": [
+    "boolean",
+    "Select light or dark theme based on the browser/system setting",
+    221,
+    false,
+    "Use the browser-provided light/dark theme setting in the UI, and remove the manual theme switcher. This may not work in older brwsers",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "system_theme"
+   ],
+   "tanksize": [
+    "int",
+    "Fuel Tank Size",
+    105,
+    0,
+    "Fuel tank size. Units is gallons unless \"Use Metric Units\" is enabled, then it is in liters. This is used to estimate the fuel remaining the tank. Ignore for Natural Gas or tankless installations. If external tank sensors are used via an add on then this setting can be used if all tanks are the same size, then set this to the the total capacity of all tanks (sum of all tanks size).",
+    "required digits range:0:10000",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "tanksize"
+   ],
+   "tls_disable": [
+    "boolean",
+    "Disable TLS Encryption",
+    309,
+    false,
+    "If SSL is disabled TLS encryption is the default, unless this is enabled. If enabled and SSL is disabled, no encryption will be used to send email.",
+    "",
+    "<CONF>/mymail.conf",
+    "MyMail",
+    "tls_disable"
+   ],
+   "update_check": [
+    "boolean",
+    "Check for Software Update",
+    30,
+    true,
+    "If enabled the software will send an email notice when a software update is available.",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "update_check"
+   ],
+   "use_html": [
+    "boolean",
+    "Use HTML Email Format",
+    310,
+    false,
+    "Send a structured HTML alternative (in addition to plain text) so screen readers get clear pauses between status lines.",
+    "",
+    "<CONF>/mymail.conf",
+    "MyMail",
+    "use_html"
+   ],
+   "use_serial_tcp": [
+    "boolean",
+    "Enable Serial over TCP/IP",
+    2,
+    false,
+    "If enabled, the software will use TCP over serial instead of direct serial communications",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "use_serial_tcp"
+   ],
+   "usehttps": [
+    "boolean",
+    "Use Secure Web Server",
+    200,
+    false,
+    "HTTPS (secure HTTP) and / or user name and password authentication.",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "usehttps"
+   ],
+   "usemfa": [
+    "boolean",
+    "Use Multi-Factor Authentication",
+    210,
+    false,
+    "Use Multi-Factor Authentication. You must use a Multi-Factor Authenticator app like Google Authenticator or Authy to use this feature. If enabled, MFA will apply to both normal and limited rights login.",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "usemfa"
+   ],
+   "weatherkey": [
+    "string",
+    "Openweathermap.org API key",
+    501,
+    "",
+    "Openweathermap.org API Key. This is required to enable weather reporting. See https://openweathermap.org/appid. Requires openweathermap library. If you installed the Generator Monitor Software before V1.9.6 and are upgrading you must run this command: \"sudo pip install pyowm\" from the console before the weather features will be functional",
+    "required minmax:4:50",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "weatherkey"
+   ],
+   "weatherlocation": [
+    "string",
+    "Location to report weather",
+    502,
+    "",
+    "The location to report weather. Either enter City,State,Country or a openweathermap.org city ID. Automatic lookup of location requires location services to be enabled in your browser, a https connection, and a valid API key.",
+    "required minmax:4:50",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "weatherlocation"
+   ]
+  }
+ },
+ "pages_after_saves": {
+  "get_add_on_settings": {
+   "genlog": {
+    "description": "Log Genmon and utility state changes to a file. Log file is in text CSV format.",
+    "enable": true,
+    "icon": "csv",
+    "parameters": {
+     "Log File Name": {
+      "bounds": "required UnixFile",
+      "description": "Filename for log. Full path of the file must be included (i.e. /home/pi/genmon/LogFile.csv)",
+      "display_name": "Log File Name",
+      "type": "string",
+      "value": "/home/pi/snapshot.csv"
+     }
+    },
+    "title": "Notifications to CSV Log",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genlogpy-optional"
+   },
+   "genslack": {
+    "description": "Send Genmon and utility state changes via Slack service",
+    "enable": false,
+    "icon": "slack",
+    "parameters": {
+     "channel": {
+      "bounds": "",
+      "description": "Slack channel to which the message will be sent.",
+      "display_name": "Channel",
+      "type": "string",
+      "value": "snapshot"
+     },
+     "default_wait": {
+      "bounds": "",
+      "description": "The number of seconds to wait before retrying a failed message.",
+      "display_name": "Retry Interval (seconds)",
+      "type": "int",
+      "value": 120
+     },
+     "icon_emoji": {
+      "bounds": "",
+      "description": "Emoji that appears as the icon of the user who sent the message i.e. :red_circle:n",
+      "display_name": "Icon Emoji",
+      "type": "string",
+      "value": ":red_circle:"
+     },
+     "max_retry_time": {
+      "bounds": "",
+      "description": "Maximum number of seconds to retry a failed message before dropping the message.",
+      "display_name": "Max Retry Duration (seconds)",
+      "type": "int",
+      "value": 600
+     },
+     "notify_error": {
+      "bounds": "",
+      "description": "Send messages for errors (Generator Alarms).",
+      "display_name": "Notify for Errors",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_info": {
+      "bounds": "",
+      "description": "Send messages for information (switch state change, engine state change, exercising).",
+      "display_name": "Notify for Information",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_outage": {
+      "bounds": "",
+      "description": "Send messages for outages.",
+      "display_name": "Notify for Outages",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_pi_state": {
+      "bounds": "",
+      "description": "Send messages for Pi hardware sensor status (CPU throttling, undervoltage, etc).",
+      "display_name": "Notify for Pi Hardware Issues",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_sw_update": {
+      "bounds": "",
+      "description": "Send messages for software updates.",
+      "display_name": "Notify for Software Updates",
+      "type": "boolean",
+      "value": true
+     },
+     "notify_warn": {
+      "bounds": "",
+      "description": "Send messages for warnings (service due, fuel low).",
+      "display_name": "Notify for Warnings",
+      "type": "boolean",
+      "value": true
+     },
+     "title_link": {
+      "bounds": "HTTPAddress",
+      "description": "Use this to make the title of the message a link i.e. link to the genmon web interface.",
+      "display_name": "Title Link",
+      "type": "string",
+      "value": ""
+     },
+     "username": {
+      "bounds": "required username",
+      "description": "Slack username.",
+      "display_name": "Username",
+      "type": "string",
+      "value": "GenMon"
+     },
+     "webhook_url": {
+      "bounds": "required HTTPAddress",
+      "description": "Full Slack Webhook URL. Retrieve from Slack custom integration configuration.",
+      "display_name": "Web Hook URL",
+      "type": "string",
+      "value": "https://hooks.slack.com/x"
+     }
+    },
+    "title": "Notifications via Slack",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genslackpy-optional"
+   },
+   "gensms_voip": {
+    "description": "SMS Support vis VoIP using voip.ms",
+    "enable": true,
+    "icon": "voipms",
+    "parameters": {
+     "destination": {
+      "bounds": "required InternationalPhone",
+      "description": "Mobile number to send SMS message to. This can be any mobile number. Separate multilpe recipients with commas.",
+      "display_name": "Recipient Phone Number",
+      "type": "string",
+      "value": ""
+     },
+     "did": {
+      "bounds": "required InternationalPhone",
+      "description": "DID number for your voip.ms account to send the SMS.",
+      "display_name": "Sender DID Number",
+      "type": "string",
+      "value": "555-1234"
+     },
+     "password": {
+      "bounds": "required minmax:8:50",
+      "description": "VoIP.ms API password. This is NOT the account login, but rather then API password",
+      "display_name": "VoIP.ms API password",
+      "type": "password",
+      "value": ""
+     },
+     "username": {
+      "bounds": "required minmax:5:50",
+      "description": "Voip.ms account username",
+      "display_name": "VoIP.ms User Name",
+      "type": "string",
+      "value": ""
+     }
+    },
+    "title": "SMS via VoIP using voip.ms",
+    "url": "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensms_voippy-optional"
+   }
+  },
+  "get_advanced_settings": {
+   "address": [
+    "string",
+    "Modbus slave address",
+    6,
+    "64",
+    "The Modbus slave address in hexadecimal. This value is 9d for Evolution / Nexus, and typically 64 for industrial generators.",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "address"
+   ],
+   "kwlogmax": [
+    "string",
+    "Maximum size Power Log (MB)",
+    70,
+    "2.0",
+    "Override the maximum size of the kW log. The default is 15MB.",
+    0,
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "kwlogmax"
+   ]
+  },
+  "get_ui_prefs": {
+   "theme": "light"
+  },
+  "notifications": {
+   "a@example.com": [
+    1,
+    "outage,info"
+   ],
+   "b@example.com": [
+    1,
+    "error"
+   ],
+   "myrecipent@gmail.com": null
+  },
+  "settings": {
+   "displayunknown": [
+    "boolean",
+    "Display Experimental Data",
+    111,
+    true,
+    "Display the contents of additional data that appear to be associated with an unknown modbus register or a calculated value not included with the default genmon data set.",
+    "",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "displayunknown"
+   ],
+   "nominalfrequency": [
+    "list",
+    "Rated Frequency",
+    101,
+    "50",
+    "Frequency your generator is running. Either 50Hz or 60Hz. This is used by the web interface.",
+    "50,60",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "nominalfrequency"
+   ],
+   "sitename": [
+    "string",
+    "Site Name",
+    1,
+    "SnapshotSite",
+    "Site Name",
+    "required minmax:4:50",
+    "<CONF>/genmon.conf",
+    "GenMon",
+    "sitename"
+   ]
+  }
+ },
+ "saves": [
+  {
+   "calls": [
+    "SHELL /bin/bash <RUN>/startgenmon.sh restart -c <CONF>/"
+   ],
+   "command": "setsettings",
+   "reply": "OK"
+  },
+  {
+   "calls": [
+    "SHELL /bin/bash <RUN>/startgenmon.sh restart -c <CONF>/"
+   ],
+   "command": "set_advanced_settings",
+   "reply": "OK"
+  },
+  {
+   "calls": [
+    "SHELL /bin/bash <RUN>/startgenmon.sh restart -c <CONF>/"
+   ],
+   "command": "set_add_on_settings",
+   "reply": "OK"
+  },
+  {
+   "calls": [
+    "SHELL /bin/bash <RUN>/startgenmon.sh restart -c <CONF>/"
+   ],
+   "command": "setnotifications",
+   "reply": "OK"
+  },
+  {
+   "calls": [],
+   "command": "set_ui_prefs",
+   "reply": "OK"
+  }
+ ]
+}
