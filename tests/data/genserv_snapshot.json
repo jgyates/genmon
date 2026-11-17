@@ -2114,10 +2114,10 @@
     71,
     "8000",
     "The maximum number of entries in the working power log. Note the log file will not be truncated until the maximum file size is reached. In most cases the default is the preferred value.",
-    0,
+    "digits",
     "<CONF>/genmon.conf",
     "GenMon",
-    "min_powerlog_entries"
+    "max_powerlog_entries"
    ],
    "min_outage_duration": [
     "int",

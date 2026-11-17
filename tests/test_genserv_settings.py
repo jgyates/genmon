@@ -106,6 +106,16 @@ class SaveTests(SettingsTestCase):
         self.assertEqual(self.setting("get_advanced_settings", "address"), "64")
         self.assertIn(RESTART, self.fixture.shell_calls())
 
+    def test_advanced_settings_read_back(self):
+        # every advanced setting is read from the config entry it is saved to
+        for key, item in self.fixture.get_json("/cmd/get_advanced_settings").items():
+            with self.subTest(setting=key):
+                self.assertEqual(item[8], key)
+        self.save("set_advanced_settings", "max_powerlog_entries=5000")
+        self.assertEqual(self.fixture.conf_value("genmon.conf", "max_powerlog_entries", "GenMon"),
+                         "5000")
+        self.assertEqual(self.setting("get_advanced_settings", "max_powerlog_entries"), 5000)
+
     def test_add_on_settings(self):
         self.save("set_add_on_settings", json.dumps({
             "genlog": {"enable": "true", "parameters": {"Log File Name": "/home/pi/test.csv"}},

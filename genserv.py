@@ -3147,11 +3147,11 @@ class GenServ(MySupport):
                 "Maximum Entries in Power Log",
                 71,
                 "8000",
+                "",
                 "digits",
-                0,
                 self.GENMON_CONFIG,
                 self.GENMON_SECTION,
-                "min_powerlog_entries",
+                "max_powerlog_entries",
             ]
 
             ConfigSettings["currentdivider"] = [
