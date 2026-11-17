@@ -33,9 +33,13 @@
 #                        genmon looks up the serial number on the internet
 #          controller    expected start of the controller genmon detects
 #          fueltype      optional genmon.conf setting
+#          settings      optional, other genmon.conf settings, e.g.
+#                        {"import_config_file": "Kohler_APM603.json"} for a
+#                        custom controller
 #          log_errors_allowed
 #                        optional list of texts; genmon.log lines with "error"
-#                        that contain one of them are not reported
+#                        or "unable" that contain one of them are not reported
+#                        (for a known problem; "note" can say why)
 #
 #          For each capture the test starts gensim and genmon (each on a free
 #          port, with temporary config, log and data folders), and checks that
@@ -72,6 +76,9 @@ REPO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, REPO_DIR)
 
 CAPTURES_DIR = os.environ.get("GENMON_CAPTURES")
+if CAPTURES_DIR:
+    # gensim and genmon run in other folders
+    CAPTURES_DIR = os.path.abspath(CAPTURES_DIR)
 GENSIM = os.path.join(REPO_DIR, "tests", "sim", "gensim.py")
 START_TIMEOUT = 90  # seconds for genmon to connect and read the controller
 
@@ -188,6 +195,7 @@ class SimulatedGenerator(object):
         }
         if "fueltype" in self.capture:
             settings["fueltype"] = self.capture["fueltype"]
+        settings.update(self.capture.get("settings", {}))
         config = MyConfig(filename=os.path.join(self.conf, "genmon.conf"), section="GenMon")
         for key, value in settings.items():
             config.WriteValue(key, value)
@@ -342,7 +350,8 @@ class GenmonSimulatorTests(unittest.TestCase):
         self.assertNotIn("/etc/genmon/", log)
         allowed = capture.get("log_errors_allowed", [])
         errors = [line for line in log.splitlines()
-                  if "error" in line.lower() and not any(a in line for a in allowed)]
+                  if ("error" in line.lower() or "unable" in line.lower())
+                  and not any(a in line for a in allowed)]
         self.assertEqual(errors, [], "errors in genmon.log")
 
         if os.path.isdir(snapshots):
