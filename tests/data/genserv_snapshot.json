@@ -2427,7 +2427,7 @@
    "allow_iframe": [
     "boolean",
     "Allow Embedding in an iframe",
-    216,
+    48,
     false,
     "SECURITY RISK - keep this OFF unless you understand the risks. Off (default, recommended) blocks all iframe embedding for the web interface, which protects against clickjacking. Turning it On lets ANY website embed the genmon web page in an iframe, which can be abused to trick you into clicking controls. Only enable it if you are embedding genmon in your own trusted dashboard (e.g. Home Assistant) on a network you control.",
     "",
@@ -2438,7 +2438,7 @@
    "autofeedback": [
     "boolean",
     "Automated Feedback",
-    29,
+    15,
     false,
     "If enabled, an email will be sent to the software maintainer if critical data is missing in the software for your generator. The email will contain the contents of the generator registers. Enabling this option helps support the widest possible set of features and supported generators.",
     "",
@@ -2449,7 +2449,7 @@
    "cert_info": [
     "string",
     "Certificate Info",
-    203.5,
+    35,
     "{\"mode\": \"selfsigned\", \"detail\": \"Ephemeral \\u2014 regenerated on each restart\"}",
     "",
     "",
@@ -2460,7 +2460,7 @@
    "cert_mode": [
     "list",
     "Certificate Mode",
-    203,
+    34,
     "selfsigned",
     "Certificate mode for HTTPS. 'selfsigned' generates a temporary certificate on each restart (browser will show a warning). 'localca' creates a persistent local CA you can import into your browser for a trusted connection. 'custom' lets you supply your own certificate and key files.",
     "selfsigned,localca,custom",
@@ -2471,7 +2471,7 @@
    "certfile": [
     "string",
     "https Certificate File",
-    205,
+    37,
     "",
     "Path and filename of the certificate file for your own certificate (cert_mode = custom).",
     "UnixFile",
@@ -2482,7 +2482,7 @@
    "disableimap": [
     "boolean",
     "Disable Receiving Email",
-    400,
+    64,
     true,
     "Enable incoming email. See the project wiki Tips and Trick page for info on setting up inbound email.",
     "",
@@ -2493,7 +2493,7 @@
    "disableoutagecheck": [
     "boolean",
     "Do Not Check for Outages",
-    17,
+    8,
     false,
     "If enabled and supported by the controller, this setting will disable the monitoring and notification of the utility line voltage for detecting power outages. If you have a 'smart' transfer switch, this may need to be enabled. For Evo/Nexus this is typically disabled. For Briggs an Stratton, if enabled this will disable the display of the Utility line information for off-grid mode.",
     "",
@@ -2504,7 +2504,7 @@
    "disablepowerlog": [
     "boolean",
     "Disable Power / Current Display",
-    26,
+    13,
     false,
     "Enable to disable the power log and current reading. Not supported on Nexus.",
     "",
@@ -2515,7 +2515,7 @@
    "disablesensorlog": [
     "boolean",
     "Disable Sensor Log",
-    27,
+    14,
     false,
     "If enabled, the logging of sensor data will be disabled. This also disbles the graphs of sensors in the web interface.",
     "",
@@ -2526,7 +2526,7 @@
    "disablesmtp": [
     "boolean",
     "Disable Sending Email",
-    300,
+    53,
     false,
     "Enable outgoing email. See the project wiki Tips and Trick page for info on setting up outbound email.",
     "",
@@ -2537,7 +2537,7 @@
    "disableweather": [
     "boolean",
     "Disable Weather Functionality",
-    500,
+    69,
     true,
     "Enable the weather feature. Requires an OpenWeatherMap API key and location to be configured.",
     "",
@@ -2548,7 +2548,7 @@
    "displayunknown": [
     "boolean",
     "Display Experimental Data",
-    111,
+    31,
     false,
     "Display the contents of additional data that appear to be associated with an unknown modbus register or a calculated value not included with the default genmon data set.",
     "",
@@ -2559,7 +2559,7 @@
    "email_account": [
     "string",
     "Email Account",
-    301,
+    54,
     "mysender@gmail.com",
     "Email account username",
     "minmax:3:50",
@@ -2570,7 +2570,7 @@
    "email_configured": [
     "boolean",
     "Email Configured",
-    212.6,
+    45,
     true,
     "",
     "",
@@ -2581,7 +2581,7 @@
    "email_pw": [
     "password",
     "Email Password",
-    302,
+    55,
     "mypassword",
     "Password for the email account used for sending and receiving email",
     "max:70",
@@ -2592,7 +2592,7 @@
    "enhancedexercise": [
     "boolean",
     "Enhanced Exercise Time",
-    109,
+    29,
     false,
     "Enable the functionality to support biweekly and monthly exercise times (weekly is the default). Note, your generator controller must support this before enabling this option. Evolution only and firmware version dependent.",
     "",
@@ -2603,7 +2603,7 @@
    "favicon": [
     "string",
     "FavIcon",
-    220,
+    51,
     "",
     "favicon for website. This is an optional parameter and default is \"favicon.ico\". This may not work in older browsers",
     "minmax:8:255",
@@ -2614,7 +2614,7 @@
    "fueltype": [
     "list",
     "Fuel Type",
-    104,
+    22,
     "Natural Gas",
     "The type of fuel used by your generator (Natural Gas, Propane, Diesel, Gasoline). This value is used by for displaying the correct information to the user.",
     "Natural Gas,Propane,Diesel,Gasoline",
@@ -2625,7 +2625,7 @@
    "http_pass": [
     "password",
     "Web Password",
-    207,
+    39,
     "",
     "Simple authentication will be used. Sets the password of the simple authentication. Leave blank to disable. 'Use Secure Web Settings' must be enabled to use this feature.",
     "minmax:4:50",
@@ -2636,7 +2636,7 @@
    "http_pass_ro": [
     "password",
     "Limited Rights User Password",
-    209,
+    41,
     "",
     "Sets the password of the limited rights user. Leave blank to disable. 'Use Secure Web Settings' and full rights user must be enabled to use this feature.",
     "minmax:4:50",
@@ -2647,7 +2647,7 @@
    "http_port": [
     "int",
     "Port of WebServer",
-    215,
+    46,
     8000,
     "HTTP port to be used by the web server.",
     "required digits",
@@ -2658,7 +2658,7 @@
    "http_user": [
     "string",
     "Web Username",
-    206,
+    38,
     "",
     "Simple authentication will be used. Sets the username of the simple authentication. Leave blank to disable. 'Use Secure Web Settings' must be enabled to use this feature.",
     "minmax:4:50",
@@ -2669,7 +2669,7 @@
    "http_user_ro": [
     "string",
     "Limited Rights User Username",
-    208,
+    40,
     "",
     "Sets the username of the limited rights user. Leave blank to disable. 'Use Secure Web Settings' and full rights user must be enabled to use this feature.",
     "minmax:4:50",
@@ -2680,7 +2680,7 @@
    "imap_server": [
     "string",
     "IMAP Server",
-    401,
+    65,
     "imap.gmail.com",
     "Server address used for receiving email, leave empty to disable IMAP. See the project wiki Tips and Trick page for info on setting up inbound email.",
     "InternetAddress",
@@ -2691,7 +2691,7 @@
    "incoming_mail_folder": [
     "string",
     "Incoming Mail Folder",
-    403,
+    67,
     "Generator",
     "The name of the folder in the mailbox for searching for incoming email commands",
     "minmax:1:1500",
@@ -2702,7 +2702,7 @@
    "keyfile": [
     "string",
     "https Key File",
-    204,
+    36,
     "",
     "Path and filename of the key file for your own certificate (cert_mode = custom).",
     "UnixFile",
@@ -2713,10 +2713,10 @@
    "max_sensorlog_entries": [
     "int",
     "Maximum Entries in Sensor Log",
-    71,
+    18,
     "2000",
     "The maximum number of entries in each sensor log. Note the log file will not be truncated until the maximum file size is reached. In most cases the default is the preferred value.",
-    0,
+    "digits",
     "<CONF>/genmon.conf",
     "GenMon",
     "max_sensorlog_entries"
@@ -2724,7 +2724,7 @@
    "metricweather": [
     "boolean",
     "Use Metric Units",
-    24,
+    11,
     false,
     "If enabled, metric units will be displayed when applicable.",
     "",
@@ -2735,7 +2735,7 @@
    "mfa_enrolled": [
     "boolean",
     "MFA Enrolled",
-    212.5,
+    44,
     false,
     "",
     "",
@@ -2746,7 +2746,7 @@
    "mfa_trust_days": [
     "int",
     "Days to remember (never use on shared computers)",
-    217,
+    50,
     90,
     "",
     "minmax:1:365",
@@ -2757,7 +2757,7 @@
    "mfa_trust_extend": [
     "boolean",
     "Remember this browser & don't ask for MFA again",
-    216,
+    49,
     false,
     "",
     "",
@@ -2768,7 +2768,7 @@
    "mfa_url": [
     "qrcode",
     "MFA QRCode",
-    212,
+    43,
     null,
     "",
     "",
@@ -2779,7 +2779,7 @@
    "minimumweatherinfo": [
     "boolean",
     "Display Minimum Weather Info",
-    504,
+    72,
     true,
     "If enabled the minimum information regarding the weather will be displayed, otherwise the maximum info will be displayed",
     "",
@@ -2790,7 +2790,7 @@
    "modbus_tcp": [
     "boolean",
     "Use Modbus TCP protocol",
-    6,
+    7,
     false,
     "If enabled, the modbus TCP protocol will be used. If disabled modbus RTU (serial) over TCP is used.",
     "",
@@ -2801,7 +2801,7 @@
    "nominalfrequency": [
     "list",
     "Rated Frequency",
-    101,
+    19,
     "60",
     "Frequency your generator is running. Either 50Hz or 60Hz. This is used by the web interface.",
     "50,60",
@@ -2812,7 +2812,7 @@
    "nominalkw": [
     "int",
     "Maximum kW Output",
-    103,
+    21,
     "22",
     "The maximum kilowatt output of your generator. This is used by the web interface.",
     "required digits range:0:1000",
@@ -2823,7 +2823,7 @@
    "nominalrpm": [
     "int",
     "Nominal RPM",
-    102,
+    20,
     "3600",
     "The RPM of your generator. Typically 1800 or 3600 for 60Hz and 1500 or 3000 for 50Hz. Some models run at 2300. This is used by the web interface.",
     "required digits range:1500:4000",
@@ -2834,7 +2834,7 @@
    "optimizeforslowercpu": [
     "boolean",
     "Optimize for slower CPUs",
-    25,
+    12,
     false,
     "If enabled, minor optimizations for slower CPUs will be used. Note that this is a design trade off for responsiveness vs CPU utilization.",
     "",
@@ -2856,7 +2856,7 @@
    "processed_mail_folder": [
     "string",
     "Mail Processed Folder",
-    404,
+    68,
     "Generator/Processed",
     "Once an email command has been processed by the software the email is moved to this mailbox folder",
     "minmax:1:255",
@@ -2867,7 +2867,7 @@
    "readonlyemailcommands": [
     "boolean",
     "Disable Email Write Commands",
-    402,
+    66,
     false,
     "If enabled, email commands that write to the controller will be disabled (settime, setexercise, setremote, etc.)",
     "",
@@ -2878,7 +2878,7 @@
    "remember_me_days": [
     "int",
     "Remember Me (days, 0 = browser session only)",
-    215,
+    47,
     0,
     "Number of days the browser remembers your login when you check \"Remember me\". Set to 0 for a browser-session only \u2014 your login expires as soon as you close the browser.",
     "minmax:0:365",
@@ -2889,7 +2889,7 @@
    "sender_account": [
     "string",
     "Sender Address",
-    303,
+    56,
     "no-reply@gmail.com",
     "Email address from which the emails are sent, can be blank if Email Account is a valid address.",
     "email",
@@ -2900,7 +2900,7 @@
    "sender_name": [
     "string",
     "Sender Name",
-    304,
+    57,
     "Genmon",
     "Name of the sender (i.e. Genmon or John Doe)",
     "max:50",
@@ -2911,7 +2911,7 @@
    "sensorlogmax": [
     "string",
     "Maximum size Sensor Log (MB)",
-    70,
+    17,
     "5",
     "Override the maximum size of each sensor log. The default is 5MB.",
     0,
@@ -2966,7 +2966,7 @@
    "smart_transfer_switch": [
     "boolean",
     "Smart Transfer Switch",
-    110,
+    30,
     false,
     "If enabled a smart transfer switch is utilized and the generator controller will not be responsible for starting and stopping or or weekly exercise functions and these items will be disabled in the web interface.",
     "",
@@ -2977,7 +2977,7 @@
    "smtp_port": [
     "int",
     "SMTP Server Port",
-    307,
+    59,
     587,
     "SMTP port used on the SMTP server for sending email. Typically port 587 is used for TLS and port 465 is used for SSL",
     "digits",
@@ -2988,7 +2988,7 @@
    "smtp_server": [
     "string",
     "SMTP Server",
-    305,
+    58,
     "smtp.gmail.com",
     "Mail server used for sending email, leave empty to disable SMTP. See the project wiki Tips and Trick page for info on setting up outbound email.",
     "InternetAddress",
@@ -2999,7 +2999,7 @@
    "smtpauth_disable": [
     "boolean",
     "Disable SMTP Auth",
-    309,
+    62,
     false,
     "If enabled, ignore SMTP authentication. Typically only used for locally administered SMTP servers",
     "",
@@ -3010,7 +3010,7 @@
    "ssl_enabled": [
     "boolean",
     "Use SSL Encryption",
-    308,
+    60,
     false,
     "Use SSL encryption to send emails",
     "",
@@ -3021,7 +3021,7 @@
    "syncdst": [
     "boolean",
     "Sync Daylight Savings Time",
-    22,
+    9,
     false,
     "Enable to sync the generator time to the system time if there is a change in Daylight Savings Time. This does not change the system time, only the generator time.",
     "",
@@ -3032,7 +3032,7 @@
    "synctime": [
     "boolean",
     "Sync Time",
-    23,
+    10,
     false,
     "Enables syncing the generator time to the system time once every hour. This does not change the system time, only the generator time.",
     "",
@@ -3043,7 +3043,7 @@
    "system_theme": [
     "boolean",
     "Select light or dark theme based on the browser/system setting",
-    221,
+    52,
     false,
     "Use the browser-provided light/dark theme setting in the UI, and remove the manual theme switcher. This may not work in older brwsers",
     "",
@@ -3054,7 +3054,7 @@
    "tanksize": [
     "int",
     "Fuel Tank Size",
-    105,
+    23,
     0,
     "Fuel tank size. Units is gallons unless \"Use Metric Units\" is enabled, then it is in liters. This is used to estimate the fuel remaining the tank. Ignore for Natural Gas or tankless installations. If external tank sensors are used via an add on then this setting can be used if all tanks are the same size, then set this to the the total capacity of all tanks (sum of all tanks size).",
     "required digits range:0:10000",
@@ -3065,7 +3065,7 @@
    "tls_disable": [
     "boolean",
     "Disable TLS Encryption",
-    309,
+    61,
     false,
     "If SSL is disabled TLS encryption is the default, unless this is enabled. If enabled and SSL is disabled, no encryption will be used to send email.",
     "",
@@ -3076,7 +3076,7 @@
    "update_check": [
     "boolean",
     "Check for Software Update",
-    30,
+    16,
     true,
     "If enabled the software will send an email notice when a software update is available.",
     "",
@@ -3087,7 +3087,7 @@
    "use_html": [
     "boolean",
     "Use HTML Email Format",
-    310,
+    63,
     false,
     "Send a structured HTML alternative (in addition to plain text) so screen readers get clear pauses between status lines.",
     "",
@@ -3109,7 +3109,7 @@
    "usehttps": [
     "boolean",
     "Use Secure Web Server",
-    200,
+    33,
     false,
     "HTTPS (secure HTTP) and / or user name and password authentication.",
     "",
@@ -3120,7 +3120,7 @@
    "usemfa": [
     "boolean",
     "Use Multi-Factor Authentication",
-    210,
+    42,
     false,
     "Use Multi-Factor Authentication. You must use a Multi-Factor Authenticator app like Google Authenticator or Authy to use this feature. If enabled, MFA will apply to both normal and limited rights login.",
     "",
@@ -3131,7 +3131,7 @@
    "weatherkey": [
     "string",
     "Openweathermap.org API key",
-    501,
+    70,
     "",
     "Openweathermap.org API Key. This is required to enable weather reporting. See https://openweathermap.org/appid. Requires openweathermap library. If you installed the Generator Monitor Software before V1.9.6 and are upgrading you must run this command: \"sudo pip install pyowm\" from the console before the weather features will be functional",
     "required minmax:4:50",
@@ -3142,7 +3142,7 @@
    "weatherlocation": [
     "string",
     "Location to report weather",
-    502,
+    71,
     "",
     "The location to report weather. Either enter City,State,Country or a openweathermap.org city ID. Automatic lookup of location requires location services to be enabled in your browser, a https connection, and a valid API key.",
     "required minmax:4:50",
@@ -3350,7 +3350,7 @@
    "displayunknown": [
     "boolean",
     "Display Experimental Data",
-    111,
+    31,
     true,
     "Display the contents of additional data that appear to be associated with an unknown modbus register or a calculated value not included with the default genmon data set.",
     "",
@@ -3361,7 +3361,7 @@
    "nominalfrequency": [
     "list",
     "Rated Frequency",
-    101,
+    19,
     "50",
     "Frequency your generator is running. Either 50Hz or 60Hz. This is used by the web interface.",
     "50,60",

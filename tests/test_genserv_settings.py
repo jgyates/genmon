@@ -203,25 +203,48 @@ class MaintenanceCommandTests(SettingsTestCase):
 class SettingsTableTests(SettingsTestCase):
     """The settings tables in genmonlib/genservsettings.py."""
 
-    TYPES = ["string", "password", "int", "float", "boolean", "list"]
+    TYPES = ["string", "password", "int", "float", "boolean", "list", "qrcode"]
+    # conditions genserv knows (GenServ.SettingShown); an unknown one is never shown
+    CONDITIONS = [None, "custom", "evo_nexus", "not_h100", "h100", "h100_pzp", "not_h100_pzp",
+                  "nexus", "evo_lc_diesel", "linux", "setgentime"]
 
-    def test_advanced_settings_table(self):
+    def check_table(self, table_name, command):
         instance = self.fixture.instance
-        table = self.fixture.module_globals["ADVANCED_SETTINGS"]
-        self.assertEqual(len(table), len({s.key for s in table}), "duplicate key")
+        table = self.fixture.module_globals[table_name]
+        # a key is only in the table twice with different conditions
+        self.assertEqual(len(table), len({(s.key, s.when) for s in table}), "duplicate key")
         # the page shows the settings in table order
-        page = self.fixture.get_json("/cmd/get_advanced_settings")
-        shown = [s.key for s in table if s.key in page]
+        page = self.fixture.get_json("/cmd/" + command)
+        shown = []
+        for s in table:
+            if s.key in page and instance.SettingShown(s.when) and s.key not in shown:
+                shown.append(s.key)
         self.assertEqual(sorted(page, key=lambda k: page[k][2]), shown)
         for s in table:
             with self.subTest(setting=s.key):
                 self.assertIn(s.type, self.TYPES)
-                self.assertIn(s.file, ["genmon", "mail"])
+                self.assertIn(s.file, ["genmon", "mail", None])
                 if s.type == "list":
                     self.assertTrue(instance.SettingValue(s.bounds), "list without choices")
-                # a condition genserv does not know is never shown
-                self.assertIn(s.when, [None, "custom", "evo_nexus", "not_h100", "h100", "nexus",
-                                       "linux"])
+                self.assertIn(s.when, self.CONDITIONS)
+
+    def test_advanced_settings_table(self):
+        self.check_table("ADVANCED_SETTINGS", "get_advanced_settings")
+
+    def test_main_settings_table(self):
+        self.check_table("MAIN_SETTINGS", "settings")
+
+    def test_settings_shown_for_controller(self):
+        # the default test setup is an Evolution controller on Linux that can set the time
+        keys = set(self.fixture.get_json("/cmd/settings"))
+        self.assertTrue({"enhancedexercise", "synctime", "cert_info", "smtp_server"} <= keys)
+        self.assertFalse({"voltageconfiguration", "nominalbattery", "usesensorforfuelgauge"} & keys)
+        self.fixture.stop()
+        self.fixture = GenServFixture("open", settings={"controllertype": "h_100"}).start()
+        page = self.fixture.get_json("/cmd/settings")
+        self.assertTrue({"voltageconfiguration", "industrialoutagecheck",
+                         "usesensorforfuelgauge"} <= set(page))
+        self.assertNotIn("enhancedexercise", page)
 
     def test_advanced_settings_shown_for_controller(self):
         # the default test setup is an Evolution controller on Linux
