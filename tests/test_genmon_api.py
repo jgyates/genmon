@@ -138,7 +138,10 @@ class MyTest(MyCommon):
             self.Failed.append(name)
             status = "FAIL"
         self.LogConsole(status + "  " + name + (": " + detail if detail else ""))
-        if self.Verbose and reply is not None:
+        if self.Verbose and reply is not None and name.split(" ")[-1] in GENSERV_SETTINGS_COMMANDS:
+            # the settings pages hold passwords and API keys, do not print them
+            self.LogConsole("(reply not printed, it contains passwords and keys)")
+        elif self.Verbose and reply is not None:
             self.LogConsole(reply if isinstance(reply, str) else json.dumps(reply, indent=2))
 
     # ---------------------------------------------------------------------------
