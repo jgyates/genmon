@@ -88,9 +88,10 @@ LINKED_FILES = ["static", "templates", "genmonlib", "data", "startgenmon.sh", "g
 
 # -------------------------------------------------------------------------------
 class GenServFixture(object):
-    def __init__(self, mode="open", settings=None, extension_file=None):
+    def __init__(self, mode="open", settings=None, extension_file=None, missing_conf=None):
 
         self.mode = mode
+        self.missing_conf = missing_conf or []  # config files removed before genserv starts
         self.extra_settings = settings or {}
         self.extension_file = extension_file
         self.calls = []  # genmon commands, emails and shell commands, in order
@@ -159,7 +160,8 @@ class GenServFixture(object):
                 f.write(b"test archive")
 
         for f in glob.glob(os.path.join(REPO_DIR, "conf", "*.conf")):
-            shutil.copy(f, self.conf_dir)
+            if os.path.basename(f) not in self.missing_conf:
+                shutil.copy(f, self.conf_dir)
 
         from genmonlib.myconfig import MyConfig
 
@@ -185,9 +187,10 @@ class GenServFixture(object):
             settings["cert_mode"] = "localca"
         settings.update(self.extra_settings)
 
-        config = MyConfig(filename=self.conf_path("genmon.conf"), section="GenMon")
-        for key, value in settings.items():
-            config.WriteValue(key, value)
+        if "genmon.conf" not in self.missing_conf:
+            config = MyConfig(filename=self.conf_path("genmon.conf"), section="GenMon")
+            for key, value in settings.items():
+                config.WriteValue(key, value)
 
     # ---------------------------------------------------------------------------
     def _start_patches(self):

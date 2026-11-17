@@ -132,6 +132,52 @@ class SaveTests(SettingsTestCase):
         self.assertEqual(addons["genlog"]["parameters"]["Log File Name"]["value"], "/home/pi/test.csv")
         self.assertIn(RESTART, self.fixture.shell_calls())
 
+    def test_add_on_save_only_writes_table_parameters(self):
+        files = ["genmon.conf", "mymail.conf", "genloader.conf", "genslack.conf", "genhalink.conf"]
+        before = {name: self.fixture.read_conf(name) for name in files}
+        self.save("set_add_on_settings", json.dumps({
+            # a parameter not in the table, a read only one, and a new line in a value
+            "genslack": {"parameters": {"no_such_parameter": "1", "username": "a\nenable = true"}},
+            "genhalink": {"parameters": {"api_key": "changed"}},
+            # not add-ons
+            "genmon": {"parameters": {"http_pass": "x"}},
+            "mymail": {"parameters": {"email_pw": "x"}},
+            "genloader": {"enable": "true"},
+            "no_such_addon": {"enable": "true"},
+            # enable is true or false only
+            "gensms": {"enable": "true\nmodule = other.py"},
+        }))
+        for name in files:
+            with self.subTest(file=name):
+                self.assertEqual(self.fixture.read_conf(name), before[name])
+        # a parameter that is in the table is written even if the config file
+        # does not have the entry yet
+        self.assertIsNone(self.fixture.conf_value("genslack.conf", "title_link", "genslack"))
+        self.save("set_add_on_settings", json.dumps(
+            {"genslack": {"parameters": {"title_link": "https://example.com"}}}))
+        self.assertEqual(self.fixture.conf_value("genslack.conf", "title_link", "genslack"),
+                         "https://example.com")
+
+    def test_missing_add_on_config_file(self):
+        # only that add-on is left off the page, and it can not be saved
+        self.fixture.stop()
+        self.fixture = GenServFixture("open", missing_conf=["genslack.conf"]).start()
+        page = self.fixture.get_json("/cmd/get_add_on_settings")
+        self.assertNotIn("genslack", page)
+        self.assertIn("genpushover", page)
+        self.save("set_add_on_settings", json.dumps(
+            {"genslack": {"enable": "true", "parameters": {"channel": "x"}}}))
+        self.assertFalse(os.path.exists(self.fixture.conf_path("genslack.conf")))
+        self.assertNotEqual(self.fixture.conf_value("genloader.conf", "enable", "genslack"), "true")
+
+    def test_missing_required_config_file(self):
+        self.fixture.stop()
+        for name in ["genmon.conf", "mymail.conf", "genloader.conf"]:
+            with self.subTest(file=name):
+                with self.assertRaises(SystemExit):
+                    GenServFixture("open", missing_conf=[name]).start()
+        self.fixture = GenServFixture("open").start()
+
     def test_notifications(self):
         self.save("setnotifications", "a@example.com=outage,info&b@example.com=error")
         self.assertEqual(self.fixture.conf_value("mymail.conf", "email_recipient", "MyMail"),

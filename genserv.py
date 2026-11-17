@@ -331,14 +331,23 @@ class GenServ(MySupport):
         for attr, filename in self.CONFIG_FILE_NAMES.items():
             setattr(self, attr, os.path.join(self.ConfigFilePath, filename))
             ConfigFileList.append(getattr(self, attr))
-        for addon in ADDONS:
-            if addon.conf is not None:
-                ConfigFileList.append(self.AddOnConfigFile(addon))
 
+        # genmon.conf, mymail.conf and genloader.conf are required
         for ConfigFile in ConfigFileList:
             if not os.path.isfile(ConfigFile):
                 self.LogConsole("Missing config file : " + ConfigFile)
                 sys.exit(1)
+
+        # a missing add-on config file only hides that add-on (genloader normally
+        # copies missing config files from the conf folder when it starts)
+        for addon in ADDONS:
+            if addon.conf is None:
+                continue
+            ConfigFile = self.AddOnConfigFile(addon)
+            if os.path.isfile(ConfigFile):
+                ConfigFileList.append(ConfigFile)
+            else:
+                self.LogError("Missing config file, add-on " + addon.name + " not shown: " + ConfigFile)
 
         self.ConfigFiles = {}
         for ConfigFile in ConfigFileList:
@@ -2106,7 +2115,7 @@ class GenServ(MySupport):
         AddOnCfg = collections.OrderedDict()
         try:
             for addon in ADDONS:
-                if self.SettingShown(addon.when):
+                if self.SettingShown(addon.when) and self.AddOnAvailable(addon):
                     AddOnCfg[addon.name] = self.ReadAddOn(addon)
         except Exception as e1:
             self.LogErrorLine("Error in GetAddOns: " + str(e1))
@@ -2156,6 +2165,12 @@ class GenServ(MySupport):
             if missing:
                 Description += ADDON_CHECKS[check]
         return Description
+
+    # -------------------------------------------------------------------------------
+    # False if the add-on's config file was missing when genserv started
+    def AddOnAvailable(self, addon):
+
+        return addon.conf is None or self.AddOnConfigFile(addon) in self.ConfigFiles
 
     # -------------------------------------------------------------------------------
     # Full path of the config file an add-on's parameters are saved in
@@ -2235,24 +2250,23 @@ class GenServ(MySupport):
             if not len(settings):
                 return  # nothing to change
 
-            ConfigDict = {
-                "genmon": self.ConfigFiles[self.GENMON_CONFIG],
-                "mymail": self.ConfigFiles[self.MAIL_CONFIG],
-                "genloader": self.ConfigFiles[self.GENLOADER_CONFIG],
-            }
-            AddOns = {}
-            for addon in ADDONS:
-                ConfigDict[addon.name] = self.ConfigFiles[self.AddOnConfigFile(addon)]
-                AddOns[addon.name] = addon
-
+            # only add-ons in the ADDONS table and their parameters are saved
+            AddOns = {addon.name: addon for addon in ADDONS}
             for module, entries in settings.items():  # module
-                ParameterConfig = ConfigDict.get(module, None)
-                if ParameterConfig == None:
-                    self.LogError("Invalid module in SaveAddOnSettings: " + module)
+                addon = AddOns.get(module)
+                if addon is None:
+                    self.LogError("Invalid module in SaveAddOnSettings: " + str(module))
                     continue
+                if not self.AddOnAvailable(addon):
+                    self.LogError("Missing config file for add-on in SaveAddOnSettings: " + module)
+                    continue
+                Params = {param.key: param for param in (addon.params or ())}
                 # Find if it needs to be enabled / disabled or if there are parameters
                 for basesettings, basevalues in entries.items():  # base settings
                     if basesettings == "enable":
+                        if str(basevalues).lower() not in ("true", "false"):
+                            self.LogError("Invalid enable value in SaveAddOnSettings: " + module)
+                            continue
                         self.ConfigFiles[self.GENLOADER_CONFIG].WriteValue(
                             "enable", basevalues, section=module
                         )
@@ -2262,24 +2276,32 @@ class GenServ(MySupport):
                             self.ConfigFiles[self.GENMON_CONFIG].WriteValue(
                                 "use_external_fuel_data", basevalues, section="genmon"
                             )
-
-                        addon = AddOns.get(module)
-                        if addon is not None and addon.params and basevalues.lower() == "true":
+                        if basevalues.lower() == "true":
                             # make an API key if the add-on has none when it is enabled
-                            for param in addon.params:
+                            for param in Params.values():
                                 if param.special == "api_key":
                                     self.GetAddOnAPIKey(addon, param)
                     if basesettings == "parameters":
-                        Special = {}
-                        if AddOns.get(module) is not None and AddOns[module].params:
-                            Special = {p.key: p.special for p in AddOns[module].params}
-                        for params, paramvalue in basevalues.items():
-                            if Special.get(params) == "genlog_args":
+                        for key, value in basevalues.items():
+                            param = Params.get(key)
+                            if param is None or param.type == "readonly":
+                                self.LogError(
+                                    "Invalid parameter in SaveAddOnSettings: " + module + ": " + str(key)
+                                )
+                                continue
+                            value = str(value)
+                            if "\n" in value or "\r" in value:
+                                # a new line would add other entries to the config file
+                                self.LogError(
+                                    "Invalid value in SaveAddOnSettings: " + module + ": " + key
+                                )
+                                continue
+                            if param.special == "genlog_args":
                                 self.ConfigFiles[self.GENLOADER_CONFIG].WriteValue(
-                                    "args", "-f " + paramvalue, section=module
+                                    "args", "-f " + value, section=module
                                 )
                             else:
-                                ParameterConfig.WriteValue(params, paramvalue)
+                                self.ConfigFiles[self.AddOnConfigFile(addon)].WriteValue(key, value)
 
             self.Restart()
             return
