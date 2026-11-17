@@ -62,6 +62,8 @@ SNAPSHOT_SAVES = [
 # genhalink / genhubitat make a random API key when none is set
 UUID_PATTERN = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 
+MISSING_LIBRARIES_PATTERN = re.compile(r"<br/><font color='red'>The required libraries[^<]*</font>")
+
 SNAPSHOT_HINT = ("differs from tests/data/genserv_snapshot.json; if this change is intended, "
                  "make a new snapshot with GENSERV_UPDATE_SNAPSHOT=1")
 
@@ -194,7 +196,11 @@ class SnapshotTests(SettingsTestCase):
             suffix = os.sep if folder.endswith(os.sep) else ""
             for path in [os.path.realpath(folder) + suffix, folder]:
                 text = text.replace(path, label)
-        return UUID_PATTERN.sub("<UUID>", text)
+        text = UUID_PATTERN.sub("<UUID>", text)
+        # depends on the machine, not on genserv: an add-on's "libraries are not
+        # installed" note, and macOS .DS_Store files in folder listings
+        text = MISSING_LIBRARIES_PATTERN.sub("", text)
+        return text.replace(".DS_Store,", "").replace(",.DS_Store", "")
 
     def page(self, command):
         return json.loads(self.normalize(self.fixture.get("/cmd/" + command).get_data(as_text=True)))

@@ -55,7 +55,8 @@ ADMIN_USER = "admin"
 ADMIN_PASS = "secretpw"
 RO_USER = "viewer"
 RO_PASS = "viewpw"
-MFA_SECRET = "JBSWY3DPEHPK3PXP"
+# 32 characters (160 bits): newer pyotp versions refuse short secrets
+MFA_SECRET = "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP"
 BASE_URL = "https://localhost"  # the session cookie is Secure, so use https
 
 # what the fake genmon returns for "generator: start_info_json"
@@ -298,6 +299,10 @@ class GenServFixture(object):
                 module_globals = runpy.run_path(target, run_name="__main__")
         finally:
             sys.argv = old_argv
+        if "GenServInstance" not in module_globals:
+            raise RuntimeError(
+                "genserv.py (" + (os.environ.get("GENSERV_PY") or os.path.join(REPO_DIR, "genserv.py"))
+                + ") did not create GenServInstance; these tests need the class based genserv.py")
         self.app = module_globals["app"]
         self.instance = module_globals["GenServInstance"]
         # run_path returns a copy of the module globals, use the live ones

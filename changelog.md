@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 - Updated service journal to preserve line breaks (thanks @MichaelB2018)
 - remove pytz from requirements as it is no longer needed
 - Performance improvements to genhubitat. thanks @bdwilson
-- added remote alarm reset for Power Zone 200. thanks @@karl-pizzolatto for the data and testing
+- added remote alarm reset for Power Zone 200. thanks @karl-pizzolatto for the data and testing
 - Added alarm log for PZ200. Only 10 log events are stored in the controller.
 - Add the ability to extend the outage log past the default of 100 entries
 - Added remote exericse button for supported controllers (Evo/Nexus)
@@ -22,13 +22,14 @@ All notable changes to this project will be documented in this file.
 - misc security improvemnts
 - Added code hash value to About page
 - Local LAN socket access to genmon is now disabled by default if authentication is enabled in the web interface. If you want enable this then look at the advanced seeting named "Allow LAN access to genmon" 
-- remove numerious python 2.x references in the code that are no longer used
+- remove numerous python 2.x references in the code that are no longer used
 - Update to make config and JSON file writes atomic to reduce file corruption if power is lost
 - made iteration object in custom_controller be an int or an object
 - Added initial support for Kohler APM402
 - Web UI security updates (thanks @MichaelB2018 and @skipfire)
 - Added Ambient Temp gauge for Evo 2.0
 - Maintenance updates for some older addon program to convert to a class architecture
+- Maintenance updates for genserv.py to convert to a class architecture
 
 ## 2.0.02 -2026-08-04
 - New add on for Hubitat Elevation hub, Thanks @bdwilson
