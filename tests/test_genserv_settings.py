@@ -51,7 +51,7 @@ SNAPSHOT_SAVES = [
     ("setsettings", "sitename=SnapshotSite&displayunknown=true&nominalfrequency=50"),
     ("set_advanced_settings", "address=64&kwlogmax=2.0"),
     ("set_add_on_settings", json.dumps({
-        "genlog": {"enable": "true", "parameters": {"Log File Name": "/home/pi/snapshot.csv"}},
+        "genlog": {"enable": "true", "parameters": {"filename": "/home/pi/snapshot.csv"}},
         "genslack": {"enable": "false", "parameters": {
             "channel": "snapshot", "webhook_url": "https://hooks.slack.com/x"}},
         "gensms_voip": {"enable": "true", "parameters": {"did": "555-1234"}},
@@ -119,17 +119,18 @@ class SaveTests(SettingsTestCase):
 
     def test_add_on_settings(self):
         self.save("set_add_on_settings", json.dumps({
-            "genlog": {"enable": "true", "parameters": {"Log File Name": "/home/pi/test.csv"}},
+            "genlog": {"enable": "true", "parameters": {"filename": "/home/pi/test.csv"}},
             "genslack": {"enable": "false", "parameters": {"channel": "testchannel"}},
         }))
-        # genlog keeps its file name on its command line in genloader.conf
+        # enable is in genloader.conf, the parameters in the add-on's config file
         self.assertEqual(self.fixture.conf_value("genloader.conf", "enable", "genlog"), "true")
-        self.assertEqual(self.fixture.conf_value("genloader.conf", "args", "genlog"), "-f /home/pi/test.csv")
+        self.assertEqual(self.fixture.conf_value("genlog.conf", "filename", "genlog"), "/home/pi/test.csv")
+        self.assertEqual(self.fixture.conf_value("genloader.conf", "args", "genlog"), "")
         self.assertEqual(self.fixture.conf_value("genloader.conf", "enable", "genslack"), "false")
         self.assertEqual(self.fixture.conf_value("genslack.conf", "channel", "genslack"), "testchannel")
         addons = self.fixture.get_json("/cmd/get_add_on_settings")
         self.assertTrue(addons["genlog"]["enable"])
-        self.assertEqual(addons["genlog"]["parameters"]["Log File Name"]["value"], "/home/pi/test.csv")
+        self.assertEqual(addons["genlog"]["parameters"]["filename"]["value"], "/home/pi/test.csv")
         self.assertIn(RESTART, self.fixture.shell_calls())
 
     def test_add_on_save_only_writes_table_parameters(self):
@@ -315,7 +316,7 @@ class SettingsTableTests(SettingsTestCase):
                 self.assertEqual(len(params), len({p.key for p in params}), "duplicate parameter")
                 for p in params:
                     self.assertIn(p.type, self.TYPES + ["readonly"])
-                    self.assertIn(p.special, [None, "genlog_args", "api_key"])
+                    self.assertIn(p.special, [None, "api_key"])
                     if p.type == "list":
                         self.assertTrue(p.bounds, p.key + ": list without choices")
                 if a.name in page:

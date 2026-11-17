@@ -311,8 +311,7 @@ ADVANCED_SETTINGS = (
 #               the comma separated choices
 #   read        how the value is read from the config file (str, int, float, bool)
 #               when it is not the usual one for the type
-#   special     stored in a special way, see GenServ.ReadAddOnParam:
-#               genlog_args  the file name is in genloader.conf as "args = -f <file>"
+#   special     handled in a special way, see GenServ.ReadAddOnParam:
 #               api_key      a key is made (and saved) if the config file has none
 #
 # A new parameter is shown, and can be saved, as soon as it is in this table, even
@@ -413,12 +412,14 @@ ADDONS = (
           )),
     AddOn("genlog", "Notifications to CSV Log",
           "Log Genmon and utility state changes to a file. Log file is in text CSV format.",
-          icon="csv", url=WIKI + "#genlogpy-optional",
+          icon="csv", url=WIKI + "#genlogpy-optional", conf="genlog.conf",
           params=(
-              Param("Log File Name", "string", "Log File Name",
+              # before 2.0.3 this was "args = -f <file>" in genloader.conf, see
+              # Loader.MoveGenLogArgs in genloader.py
+              Param("filename", "string", "Log File Name",
                     "Filename for log. Full path of the file must be included (i.e. "
                     "/home/pi/genmon/LogFile.csv)",
-                    "/home/pi/genmon/LogFile.csv", "required UnixFile", special="genlog_args"),
+                    "", "required UnixFile"),
           )),
     AddOn("gensms", "Notifications via SMS - Twilio",
           "Send Genmon and utility state changes via Twilio SMS",

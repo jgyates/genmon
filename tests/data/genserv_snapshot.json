@@ -4,15 +4,17 @@
    "@@ -56 +56 @@",
    "-enable = False",
    "+enable = true",
-   "@@ -59 +59 @@",
-   "-args = -f /home/pi/genmon/LogFile.csv",
-   "+args = -f /home/pi/snapshot.csv",
    "@@ -120 +120 @@",
    "-enable = False",
    "+enable = false",
    "@@ -232 +232 @@",
    "-enable = False",
    "+enable = true"
+  ],
+  "genlog.conf": [
+   "@@ -5 +5 @@",
+   "-filename = /home/pi/genmon/LogFile.csv",
+   "+filename = /home/pi/snapshot.csv"
   ],
   "genmon.conf": [
    "@@ -4 +4 @@",
@@ -706,7 +708,7 @@
     "enable": false,
     "icon": "csv",
     "parameters": {
-     "Log File Name": {
+     "filename": {
       "bounds": "required UnixFile",
       "description": "Filename for log. Full path of the file must be included (i.e. /home/pi/genmon/LogFile.csv)",
       "display_name": "Log File Name",
@@ -3159,7 +3161,7 @@
     "enable": true,
     "icon": "csv",
     "parameters": {
-     "Log File Name": {
+     "filename": {
       "bounds": "required UnixFile",
       "description": "Filename for log. Full path of the file must be included (i.e. /home/pi/genmon/LogFile.csv)",
       "display_name": "Log File Name",

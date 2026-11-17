@@ -26,6 +26,7 @@ try:
         sys.path.insert(1, parent_root)
 
     from genmonlib.myclient import ClientInterface
+    from genmonlib.myconfig import MyConfig
     from genmonlib.mycommon import MyCommon
     from genmonlib.mysupport import MySupport
     from genmonlib.mythread import MyThread
@@ -76,15 +77,16 @@ class GenLog(MySupport):
         if self.MonitorAddress == None or not len(self.MonitorAddress):
             self.MonitorAddress = ProgramDefaults.LocalHost
 
-        self.OutputFileName = filename.strip() if filename != None else ""
+        self.OutputFileName = self.GetOutputFileName(filename, ConfigFilePath)
 
         self.LogConsole("Address is " + self.MonitorAddress)
         self.LogConsole("Output file is " + self.OutputFileName)
         self.LogConsole("Config File Path is " + ConfigFilePath)
 
         if not len(self.OutputFileName):
-            self.LogConsole("Missing output file name (-f <outputfile>)")
-            self.LogError("Missing output file name (-f <outputfile>)")
+            Message = "Missing output file name (filename in genlog.conf, or -f <outputfile>)"
+            self.LogConsole(Message)
+            self.LogError(Message)
             sys.exit(2)
 
         try:
@@ -105,6 +107,24 @@ class GenLog(MySupport):
             self.LogErrorLine("Error in GenLog init: " + str(e1))
             self.LogConsole("Error in GenLog init: " + str(e1))
             sys.exit(1)
+
+    # ------------------- GenLog::GetOutputFileName -----------------------------
+    # The file to log to: -f on the command line if given, otherwise filename in
+    # genlog.conf
+    def GetOutputFileName(self, filename, ConfigFilePath):
+
+        if filename != None and len(filename.strip()):
+            return filename.strip()
+        try:
+            ConfigFile = os.path.join(ConfigFilePath, "genlog.conf")
+            if not os.path.isfile(ConfigFile):
+                self.LogError("Missing config file " + ConfigFile)
+                return ""
+            config = MyConfig(filename=ConfigFile, section="genlog", log=self.log)
+            return config.ReadValue("filename", default="").strip()
+        except Exception as e1:
+            self.LogErrorLine("Error reading genlog.conf: " + str(e1))
+            return ""
 
     # ------------------- GenLog::ExcelDate -------------------------------------
     def ExcelDate(self, date1):

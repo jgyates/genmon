@@ -950,6 +950,36 @@ class Loader(MySupport):
             self.LogInfo("Error in UpdateFromTemplate: " + str(e1), LogLine=True)
 
     # ---------------------------------------------------------------------------
+    # Older versions gave genlog.py its file name on the command line, as
+    # "args = -f <file>" in genloader.conf. Move it to genlog.conf (once).
+    def MoveGenLogArgs(self):
+
+        try:
+            if not "genlog" in self.config.GetSections():
+                return
+            self.config.SetSection("genlog")
+            Args = self.config.ReadValue("args", default="").split()
+            if len(Args) != 2 or Args[0] not in ("-f", "--filename"):
+                return
+            GenLogConf = os.path.join(self.ConfigFilePath, "genlog.conf")
+            if not os.path.isfile(GenLogConf):
+                Default = os.path.join(self.ConfPath, "genlog.conf")
+                if os.path.isfile(Default):
+                    copyfile(Default, GenLogConf)
+                else:
+                    with open(GenLogConf, "w") as f:
+                        f.write("[genlog]\n")
+            if not MyConfig(filename=GenLogConf, section="genlog", log=self.log).WriteValue(
+                "filename", Args[1]
+            ):
+                self.LogError("Error writing the genlog file name to " + GenLogConf)
+                return  # keep args, try again next time
+            self.config.WriteValue("args", "", section="genlog")
+            self.LogError("Moved the genlog file name (" + Args[1] + ") from genloader.conf to " + GenLogConf)
+        except Exception as e1:
+            self.LogInfo("Error in MoveGenLogArgs: " + str(e1), LogLine=True)
+
+    # ---------------------------------------------------------------------------
     def UpdateIfNeeded(self):
 
         try:
@@ -1028,6 +1058,7 @@ class Loader(MySupport):
 
             # sections in the default genloader.conf are the known modules
             self.UpdateFromTemplate(Sections)
+            self.MoveGenLogArgs()
             self.UpdateIfNeeded()
 
             Sections = self.config.GetSections()

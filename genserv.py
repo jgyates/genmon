@@ -2186,14 +2186,7 @@ class GenServ(MySupport):
 
         ReadTypes = {"int": int, "float": float, "boolean": bool}
         config = self.ConfigFiles[self.AddOnConfigFile(addon)]
-        if param.special == "genlog_args":
-            # genloader.conf has "args = -f <file>"
-            Args = self.ConfigFiles[self.GENLOADER_CONFIG].ReadValue(
-                "args", return_type=str, section=addon.name, default="-f " + param.default
-            )
-            ArgList = Args.split()
-            Value = ArgList[1] if len(ArgList) == 2 else ""
-        elif param.special == "api_key":
+        if param.special == "api_key":
             Value = self.GetAddOnAPIKey(addon, param)
         else:
             Value = config.ReadValue(
@@ -2296,12 +2289,7 @@ class GenServ(MySupport):
                                     "Invalid value in SaveAddOnSettings: " + module + ": " + key
                                 )
                                 continue
-                            if param.special == "genlog_args":
-                                self.ConfigFiles[self.GENLOADER_CONFIG].WriteValue(
-                                    "args", "-f " + value, section=module
-                                )
-                            else:
-                                self.ConfigFiles[self.AddOnConfigFile(addon)].WriteValue(key, value)
+                            self.ConfigFiles[self.AddOnConfigFile(addon)].WriteValue(key, value)
 
             self.Restart()
             return

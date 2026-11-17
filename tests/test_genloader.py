@@ -458,14 +458,14 @@ class GenLoaderConfigTests(unittest.TestCase):
     def test_get_config_fills_empty_conffile(self):
         # an old genloader.conf had an empty conffile for gengpio
         self.edit_conf("gengpio", "conffile", "")
-        self.edit_conf("genlog", "conffile", "")  # genlog has no config file
+        self.edit_conf("gensyslog", "conffile", "")  # gensyslog has no config file
         self.assertTrue(self.loader.GetConfig())
         self.assertEqual(self.loader.CachedConfig["gengpio"]["conffile"], "gengpio.conf")
-        self.assertEqual(self.loader.CachedConfig["genlog"]["conffile"], "")
+        self.assertEqual(self.loader.CachedConfig["gensyslog"]["conffile"], "")
 
     def test_get_config_keeps_user_values_and_sections(self):
         self.edit_conf("genslack", "enable", "True")
-        self.edit_conf("genlog", "args", "-f /data/log.csv")
+        self.edit_conf("gensyslog", "args", "-x test")
         with open(self.loader.configfile, "a") as f:
             f.write("\n[mymodule]\nmodule = mymodule.py\nenable = False\nhardstop = False\n"
                     "conffile =\nargs =\npriority = 5\n")
@@ -473,7 +473,7 @@ class GenLoaderConfigTests(unittest.TestCase):
                                            log=self.loader.log)
         self.assertTrue(self.loader.GetConfig())
         self.assertIs(self.loader.CachedConfig["genslack"]["enable"], True)
-        self.assertEqual(self.loader.CachedConfig["genlog"]["args"], "-f /data/log.csv")
+        self.assertEqual(self.loader.CachedConfig["gensyslog"]["args"], "-x test")
         self.assertEqual(self.loader.CachedConfig["mymodule"]["priority"], 5)
 
     def test_get_config_without_template(self):
@@ -559,6 +559,40 @@ class GenLoaderConfigTests(unittest.TestCase):
             self.assertTrue(self.loader.StopModules())
         self.assertEqual(popen.call_args[0][0], ["kill", "4321"])
         self.assertEqual(self.pid_file(), {})
+
+    # ---- genlog file name moved from args to genlog.conf -----------------
+    def genlog_conf(self):
+        return self.MyConfig(filename=os.path.join(self.folder, "genlog.conf"),
+                             section="genlog").ReadValue("filename", default=None)
+
+    def test_genlog_args_moved_to_genlog_conf(self):
+        # an older genloader.conf (genlog.conf does not exist yet)
+        self.edit_conf("genlog", "conffile", "")
+        self.edit_conf("genlog", "args", "-f /data/mylog.csv")
+        self.assertTrue(self.loader.GetConfig())
+        self.assertEqual(self.genlog_conf(), "/data/mylog.csv")
+        self.assertEqual(self.loader.CachedConfig["genlog"]["args"], "")
+        self.assertEqual(self.loader.CachedConfig["genlog"]["conffile"], "genlog.conf")
+        self.assertIn("Moved the genlog file name (/data/mylog.csv) from genloader.conf to "
+                      + os.path.join(self.folder, "genlog.conf"), self.log.messages)
+        # the next run leaves it alone
+        self.log.messages.clear()
+        self.assertTrue(self.loader.GetConfig())
+        self.assertEqual(self.genlog_conf(), "/data/mylog.csv")
+        self.assertFalse(any("genlog" in m for m in self.log.messages))
+
+    def test_genlog_args_replace_default_in_genlog_conf(self):
+        # genlog.conf was already copied with the default file name
+        shutil.copy(os.path.join(REPO_DIR, "conf", "genlog.conf"), self.folder)
+        self.edit_conf("genlog", "args", "-f /data/mylog.csv")
+        self.assertTrue(self.loader.GetConfig())
+        self.assertEqual(self.genlog_conf(), "/data/mylog.csv")
+
+    def test_genlog_other_args_not_moved(self):
+        self.edit_conf("genlog", "args", "-x something")
+        self.assertTrue(self.loader.GetConfig())
+        self.assertEqual(self.loader.CachedConfig["genlog"]["args"], "-x something")
+        self.assertIsNone(self.genlog_conf())
 
     # ---- ValidateConfig ---------------------------------------------------
     def test_validate_config_copies_missing_conf_files(self):

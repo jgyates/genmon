@@ -40,7 +40,7 @@ WRITE_COMMANDS = [
     ("setsettings", {"setsettings": "sitename=ReadOnlySite"}),
     ("set_advanced_settings", {"set_advanced_settings": "address=99"}),
     ("set_add_on_settings", {"set_add_on_settings": json.dumps(
-        {"genlog": {"enable": "true", "parameters": {"Log File Name": "/tmp/ro.csv"}}})}),
+        {"genlog": {"enable": "true", "parameters": {"filename": "/tmp/ro.csv"}}})}),
     ("setnotifications", {"setnotifications": "ro@example.com=outage"}),
     ("set_ui_prefs", {"set_ui_prefs": json.dumps({"theme": "light"})}),
     ("test_email", {"test_email": "{}"}),
