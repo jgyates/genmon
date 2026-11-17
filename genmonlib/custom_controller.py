@@ -1833,7 +1833,12 @@ class CustomController(GeneratorController):
                         ReturnValue = entry["format"] % tuple(value_list)
                 else:
                     if separator == None or separator == "":
-                        ReturnValue = self.ProcessExecModifier(entry, tuple(value_list ))
+                        if "exec" in entry.keys():
+                            ReturnValue = self.ProcessExecModifier(entry, tuple(value_list ))
+                        else:
+                            # no way to join them given: one item per line
+                            # (a tuple can not be shown as text)
+                            ReturnValue = value_list
                     else:
                         ReturnValue = separator.join(value_list)
             elif entry["type"] == "object_int_index":
