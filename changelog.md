@@ -33,6 +33,7 @@ All notable changes to this project will be documented in this file.
 - Maintenande updates for genloader.py, bug fixes
 - added conf file for genlog.py add on as an option instead of command line only
 - fixed bug related to runing multiple instances of genmon on one system
+- added CI scripts to repo
 
 ## 2.0.02 -2026-08-04
 - New add on for Hubitat Elevation hub, Thanks @bdwilson
