@@ -107,7 +107,10 @@ class GenServFixture(object):
     # ---------------------------------------------------------------------------
     def start(self):
 
-        self.run_dir = tempfile.mkdtemp(prefix="genserv_run_")
+        # a fixed name under the temporary folder, so a coverage report can map
+        # .../genserv_run_*/genmon/genserv.py back to the repository's genserv.py
+        self.run_dir = os.path.join(tempfile.mkdtemp(prefix="genserv_run_"), "genmon")
+        os.mkdir(self.run_dir)
         self.conf_dir = tempfile.mkdtemp(prefix="genserv_conf_") + os.sep
         self.log_dir = tempfile.mkdtemp(prefix="genserv_log_") + os.sep
         try:
@@ -137,7 +140,8 @@ class GenServFixture(object):
         for handler in list(logger.handlers):
             handler.close()
             logger.removeHandler(handler)
-        for folder in [getattr(self, "run_dir", None), getattr(self, "conf_dir", None), getattr(self, "log_dir", None)]:
+        run_parent = os.path.dirname(self.run_dir) if getattr(self, "run_dir", None) else None
+        for folder in [run_parent, getattr(self, "conf_dir", None), getattr(self, "log_dir", None)]:
             if folder:
                 shutil.rmtree(folder, ignore_errors=True)
 
