@@ -38,6 +38,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import genserv_fixture
 from genserv_fixture import GenServFixture
 
 SNAPSHOT_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "genserv_snapshot.json")
@@ -206,7 +207,7 @@ class SettingsTableTests(SettingsTestCase):
     TYPES = ["string", "password", "int", "float", "boolean", "list", "qrcode"]
     # conditions genserv knows (GenServ.SettingShown); an unknown one is never shown
     CONDITIONS = [None, "custom", "evo_nexus", "not_h100", "h100", "h100_pzp", "not_h100_pzp",
-                  "nexus", "evo_lc_diesel", "linux", "setgentime"]
+                  "nexus", "evo_lc_diesel", "linux", "setgentime", "evo_nexus_name"]
 
     def check_table(self, table_name, command):
         instance = self.fixture.instance
@@ -245,6 +246,57 @@ class SettingsTableTests(SettingsTestCase):
         self.assertTrue({"voltageconfiguration", "industrialoutagecheck",
                          "usesensorforfuelgauge"} <= set(page))
         self.assertNotIn("enhancedexercise", page)
+
+    def test_add_ons_table(self):
+        globals_ = self.fixture.module_globals
+        table = globals_["ADDONS"]
+        repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.assertEqual(len(table), len({a.name for a in table}), "duplicate add-on")
+        confs = [a.conf for a in table if a.conf]
+        self.assertEqual(len(confs), len(set(confs)), "two add-ons use one config file")
+        # the page shows the add-ons in table order
+        page = self.fixture.get_json("/cmd/get_add_on_settings")
+        self.assertEqual(list(page), [a.name for a in table if a.name in page])
+        for a in table:
+            with self.subTest(addon=a.name):
+                self.assertIn(a.when, self.CONDITIONS)
+                for check in a.checks:
+                    self.assertIn(check, globals_["ADDON_CHECKS"])
+                if a.conf:
+                    # genloader copies a missing config file from conf/
+                    self.assertTrue(os.path.isfile(os.path.join(repo, "conf", a.conf)), a.conf)
+                params = a.params or ()
+                self.assertEqual(len(params), len({p.key for p in params}), "duplicate parameter")
+                for p in params:
+                    self.assertIn(p.type, self.TYPES + ["readonly"])
+                    self.assertIn(p.special, [None, "genlog_args", "api_key"])
+                    if p.type == "list":
+                        self.assertTrue(p.bounds, p.key + ": list without choices")
+                if a.name in page:
+                    shown = page[a.name]["parameters"]
+                    self.assertEqual(None if a.params is None else [p.key for p in a.params],
+                                     None if shown is None else list(shown))
+
+    def test_add_on_shown_for_controller(self):
+        page = self.fixture.get_json("/cmd/get_add_on_settings")
+        self.assertIn("genexercise", page)
+        self.fixture.stop()
+        saved = genserv_fixture.START_INFO
+        genserv_fixture.START_INFO = dict(saved, Controller="H-100")
+        try:
+            self.fixture = GenServFixture("open").start()
+            self.assertNotIn("genexercise", self.fixture.get_json("/cmd/get_add_on_settings"))
+        finally:
+            genserv_fixture.START_INFO = saved
+
+    def test_add_on_api_key_made_when_missing(self):
+        page = self.fixture.get_json("/cmd/get_add_on_settings")
+        key = page["genhalink"]["parameters"]["api_key"]["value"]
+        self.assertRegex(key, r"^[0-9a-f-]{36}$")
+        self.assertEqual(self.fixture.conf_value("genhalink.conf", "api_key"), key)
+        # the same key next time
+        page = self.fixture.get_json("/cmd/get_add_on_settings")
+        self.assertEqual(page["genhalink"]["parameters"]["api_key"]["value"], key)
 
     def test_advanced_settings_shown_for_controller(self):
         # the default test setup is an Evolution controller on Linux
