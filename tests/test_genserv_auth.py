@@ -51,12 +51,12 @@ WRITE_COMMANDS = [
     ("stop", {}),
     ("shutdown", {}),
     ("reboot", {}),
+    ("notify_message", {"notify_message": json.dumps({"title": "t", "body": "b", "type": "info"})}),
 ]
 
-# write commands that must answer a read only user with a denial the web UI shows
+# how genserv refuses a write command for a read only user (the web UI shows
+# "Write access required" for both)
 DENIED_REPLIES = ["Read Only Mode", "Access denied"]
-MUST_DENY = ["setquiet", "test_email", "backup", "get_logs", "updatesoftware",
-             "restart", "stop", "shutdown", "reboot"]
 
 
 def otp_code():
@@ -123,12 +123,19 @@ class LoginTests(unittest.TestCase):
         self.assertEqual(r.status_code, 302)
         self.assertTrue(self.fixture.is_logged_in())
 
+    def test_read_only_user_pages(self):
+        # the web UI hides the pages a read only user can not use
+        self.fixture.login(RO_USER, RO_PASS)
+        pages = self.fixture.get_json("/cmd/start_info_json")["pages"]
+        for page in ["settings", "notifications", "addons"]:
+            with self.subTest(page=page):
+                self.assertIs(pages.get(page), False)
+
     def test_read_only_user_does_not_get_settings(self):
         self.fixture.login(RO_USER, RO_PASS)
-        self.assertEqual(reply_text(self.fixture.get("/cmd/settings")), "Access denied")
-        for command in ["get_advanced_settings", "get_add_on_settings"]:
+        for command in ["settings", "get_advanced_settings", "get_add_on_settings", "notifications"]:
             with self.subTest(command=command):
-                self.assertEqual(reply_text(self.fixture.get("/cmd/" + command)), "OK")
+                self.assertEqual(reply_text(self.fixture.get("/cmd/" + command)), "Access denied")
 
     def test_read_only_user_cannot_write(self):
         self.fixture.login(RO_USER, RO_PASS)
@@ -141,14 +148,30 @@ class LoginTests(unittest.TestCase):
                 except SystemExit:
                     self.fail("read only user stopped genserv with " + command)
                 self.assertLess(r.status_code, 500)
-                if command in MUST_DENY:
-                    self.assertIn(reply_text(r), DENIED_REPLIES)
+                self.assertIn(reply_text(r), DENIED_REPLIES)
                 new_calls = self.fixture.calls[before:]
                 self.assertEqual([c for c in new_calls if c.startswith(("SHELL", "RUN"))], [])
                 self.assertEqual([c for c in new_calls if command in c], [])
                 self.assertNotIn("TestSendSettings", " ".join(new_calls))
         self.assertEqual(self.conf_files(), conf_before)
         self.assertFalse(self.fixture.instance.Closing)
+
+    def test_read_only_user_refused_every_write_command(self):
+        # every command marked write in the command table, so a new one is covered too
+        self.fixture.login(RO_USER, RO_PASS)
+        conf_before = self.conf_files()
+        commands = sorted(n for n, c in self.fixture.instance.COMMANDS.items() if c.write)
+        self.assertTrue(commands)
+        for command in commands:
+            with self.subTest(command=command):
+                before = len(self.fixture.calls)
+                if command in self.fixture.instance.POST_ONLY_COMMANDS:
+                    r = self.fixture.post_cmd(command, {command: "1"})
+                else:
+                    r = self.fixture.get("/cmd/" + command)
+                self.assertIn(reply_text(r), DENIED_REPLIES)
+                self.assertEqual(self.fixture.calls[before:], [])
+        self.assertEqual(self.conf_files(), conf_before)
 
 
 # -------------------------------------------------------------------------------

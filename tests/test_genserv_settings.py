@@ -168,7 +168,8 @@ class MaintenanceCommandTests(SettingsTestCase):
         self.assertEqual(self.fixture.shell_calls(), ["SHELL /bin/bash <RUN>/genmonmaint.sh -l <LOG>/"])
 
     def test_update_software(self):
-        self.run_command("updatesoftware")
+        r = self.run_command("updatesoftware")
+        self.assertEqual(json.loads(r.get_data(as_text=True)), "OK")
         self.assertEqual(self.fixture.shell_calls(), [
             "SHELL /bin/bash <RUN>/genmonmaint.sh -u -n", RESTART])
 

@@ -126,6 +126,32 @@ class GenServOpenTests(unittest.TestCase):
         self.assertEqual(r.status_code, 403)
         self.assertEqual(self.new_calls(before), [])
 
+    def test_command_table(self):
+        instance = self.fixture.instance
+        for name, cmd in instance.COMMANDS.items():
+            with self.subTest(command=name):
+                if cmd.handler is not None:
+                    self.assertTrue(callable(getattr(instance, cmd.handler, None)),
+                                    "no method " + cmd.handler)
+                if cmd.maxlen is not None:
+                    self.assertIsNotNone(cmd.param)
+                # a command that changes something must be POST only
+                if cmd.write and name not in ["settings", "get_advanced_settings",
+                                              "get_add_on_settings", "notifications"]:
+                    self.assertTrue(cmd.post)
+
+    def test_command_parameter_passed_to_genmon(self):
+        message = json.dumps({"title": "t", "body": "line1\nline2", "type": "info"})
+        self.fixture.post_cmd("notify_message", {"notify_message": message})
+        self.assertIn("generator: notify_message=" + message, self.fixture.calls)
+        self.fixture.post_cmd("add_maint_log", {"add_maint_log": "a\x00b\nc" + "x" * 3000})
+        sent = [c for c in self.fixture.calls if c.startswith("generator: add_maint_log=")][-1]
+        self.assertEqual(sent, "generator: add_maint_log=" + ("ab c" + "x" * 3000)[:2048])
+
+    def test_missing_required_parameter(self):
+        r = self.fixture.post_cmd("add_maint_log", {})
+        self.assertEqual(json.loads(r.get_data(as_text=True)), "Retry")
+
     def test_post_command_passed_to_genmon(self):
         r = self.fixture.post_cmd("setquiet", {"setquiet": "off"})
         self.assertEqual(r.status_code, 200)

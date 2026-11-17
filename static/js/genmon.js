@@ -6458,11 +6458,15 @@ var Pages = {
               }, 300);
               /* Fire update request (timeout: 0 — server restarts before replying) */
               $.ajax({ url: CFG.baseUrl + 'updatesoftware', method: 'POST', dataType: 'json', timeout: 0, cache: false })
-                .done(function(){
-                  /* Unexpected — server shouldn't reply before restarting */
+                .done(function(resp){
+                  /* "OK": the update ran and the restart has started */
                   clearInterval(updTimer);
                   Modal.close();
-                  Modal.alert('Note', 'Genmon may not have updated. Please verify manually or try again.');
+                  if (resp === 'OK') {
+                    Modal.restart('Update installed. Service is restarting\u2026', null, true);
+                  } else {
+                    Modal.alert('Note', 'Genmon may not have updated. Please verify manually or try again.');
+                  }
                 })
                 .fail(function(){
                   /* Expected — server restarted; switch to restart modal */
@@ -6494,8 +6498,15 @@ var Pages = {
           '<div class="restart-spinner"></div>' +
           '<p class="restart-msg">Preparing download\u2026</p>' +
         '</div>'), []);
-      fetch(CFG.baseUrl + cmd).then(function(resp) {
+      /* POST with the CSRF token: these commands run a script on the Pi */
+      fetch(CFG.baseUrl + cmd, { method: 'POST', headers: { 'X-CSRFToken': CFG.csrfToken } }).then(function(resp) {
         var cd = resp.headers.get('content-disposition') || '';
+        if (!resp.ok || cd.indexOf('attachment') < 0) {
+          /* no file: refused for a read only login, or an error */
+          return resp.text().then(function(text) {
+            throw new Error(API._writeDenied(text) ? 'denied' : 'failed');
+          });
+        }
         var m = cd.match(/filename[^;=\n]*=["']?([^"';\n]+)/);
         var fname = m ? m[1] : cmd.replace(/\//g, '_') + '.bin';
         return resp.blob().then(function(blob) { return { blob: blob, name: fname }; });
@@ -6507,8 +6518,12 @@ var Pages = {
         document.body.removeChild(a);
         setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
         Modal.close();
-      }).catch(function() {
-        Modal.alert('Error', 'Download failed. Please try again.');
+      }).catch(function(err) {
+        if (err && err.message === 'denied') {
+          Modal.alert('Denied', 'Write access required.');
+        } else {
+          Modal.alert('Error', 'Download failed. Please try again.');
+        }
       });
     },
     _showChangelog: function(){

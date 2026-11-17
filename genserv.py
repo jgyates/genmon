@@ -115,20 +115,103 @@ app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 300
 
 
 # -------------------------------------------------------------------------------
+# One /cmd/ command, see GenServ.COMMANDS.
+#   handler  None: the command is passed to genmon as "generator: <name>".
+#            Otherwise the name of the GenServ method that answers it.
+#   write    needs write access; the dispatcher refuses read only users
+#   post     POST only, with the X-CSRFToken header; a GET returns 405
+#   param    request value added to the genmon command as "=<value>"
+#   maxlen   if set, the value is required, null bytes and newlines are
+#            removed and it is cut to this length
+#   json     genmon replies with JSON, which is returned unchanged; other
+#            genmon replies are returned as a JSON string
+# A read only user gets "Read Only Mode" for a genmon command with write set,
+# and "Access denied" for the others.
+Cmd = collections.namedtuple(
+    "Cmd", "handler write post param maxlen json",
+    defaults=(None, False, False, None, None, False),
+)
+
+
+# -------------------------------------------------------------------------------
 class GenServ(MySupport):
 
-    # /cmd/ commands that change state. They are only accepted as POST (with the
-    # X-CSRFToken header, see csrf_check); a GET returns 405.
-    POST_ONLY_COMMANDS = frozenset([
-        "setexercise", "setquiet", "setremote", "settime", "set_button_command",
-        "sendregisters", "sendlogfiles", "notify_message",
-        "add_maint_log", "edit_row_maint_log", "delete_row_maint_log",
-        "clear_maint_log", "clear_aux_alarm_log",
-        "power_log_clear", "fuel_log_clear", "sensor_log_clear",
-        "setsettings", "set_advanced_settings", "set_add_on_settings",
-        "setnotifications", "set_ui_prefs", "test_email",
-        "updatesoftware", "restart", "stop", "shutdown", "reboot",
-    ])
+    # /cmd/<command> commands. To add a command, add it here (and for one
+    # genserv answers itself, the method named as its handler).
+    COMMANDS = {
+        # passed to genmon, reading
+        "status": Cmd(),
+        "status_json": Cmd(json=True),
+        "status_num_json": Cmd(json=True),
+        "outage": Cmd(),
+        "outage_json": Cmd(json=True),
+        "outage_num_json": Cmd(json=True),
+        "maint": Cmd(),
+        "maint_json": Cmd(json=True),
+        "maint_num_json": Cmd(json=True),
+        "logs": Cmd(),
+        "logs_json": Cmd(json=True),
+        "monitor": Cmd(),
+        "monitor_json": Cmd(json=True),
+        "monitor_num_json": Cmd(json=True),
+        "registers_json": Cmd(json=True),
+        "allregs_json": Cmd(json=True),
+        "start_info_json": Cmd("CmdStartInfo"),
+        "gui_status_json": Cmd(json=True),
+        "power_log_json": Cmd(json=True, param="power_log_json"),
+        "sensor_log_json": Cmd("CmdSensorLog"),
+        "sensor_names_json": Cmd(json=True),
+        "get_maint_log_json": Cmd(json=True),
+        "support_data_json": Cmd(json=True),
+        "getbase": Cmd(),
+        "getsitename": Cmd(),
+        "getdebug": Cmd(),
+        # passed to genmon, changing something
+        "setexercise": Cmd(write=True, post=True, param="setexercise"),
+        "setquiet": Cmd(write=True, post=True, param="setquiet"),
+        "setremote": Cmd(write=True, post=True, param="setremote"),
+        "settime": Cmd(write=True, post=True),
+        "set_button_command": Cmd(write=True, post=True, param="set_button_command", maxlen=512),
+        "add_maint_log": Cmd(write=True, post=True, param="add_maint_log", maxlen=2048),
+        "edit_row_maint_log": Cmd(write=True, post=True, param="edit_row_maint_log", maxlen=2048),
+        "delete_row_maint_log": Cmd(write=True, post=True, param="delete_row_maint_log", maxlen=512),
+        "clear_maint_log": Cmd(write=True, post=True),
+        "clear_aux_alarm_log": Cmd(write=True, post=True),
+        "power_log_clear": Cmd(write=True, post=True),
+        "fuel_log_clear": Cmd(write=True, post=True),
+        "sensor_log_clear": Cmd(write=True, post=True),
+        # send a notification, the value is the JSON message genmon expects
+        "notify_message": Cmd(write=True, post=True, param="notify_message", maxlen=2048),
+        # email the registers / logs to the developer; allowed for read only users
+        "sendregisters": Cmd(post=True),
+        "sendlogfiles": Cmd(post=True),
+        # answered by genserv
+        "csrf_token": Cmd("CmdCSRFToken"),
+        "getfavicon": Cmd("CmdFavicon"),
+        "getreglabels": Cmd("CmdRegisterLabels"),
+        "settings": Cmd("CmdSettings", write=True),
+        "setsettings": Cmd("CmdSetSettings", write=True, post=True),
+        "get_advanced_settings": Cmd("CmdAdvancedSettings", write=True),
+        "set_advanced_settings": Cmd("CmdSetAdvancedSettings", write=True, post=True),
+        "get_add_on_settings": Cmd("CmdAddOnSettings", write=True),
+        "set_add_on_settings": Cmd("CmdSetAddOnSettings", write=True, post=True),
+        "notifications": Cmd("CmdNotifications", write=True),
+        "setnotifications": Cmd("CmdSetNotifications", write=True, post=True),
+        "get_ui_prefs": Cmd("CmdUIPrefs"),
+        "set_ui_prefs": Cmd("CmdSetUIPrefs", write=True, post=True),
+        "test_email": Cmd("CmdTestEmail", write=True, post=True),
+        "backup": Cmd("CmdBackup", write=True, post=True),
+        "get_logs": Cmd("CmdGetLogs", write=True, post=True),
+        "updatesoftware": Cmd("CmdUpdateSoftware", write=True, post=True),
+        "restart": Cmd("CmdRestart", write=True, post=True),
+        "stop": Cmd("CmdStop", write=True, post=True),
+        "shutdown": Cmd("CmdShutdown", write=True, post=True),
+        "reboot": Cmd("CmdReboot", write=True, post=True),
+    }
+
+    # /cmd/ commands only accepted as POST (with the X-CSRFToken header, see
+    # csrf_check); a GET returns 405.
+    POST_ONLY_COMMANDS = frozenset(name for name, cmd in COMMANDS.items() if cmd.post)
 
     # Extensions treated as long-lived static assets that browsers may cache.
     STATIC_ASSET_EXTENSIONS = (
@@ -6296,293 +6379,182 @@ class GenServ(MySupport):
                 return commandResponse
 
     # -------------------------------------------------------------------------------
+    # answer a /cmd/ command, as set out in COMMANDS
     def ProcessCommand(self, command):
 
         try:
-            command_list = [
-                "status",
-                "status_json",
-                "outage",
-                "outage_json",
-                "maint",
-                "maint_json",
-                "logs",
-                "logs_json",
-                "monitor",
-                "monitor_json",
-                "registers_json",
-                "allregs_json",
-                "start_info_json",
-                "gui_status_json",
-                "power_log_json",
-                "sensor_log_json",
-                "sensor_names_json",
-                "sensor_log_clear",
-                "power_log_clear",
-                "getbase",
-                "getsitename",
-                "setexercise",
-                "setquiet",
-                "setremote",
-                "settime",
-                "sendregisters",
-                "sendlogfiles",
-                "getdebug",
-                "status_num_json",
-                "maint_num_json",
-                "monitor_num_json",
-                "outage_num_json",
-                "get_maint_log_json",
-                "add_maint_log",
-                "clear_maint_log",
-                "clear_aux_alarm_log",
-                "delete_row_maint_log",
-                "edit_row_maint_log",
-                "support_data_json",
-                "fuel_log_clear",
-                "notify_message",
-                "set_button_command",
-            ]
-            # LogError(request.url)
-            if command in command_list:
-                finalcommand = "generator: " + command
-
-                try:
-                    if command in [
-                        "setexercise", "setquiet", "setremote", "add_maint_log", 
-                        "delete_row_maint_log", "edit_row_maint_log", 
-                        "set_button_command", "settime", "sensor_log_clear", 
-                        "power_log_clear", "fuel_log_clear", "clear_maint_log", 
-                        "clear_aux_alarm_log"
-                    ] and not self.HasWriteAccess():
-                        return jsonify("Read Only Mode")
-
-                    if command == "setexercise":
-                        settimestr = request.values.get("setexercise", 0, type=str)
-                        if settimestr:
-                            finalcommand += "=" + settimestr
-                    elif command == "setquiet":
-                        # /cmd/setquiet?setquiet=off
-                        setquietstr = request.values.get("setquiet", 0, type=str)
-                        if setquietstr:
-                            finalcommand += "=" + setquietstr
-                    elif command == "setremote":
-                        setremotestr = request.values.get("setremote", 0, type=str)
-                        if setremotestr:
-                            finalcommand += "=" + setremotestr
-
-                    if command == "power_log_json":
-                        # example: /cmd/power_log_json?power_log_json=1440
-                        setlogstr = request.values.get("power_log_json", 0, type=str)
-                        if setlogstr:
-                            finalcommand += "=" + setlogstr
-                    if command == "sensor_log_json":
-                        # example: /cmd/sensor_log_json?sensor_log_json=1440&sensor=Oil+Temp
-                        minutes = request.values.get("sensor_log_json", 0, type=str)
-                        sensor = request.values.get("sensor", "", type=str)
-                        if minutes and sensor:
-                            finalcommand += "=" + minutes + "&sensor=" + sensor
-                    # Sanitize command parameters: strip null bytes and newlines
-                    # to prevent header/log injection, cap length to limit abuse.
-                    if command == "add_maint_log":
-                        # use direct method instead of request.values.get due to unicode
-                        # input for add_maint_log for international users
-                        input = request.values["add_maint_log"]
-                        input = input.replace("\x00", "").replace("\n", " ").replace("\r", " ")[:2048]
-                        finalcommand += "=" + input
-                    if command == "delete_row_maint_log":
-                        input = request.values["delete_row_maint_log"]
-                        input = input.replace("\x00", "").replace("\n", " ").replace("\r", " ")[:512]
-                        finalcommand += "=" + input
-                    if command == "edit_row_maint_log":
-                        input = request.values["edit_row_maint_log"]
-                        input = input.replace("\x00", "").replace("\n", " ").replace("\r", " ")[:2048]
-                        finalcommand += "=" + input
-                    if command == "set_button_command":
-                        input = request.values["set_button_command"]
-                        input = input.replace("\x00", "").replace("\n", " ").replace("\r", " ")[:512]
-                        finalcommand += "=" + input
-                    data = self.MyClientInterface.ProcessMonitorCommand(finalcommand)
-
-                except Exception as e1:
-                    data = "Retry"
-                    self.LogErrorLine("Error on command function: " + str(e1))
-
-                if command in [
-                    "status_json",
-                    "outage_json",
-                    "maint_json",
-                    "monitor_json",
-                    "logs_json",
-                    "registers_json",
-                    "allregs_json",
-                    "start_info_json",
-                    "gui_status_json",
-                    "power_log_json",
-                    "sensor_log_json",
-                    "sensor_names_json",
-                    "status_num_json",
-                    "maint_num_json",
-                    "monitor_num_json",
-                    "outage_num_json",
-                    "get_maint_log_json",
-                    "support_data_json",
-                ]:
-
-                    if command in ["start_info_json"]:
-                        try:
-                            StartInfo = json.loads(data)
-                            StartInfo["write_access"] = self.HasWriteAccess()
-                            if not StartInfo["write_access"]:
-                                StartInfo["pages"]["settings"] = False
-                                StartInfo["pages"]["notifications"] = False
-                            StartInfo["LoginActive"] = self.LoginActive()
-                            StartInfo["code_hash"] = self.GitHubCodeHash()
-                            data = json.dumps(StartInfo, sort_keys=False)
-                        except Exception as e1:
-                            self.LogErrorLine("Error in JSON parse / decode: " + str(e1))
-                    return data
-                return jsonify(data)
-
-            elif command in ["updatesoftware"]:
-                if self.HasWriteAccess():
-                    self.Update()
-                    return "OK"
-                else:
-                    return "Access denied"
-
-            elif command in ["csrf_token"]:
-                # for integrations: send back as X-CSRFToken header on POST requests
-                return jsonify({"csrf_token": self.CSRFToken()})
-
-            elif command in ["getfavicon"]:
-                return jsonify(self.favicon)
-
-            elif command in ["settings"]:
-                if self.HasWriteAccess():
-                    data = self.ReadSettingsFromFile()
-                    return json.dumps(data, sort_keys=False)
-                else:
-                    return "Access denied"
-
-            elif command in ["notifications"]:
-                data = self.ReadNotificationsFromFile()
-                return jsonify(data)
-            elif command in ["setnotifications"]:
-                if self.HasWriteAccess():
-                    self.SaveNotifications(request.values.get("setnotifications", 0, type=str))
-                return "OK"
-
-            # Add on items
-            elif command in ["get_add_on_settings", "set_add_on_settings"]:
-                if self.HasWriteAccess():
-                    if command == "get_add_on_settings":
-                        data = self.GetAddOnSettings()
-                        return json.dumps(data, sort_keys=False)
-                    elif command == "set_add_on_settings":
-                        self.SaveAddOnSettings(
-                            request.values.get("set_add_on_settings", default=None, type=str)
-                        )
-                    else:
-                        return "OK"
-                return "OK"
-
-            elif command in ["get_advanced_settings", "set_advanced_settings"]:
-                if self.HasWriteAccess():
-                    if command == "get_advanced_settings":
-                        data = self.ReadAdvancedSettingsFromFile()
-                        return json.dumps(data, sort_keys=False)
-                    elif command == "set_advanced_settings":
-                        self.SaveAdvancedSettings(
-                            request.values.get(
-                                "set_advanced_settings", default=None, type=str
-                            )
-                        )
-                    else:
-                        return "OK"
-                return "OK"
-
-            elif command in ["setsettings"]:
-                if self.HasWriteAccess():
-                    self.SaveSettings(request.values.get("setsettings", 0, type=str))
-                return "OK"
-
-            # ---- UI preferences (persisted to genmon.conf, no restart) ----
-            elif command in ["get_ui_prefs", "set_ui_prefs"]:
-                if command == "get_ui_prefs":
-                    try:
-                        return self.ConfigFiles[self.GENMON_CONFIG].ReadValue(
-                            "ui_prefs", return_type=str, section="GenMon", default="{}"
-                        )
-                    except Exception:
-                        return "{}"
-                elif command == "set_ui_prefs":
-                    if self.HasWriteAccess():
-                        raw = request.values.get("set_ui_prefs", "{}", type=str)
-                        if len(raw) > 16384:  # 16 KB cap to prevent memory/storage abuse
-                            return "Error: payload too large"
-                        try:
-                            # validate, then store on a single line: valid JSON
-                            # may contain newlines, which would corrupt the conf
-                            raw = json.dumps(json.loads(raw), separators=(",", ":"))
-                        except Exception:
-                            return "Error: invalid JSON"
-                        if not self.ConfigFiles[self.GENMON_CONFIG].WriteValue(
-                            "ui_prefs", raw, section="GenMon"
-                        ):
-                            return "Error: unable to save preferences"
-                    return "OK"
-
-            elif command in ["getreglabels"]:
-                return jsonify(self.CachedRegisterDescriptions)
-
-            elif command in ["restart"]:
-                if self.HasWriteAccess():
-                    self.Restart()
-                    return jsonify("OK")
-            elif command in ["stop"]:
-                if self.HasWriteAccess():
-                    self.Close()
-                    sys.exit(0)
-            elif command in ["shutdown"]:
-                if self.HasWriteAccess():
-                    self.Shutdown()
-                    sys.exit(0)
-            elif command in ["reboot"]:
-                if self.HasWriteAccess():
-                    self.Reboot()
-                    sys.exit(0)
-            elif command in ["backup"]:
-                if self.HasWriteAccess():
-                    self.Backup()  # Create backup file
-                    # Now send the file
-                    pathtofile = os.path.dirname(os.path.realpath(__file__))
-                    return send_file(
-                        os.path.join(pathtofile, "genmon_backup.tar.gz"), as_attachment=True
-                    )
-            elif command in ["get_logs"]:
-                if self.HasWriteAccess():
-                    self.GetLogs()  # Create log archive file
-                    # Now send the file
-                    pathtofile = os.path.dirname(os.path.realpath(__file__))
-                    return send_file(
-                        os.path.join(pathtofile, "genmon_logs.tar.gz"), as_attachment=True
-                    )
-            elif command in ["test_email"]:
-                if self.HasWriteAccess():
-                    return self.SendTestEmail(request.values.get("test_email", default=None, type=str))
-            else:
+            cmd = self.COMMANDS.get(command)
+            if cmd is None:
                 return render_template("command_template.html", command=command, theme=self.get_theme_pref())
 
-            # write commands refused for a read only login end up here, as
-            # would any command above that does not return a response
-            if not self.HasWriteAccess():
-                return "Access denied"
-            self.LogError("No response for command: " + command)
-            return jsonify("OK")
+            if cmd.write and not self.HasWriteAccess():
+                return jsonify("Read Only Mode") if cmd.handler is None else "Access denied"
+
+            if cmd.handler is None:
+                data = self.SendCommandToGenmon(command, cmd)
+                return data if cmd.json else jsonify(data)
+
+            response = getattr(self, cmd.handler)()
+            if response is None:
+                self.LogError("No response for command: " + command)
+                return jsonify("OK")
+            return response
         except Exception as e1:
             self.LogErrorLine("Error in Process Command: " + command + ": " + str(e1))
             return render_template("command_template.html", command=command, theme=self.get_theme_pref())
+
+    # -------------------------------------------------------------------------------
+    # send a /cmd/ command to genmon, adding its parameter, and return the reply
+    def SendCommandToGenmon(self, command, cmd, finalcommand=None):
+
+        try:
+            if finalcommand is None:
+                finalcommand = "generator: " + command
+                if cmd.param is not None and cmd.maxlen is not None:
+                    # Sanitize command parameters: strip null bytes and newlines
+                    # to prevent header/log injection, cap length to limit abuse.
+                    # (request.values[] not .get(), for unicode input from
+                    # international users)
+                    value = request.values[cmd.param]
+                    value = value.replace("\x00", "").replace("\n", " ").replace("\r", " ")[: cmd.maxlen]
+                    finalcommand += "=" + value
+                elif cmd.param is not None:
+                    # example: /cmd/setquiet?setquiet=off
+                    value = request.values.get(cmd.param, 0, type=str)
+                    if value:
+                        finalcommand += "=" + value
+            return self.MyClientInterface.ProcessMonitorCommand(finalcommand)
+        except Exception as e1:
+            self.LogErrorLine("Error on command function: " + str(e1))
+            return "Retry"
+
+    # ------------ /cmd/ commands answered by genserv (see COMMANDS) ----------------
+    def CmdStartInfo(self):
+
+        data = self.SendCommandToGenmon("start_info_json", self.COMMANDS["start_info_json"])
+        try:
+            StartInfo = json.loads(data)
+            StartInfo["write_access"] = self.HasWriteAccess()
+            if not StartInfo["write_access"]:
+                StartInfo["pages"]["settings"] = False
+                StartInfo["pages"]["notifications"] = False
+                StartInfo["pages"]["addons"] = False
+            StartInfo["LoginActive"] = self.LoginActive()
+            StartInfo["code_hash"] = self.GitHubCodeHash()
+            data = json.dumps(StartInfo, sort_keys=False)
+        except Exception as e1:
+            self.LogErrorLine("Error in JSON parse / decode: " + str(e1))
+        return data
+
+    def CmdSensorLog(self):
+
+        # example: /cmd/sensor_log_json?sensor_log_json=1440&sensor=Oil+Temp
+        finalcommand = "generator: sensor_log_json"
+        try:
+            minutes = request.values.get("sensor_log_json", 0, type=str)
+            sensor = request.values.get("sensor", "", type=str)
+            if minutes and sensor:
+                finalcommand += "=" + minutes + "&sensor=" + sensor
+        except Exception as e1:
+            self.LogErrorLine("Error on command function: " + str(e1))
+            return "Retry"
+        return self.SendCommandToGenmon("sensor_log_json", self.COMMANDS["sensor_log_json"], finalcommand)
+
+    def CmdCSRFToken(self):
+        # for integrations: send back as X-CSRFToken header on POST requests
+        return jsonify({"csrf_token": self.CSRFToken()})
+
+    def CmdFavicon(self):
+        return jsonify(self.favicon)
+
+    def CmdRegisterLabels(self):
+        return jsonify(self.CachedRegisterDescriptions)
+
+    def CmdSettings(self):
+        return json.dumps(self.ReadSettingsFromFile(), sort_keys=False)
+
+    def CmdSetSettings(self):
+        self.SaveSettings(request.values.get("setsettings", 0, type=str))
+        return "OK"
+
+    def CmdAdvancedSettings(self):
+        return json.dumps(self.ReadAdvancedSettingsFromFile(), sort_keys=False)
+
+    def CmdSetAdvancedSettings(self):
+        self.SaveAdvancedSettings(request.values.get("set_advanced_settings", default=None, type=str))
+        return "OK"
+
+    def CmdAddOnSettings(self):
+        return json.dumps(self.GetAddOnSettings(), sort_keys=False)
+
+    def CmdSetAddOnSettings(self):
+        self.SaveAddOnSettings(request.values.get("set_add_on_settings", default=None, type=str))
+        return "OK"
+
+    def CmdNotifications(self):
+        return jsonify(self.ReadNotificationsFromFile())
+
+    def CmdSetNotifications(self):
+        self.SaveNotifications(request.values.get("setnotifications", 0, type=str))
+        return "OK"
+
+    # UI preferences (saved in genmon.conf, no restart)
+    def CmdUIPrefs(self):
+        try:
+            return self.ConfigFiles[self.GENMON_CONFIG].ReadValue(
+                "ui_prefs", return_type=str, section="GenMon", default="{}"
+            )
+        except Exception:
+            return "{}"
+
+    def CmdSetUIPrefs(self):
+        raw = request.values.get("set_ui_prefs", "{}", type=str)
+        if len(raw) > 16384:  # 16 KB cap to prevent memory/storage abuse
+            return "Error: payload too large"
+        try:
+            # validate, then store on a single line: valid JSON
+            # may contain newlines, which would corrupt the conf
+            raw = json.dumps(json.loads(raw), separators=(",", ":"))
+        except Exception:
+            return "Error: invalid JSON"
+        if not self.ConfigFiles[self.GENMON_CONFIG].WriteValue("ui_prefs", raw, section="GenMon"):
+            return "Error: unable to save preferences"
+        return "OK"
+
+    def CmdTestEmail(self):
+        return self.SendTestEmail(request.values.get("test_email", default=None, type=str))
+
+    def CmdBackup(self):
+        self.Backup()  # Create backup file
+        # Now send the file
+        pathtofile = os.path.dirname(os.path.realpath(__file__))
+        return send_file(os.path.join(pathtofile, "genmon_backup.tar.gz"), as_attachment=True)
+
+    def CmdGetLogs(self):
+        self.GetLogs()  # Create log archive file
+        # Now send the file
+        pathtofile = os.path.dirname(os.path.realpath(__file__))
+        return send_file(os.path.join(pathtofile, "genmon_logs.tar.gz"), as_attachment=True)
+
+    def CmdUpdateSoftware(self):
+        self.Update()
+        return jsonify("OK")
+
+    def CmdRestart(self):
+        self.Restart()
+        return jsonify("OK")
+
+    def CmdStop(self):
+        self.Close()
+        sys.exit(0)
+
+    def CmdShutdown(self):
+        self.Shutdown()
+        sys.exit(0)
+
+    def CmdReboot(self):
+        self.Reboot()
+        sys.exit(0)
 
     # -------------------------------------------------------------------------------
     def logout(self):
