@@ -209,6 +209,10 @@ class SettingsTableTests(SettingsTestCase):
         instance = self.fixture.instance
         table = self.fixture.module_globals["ADVANCED_SETTINGS"]
         self.assertEqual(len(table), len({s.key for s in table}), "duplicate key")
+        # the page shows the settings in table order
+        page = self.fixture.get_json("/cmd/get_advanced_settings")
+        shown = [s.key for s in table if s.key in page]
+        self.assertEqual(sorted(page, key=lambda k: page[k][2]), shown)
         for s in table:
             with self.subTest(setting=s.key):
                 self.assertIn(s.type, self.TYPES)

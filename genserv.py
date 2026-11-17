@@ -2696,7 +2696,8 @@ class GenServ(MySupport):
 
     # -------------------------------------------------------------------------------
     # Build a settings page from a table in genservsettings.py: the settings that
-    # are shown, each with its current value read from its config file
+    # are shown, each with its current value read from its config file. The page
+    # sorts the settings by the 3rd item, so that is the position in the table.
     def ReadSettingsTable(self, table, caller):
 
         Files = {
@@ -2705,7 +2706,7 @@ class GenServ(MySupport):
         }
         ConfigSettings = collections.OrderedDict()
         try:
-            for setting in table:
+            for position, setting in enumerate(table, 1):
                 if not self.SettingShown(setting.when):
                     continue
                 if setting.file not in Files:
@@ -2722,7 +2723,7 @@ class GenServ(MySupport):
                     bounds=bounds,
                 )
                 ConfigSettings[setting.key] = [
-                    setting.type, setting.title, setting.sort, value, "", bounds,
+                    setting.type, setting.title, position, value, "", bounds,
                     FileName, Section, setting.key,
                 ]
             self.GetToolTips(ConfigSettings)

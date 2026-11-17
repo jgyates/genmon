@@ -1836,7 +1836,7 @@
    "additional_modbus_timeout": [
     "float",
     "Additional Modbus Timeout (sec)",
-    8,
+    4,
     0.0,
     "Add this value (in seconds) to the modbus timeout value. Floating point value.",
     "number",
@@ -1847,7 +1847,7 @@
    "additionalrunhours": [
     "float",
     "Additional Run Hours",
-    37,
+    23,
     0.0,
     "Nexus controllers (not Evolution) do not have the ability to set the run hours. If your controller has been replaced you can use this entry to add hours to the Run Hours reported by the in the UI. Note: If this option is used it will only modify the run hours displayed in the web interface. It will not affect the controllers internal maintenance counters. This value must be a numeric value.",
     "number",
@@ -1858,7 +1858,7 @@
    "address": [
     "string",
     "Modbus slave address",
-    6,
+    2,
     "9d",
     "The Modbus slave address in hexadecimal. This value is 9d for Evolution / Nexus, and typically 64 for industrial generators.",
     0,
@@ -1869,7 +1869,7 @@
    "allow_local_access": [
     "boolean",
     "Allow LAN access to genmon",
-    12,
+    9,
     false,
     "If enabled, genmon will allow LAN access to the genmon socket interface. This setting is disabled by default if the web UI enabled authentication to increase the security of genmon. If you want to access genmon via the socket interface or run an add on on a different computer then enable this option.",
     "",
@@ -1880,7 +1880,7 @@
    "alternate_date_format": [
     "boolean",
     "Alternate Date Format",
-    26,
+    20,
     false,
     "Use dd/mm/yyyy for date format instead of mm/dd/yyyy where applicable",
     0,
@@ -1891,7 +1891,7 @@
    "controllertype": [
     "list",
     "Controller Type",
-    14,
+    12,
     "generac_evo_nexus",
     "Set to h_100 for H-100 mode or powerzone for PowerZone or custom to use an imported controller configuration, otherwise the software will default to Nexus/Evolution Mode",
     "generac_evo_nexus,h_100,powerzone_pro,custom",
@@ -1902,7 +1902,7 @@
    "currentdivider": [
     "float",
     "Current Divider",
-    72,
+    43,
     "",
     "This is a value to override the divisor used to calculate the current for Evolution units. This value is expressed in floating point. Leave blank to use the default value.",
     "number",
@@ -1913,7 +1913,7 @@
    "currentoffset": [
     "float",
     "Current Offset",
-    73,
+    44,
     "",
     "This value provides an offset to compensate for mis-calibrated current transformers in Evolution generators. This may need to be used if you you see a negative current value displayed for Evolution Air Cooled Generators. The default value is zero. Leave blank to use the default value.",
     "number",
@@ -1924,7 +1924,7 @@
    "disableplatformstats": [
     "boolean",
     "Disable Platform Stats",
-    80,
+    46,
     false,
     "If enabled, platform statistics will not be displayed in the user interface",
     0,
@@ -1935,7 +1935,7 @@
    "enable_fuel_log": [
     "boolean",
     "Log Fuel Level to File",
-    60,
+    39,
     false,
     "If enabled, the fuel level will be logged to a file periodically if the fuel level changes. The default filename is /etc/genmon/fuellog.txt",
     0,
@@ -1946,7 +1946,7 @@
    "estimated_load": [
     "float",
     "Estimated Load",
-    38,
+    24,
     "0.0",
     "The percent load (expresses a a decimal value i.e. .5 = 50 percent) used when estimating the run hours left until the tank is empty.",
     "required range:0:1",
@@ -1957,7 +1957,7 @@
    "extend_wait": [
     "int",
     "Extend email retry",
-    83,
+    49,
     0,
     "Number of additional seconds to wait to retry sending failed emails.",
     "digits",
@@ -1968,7 +1968,7 @@
    "forceserialuse": [
     "boolean",
     "Force Use of Serial Port on Errors",
-    12,
+    8,
     false,
     "If enabled, the software will try continue attempt use the serial port even if it is not found when the software is initially loaded. This may be needed for some serial USB devices.",
     0,
@@ -1979,7 +1979,7 @@
    "fuel_log_freq": [
     "float",
     "Fuel Log Frequency",
-    61,
+    40,
     "15.0",
     "The frequency in minutes to log the fuel level to a file.",
     "number",
@@ -1990,7 +1990,7 @@
    "fuel_units": [
     "list",
     "Fuel Units",
-    57,
+    38,
     "gal",
     "The unit of the Half and Full consumption rate. Use this fuel consumption stats for non Evolution units or to override the fuel consumption defaults for Evolution controllers.",
     "gal,cubic feet",
@@ -2001,7 +2001,7 @@
    "full_rate": [
     "float",
     "Fuel Rate Full Load",
-    56,
+    37,
     0.0,
     "The number of units of fuel consumed by your generator at a full load. Use this fuel consumption stats for non Evolution units or to override the fuel consumption defaults for Evolution controllers.",
     "number",
@@ -2012,7 +2012,7 @@
    "half_rate": [
     "float",
     "Fuel Rate Half Load",
-    55,
+    36,
     0.0,
     "The unit of fuel for Half and Full Rate parameters. Use this fuel consumption stats for non Evolution units or to override the fuel consumption defaults for Evolution controllers.",
     "number",
@@ -2023,7 +2023,7 @@
    "https_port": [
     "int",
     "Override HTTPS port",
-    81,
+    47,
     443,
     "Port to override the secure web server port (https). The default value is 443.",
     "digits",
@@ -2034,7 +2034,7 @@
    "ignore_unknown": [
     "boolean",
     "Ignore Unknown Values",
-    25,
+    19,
     false,
     "Ignore unknown values for modbus register 0001 for Evolution 2.0",
     0,
@@ -2045,7 +2045,7 @@
    "import_config_file": [
     "list",
     "Custom Controller Config File",
-    21,
+    13,
     "Evolution_Liquid_Cooled.json",
     "Only used for custom controller type. Select the controller configuration to use for the custom controller type. See the project wiki for more info on custom controller support",
     "Basler_DGC_2020HD.json,Briggs_Stratton_GC-1032.json,ComAp.json,Deepsea_controller.json,Evolution_Liquid_Cooled.json,Kohler_APM402.json,Kohler_APM603.json,MEBAY_DCxx.json,Power_Zone_410.json,SmartGen_HGM4000.json",
@@ -2056,7 +2056,7 @@
    "kwlogmax": [
     "string",
     "Maximum size Power Log (MB)",
-    70,
+    41,
     "15",
     "Override the maximum size of the kW log. The default is 15MB.",
     0,
@@ -2067,7 +2067,7 @@
    "legacy_power": [
     "boolean",
     "Use Legacy Power Calculation",
-    74,
+    45,
     false,
     "If enabled this will allow the use of the older method to calculate current / power for Evolution Air Cooled controllers",
     0,
@@ -2078,7 +2078,7 @@
    "login_lockout_seconds": [
     "int",
     "Login lockout duration in seconds",
-    97,
+    52,
     300,
     "The number of seconds to perform a lockout if failed logins exceed Maximum Login Attempts. For example if this value is 300 seconds (5 min) and max attempt is 5, then if 5 logins failures occur in a row within 5 minutes, the a lockout will occur for 5 minutes.",
     "digits",
@@ -2089,7 +2089,7 @@
    "loglocation": [
     "string",
     "Log Directory",
-    23,
+    17,
     "/var/log/",
     "Location of log files. Full path must be specified.",
     "required UnixDir",
@@ -2100,7 +2100,7 @@
    "max_login_attempts": [
     "int",
     "Maxmum login attempts before temporary lockout",
-    96,
+    51,
     5,
     "The maximum number of failed login attempts to the web interface before a temporary lockout is started. A lockout will prevent any login attempts. If the login failures occur within the time frame of lockout duration then then logins will be blocked for the number of seconds of lockout duration. Set to zero to disable.",
     "digits",
@@ -2111,7 +2111,7 @@
    "max_powerlog_entries": [
     "int",
     "Maximum Entries in Power Log",
-    71,
+    42,
     "8000",
     "The maximum number of entries in the working power log. Note the log file will not be truncated until the maximum file size is reached. In most cases the default is the preferred value.",
     "digits",
@@ -2122,7 +2122,7 @@
    "min_outage_duration": [
     "int",
     "Minimum Outage Duration",
-    48,
+    33,
     "0",
     "Outages less than this time in seconds will not be logged. Notifications will still be sent if enabled.",
     "digits",
@@ -2133,7 +2133,7 @@
    "modbus_between_frame_delay": [
     "float",
     "Modbus Between Frame Delay (sec)",
-    8,
+    5,
     "0.0",
     "This value will add a delay between modbus requests. For most controllers this value should be zero (disabled). This is a floating point value. To add a 10 mS delay use the value 0.01. Values above 0.2 may cause very slow performance.",
     "number",
@@ -2144,7 +2144,7 @@
    "multi_instance": [
     "boolean",
     "Allow Multiple Genmon Instances",
-    85,
+    50,
     false,
     "If Enabled this setting will allow multiple instances of genmon to be used on one system. Note that other settings will also need to be changed. See the wiki for additional details.",
     0,
@@ -2155,7 +2155,7 @@
    "nominallinevolts": [
     "int",
     "Override nominal line voltage in UI",
-    46,
+    29,
     240,
     "Override nominal line voltage value for UI (i.e. 220, 230 in stead of 240)",
     "digits",
@@ -2166,7 +2166,7 @@
    "outage_notice_delay": [
     "int",
     "Outage Notice Delay",
-    47,
+    32,
     "0",
     "The delay in seconds between a detected loss in utility voltage and a notification of an outage. This value must be an integer.",
     "digits",
@@ -2177,7 +2177,7 @@
    "outage_notice_interval": [
     "int",
     "Outage Recurring Notice Interval (minutes)",
-    49,
+    34,
     "0",
     "To enable recurring outage notices set this to a positive non zero integer value. This represents the number of minutes to send a recurring outage notice.",
     "digits",
@@ -2188,7 +2188,7 @@
    "outagelog_max_entries": [
     "int",
     "Maximum Entries in Outage Log",
-    46,
+    30,
     "100",
     "The maximimum number of entries allowed in the outage log. You may increase this value from the default of 100 however if you notice a drop in the web UI performance you should reduce this back to the default value.",
     "digits",
@@ -2199,7 +2199,7 @@
    "phase": [
     "list",
     "Generator Phase",
-    22,
+    15,
     "1",
     "Set the phase of the controller for genmon's use. This value is used only by genmon. It does not set the phase of the controller, but tells genmon the phase of the generator (e.g. 1 for single phase, 3 for three phase). For most controllers this value is ignored, however some custom config based controllers, like MEBAY can set this value based on the controller configuration.",
     "1,3",
@@ -2210,7 +2210,7 @@
    "preferred_network_adapter": [
     "string",
     "Preferred Network Adapter",
-    108,
+    55,
     "",
     "If genmon failes to identify your network adapter correctly in cases where multiple adapaters are present, set this value to the adapater name that you would like genmon to report as the active network device. Note: only WLAN adapters display statistics.",
     0,
@@ -2221,7 +2221,7 @@
    "response_address": [
     "string",
     "Modbus slave transmit address",
-    7,
+    3,
     "",
     "Only used for Pre Nexus 2008 Generac controllers. Should be 41 if Pre-Nexus controller is present.",
     0,
@@ -2232,7 +2232,7 @@
    "serial_parity": [
     "list",
     "Serial Parity",
-    11,
+    7,
     "None",
     "The default for Generac is None. Some (Briggs and Stratton uses Odd) custom controllers may use Odd or Even parity. Note: this is only for direct serial, not for serial over TCP.",
     "None,Even,Odd",
@@ -2243,7 +2243,7 @@
    "serial_rate": [
     "int",
     "Serial Data Rate",
-    10,
+    6,
     9600,
     "The rate of the serial link used to communicate with the controller. In almost all cases this is 9600. Evolution 4.5L models may use 115200 for this value.",
     "digits",
@@ -2254,7 +2254,7 @@
    "serialnumberifmissing": [
     "string",
     "Serial Number if Missing",
-    36,
+    22,
     "",
     "If the serial number is not present due to the controller being replaced you can override the missing serial number and still have the software lookup model information. This is a numeric value that must be ten digits. Pad leading zeros if you serial number is less than 10 digits.",
     0,
@@ -2265,7 +2265,7 @@
    "server_port": [
     "int",
     "Server Port",
-    5,
+    1,
     9082,
     "The TCP port used internally by genmon for communicating with the supporting applications. Some apps may not work without modification if this is changed.",
     "digits",
@@ -2276,7 +2276,7 @@
    "show_hours_activation": [
     "boolean",
     "Time Since Activation Format",
-    47,
+    31,
     true,
     "Enable to show Time Since Activation as hours, disable to show as Years, Days, Hours",
     0,
@@ -2287,7 +2287,7 @@
    "subtractfuel": [
     "float",
     "Subtract Fuel",
-    39,
+    25,
     "0.0",
     "The amount of fuel (gal or L, depending on 'Use Metric' setting) to subtract from the fuel in tank estimate",
     "number",
@@ -2298,7 +2298,7 @@
    "threephaseutilitycompensation": [
     "boolean",
     "Three Phase Utility Volts Compensation",
-    23,
+    16,
     false,
     "If enabled, the Utility Voltage will not be divided by 2 for three phase Evolution Air Cooled systems.",
     0,
@@ -2309,7 +2309,7 @@
    "unbalanced_capacity": [
     "float",
     "Unbalanced Load Capacity",
-    46,
+    28,
     "0",
     "Disabled if zero. If non zero this will be the maximum allowable difference in the load on a generator leg, represented as a percent of the maximum load. A value of 0.50 (50%) would be an allowable difference of 100 amps between legs on a 200 amp rated generator. Lower values will be the most strict threshold. Higher values will be less strict. Valid values are 0 - 0.50. Unbalanced capacity notices are set via a warning email, once per day.",
     "range:0:0.50",
@@ -2320,7 +2320,7 @@
    "use_aux_alarm_log": [
     "boolean",
     "Use Auxiliary Alarm Log",
-    27,
+    21,
     false,
     "If enabled the sotware will log alarms that occur while the software is running. This log is separate from any alarm logging internal to the controller.",
     0,
@@ -2331,7 +2331,7 @@
    "uselinuxwifisignalgauge": [
     "boolean",
     "Show Wifi Signal Strength Gauge",
-    108,
+    53,
     true,
     "if enabled and running linux the WiFi signal will be displayed on a gauge in the web interface. Note, the gauge will not show if you are using Ethernet for your network.",
     0,
@@ -2342,7 +2342,7 @@
    "usenominallinevolts": [
     "boolean",
     "Use Nominal Volts Override",
-    45,
+    26,
     false,
     "Enable overriding of the default of 240V for nominal line voltage in the UI",
     0,
@@ -2353,7 +2353,7 @@
    "user_url": [
     "string",
     "User URL",
-    82,
+    48,
     "",
     "A user defined URL link to include in status emails sent from the software when the generator status changes",
     0,
@@ -2364,7 +2364,7 @@
    "useraspberrypicputempgauge": [
     "boolean",
     "Show CPU Temperature Gauge",
-    109,
+    56,
     true,
     "If enabled and running on a Linux system, the CPU temperature will be displayed on a gauge in the web interface.",
     0,
@@ -2375,7 +2375,7 @@
    "userdatalocation": [
     "string",
     "User Defined Data Directory",
-    24,
+    18,
     "<RUN>",
     "Location of user defined JSON data (userdefined.json) to be displayed on Monitor page. Full path must be specified.",
     "required UnixDir",
@@ -2386,7 +2386,7 @@
    "wait_for_init_seconds": [
     "int",
     "Initialization Wait Time (seconds)",
-    13,
+    10,
     15,
     "The time in seconds to delay waiting for genmon intilization to complete. Some USB serial ports may be slow to open and this can be increased from the default value for greater compatiblity. Note that increasing this value could also cause an increase the time before the web interface is available if you have comms issues.",
     "digits",
@@ -2397,7 +2397,7 @@
    "watchdog_addition": [
     "float",
     "Additional Watchdog Timeout (sec)",
-    13,
+    11,
     "0.0",
     "Additional delay before a communication timeout notification",
     "number",
@@ -2408,7 +2408,7 @@
    "wifiispercent": [
     "boolean",
     "Wifi Gauge is percentage",
-    108,
+    54,
     false,
     "Some Linux wifi drivers (like USB wifi adapters) may return a percentage instead of a raw signal strength. If your wifi gauge is not working as expected, try enabling this setting. Note, the built in raspberry pi driver returns signal strength, not percentage so if using the on board adapter this setting should be disabled.",
     0,
@@ -3312,7 +3312,7 @@
    "address": [
     "string",
     "Modbus slave address",
-    6,
+    2,
     "64",
     "The Modbus slave address in hexadecimal. This value is 9d for Evolution / Nexus, and typically 64 for industrial generators.",
     0,
@@ -3323,7 +3323,7 @@
    "kwlogmax": [
     "string",
     "Maximum size Power Log (MB)",
-    70,
+    41,
     "2.0",
     "Override the maximum size of the kW log. The default is 15MB.",
     0,
