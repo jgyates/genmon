@@ -484,6 +484,7 @@ class PowerZonePro(GeneratorController):
         message=None,
         feedback=None,
         config=None,
+        ConfigFilePath=None,
     ):
 
         # call parent constructor
@@ -495,6 +496,7 @@ class PowerZonePro(GeneratorController):
             message=message,
             feedback=feedback,
             config=config,
+            ConfigFilePath=ConfigFilePath,
         )
 
         self.LastEngineState = ""

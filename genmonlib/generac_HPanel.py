@@ -1089,6 +1089,7 @@ class HPanel(GeneratorController):
         message=None,
         feedback=None,
         config=None,
+        ConfigFilePath=None,
     ):
 
         # call parent constructor
@@ -1100,6 +1101,7 @@ class HPanel(GeneratorController):
             message=message,
             feedback=feedback,
             config=config,
+            ConfigFilePath=ConfigFilePath,
         )
 
         self.AltTimeSet = True

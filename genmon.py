@@ -248,6 +248,7 @@ class Monitor(MySupport):
                     message=self.MessagePipe,
                     feedback=self.FeedbackPipe,
                     config=self.config,
+                    ConfigFilePath=self.ConfigFilePath,
                 )
             elif self.ControllerSelected.lower() == "powerzone_pro":
                 self.Controller = PowerZonePro(
@@ -258,6 +259,7 @@ class Monitor(MySupport):
                     message=self.MessagePipe,
                     feedback=self.FeedbackPipe,
                     config=self.config,
+                    ConfigFilePath=self.ConfigFilePath,
                 )
             elif self.ControllerSelected.lower() == "custom":
                 self.Controller = CustomController(
@@ -268,6 +270,7 @@ class Monitor(MySupport):
                     message=self.MessagePipe,
                     feedback=self.FeedbackPipe,
                     config=self.config,
+                    ConfigFilePath=self.ConfigFilePath,
                 )
             else:
                 self.Controller = Evolution(
@@ -278,6 +281,7 @@ class Monitor(MySupport):
                     message=self.MessagePipe,
                     feedback=self.FeedbackPipe,
                     config=self.config,
+                    ConfigFilePath=self.ConfigFilePath,
                 )
             self.Threads = self.MergeDicts(self.Threads, self.Controller.Threads)
 

@@ -39,6 +39,7 @@ class CustomController(GeneratorController):
         message=None,
         feedback=None,
         config=None,
+        ConfigFilePath=None,
     ):
 
         # call parent constructor
@@ -50,6 +51,7 @@ class CustomController(GeneratorController):
             message=message,
             feedback=feedback,
             config=config,
+            ConfigFilePath=ConfigFilePath,
         )
 
         self.LastEngineState = ""

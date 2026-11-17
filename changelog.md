@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file.
 - Added remote exercise button for supported controllers (Evo/Nexus)
 - Fixed issue with Evo Liquid Cooled controllers with older firmware that cause a timeout when reading three specific registers 
 - Corrected one issue with genhomeassistant.py (thanks @ahrens26)
-- Improvment to web connectivity (thanks @skipfire)
+- Improvement to web connectivity (thanks @skipfire)
 - Update to improve loading on systems with long delays before the serial port is ready
 - Updated alarm E-Codes for Power Zone 200
 - Improved alarm handling for Evo 2.0 and Evo LC 4.5L
@@ -32,6 +32,7 @@ All notable changes to this project will be documented in this file.
 - Maintenance updates for genserv.py to convert to a class architecture
 - Maintenande updates for genloader.py, bug fixes
 - added conf file for genlog.py add on as an option instead of command line only
+- fixed bug related to runing multiple instances of genmon on one system
 
 ## 2.0.02 -2026-08-04
 - New add on for Hubitat Elevation hub, Thanks @bdwilson

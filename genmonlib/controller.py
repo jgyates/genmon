@@ -52,7 +52,7 @@ class GeneratorController(MySupport):
         message=None,
         feedback=None,
         config=None,
-        ConfigFilePath=ProgramDefaults.ConfPath,
+        ConfigFilePath=None,
     ):
 
         super(GeneratorController, self).__init__(simulation=simulation)
@@ -79,6 +79,9 @@ class GeneratorController(MySupport):
         self.NotChanged = 0  # stats for registers
         self.Changed = 0  # stats for registers
         self.TotalChanged = 0.0  # ratio of changed ragisters
+        # the data files are kept in the config folder (genmon.py -c <folder>)
+        if ConfigFilePath is None:
+            ConfigFilePath = ProgramDefaults.ConfPath
         self.MaintLogFileName = os.path.join(ConfigFilePath, "maintlog.json")
         self.MaintLogList = []
         self.MaintLock = threading.RLock()
@@ -1859,7 +1862,8 @@ class GeneratorController(MySupport):
         if not self.PowerMeterIsSupported():
             return "Not Supported"
         try:
-            LogSize = os.path.getsize(self.PowerLog)
+            # no file yet: nothing has been logged
+            LogSize = os.path.getsize(self.PowerLog) if os.path.isfile(self.PowerLog) else 0
             outstr = "%.2f MB of %.2f MB" % (
                 (float(LogSize) / (1024.0 * 1024.0)),
                 self.PowerLogMaxSize,
