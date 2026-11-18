@@ -556,10 +556,68 @@ class Loader(MySupport):
                         # This will correct and issue with the ldap3 modbule not being recogonized in LibrayIsInstalled
                         self.InstallLibrary("pyasn1", version=self.PYASN1_VERSION, update=True)
 
+            for removed in self.RemoveStrayPackages():
+                self.LogInfo("Removed " + removed + " (installed by a library by mistake)")
             return not ErrorOccured
         except Exception as e1:
             self.LogInfo("Error in CheckSystem: " + str(e1), LogLine=True)
             return False
+
+    # ---------------------------------------------------------------------------
+    # libraries that install a top level package they should not (their own
+    # tests): {library: package}. bleson's "tests" package hides genmon's tests
+    # folder (python -m unittest tests.<name>).
+    STRAY_PACKAGES = {"bleson": "tests"}
+
+    @staticmethod
+    def RemoveStrayPackages(stray=None):
+        # removes the files of these packages that the library's own install
+        # record lists (nothing else), and their folders when empty. Returns
+        # the packages removed.
+        removed = []
+        if metadata is None:
+            return removed
+        for library, package in (stray or Loader.STRAY_PACKAGES).items():
+            try:
+                distribution = metadata.distribution(library)
+            except Exception:
+                continue  # not installed
+            folders = set()
+            for path in distribution.files or []:
+                parts = path.parts
+                if not parts or parts[0] != package:
+                    continue
+                full = str(distribution.locate_file(path))
+                folders.add(os.path.dirname(full))
+                try:
+                    if os.path.isfile(full):
+                        os.remove(full)
+                except OSError:
+                    pass
+            if not folders:
+                continue
+            top = str(distribution.locate_file(package))
+            # compiled files Python made later (other versions) in the
+            # package's own __pycache__ folders
+            for folder in list(folders):
+                cache = folder if os.path.basename(folder) == "__pycache__" else os.path.join(folder, "__pycache__")
+                if os.path.isdir(cache) and cache.startswith(top + os.sep):
+                    for name in os.listdir(cache):
+                        if name.endswith(".pyc"):
+                            try:
+                                os.remove(os.path.join(cache, name))
+                            except OSError:
+                                pass
+                    folders.add(cache)
+            # the folders, deepest first, only if empty
+            for folder in sorted(folders, key=len, reverse=True):
+                try:
+                    os.rmdir(folder)
+                except OSError:
+                    pass
+            if not os.path.exists(top):
+                removed.append(library + ": " + top)
+        return removed
 
     # ---------------------------------------------------------------------------
     def ExecuteCommandList(self, execute_list, env=None):

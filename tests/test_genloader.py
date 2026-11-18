@@ -788,5 +788,61 @@ class DependencyListTests(unittest.TestCase):
                     self.assertIn(module, known)
 
 
+# -------------------------------------------------------------------------------
+class StrayPackageTests(unittest.TestCase):
+    """Loader.RemoveStrayPackages: the "tests" package bleson installs by
+    mistake is removed, using only bleson's own install record."""
+
+    def setUp(self):
+        self.site = tempfile.mkdtemp(prefix="genloader_site_")
+        self.addCleanup(shutil.rmtree, self.site)
+        sys.path.insert(0, self.site)
+        self.addCleanup(sys.path.remove, self.site)
+
+    def install(self, name, files):
+        """A fake installed library: its files and its RECORD."""
+        info = os.path.join(self.site, name + "-1.0.dist-info")
+        os.mkdir(info)
+        with open(os.path.join(info, "METADATA"), "w") as f:
+            f.write("Metadata-Version: 2.1\nName: %s\nVersion: 1.0\n" % name)
+        record = []
+        for path in files:
+            full = os.path.join(self.site, path)
+            os.makedirs(os.path.dirname(full), exist_ok=True)
+            with open(full, "w") as f:
+                f.write("x")
+            record.append(path + ",,")
+        record.append(name + "-1.0.dist-info/RECORD,,")
+        with open(os.path.join(info, "RECORD"), "w") as f:
+            f.write("\n".join(record) + "\n")
+
+    def path(self, *names):
+        return os.path.join(self.site, *names)
+
+    def test_removed(self):
+        self.install("fakelib", ["fakelib/__init__.py", "tests/__init__.py", "tests/test_one.py",
+                                 "tests/__pycache__/test_one.cpython-313.pyc"])
+        # compiled later by another Python version (not in the record)
+        with open(self.path("tests", "__pycache__", "test_one.cpython-311.pyc"), "w") as f:
+            f.write("x")
+        removed = genloader.Loader.RemoveStrayPackages({"fakelib": "tests"})
+        self.assertEqual(removed, ["fakelib: " + self.path("tests")])
+        self.assertFalse(os.path.exists(self.path("tests")))
+        # the library itself is kept
+        self.assertTrue(os.path.isfile(self.path("fakelib", "__init__.py")))
+
+    def test_other_files_kept(self):
+        # a file in the folder that the library did not install is never removed
+        self.install("fakelib", ["tests/__init__.py", "tests/test_one.py"])
+        with open(self.path("tests", "someone_else.py"), "w") as f:
+            f.write("x")
+        self.assertEqual(genloader.Loader.RemoveStrayPackages({"fakelib": "tests"}), [])
+        self.assertEqual(os.listdir(self.path("tests")), ["someone_else.py"])
+
+    def test_not_installed(self):
+        self.assertEqual(genloader.Loader.RemoveStrayPackages({"no_such_library_x": "tests"}), [])
+        self.assertIn("bleson", genloader.Loader.STRAY_PACKAGES)
+
+
 if __name__ == "__main__":
     unittest.main()

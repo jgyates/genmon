@@ -92,6 +92,8 @@ All notable changes to this project will be documented in this file.
 - Folder names with spaces now work for startgenmon.sh and for backup, restore and log archive from the web interface
 - Added tests/run_pi_tests.sh to test genmon on a Raspberry Pi (unit tests, simulator, and live tests with every capture)
 - Simulator tests now run on a system where genmon is installed and running
+- genloader and genmonmaint.sh remove the "tests" package the bleson library installs by mistake
+- Tests can be run by name (python -m unittest tests.<name>) when another "tests" package is installed
 
 
 ## 2.0.02 -2026-08-04

@@ -138,11 +138,18 @@ function copyconffiles() {
     sudo cp "$genmondir"/conf/*.conf "$config_path"
 }
 #-------------------------------------------------------------------------------
+# Remove packages a library installs by mistake (bleson installs its own
+# "tests" package, which hides genmon's tests folder). See genloader.py.
+function removestraypackages() {
+  sudo "$pythoncommand" -c 'import sys; sys.path.insert(0, sys.argv[1]); from genloader import Loader; Loader.RemoveStrayPackages()' "$genmondir"
+}
+#-------------------------------------------------------------------------------
 # This function will update the pip libraries used
 function updatelibraries() {
 
   echo "Updating libraries...."
   sudo "$pythoncommand" -m pip install --upgrade -r "$genmondir/requirements.txt" -U "$pipoptions"
+  removestraypackages
   installgpio
   echo "Done."
 }
@@ -234,6 +241,7 @@ function installgenmon() {
     sudo "$pythoncommand" -m pip install --upgrade setuptools
 
     sudo "$pythoncommand" -m pip install -r "$genmondir/requirements.txt" "$pipoptions"
+    removestraypackages
     installgpio
 
     sudo chmod 775 "$genmondir/startgenmon.sh"
