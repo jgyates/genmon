@@ -1,0 +1,171 @@
+{
+  "captures": [
+    {
+      "name": "evo_ac",
+      "file": "evo_ac.json",
+      "controllertype": "generac_evo_nexus",
+      "address": "9d",
+      "model": "G0070330",
+      "nominalkw": "11",
+      "controller": "Evolution, Air Cooled",
+      "fueltype": "Natural Gas"
+    },
+    {
+      "name": "nexus_ac",
+      "file": "nexus_ac.json",
+      "controllertype": "generac_evo_nexus",
+      "address": "9d",
+      "model": "G0060331",
+      "nominalkw": "15",
+      "controller": "Nexus, Air Cooled",
+      "fueltype": "Natural Gas"
+    },
+    {
+      "name": "evo_lc",
+      "file": "evo_lc.json",
+      "controllertype": "generac_evo_nexus",
+      "address": "9d",
+      "model": "RD01523ADAE",
+      "nominalkw": "30",
+      "controller": "Evolution, Liquid Cooled",
+      "fueltype": "Diesel"
+    },
+    {
+      "name": "h100",
+      "file": "h100.json",
+      "controllertype": "h_100",
+      "address": "64",
+      "model": "Generac H-100 Industrial Generator",
+      "nominalkw": "35",
+      "controller": "H-100",
+      "fueltype": "Natural Gas"
+    },
+    {
+      "name": "powerzone",
+      "file": "powerzone.json",
+      "controllertype": "powerzone_pro",
+      "address": "64",
+      "model": "Generac Power Zone Industrial Generator",
+      "nominalkw": "500",
+      "controller": "Power Zone",
+      "fueltype": "Natural Gas"
+    },
+    {
+      "name": "kohler_apm603",
+      "file": "kohler_apm603.json",
+      "controllertype": "custom",
+      "address": "64",
+      "model": "Kohler APM603",
+      "nominalkw": "300",
+      "controller": "Kohler APM603",
+      "fueltype": "Diesel",
+      "settings": {
+        "import_config_file": "Kohler_APM603.json"
+      }
+    },
+    {
+      "name": "kohler_apm402",
+      "file": "kohler_apm402.json",
+      "controllertype": "custom",
+      "address": "64",
+      "model": "Kohler APM402",
+      "nominalkw": "60",
+      "controller": "Kohler APM402",
+      "fueltype": "Natural Gas",
+      "settings": {
+        "import_config_file": "Kohler_APM402.json"
+      }
+    },
+    {
+      "name": "comap",
+      "file": "comap.json",
+      "controllertype": "custom",
+      "address": "64",
+      "model": "ComAp Controller",
+      "nominalkw": 1250,
+      "controller": "ComAp Controller",
+      "fueltype": "Diesel",
+      "settings": {
+        "import_config_file": "ComAp.json"
+      }
+    },
+    {
+      "name": "deepsea",
+      "file": "deepsea.json",
+      "controllertype": "custom",
+      "address": "64",
+      "model": "DeepSea Controller",
+      "nominalkw": "22",
+      "controller": "DeepSea Controller",
+      "fueltype": "Natural Gas",
+      "settings": {
+        "import_config_file": "Deepsea_controller.json"
+      }
+    },
+    {
+      "name": "briggs_gc1032",
+      "file": "briggs_gc1032.json",
+      "controllertype": "custom",
+      "address": "64",
+      "model": "Briggs & Stratton GC-1032 Controller",
+      "nominalkw": "20",
+      "controller": "Briggs & Stratton GC-1032 Controller",
+      "fueltype": "Propane",
+      "settings": {
+        "import_config_file": "Briggs_Stratton_GC-1032.json"
+      }
+    },
+    {
+      "name": "smartgen",
+      "file": "smartgen.json",
+      "controllertype": "custom",
+      "address": "64",
+      "model": "SmartGen HGM40x0 Controller",
+      "nominalkw": "21",
+      "controller": "SmartGen HGM40x0 Controller",
+      "fueltype": "Diesel",
+      "settings": {
+        "import_config_file": "SmartGen_HGM4000.json"
+      }
+    },
+    {
+      "name": "mebay",
+      "file": "mebay.json",
+      "controllertype": "custom",
+      "address": "64",
+      "model": "MEBAY DCxx Controller",
+      "nominalkw": "13",
+      "controller": "MEBAY DCxx Controller",
+      "fueltype": "Propane",
+      "settings": {
+        "import_config_file": "MEBAY_DCxx.json"
+      }
+    },
+    {
+      "name": "powerzone_410",
+      "file": "powerzone_410.json",
+      "controllertype": "custom",
+      "address": "64",
+      "model": "Power Zone 410 Controller",
+      "nominalkw": "20",
+      "controller": "Power Zone 410 Controller",
+      "fueltype": "Propane",
+      "settings": {
+        "import_config_file": "Power_Zone_410.json"
+      }
+    },
+    {
+      "name": "basler",
+      "file": "basler.json",
+      "controllertype": "custom",
+      "address": "64",
+      "model": "Basler DGC-2020HD",
+      "nominalkw": "1250",
+      "controller": "Basler DGC-2020HD",
+      "fueltype": "Diesel",
+      "settings": {
+        "import_config_file": "Basler_DGC_2020HD.json"
+      }
+    }
+  ]
+}

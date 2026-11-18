@@ -1,0 +1,316 @@
+{
+ "logs_json": {},
+ "maint_json": {
+  "Maintenance": [
+   {
+    "Model": "MEBAY DCxx Controller"
+   },
+   {
+    "Maintenance Due": "No"
+   },
+   {
+    "Controller Detected": "MEBAY DC-42 Controller"
+   },
+   {
+    "Nominal RPM": 3600
+   },
+   {
+    "Rated kW": "13"
+   },
+   {
+    "Nominal Frequency": 60
+   },
+   {
+    "Phase": 1
+   },
+   {
+    "Fuel Type": "Propane"
+   },
+   {
+    "Service": [
+     {
+      "Total Run Hours": "0.10 h"
+     },
+     {
+      "Current Run Hours": "0.10 h"
+     },
+     {
+      "Backup Battery voltage": "13.00 V"
+     },
+     {
+      "Maintenance Countdown": "50 h"
+     },
+     {
+      "Total Crank Times": "0 "
+     },
+     {
+      "Dynamic Load": "0 %"
+     },
+     {
+      "Current Load": "0 %"
+     },
+     {
+      "Average Load": "0 %"
+     },
+     {
+      "Current Consumption": "0 kWh"
+     },
+     {
+      "Total Consumption": "0 kWh"
+     }
+    ]
+   }
+  ]
+ },
+ "outage_json": {
+  "Outage": [
+   {
+    "Status": "No outage has occurred since program launched."
+   },
+   {
+    "System In Outage": "No"
+   },
+   {
+    "Utility Voltage Minimum": "0 V"
+   },
+   {
+    "Utility Voltage Maximum": "0 V"
+   },
+   {
+    "Outage Log": ""
+   }
+  ]
+ },
+ "registers_json": {
+  "Registers": {
+   "Coils": {},
+   "Holding": {
+    "1000": "0000",
+    "1001": "0080",
+    "1002": "4e20",
+    "1003": "028d",
+    "1004": "004f",
+    "1005": "4e20",
+    "1006": "0000",
+    "1007": "3193",
+    "1008": "07e9",
+    "1009": "0000",
+    "100a": "0000",
+    "100b": "0000",
+    "100c": "4e20",
+    "100d": "0000",
+    "100e": "4e20",
+    "100f": "4e20",
+    "1010": "0000",
+    "1011": "0000",
+    "1012": "4e20",
+    "1013": "0000",
+    "1014": "0000",
+    "1015": "0000",
+    "1016": "4e20",
+    "1017": "0000",
+    "1018": "0000",
+    "1019": "0000",
+    "101a": "4e20",
+    "101b": "0000",
+    "101c": "0000",
+    "101d": "0000",
+    "101e": "4e20",
+    "101f": "0000",
+    "1020": "0000",
+    "1021": "0000",
+    "1022": "0000",
+    "1023": "0000",
+    "1024": "0000",
+    "1025": "0000",
+    "1026": "4e20",
+    "1027": "4e20",
+    "1028": "4e20",
+    "1029": "4e20",
+    "102a": "4e20",
+    "102b": "0082",
+    "102c": "0000",
+    "102d": "0032",
+    "102e": "0000",
+    "102f": "0000",
+    "1030": "0000",
+    "1031": "0000",
+    "1032": "ffff",
+    "1033": "0000",
+    "1034": "0000",
+    "1035": "0000",
+    "1036": "00000001",
+    "1038": "0000",
+    "1039": "0000",
+    "103a": "0000",
+    "103b": "00000000",
+    "103d": "00000000",
+    "103f": "0033",
+    "1040": "0000",
+    "1041": "0006",
+    "1042": "0008",
+    "1043": "0000",
+    "1044": "0000",
+    "1045": "0000",
+    "1046": "0000",
+    "1047": "0000",
+    "1048": "dc42",
+    "1049": "0600",
+    "104a": "2104",
+    "104b": "0bb8",
+    "104c": "0078",
+    "104d": "01f4",
+    "104e": "00c8",
+    "104f": "0005",
+    "1050": "0021",
+    "1051": "0000",
+    "1052": "0000",
+    "1053": "005e",
+    "1054": "004f",
+    "1055": "4e20",
+    "1056": "4e20",
+    "1057": "0000",
+    "1058": "4e20",
+    "1059": "0078",
+    "105a": "0052",
+    "105b": "4e20",
+    "105c": "0000",
+    "105d": "0102",
+    "105e": "020c",
+    "105f": "030a",
+    "1060": "0000",
+    "1061": "0000",
+    "1062": "0000",
+    "1063": "0000",
+    "1064": "0000",
+    "1065": "0000",
+    "1066": "0000",
+    "1067": "0000",
+    "1068": "0000"
+   },
+   "Inputs": {}
+  }
+ },
+ "status_json": {
+  "Status": [
+   {
+    "Switch State": "Stop"
+   },
+   {
+    "Engine State": "Standby"
+   },
+   {
+    "Generator Status": "Mains on Load"
+   },
+   {
+    "Engine": [
+     {
+      "Battery Voltage": "12.80 V"
+     },
+     {
+      "Generator Frequency": "0.00 Hz"
+     },
+     {
+      "RPM": "0.00 "
+     },
+     {
+      "Voltage L1": "0 V"
+     },
+     {
+      "Voltage L2": "0 V"
+     },
+     {
+      "Generator L1-L2 Voltage": "0 V"
+     },
+     {
+      "L1 Current": "0.00 A"
+     },
+     {
+      "L2 Current": "0.00 A"
+     },
+     {
+      "Total Current": "0.00 A"
+     },
+     {
+      "Apparent Power S1": "0.00 kVA"
+     },
+     {
+      "Apparent Power S2": "0.00 kVA"
+     },
+     {
+      "Total Apparent Power": "0.00 kVA"
+     },
+     {
+      "Active Power S1": "0.00 kW"
+     },
+     {
+      "Active Power S2": "0.00 kW"
+     },
+     {
+      "Total Active Power": "0.00 kW"
+     },
+     {
+      "Reactive Power Q1": "0.00 kVar"
+     },
+     {
+      "Reactive Power Q2": "0.00 kVar"
+     },
+     {
+      "Total Reactive Power": "0.00 kVar"
+     },
+     {
+      "Power Factor PF1": "0.00 "
+     },
+     {
+      "Power Factor PF2": "0.00 "
+     },
+     {
+      "Power Factor PF3": "0.00 "
+     },
+     {
+      "Average Power Factor": "0.00 "
+     },
+     {
+      "Oil Pressure": "94 PSI"
+     },
+     {
+      "Water Temperature": "174 F"
+     }
+    ]
+   },
+   {
+    "Line": [
+     {
+      "Mains Frequency": "0.00 Hz"
+     },
+     {
+      "Mains Voltage L1": "0 V"
+     },
+     {
+      "ATS Status": "MAINS Closing"
+     }
+    ]
+   },
+   {
+    "Inputs and Outputs": [
+     {
+      "Switch Input Status": ""
+     },
+     {
+      "Relay Output Status": ""
+     }
+    ]
+   },
+   {
+    "Time": [
+     {
+      "Monitor Time": "<NOW>"
+     },
+     {
+      "Generator Time": "Thursday December 19, 2024 7:233"
+     }
+    ]
+   }
+  ]
+ }
+}

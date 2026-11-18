@@ -1,0 +1,437 @@
+{
+ "logs_json": {
+  "Logs": {
+   "Alarm Log": [
+    "03/17/21 <TIME> Low Battery : Alarm Code: 2750",
+    "03/12/21 <TIME> Low Battery : Alarm Code: 2750",
+    "03/10/21 <TIME> Low Battery : Alarm Code: 2750",
+    "01/10/21 <TIME> E-Stop : Alarm Code: 2800",
+    "01/10/21 <TIME> E-Stop : Alarm Code: 2800",
+    "01/10/21 <TIME> E-Stop : Alarm Code: 2800",
+    "01/10/21 <TIME> E-Stop : Alarm Code: 2800",
+    "01/10/21 <TIME> E-Stop : Alarm Code: 2800",
+    "01/10/21 <TIME> E-Stop : Alarm Code: 2800",
+    "01/10/21 <TIME> Low Battery : Alarm Code: 2750",
+    "01/09/21 <TIME> Battery Problem : Alarm Code: 2760",
+    "03/08/21 <TIME> Battery Problem : Alarm Code: 2760",
+    "03/08/21 <TIME> Battery Problem : Alarm Code: 2760",
+    "03/05/21 <TIME> Battery Problem : Alarm Code: 2760",
+    "03/04/21 <TIME> Low Coolant Level : Alarm Code: 2720",
+    "03/04/21 <TIME> E-Stop : Alarm Code: 2800",
+    "03/04/21 <TIME> E-Stop : Alarm Code: 2800",
+    "03/04/21 <TIME> E-Stop : Alarm Code: 2800",
+    "03/04/21 <TIME> E-Stop : Alarm Code: 2800",
+    "03/04/21 <TIME> E-Stop : Alarm Code: 2800",
+    "03/04/21 <TIME> E-Stop : Alarm Code: 2800",
+    "03/04/21 <TIME> E-Stop : Alarm Code: 2800",
+    "03/04/21 <TIME> E-Stop : Alarm Code: 2800",
+    "03/04/21 <TIME> E-Stop : Alarm Code: 2800",
+    "03/04/21 <TIME> E-Stop : Alarm Code: 2800",
+    "03/04/21 <TIME> E-Stop : Alarm Code: 2800",
+    "01/01/13 <TIME> Charger missing AC : Alarm Code: 2780",
+    "01/01/13 <TIME> E-Stop : Alarm Code: 2800"
+   ],
+   "Run Log": [
+    "03/17/21 <TIME> Switched Off ",
+    "03/17/21 <TIME> Running - Exercise ",
+    "03/11/21 <TIME> Stopped - Auto ",
+    "03/11/21 <TIME> Running - Remote Start ",
+    "03/10/21 <TIME> Stopped - Auto ",
+    "03/10/21 <TIME> Switched Off ",
+    "03/10/21 <TIME> Stopped - Auto ",
+    "01/10/21 <TIME> Switched Off ",
+    "01/10/21 <TIME> Switched Off ",
+    "01/10/21 <TIME> Switched Off ",
+    "01/10/21 <TIME> Stopped - Auto ",
+    "01/10/21 <TIME> Switched Off ",
+    "01/10/21 <TIME> Stopped - Auto ",
+    "01/10/21 <TIME> Switched Off ",
+    "01/10/21 <TIME> Stopped - Auto ",
+    "01/10/21 <TIME> Switched Off ",
+    "01/10/21 <TIME> Stopped - Auto ",
+    "01/10/21 <TIME> Switched Off ",
+    "01/08/21 <TIME> Stopped - Auto ",
+    "01/08/21 <TIME> Running - Manual ",
+    "03/08/21 <TIME> Switched Off ",
+    "03/08/21 <TIME> Switched Off ",
+    "03/08/21 <TIME> Running - Manual ",
+    "03/08/21 <TIME> Switched Off ",
+    "03/08/21 <TIME> Stopped - Auto ",
+    "03/08/21 <TIME> Switched Off ",
+    "03/08/21 <TIME> Stopped - Auto ",
+    "03/08/21 <TIME> Switched Off ",
+    "03/04/21 <TIME> Stopped - Auto ",
+    "03/04/21 <TIME> Running - Utility Loss ",
+    "03/04/21 <TIME> Stopped - Auto ",
+    "03/04/21 <TIME> Switched Off ",
+    "03/04/21 <TIME> Running - Manual ",
+    "03/04/21 <TIME> Switched Off ",
+    "01/01/13 <TIME> Switched Off "
+   ],
+   "Service Log": [
+    "03/04/21 <TIME> Service Schedule A "
+   ]
+  }
+ },
+ "maint_json": {
+  "Maintenance": [
+   {
+    "Model": "RD01523ADAE"
+   },
+   {
+    "Generator Serial Number": "1234567890"
+   },
+   {
+    "Controller Detected": "Evolution, Liquid Cooled"
+   },
+   {
+    "Nominal RPM": "1800"
+   },
+   {
+    "Rated kW": "30 kW"
+   },
+   {
+    "Nominal Frequency": "60 Hz"
+   },
+   {
+    "Fuel Type": "Diesel"
+   },
+   {
+    "Generator Phase": "Unknown"
+   },
+   {
+    "Fuel Level Sensor": "93 %"
+   },
+   {
+    "kW Hours in last 30 days": "0.00 kWh"
+   },
+   {
+    "Fuel Consumption in last 30 days": "0.00 gal"
+   },
+   {
+    "Run Hours in last 30 days": "0.00 h"
+   },
+   {
+    "Ambient Temperature Sensor": "42 F"
+   },
+   {
+    "Controller Settings": [
+     {
+      "Calibrate Volts": "1024 "
+     },
+     {
+      "Nominal Line Voltage": "Unknown V"
+     },
+     {
+      "Rated Max Power": "Unknown kW"
+     },
+     {
+      "Param Group": "25 "
+     },
+     {
+      "Voltage Code": "24 "
+     },
+     {
+      "Time Since Activation": "320 h"
+     },
+     {
+      "Volts Per Hertz": "10 "
+     },
+     {
+      "Gain": "0 "
+     },
+     {
+      "Target Frequency": "60 Hz"
+     },
+     {
+      "Target Voltage": "240 V"
+     }
+    ]
+   },
+   {
+    "Exercise": [
+     {
+      "Exercise Time": "Weekly Wednesday 12:00 Quiet Mode Off"
+     },
+     {
+      "Exercise Duration": "12 min"
+     }
+    ]
+   },
+   {
+    "Service": [
+     {
+      "Service A Due": "124 hrs or 03/04/2022 "
+     },
+     {
+      "Service B Due": "249 hrs or 03/04/2023 "
+     },
+     {
+      "Total Run Hours": "1.00 h"
+     },
+     {
+      "Hardware Version": "V1.05"
+     },
+     {
+      "Firmware Version": "V1.46"
+     }
+    ]
+   }
+  ]
+ },
+ "outage_json": {
+  "Outage": [
+   {
+    "Status": "No outage has occurred since program launched."
+   },
+   {
+    "System In Outage": "No"
+   },
+   {
+    "Utility Voltage": "246 V"
+   },
+   {
+    "Utility Voltage Minimum": "246 V"
+   },
+   {
+    "Utility Voltage Maximum": "246 V"
+   },
+   {
+    "Utility Threshold Voltage": "144 V"
+   },
+   {
+    "Utility Pickup Voltage": "192 V"
+   },
+   {
+    "Startup Delay": "5 s"
+   },
+   {
+    "Warm-up Delay": "5 s"
+   },
+   {
+    "Outage Log": ""
+   }
+  ]
+ },
+ "registers_json": {
+  "Registers": {
+   "Holding": {
+    "0000": "000c",
+    "0001": "00080038",
+    "0005": "0c00",
+    "0006": "0300",
+    "0007": "0000",
+    "0008": "0000",
+    "0009": "00f6",
+    "000a": "0059",
+    "000b": "00000001",
+    "000d": "0000",
+    "000e": "0107",
+    "000f": "0312",
+    "0010": "0415",
+    "0011": "0090",
+    "0012": "0000",
+    "0018": "0000",
+    "0019": "0000",
+    "001a": "007c",
+    "001b": "4a6f",
+    "001c": "0000",
+    "001d": "0000",
+    "001e": "00f9",
+    "001f": "4bdc",
+    "0020": "0000",
+    "0021": "0000",
+    "0022": "c22e",
+    "002a": "6992",
+    "002b": "0000",
+    "002c": "0c00",
+    "002d": "0000",
+    "002e": "0003",
+    "002f": "0000",
+    "0032": "0000",
+    "0033": "0000",
+    "0034": "0000",
+    "0035": "0000",
+    "0036": "0000",
+    "0037": "0000",
+    "0038": "0000",
+    "0039": "0000",
+    "003a": "00000000",
+    "003c": "0000",
+    "004c": "0000",
+    "0051": "0000",
+    "0052": "00c0",
+    "0053": "0030",
+    "0054": "0140",
+    "0055": "0000",
+    "0056": "000a",
+    "0057": "0000",
+    "0058": "0000",
+    "0059": "00f0",
+    "005a": "003c",
+    "005c": "000f",
+    "005d": "005d",
+    "005e": "0000003c",
+    "0062": "0000",
+    "01f4": "31323334353637383930",
+    "0208": "0400",
+    "0209": "0400",
+    "020a": "0019",
+    "020b": "0018",
+    "020c": "0002",
+    "020d": "0000",
+    "020e": "000a",
+    "020f": "0008",
+    "0212": "0000",
+    "0213": "0000",
+    "0234": "0000",
+    "0235": "0000",
+    "0236": "0000",
+    "0237": "00f0",
+    "0238": "0005",
+    "0239": "0005",
+    "023a": "0001",
+    "023b": "00c0",
+    "023d": "0067",
+    "023e": "000c",
+    "023f": "0000",
+    "0241": "4182",
+    "0242": "f1ad",
+    "0243": "4182",
+    "0244": "9413",
+    "0245": "4182",
+    "0246": "d6df",
+    "0247": "4182",
+    "0248": "9412",
+    "0249": "4182",
+    "024a": "716f",
+    "0255": "0000",
+    "0256": "0000",
+    "0258": "0022",
+    "025a": "0001",
+    "05ed": "002a",
+    "05ee": "0002",
+    "05f1": "0abf",
+    "05f2": "c22e",
+    "05f3": "0001",
+    "05f4": "0000",
+    "05f5": "0000",
+    "05f6": "0000",
+    "05f7": "0000",
+    "05fa": "0000",
+    "0614": "0000",
+    "1f72": "0000",
+    "1f73": "0000",
+    "1f74": "0000",
+    "1f75": "0000",
+    "1f76": "0000",
+    "1f77": "0000",
+    "1f7b": "0000",
+    "1f7c": "00000000",
+    "1fa4": "0000",
+    "1fa5": "0000",
+    "1fa6": "0000",
+    "2134": "0000",
+    "2135": "0000",
+    "2136": "0000",
+    "2137": "0000",
+    "2138": "0000",
+    "2166": "0000"
+   }
+  }
+ },
+ "status_json": {
+  "Status": [
+   {
+    "Engine": [
+     {
+      "Switch State": "System in Alarm"
+     },
+     {
+      "Engine State": "Stopped in Alarm"
+     },
+     {
+      "Active Relays": "Battery Charger On, Alarm Active"
+     },
+     {
+      "Active Sensors": "Oil below 8 psi"
+     },
+     {
+      "System In Alarm": "Very Low Battery"
+     },
+     {
+      "Battery Voltage": "8.90 V"
+     },
+     {
+      "Battery Status": "Charging"
+     },
+     {
+      "Battery Charger Current": "2 mA"
+     },
+     {
+      "RPM": "0 "
+     },
+     {
+      "Frequency": "0.00 Hz"
+     },
+     {
+      "Output Voltage": "0 V"
+     },
+     {
+      "Output Current": "0.00 A"
+     },
+     {
+      "Output Power (Single Phase)": "0.00 kW"
+     },
+     {
+      "Active Rotor Poles (Calculated)": "0 "
+     }
+    ]
+   },
+   {
+    "Line": [
+     {
+      "Transfer Switch State": "Utility"
+     },
+     {
+      "Utility Voltage": "246 V"
+     },
+     {
+      "Utility Max Voltage": "246 V"
+     },
+     {
+      "Utility Min Voltage": "246 V"
+     },
+     {
+      "Utility Threshold Voltage": "144 V"
+     },
+     {
+      "Utility Pickup Voltage": "192 V"
+     },
+     {
+      "Set Output Voltage": "240 V"
+     }
+    ]
+   },
+   {
+    "Last Log Entries": {
+     "Logs": {
+      "Alarm Log": "03/17/21 <TIME> Low Battery : Alarm Code: 2750",
+      "Run Log": "03/17/21 <TIME> Switched Off ",
+      "Service Log": "03/04/21 <TIME> Service Schedule A "
+     }
+    }
+   },
+   {
+    "Time": [
+     {
+      "Monitor Time": "<NOW>"
+     },
+     {
+      "Generator Time": "Thursday March 18, 2021 01:07"
+     }
+    ]
+   }
+  ]
+ }
+}

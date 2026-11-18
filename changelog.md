@@ -81,6 +81,8 @@ All notable changes to this project will be documented in this file.
 - Fixed add ons and the web interface checking for genmon in a tight loop while genmon starts
 - genmonmaint.sh stops an update, backup or restore if it cannot change to the genmon folder
 - Added lint checks (pyflakes, shellcheck) to CI and removed unused code
+- Added anonymized register captures so CI tests the Generac and custom controllers with the generator simulator
+
 
 ## 2.0.02 -2026-08-04
 - New add on for Hubitat Elevation hub, Thanks @bdwilson

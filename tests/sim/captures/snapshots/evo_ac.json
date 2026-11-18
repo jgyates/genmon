@@ -1,0 +1,443 @@
+{
+ "logs_json": {
+  "Logs": {
+   "Alarm Log": [
+    "07/08/20 <TIME> High Temperature : Alarm Code: 1400",
+    "07/08/20 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "04/17/20 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "02/21/20 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "02/17/20 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "02/14/20 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "11/27/19 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "08/10/19 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "05/01/19 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "01/15/19 <TIME> RPM Sensor (Twin Cylinder+Cranking) : Alarm Code: 1505",
+    "01/15/19 <TIME> RPM Sensor (Twin Cylinder+Cranking) : Alarm Code: 1505",
+    "01/15/19 <TIME> RPM Sensor (Twin Cylinder+Cranking) : Alarm Code: 1505",
+    "01/15/19 <TIME> RPM Sensor (Twin Cylinder+Cranking) : Alarm Code: 1505",
+    "01/15/19 <TIME> RPM Sensor (Twin Cylinder+Cranking) : Alarm Code: 1505",
+    "01/15/19 <TIME> RPM Sensor (Twin Cylinder+Cranking) : Alarm Code: 1505",
+    "01/15/19 <TIME> RPM Sensor (Twin Cylinder+Cranking) : Alarm Code: 1505",
+    "11/23/18 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "07/20/18 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "07/20/18 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "07/19/18 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "05/17/18 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "04/02/18 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "04/02/18 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "03/22/18 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "03/22/18 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "03/22/18 <TIME> Overcrank : Alarm Code: 1100",
+    "03/22/18 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "02/19/18 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "12/27/17 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "12/17/17 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "11/28/17 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "08/19/17 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "08/19/17 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "08/16/17 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "06/05/17 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "05/05/17 <TIME> Low Battery : Alarm Code: 0000",
+    "05/01/17 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "05/01/17 <TIME> RPM Sensor (Twin Cylinder+Cranking) : Alarm Code: 1505",
+    "05/01/17 <TIME> RPM Sensor (Twin Cylinder+Cranking) : Alarm Code: 1505",
+    "05/01/17 <TIME> RPM Sensor (Twin Cylinder+Cranking) : Alarm Code: 1505",
+    "05/01/17 <TIME> Low Battery : Alarm Code: 0000",
+    "05/01/17 <TIME> RPM Sensor (Twin Cylinder+Cranking) : Alarm Code: 1505",
+    "05/01/17 <TIME> Low Battery : Alarm Code: 0000",
+    "05/01/17 <TIME> Low Battery : Alarm Code: 0000",
+    "04/17/17 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "04/14/17 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "04/07/17 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "04/05/17 <TIME> Undervoltage (Both Zero Crosses missing) : Alarm Code: 1902",
+    "04/03/17 <TIME> Charger Missing AC : Alarm Code: 0000",
+    "04/03/17 <TIME> Charger Missing AC : Alarm Code: 0000"
+   ],
+   "Run Log": [
+    "07/08/20 <TIME> Stopped - Alarm ",
+    "07/08/20 <TIME> Running - Utility Loss ",
+    "07/08/20 <TIME> Stopped - Auto ",
+    "07/08/20 <TIME> Switched Off ",
+    "07/07/20 <TIME> Stopped - Auto ",
+    "07/07/20 <TIME> Running - Remote Start ",
+    "06/30/20 <TIME> Stopped - Auto ",
+    "06/30/20 <TIME> Running - Remote Start ",
+    "06/23/20 <TIME> Stopped - Auto ",
+    "06/23/20 <TIME> Running - Remote Start ",
+    "06/16/20 <TIME> Stopped - Auto ",
+    "06/16/20 <TIME> Running - Remote Start ",
+    "06/09/20 <TIME> Stopped - Auto ",
+    "06/09/20 <TIME> Running - Remote Start ",
+    "06/02/20 <TIME> Stopped - Auto ",
+    "06/02/20 <TIME> Running - Remote Start ",
+    "05/26/20 <TIME> Stopped - Auto ",
+    "05/26/20 <TIME> Running - Remote Start ",
+    "05/19/20 <TIME> Stopped - Auto ",
+    "05/19/20 <TIME> Running - Remote Start ",
+    "05/12/20 <TIME> Stopped - Auto ",
+    "05/12/20 <TIME> Running - Remote Start ",
+    "05/05/20 <TIME> Stopped - Auto ",
+    "05/05/20 <TIME> Running - Remote Start ",
+    "04/28/20 <TIME> Stopped - Auto ",
+    "04/28/20 <TIME> Running - Remote Start ",
+    "04/21/20 <TIME> Stopped - Auto ",
+    "04/21/20 <TIME> Running - Remote Start ",
+    "04/17/20 <TIME> Stopped - Auto ",
+    "04/17/20 <TIME> Running - Remote Start ",
+    "04/17/20 <TIME> Stopped - Auto ",
+    "04/17/20 <TIME> Running - Remote Start ",
+    "04/17/20 <TIME> Running - Utility Loss ",
+    "04/14/20 <TIME> Stopped - Auto ",
+    "04/14/20 <TIME> Running - Remote Start ",
+    "04/07/20 <TIME> Stopped - Auto ",
+    "04/07/20 <TIME> Running - Remote Start ",
+    "03/31/20 <TIME> Stopped - Auto ",
+    "03/31/20 <TIME> Running - Remote Start ",
+    "03/24/20 <TIME> Stopped - Auto ",
+    "03/24/20 <TIME> Running - Remote Start ",
+    "03/17/20 <TIME> Stopped - Auto ",
+    "03/17/20 <TIME> Running - Remote Start ",
+    "03/10/20 <TIME> Stopped - Auto ",
+    "03/10/20 <TIME> Running - Remote Start ",
+    "03/03/20 <TIME> Stopped - Auto ",
+    "03/03/20 <TIME> Running - Remote Start ",
+    "02/25/20 <TIME> Stopped - Auto ",
+    "02/25/20 <TIME> Running - Remote Start ",
+    "02/21/20 <TIME> Stopped - Auto "
+   ],
+   "Service Log": [
+    "03/28/20 <TIME> Battery Maintained ",
+    "03/25/20 <TIME> Inspect Battery ",
+    "03/26/19 <TIME> Schedule A Serviced ",
+    "03/24/19 <TIME> Service Schedule A  ",
+    "03/24/18 <TIME> Battery Maintained ",
+    "03/24/18 <TIME> Inspect Battery "
+   ]
+  }
+ },
+ "maint_json": {
+  "Maintenance": [
+   {
+    "Model": "G0070330"
+   },
+   {
+    "Generator Serial Number": "1234567890"
+   },
+   {
+    "Controller Detected": "Evolution, Air Cooled"
+   },
+   {
+    "Nominal RPM": "3600"
+   },
+   {
+    "Rated kW": "11 kW"
+   },
+   {
+    "Nominal Frequency": "60 Hz"
+   },
+   {
+    "Fuel Type": "Natural Gas"
+   },
+   {
+    "Generator Phase": "1"
+   },
+   {
+    "Engine Displacement": "530 cc"
+   },
+   {
+    "kW Hours in last 30 days": "0.00 kWh"
+   },
+   {
+    "Fuel Consumption in last 30 days": "0.00 cubic feet"
+   },
+   {
+    "Run Hours in last 30 days": "0.00 h"
+   },
+   {
+    "Controller Settings": [
+     {
+      "Calibrate Current 1": "1453 "
+     },
+     {
+      "Calibrate Current 2": "1480 "
+     },
+     {
+      "Calibrate Volts": "1016 "
+     },
+     {
+      "Nominal Line Voltage": "240 V"
+     },
+     {
+      "Rated Max Power": "11 kW"
+     }
+    ]
+   },
+   {
+    "Exercise": [
+     {
+      "Exercise Time": "Weekly Tuesday 16:48 Quiet Mode Off"
+     }
+    ]
+   },
+   {
+    "Service": [
+     {
+      "Service A Due": "171 hrs or 03/25/2021 "
+     },
+     {
+      "Service B Due": "299 hrs or 03/23/2021 "
+     },
+     {
+      "Battery Check Due": "03/28/2021 "
+     },
+     {
+      "Total Run Hours": "100.00 h"
+     },
+     {
+      "Hardware Version": "V1.06"
+     },
+     {
+      "Firmware Version": "V1.16"
+     }
+    ]
+   }
+  ]
+ },
+ "outage_json": {
+  "Outage": [
+   {
+    "Status": "System in outage since <DATETIME>"
+   },
+   {
+    "System In Outage": "Yes"
+   },
+   {
+    "Utility Voltage": "0 V"
+   },
+   {
+    "Utility Voltage Minimum": "0 V"
+   },
+   {
+    "Utility Voltage Maximum": "0 V"
+   },
+   {
+    "Utility Threshold Voltage": "171 V"
+   },
+   {
+    "Startup Delay": "5 s"
+   },
+   {
+    "Outage Log": ""
+   }
+  ]
+ },
+ "registers_json": {
+  "Registers": {
+   "Holding": {
+    "0000": "0009",
+    "0001": "00080002",
+    "0005": "1030",
+    "0006": "0200",
+    "0007": "0e11",
+    "0008": "0000",
+    "0009": "0000",
+    "000a": "0082",
+    "000b": "00000064",
+    "000d": "0000",
+    "000e": "0d12",
+    "000f": "0708",
+    "0010": "0314",
+    "0011": "00ab",
+    "0012": "0000",
+    "0018": "0000",
+    "0019": "000f",
+    "001a": "00ab",
+    "001b": "4917",
+    "001c": "0000",
+    "001d": "0000",
+    "001e": "012b",
+    "001f": "4915",
+    "0020": "0000",
+    "0021": "0000",
+    "0022": "491a",
+    "002a": "6a74",
+    "002b": "0005",
+    "002c": "1030",
+    "002d": "0000",
+    "002e": "0002",
+    "002f": "0000",
+    "0032": "4000",
+    "0033": "ffb0",
+    "0034": "0000",
+    "0035": "0000",
+    "0036": "0000",
+    "0037": "17ad",
+    "0038": "ffff",
+    "0039": "0000",
+    "003a": "00000000",
+    "003c": "0000",
+    "004c": "0000",
+    "0051": "0000",
+    "0052": "0000",
+    "0053": "0000",
+    "0054": "0000",
+    "0055": "0000",
+    "0056": "0000",
+    "0057": "0000",
+    "0058": "0000",
+    "0059": "0000",
+    "005a": "0000",
+    "005c": "0000",
+    "005d": "0000",
+    "005e": "00000000",
+    "0062": "0000",
+    "01f4": "31323334353637383930",
+    "0208": "03f8",
+    "0209": "0000",
+    "020a": "0000",
+    "020b": "0000",
+    "020c": "0000",
+    "020d": "0000",
+    "020e": "0000",
+    "020f": "0000",
+    "0212": "0000",
+    "0213": "0000",
+    "0234": "0000",
+    "0235": "0000",
+    "0236": "0000",
+    "0237": "0000",
+    "0238": "0000",
+    "0239": "0000",
+    "023a": "0000",
+    "023b": "0000",
+    "023d": "0000",
+    "023e": "0000",
+    "023f": "0000",
+    "0241": "0000",
+    "0242": "0000",
+    "0243": "0000",
+    "0244": "0000",
+    "0245": "0000",
+    "0246": "0000",
+    "0247": "0000",
+    "0248": "0000",
+    "0249": "0000",
+    "024a": "0000",
+    "0255": "0000",
+    "0256": "0000",
+    "0258": "0000",
+    "025a": "0000",
+    "05ed": "0064",
+    "05ee": "01df",
+    "05f1": "0578",
+    "05f2": "491a",
+    "05f3": "00c8",
+    "05f4": "0000",
+    "05f5": "0000",
+    "05f6": "05ad",
+    "05f7": "05c8",
+    "05fa": "0001",
+    "0614": "0000",
+    "1f72": "0000",
+    "1f73": "0000",
+    "1f74": "0000",
+    "1f75": "0000",
+    "1f76": "0000",
+    "1f77": "0000",
+    "1f7b": "0000",
+    "1f7c": "00000000",
+    "1fa4": "0000",
+    "1fa5": "0000",
+    "1fa6": "0000",
+    "2134": "0000",
+    "2135": "0000",
+    "2136": "0000",
+    "2137": "0000",
+    "2138": "0000",
+    "2166": "0000"
+   }
+  }
+ },
+ "status_json": {
+  "Status": [
+   {
+    "Engine": [
+     {
+      "Switch State": "System in Alarm"
+     },
+     {
+      "Engine State": "Stopped in Alarm"
+     },
+     {
+      "System In Alarm": "High Temperature"
+     },
+     {
+      "Battery Voltage": "13.00 V"
+     },
+     {
+      "Battery Charger Current": "479 mA"
+     },
+     {
+      "RPM": "3601 "
+     },
+     {
+      "Frequency": "0.00 Hz"
+     },
+     {
+      "Output Voltage": "0 V"
+     },
+     {
+      "Output Current": "0.00 A"
+     },
+     {
+      "Current L1": "0.00 A"
+     },
+     {
+      "Current L2": "0.00 A"
+     },
+     {
+      "Output Power (Single Phase)": "0.00 kW"
+     },
+     {
+      "Active Rotor Poles (Calculated)": "0 "
+     }
+    ]
+   },
+   {
+    "Line": [
+     {
+      "Utility Voltage": "0 V"
+     },
+     {
+      "Utility Max Voltage": "0 V"
+     },
+     {
+      "Utility Min Voltage": "0 V"
+     },
+     {
+      "Utility Threshold Voltage": "171 V"
+     }
+    ]
+   },
+   {
+    "Last Log Entries": {
+     "Logs": {
+      "Alarm Log": "07/08/20 <TIME> High Temperature : Alarm Code: 1400",
+      "Run Log": "07/08/20 <TIME> Stopped - Alarm ",
+      "Service Log": "03/28/20 <TIME> Battery Maintained "
+     }
+    }
+   },
+   {
+    "Time": [
+     {
+      "Monitor Time": "<NOW>"
+     },
+     {
+      "Generator Time": "Wednesday July 8, 2020 13:18"
+     }
+    ]
+   }
+  ]
+ }
+}

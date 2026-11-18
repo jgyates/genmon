@@ -1,0 +1,162 @@
+{
+ "logs_json": {},
+ "maint_json": {
+  "Maintenance": [
+   {
+    "Model": "DeepSea Controller"
+   },
+   {
+    "Controller Detected": "DeepSea Controller"
+   },
+   {
+    "Nominal RPM": 3600
+   },
+   {
+    "Rated kW": "22"
+   },
+   {
+    "Nominal Frequency": 60
+   },
+   {
+    "Phase": 1
+   },
+   {
+    "Fuel Type": "Natural Gas"
+   },
+   {
+    "Fuel Level Sensor": "100 %"
+   },
+   {
+    "Run Hours": "139500 h"
+   }
+  ]
+ },
+ "outage_json": {
+  "Outage": [
+   {
+    "Status": "No outage has occurred since program launched."
+   },
+   {
+    "System In Outage": "No"
+   },
+   {
+    "Utility Voltage": "65535 V"
+   },
+   {
+    "Utility Voltage Minimum": "0 V"
+   },
+   {
+    "Utility Voltage Maximum": "0 V"
+   },
+   {
+    "Utility Threshold Voltage": "143 V"
+   },
+   {
+    "Utility Pickup Voltage": "190 V"
+   },
+   {
+    "Outage Log": ""
+   }
+  ]
+ },
+ "registers_json": {
+  "Registers": {
+   "Coils": {},
+   "Holding": {
+    "0006": "0003",
+    "0080": "ffffffff",
+    "008b": "ffffffff",
+    "0102": "0000",
+    "0300": "0000",
+    "0301": "0000",
+    "0302": "00000000",
+    "0304": "0001",
+    "0306": "0000",
+    "0311": "0000",
+    "031b": "0000",
+    "0400": "0000",
+    "0401": "0000",
+    "0402": "0000",
+    "0403": "ffff",
+    "0404": "0000",
+    "0405": "007f",
+    "0406": "fffb",
+    "0407": "0000",
+    "0408": "00000000",
+    "040a": "00000000",
+    "040c": "00000000",
+    "040e": "00000000",
+    "0410": "00000000",
+    "0412": "00000000",
+    "0414": "00000000",
+    "0416": "00000000",
+    "0418": "00000000",
+    "041a": "00000000",
+    "041c": "00000000",
+    "041e": "00000000",
+    "0423": "0000",
+    "0424": "ffff",
+    "0425": "0000",
+    "0426": "00000000",
+    "0428": "00000000",
+    "04e8": "00000000",
+    "04ea": "00000000",
+    "054d": "0000",
+    "054f": "0000",
+    "0580": "0000",
+    "058a": "0000",
+    "0600": "00000000",
+    "0706": "000220ec",
+    "0800": "0000",
+    "9900": "01ce",
+    "9a00": "0050",
+    "9a01": "11101111",
+    "9a03": "11111111",
+    "9a05": "01111101",
+    "9a07": "11111111",
+    "9a09": "111f1111",
+    "9a0a": "11111110",
+    "9a0c": "00110000",
+    "9a0e": "00000000",
+    "9a10": "00000000",
+    "9a12": "00000000",
+    "9a14": "00000000"
+   },
+   "Inputs": {}
+  }
+ },
+ "status_json": {
+  "Status": [
+   {
+    "Switch State": "Auto"
+   },
+   {
+    "Output Voltage": "0 V"
+   },
+   {
+    "Frequency": "0 Hz"
+   },
+   {
+    "Battery Voltage": "12.70 V"
+   },
+   {
+    "Utility Voltage": "65535 V"
+   },
+   {
+    "Alarm State": "System In Alarm"
+   },
+   {
+    "Active Alarms": [
+     "Unknown Alarm"
+    ]
+   },
+   {
+    "Time": [
+     {
+      "Monitor Time": "<NOW>"
+     }
+    ]
+   }
+  ]
+ }
+}

@@ -2,8 +2,8 @@
 # OS: 3.9 Bullseye, 3.11 Bookworm, 3.13 Trixie) for every push and pull request.
 # Results are in the Actions tab and next to each commit and pull request.
 #
-# The simulator tests (tests/test_genmon_sim.py) are skipped: they need register
-# captures, which are not in the repository.
+# The simulator tests (tests/test_genmon_sim.py) run genmon against the
+# anonymized register captures in tests/sim/captures.
 
 name: Tests
 
@@ -44,12 +44,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
           activate-environment: true
           enable-cache: true
-          cache-dependency-glob: tests/requirements.txt
+          cache-dependency-glob: tests/requirements*.txt
 
       - name: Install the libraries the tests need
-        run: uv pip install -r tests/requirements.txt
+        run: uv pip install -r tests/requirements-sim.txt
 
       - name: Run the tests
+        env:
+          GENMON_CAPTURES: tests/sim/captures
         run: |
           python --version
           python -m unittest discover -s tests -v

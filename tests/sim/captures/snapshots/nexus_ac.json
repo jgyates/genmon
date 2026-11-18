@@ -1,0 +1,404 @@
+{
+ "logs_json": {
+  "Logs": {
+   "Alarm Log": [
+    "11/26/18 <TIME> Change Oil & Filter ",
+    "11/19/18 <TIME> Change Oil & Filter ",
+    "11/12/18 <TIME> Change Oil & Filter ",
+    "11/05/18 <TIME> Change Oil & Filter ",
+    "10/29/18 <TIME> Change Oil & Filter ",
+    "10/22/18 <TIME> Change Oil & Filter ",
+    "10/15/18 <TIME> Change Oil & Filter ",
+    "10/08/18 <TIME> Change Oil & Filter ",
+    "10/01/18 <TIME> Change Oil & Filter ",
+    "09/24/18 <TIME> Change Oil & Filter ",
+    "09/17/18 <TIME> Change Oil & Filter ",
+    "09/10/18 <TIME> Change Oil & Filter ",
+    "09/08/18 <TIME> Change Oil & Filter ",
+    "07/02/18 <TIME> Inspect Battery ",
+    "06/26/18 <TIME> Inspect Battery ",
+    "06/26/18 <TIME> Inspect Battery ",
+    "06/26/18 <TIME> Inspect Battery ",
+    "06/26/18 <TIME> Inspect Battery ",
+    "01/01/18 <TIME> Overcrank ",
+    "01/01/18 <TIME> Inspect Battery ",
+    "01/14/17 <TIME> Inspect Battery ",
+    "01/14/17 <TIME> Low Battery ",
+    "01/14/17 <TIME> Inspect Battery ",
+    "01/13/17 <TIME> Inspect Battery ",
+    "01/19/33 <TIME> Underspeed ",
+    "09/08/16 <TIME> Inspect Spark Plugs ",
+    "09/08/16 <TIME> Inspect Spark Plugs ",
+    "09/08/16 <TIME> Inspect Spark Plugs ",
+    "09/08/16 <TIME> Inspect Air Filter ",
+    "09/03/16 <TIME> Change Oil & Filter ",
+    "08/27/16 <TIME> Change Oil & Filter ",
+    "08/20/16 <TIME> Change Oil & Filter ",
+    "08/13/16 <TIME> Change Oil & Filter ",
+    "08/06/16 <TIME> Change Oil & Filter ",
+    "07/30/16 <TIME> Change Oil & Filter ",
+    "07/23/16 <TIME> Change Oil & Filter ",
+    "07/16/16 <TIME> Change Oil & Filter ",
+    "07/09/16 <TIME> Change Oil & Filter ",
+    "07/02/16 <TIME> Change Oil & Filter ",
+    "06/25/16 <TIME> Change Oil & Filter ",
+    "06/18/16 <TIME> Change Oil & Filter ",
+    "06/11/16 <TIME> Change Oil & Filter ",
+    "06/09/16 <TIME> Change Oil & Filter ",
+    "06/04/16 <TIME> Change Oil & Filter ",
+    "05/28/16 <TIME> Change Oil & Filter ",
+    "05/21/16 <TIME> Change Oil & Filter ",
+    "05/15/16 <TIME> Change Oil & Filter ",
+    "05/14/16 <TIME> Change Oil & Filter ",
+    "05/07/16 <TIME> Change Oil & Filter ",
+    "05/03/16 <TIME> Change Oil & Filter "
+   ],
+   "Run Log": [
+    "12/01/18 <TIME> Running - Remote Start ",
+    "11/26/18 <TIME> Stopped - Auto ",
+    "11/26/18 <TIME> Running - Exercise ",
+    "11/19/18 <TIME> Stopped - Auto ",
+    "11/19/18 <TIME> Running - Exercise ",
+    "11/12/18 <TIME> Stopped - Auto ",
+    "11/12/18 <TIME> Running - Exercise ",
+    "11/05/18 <TIME> Stopped - Auto ",
+    "11/05/18 <TIME> Running - Exercise ",
+    "10/29/18 <TIME> Stopped - Auto ",
+    "10/29/18 <TIME> Running - Exercise ",
+    "10/22/18 <TIME> Stopped - Auto ",
+    "10/22/18 <TIME> Running - Exercise ",
+    "10/15/18 <TIME> Stopped - Auto ",
+    "10/15/18 <TIME> Running - Exercise ",
+    "10/08/18 <TIME> Stopped - Auto ",
+    "10/08/18 <TIME> Running - Exercise ",
+    "10/01/18 <TIME> Stopped - Auto ",
+    "10/01/18 <TIME> Running - Exercise ",
+    "09/24/18 <TIME> Stopped - Auto ",
+    "09/24/18 <TIME> Running - Exercise ",
+    "09/17/18 <TIME> Stopped - Auto ",
+    "09/17/18 <TIME> Running - Exercise ",
+    "09/10/18 <TIME> Stopped - Auto ",
+    "09/10/18 <TIME> Running - Exercise ",
+    "09/03/18 <TIME> Stopped - Auto ",
+    "09/03/18 <TIME> Running - Exercise ",
+    "08/27/18 <TIME> Stopped - Auto ",
+    "08/27/18 <TIME> Running - Exercise ",
+    "08/20/18 <TIME> Stopped - Auto ",
+    "08/20/18 <TIME> Running - Exercise ",
+    "08/13/18 <TIME> Stopped - Auto ",
+    "08/13/18 <TIME> Running - Exercise ",
+    "08/06/18 <TIME> Stopped - Auto ",
+    "08/06/18 <TIME> Running - Exercise ",
+    "07/30/18 <TIME> Stopped - Auto ",
+    "07/30/18 <TIME> Running - Exercise ",
+    "07/26/18 <TIME> Stopped - Auto ",
+    "07/26/18 <TIME> Running - Remote Start ",
+    "07/26/18 <TIME> Stopped - Auto ",
+    "07/23/18 <TIME> Stopped - Auto ",
+    "07/23/18 <TIME> Running - Exercise ",
+    "07/16/18 <TIME> Stopped - Auto ",
+    "07/16/18 <TIME> Running - Exercise ",
+    "07/09/18 <TIME> Stopped - Auto ",
+    "07/09/18 <TIME> Running - Exercise ",
+    "07/02/18 <TIME> Stopped - Auto ",
+    "07/02/18 <TIME> Stopped - Auto ",
+    "07/02/18 <TIME> Running - Exercise ",
+    "06/27/18 <TIME> Stopped - Auto "
+   ]
+  }
+ },
+ "maint_json": {
+  "Maintenance": [
+   {
+    "Model": "G0060331"
+   },
+   {
+    "Generator Serial Number": "1234567890"
+   },
+   {
+    "Controller Detected": "Nexus, Air Cooled"
+   },
+   {
+    "Nominal RPM": "3600"
+   },
+   {
+    "Rated kW": "15 kW"
+   },
+   {
+    "Nominal Frequency": "60 Hz"
+   },
+   {
+    "Fuel Type": "Natural Gas"
+   },
+   {
+    "Generator Phase": "1"
+   },
+   {
+    "Engine Displacement": "992 cc"
+   },
+   {
+    "Controller Settings": [
+     {
+      "Calibrate Volts": "1019 "
+     },
+     {
+      "Nominal Line Voltage": "240 V"
+     },
+     {
+      "Rated Max Power": "15 kW"
+     }
+    ]
+   },
+   {
+    "Exercise": [
+     {
+      "Exercise Time": "Weekly Monday 08:00 Quiet Mode On"
+     }
+    ]
+   },
+   {
+    "Service": [
+     {
+      "Air Filter Service Due": "101 hrs or 07/02/2019 "
+     },
+     {
+      "Oil and Oil Filter Service Due": "151 hrs or 09/08/2018 "
+     },
+     {
+      "Spark Plug Service Due": "151 hrs or 09/08/2018 "
+     },
+     {
+      "Battery Service Due": "151 hrs or 09/08/2018 "
+     },
+     {
+      "Total Run Hours": "101.00 h"
+     },
+     {
+      "Hardware Version": "V1.02"
+     },
+     {
+      "Firmware Version": "V1.42"
+     }
+    ]
+   }
+  ]
+ },
+ "outage_json": {
+  "Outage": [
+   {
+    "Status": "No outage has occurred since program launched."
+   },
+   {
+    "System In Outage": "No"
+   },
+   {
+    "Utility Voltage": "234 V"
+   },
+   {
+    "Utility Voltage Minimum": "234 V"
+   },
+   {
+    "Utility Voltage Maximum": "234 V"
+   },
+   {
+    "Utility Threshold Voltage": "156 V"
+   },
+   {
+    "Outage Log": ""
+   }
+  ]
+ },
+ "registers_json": {
+  "Registers": {
+   "Holding": {
+    "0000": "0003",
+    "0001": "00060010",
+    "0005": "0800",
+    "0006": "0101",
+    "0007": "0e14",
+    "0008": "003b",
+    "0009": "00ea",
+    "000a": "0085",
+    "000b": "00000065",
+    "000d": "0000",
+    "000e": "0b19",
+    "000f": "0c01",
+    "0010": "0612",
+    "0011": "009c",
+    "0012": "00f0",
+    "0018": "0000",
+    "0019": "0003",
+    "001a": "0097",
+    "001b": "4576",
+    "001c": "0065",
+    "001d": "4576",
+    "001e": "0097",
+    "001f": "0097",
+    "0020": "4576",
+    "0021": "015f",
+    "0022": "469f",
+    "002a": "668e",
+    "002b": "0000",
+    "002c": "0000",
+    "002d": "0000",
+    "002e": "0000",
+    "002f": "0000",
+    "0032": "2d90",
+    "0033": "0000",
+    "0034": "0001",
+    "0035": "0000",
+    "0036": "0000",
+    "0037": "122c",
+    "0038": "0002",
+    "0039": "0000",
+    "003a": "000002cf",
+    "003c": "0257",
+    "004c": "0000",
+    "0051": "0000",
+    "0052": "2a29",
+    "0053": "2e2a",
+    "0054": "2a2f",
+    "0055": "2e30",
+    "0056": "2e36",
+    "0057": "2a37",
+    "0058": "2e38",
+    "0059": "2a39",
+    "005a": "2a2b",
+    "005c": "2e2c",
+    "005d": "0000",
+    "005e": "00000000",
+    "0062": "0000",
+    "01f4": "31323334353637383930",
+    "0208": "03fb",
+    "0209": "0000",
+    "020a": "0000",
+    "020b": "0000",
+    "020c": "0000",
+    "020d": "0000",
+    "020e": "0000",
+    "020f": "0000",
+    "0212": "0000",
+    "0213": "0000",
+    "0234": "0000",
+    "0235": "0000",
+    "0236": "0000",
+    "0237": "0000",
+    "0238": "0000",
+    "0239": "0000",
+    "023a": "0000",
+    "023b": "0000",
+    "023d": "0000",
+    "023e": "0000",
+    "023f": "0000",
+    "0241": "0000",
+    "0242": "0000",
+    "0243": "0000",
+    "0244": "0000",
+    "0245": "0000",
+    "0246": "0000",
+    "0247": "0000",
+    "0248": "0000",
+    "0249": "0000",
+    "024a": "0000",
+    "0255": "0000",
+    "0256": "0000",
+    "0258": "0000",
+    "025a": "0000",
+    "05ed": "0000",
+    "05ee": "0000",
+    "05f1": "2e32",
+    "05f2": "0000",
+    "05f3": "0000",
+    "05f4": "0000",
+    "05f5": "0000",
+    "05f6": "0000",
+    "05f7": "0000",
+    "05fa": "2e3a",
+    "0614": "0000",
+    "1f72": "0000",
+    "1f73": "0000",
+    "1f74": "0000",
+    "1f75": "0000",
+    "1f76": "0000",
+    "1f77": "0000",
+    "1f7b": "0000",
+    "1f7c": "00000000",
+    "1fa4": "0000",
+    "1fa5": "0000",
+    "1fa6": "0000",
+    "2134": "0000",
+    "2135": "0000",
+    "2136": "0000",
+    "2137": "0000",
+    "2138": "0000",
+    "2166": "0000"
+   }
+  }
+ },
+ "status_json": {
+  "Status": [
+   {
+    "Engine": [
+     {
+      "Switch State": "System in Alarm"
+     },
+     {
+      "Engine State": "Running in Warning"
+     },
+     {
+      "System In Alarm": "Inspect Air Filter"
+     },
+     {
+      "Battery Voltage": "13.30 V"
+     },
+     {
+      "RPM": "3604 "
+     },
+     {
+      "Frequency": "59.00 Hz"
+     },
+     {
+      "Output Voltage": "240 V"
+     },
+     {
+      "Active Rotor Poles (Calculated)": "2 "
+     }
+    ]
+   },
+   {
+    "Line": [
+     {
+      "Utility Voltage": "234 V"
+     },
+     {
+      "Utility Max Voltage": "234 V"
+     },
+     {
+      "Utility Min Voltage": "234 V"
+     },
+     {
+      "Utility Threshold Voltage": "156 V"
+     }
+    ]
+   },
+   {
+    "Last Log Entries": {
+     "Logs": {
+      "Alarm Log": "11/26/18 <TIME> Change Oil & Filter ",
+      "Run Log": "12/01/18 <TIME> Running - Remote Start "
+     }
+    }
+   },
+   {
+    "Time": [
+     {
+      "Monitor Time": "<NOW>"
+     },
+     {
+      "Generator Time": "Saturday December 1, 2018 11:25"
+     }
+    ]
+   }
+  ]
+ }
+}

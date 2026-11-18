@@ -1,0 +1,434 @@
+{
+ "logs_json": {
+  "Logs": [
+   {
+    "Alarm Log": [
+     "02-09-2021 <TIME> Shutdown Overcrank(Low )",
+     "01-14-2020 <TIME> Shutdown Throttle Stuck (Low )",
+     "11-14-2019 <TIME> Warning BATTERY VOLTS(Low )",
+     "11-13-2019 <TIME> Warning BATTERY VOLTS(Low )",
+     "04-02-2019 <TIME> Shutdown EMERGENCY STOP (High)",
+     "04-02-2019 <TIME> Shutdown Throttle Stuck (Low )",
+     "05-02-2017 <TIME> Shutdown Throttle Stuck (Low )",
+     "05-02-2017 <TIME> Alarm O2 SENSOR(Low )",
+     "05-02-2017 <TIME> Alarm O2 SENSOR(Low )",
+     "05-02-2017 <TIME> Alarm O2 SENSOR(Low )",
+     "05-02-2017 <TIME> Shutdown Throttle Stuck (Low )",
+     "05-02-2017 <TIME> Shutdown Throttle Stuck (Low )",
+     "05-02-2017 <TIME> Shutdown Throttle Stuck (Low )",
+     "05-02-2017 <TIME> Shutdown Throttle Stuck (Low )",
+     "05-02-2017 <TIME> Shutdown Throttle Stuck (Low )",
+     "05-02-2017 <TIME> Shutdown Throttle Stuck (Low )",
+     "05-02-2017 <TIME> Shutdown Throttle Stuck (Low )",
+     "05-02-2017 <TIME> Shutdown Throttle Stuck (Low )",
+     "05-02-2017 <TIME> Shutdown Throttle Stuck (Low )",
+     "05-02-2017 <TIME> Shutdown Throttle Stuck (Low )"
+    ]
+   },
+   {
+    "Run Log": [
+     "03-03-2021 <TIME> GEN STOPPED",
+     "03-03-2021 <TIME> GEN READY TO RUN ",
+     "03-03-2021 <TIME> READY FOR LOAD ",
+     "03-03-2021 <TIME> GEN RUNNING",
+     "03-03-2021 <TIME> CRANKING ",
+     "03-02-2021 <TIME> GEN STOPPED",
+     "03-02-2021 <TIME> GEN READY TO RUN ",
+     "03-02-2021 <TIME> READY FOR LOAD ",
+     "03-02-2021 <TIME> GEN RUNNING",
+     "03-02-2021 <TIME> IN WARM UP ",
+     "03-02-2021 <TIME> CRANKING ",
+     "02-28-2021 <TIME> GEN STOPPED",
+     "02-28-2021 <TIME> GEN READY TO RUN ",
+     "02-28-2021 <TIME> GEN IN AUTO",
+     "02-28-2021 <TIME> GEN IN OFF ",
+     "02-28-2021 <TIME> READY FOR LOAD ",
+     "02-28-2021 <TIME> GEN RUNNING",
+     "02-28-2021 <TIME> CRANKING ",
+     "02-28-2021 <TIME> GEN STOPPED",
+     "02-28-2021 <TIME> GEN READY TO RUN "
+    ]
+   }
+  ]
+ },
+ "maint_json": {
+  "Maintenance": [
+   {
+    "Model": "Generac H-100 Industrial Generator"
+   },
+   {
+    "Name Plate Info": "1234567890                                                      "
+   },
+   {
+    "Controller Detected": "H-100 Controller, PM-DCP Release 4.2A1, HW00"
+   },
+   {
+    "Controller Software Version": "PM-DCP Release 4.2A1, HW00, $Date: 2016/08/24 <TIME> $"
+   },
+   {
+    "Minimum GenLink Version": "4.4.3, 4.4.0"
+   },
+   {
+    "Nominal RPM": "1800"
+   },
+   {
+    "Rated kW": "35"
+   },
+   {
+    "Nominal Frequency": "60"
+   },
+   {
+    "Fuel Type": "Natural Gas"
+   },
+   {
+    "Fuel Level Sensor": "0 %"
+   },
+   {
+    "Controller Power Up Time": "11-14-2019 <TIME>"
+   },
+   {
+    "Controller Last Power Fail": "11-14-2019 <TIME>"
+   },
+   {
+    "Generator Settings": [
+     {
+      "Target RPM": "1800"
+     },
+     {
+      "Number of Flywheel Teeth": "164"
+     },
+     {
+      "Phase": "3"
+     },
+     {
+      "CT Ratio": "150"
+     }
+    ]
+   },
+   {
+    "Engine Settings": [
+     {
+      "Engine Transfer Enable": "Disabled"
+     },
+     {
+      "Preheat Enable": "Disabled"
+     },
+     {
+      "Start detection RPM": "800"
+     },
+     {
+      "Crank Time": "15 s"
+     },
+     {
+      "Alarm Hold Off Time": "15 s"
+     },
+     {
+      "Engine Warm Up Time": "0 s"
+     },
+     {
+      "Engine Cool Down Time": "0 s"
+     },
+     {
+      "Pause Between Cranks Attempts": "10 s"
+     },
+     {
+      "Start Attempts": "3"
+     },
+     {
+      "Load Accept Frequency": "57 Hz"
+     },
+     {
+      "Load Accept Voltage": "187 V"
+     }
+    ]
+   },
+   {
+    "Governor Settings": [
+     {
+      "Soft Start Frequency": "0 Hz"
+     },
+     {
+      "Governor Target Frequency": "60.00 Hz"
+     }
+    ]
+   },
+   {
+    "Regulator Settings": [
+     {
+      "Voltage KP": "120 V"
+     },
+     {
+      "Voltage KI": "20 V"
+     },
+     {
+      "Voltage KD": "100 V"
+     },
+     {
+      "Volts Per Hz": "6"
+     },
+     {
+      "High Voltage Limit": "250 V"
+     },
+     {
+      "Low Voltage Limit": "166 V"
+     },
+     {
+      "Target Volts": "208 V"
+     },
+     {
+      "VF Corner 1": "59 Hz"
+     },
+     {
+      "VF Corner 2": "9 Hz"
+     },
+     {
+      "Rated Power": "35"
+     },
+     {
+      "Power Factor": "1.00"
+     },
+     {
+      "kW Demand": "0 kW"
+     },
+     {
+      "Panel Type": "9"
+     }
+    ]
+   },
+   {
+    "Service": [
+     {
+      "Total Run Hours": "94.90 "
+     }
+    ]
+   },
+   {
+    "I/O Status": [
+     {
+      "Inputs": [
+       "HUIO-2 Config 16",
+       "HUIO-1 Config 15",
+       "HUIO-1 Config 14",
+       "HUIO-1 Config 13",
+       "HUIO-1 Config 12",
+       "DI-2 Fuel Pressure",
+       "Switch In Auto",
+       "HUIO-3 Config 21",
+       "HUIO-3 Config 20",
+       "HUIO-2 Config 19",
+       "HUIO-2 Config 18",
+       "HUIO-2 Config 17"
+      ]
+     },
+     {
+      "Outputs": [
+       "Key in Auto Position",
+       "Stopped",
+       "Ready to Run",
+       "DI-2, Digital Input #6 Active / Ruptured Basin, Gas Leak, Low Fuel Pressure",
+       "Digital Input Key in Auto Active",
+       "Check for ILC"
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "outage_json": {
+  "Outage": [
+   {
+    "Status": "Not Supported"
+   },
+   {
+    "System In Outage": "No"
+   }
+  ]
+ },
+ "registers_json": {
+  "Registers": {
+   "Holding": {
+    "0080": "841f",
+    "0081": "f818",
+    "0082": "0540",
+    "0083": "0000",
+    "0084": "0000",
+    "0085": "0000",
+    "0086": "0000",
+    "0087": "0420",
+    "0088": "0210",
+    "0089": "0001",
+    "008a": "00000000",
+    "008c": "000000c2",
+    "008e": "00000003",
+    "0090": "0000031d",
+    "0092": "00000000",
+    "0096": "0000009b",
+    "0098": "00000001",
+    "009a": "0000005f",
+    "009c": "0000059d",
+    "009e": "00000000",
+    "00a0": "00000000",
+    "00a2": "00000000",
+    "00a4": "00000000",
+    "00a6": "00000000",
+    "00a8": "00000000",
+    "00aa": "00000000",
+    "00ac": "00000000",
+    "00ae": "00000000",
+    "00b0": "00000064",
+    "00b2": "00000000",
+    "00b4": "00000000",
+    "00b6": "00000062",
+    "00e0": "0c38",
+    "00e1": "2a04",
+    "00e2": "0303",
+    "00e3": "1500",
+    "012e": "0000",
+    "012f": "0000",
+    "0130": "000003b5",
+    "0132": "0008",
+    "019c": "0000",
+    "019d": "0000",
+    "019e": "0000",
+    "01a0": "0100",
+    "01a1": "0000",
+    "01a2": "0001",
+    "022b": "ffff",
+    "0ea1": "0000",
+    "0ea2": "0000",
+    "0ea7": "0000",
+    "0eaa": "0000",
+    "0ead": "0000",
+    "0eae": "0000",
+    "0eaf": "0000",
+    "0eb0": "0000",
+    "0eb1": "0000",
+    "0eb2": "0000",
+    "0eb4": "0000",
+    "0eb5": "0000",
+    "0eb6": "0000",
+    "0eb7": "0000",
+    "0eb8": "0000",
+    "0eb9": "0000",
+    "0eba": "0000",
+    "0ebc": "0000",
+    "0ebf": "0000",
+    "0ec0": "0000"
+   }
+  }
+ },
+ "status_json": {
+  "Status": [
+   {
+    "Engine": [
+     {
+      "Engine State": "Stopped, Key SW Auto"
+     },
+     {
+      "Generator Status": "Stopped             "
+     },
+     {
+      "Switch State": "Auto"
+     },
+     {
+      "Output Power": "0.00 kW"
+     },
+     {
+      "Power Factor": "1.00 "
+     },
+     {
+      "RPM": "0 "
+     },
+     {
+      "Frequency": "0.00 Hz"
+     },
+     {
+      "Throttle Position": "155 Stp"
+     },
+     {
+      "Coolant Temp": "194 F"
+     },
+     {
+      "Coolant Level": "797 Stp"
+     },
+     {
+      "Oil Pressure": "3 psi"
+     },
+     {
+      "Oil Temp": "0 F"
+     },
+     {
+      "Fuel Level": "0 "
+     },
+     {
+      "Oxygen Sensor": "1 "
+     },
+     {
+      "Current Phase A": "0 A"
+     },
+     {
+      "Current Phase B": "0 A"
+     },
+     {
+      "Current Phase C": "0 A"
+     },
+     {
+      "Average Current": "0 A"
+     },
+     {
+      "Voltage A-B": "0 V"
+     },
+     {
+      "Voltage B-C": "0 V"
+     },
+     {
+      "Voltage C-A": "0 V"
+     },
+     {
+      "Average Voltage": "0 V"
+     },
+     {
+      "Air Fuel Duty Cycle": "9.80 "
+     }
+    ]
+   },
+   {
+    "Alarms": [
+     {
+      "Number of Active Alarms": "0 "
+     },
+     {
+      "Number of Acknowledged Alarms": "0 "
+     }
+    ]
+   },
+   {
+    "Battery": [
+     {
+      "Battery Voltage": "14.37 V"
+     },
+     {
+      "Battery Charger Current": "9.50 A"
+     }
+    ]
+   },
+   {
+    "Line State": [
+     {
+      "Transfer Switch State": "Unknown"
+     }
+    ]
+   },
+   {
+    "Time": [
+     {
+      "Monitor Time": "<NOW>"
+     },
+     {
+      "Generator Time": "Wednesday March 3, 2021 <TIME>"
+     }
+    ]
+   }
+  ]
+ }
+}

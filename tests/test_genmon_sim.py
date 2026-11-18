@@ -6,9 +6,13 @@
 #          genmon's Modbus requests from a register file (a genmon register
 #          dump, e.g. from "send registers").
 #
-#          The register files are not in the repository (they come from real
-#          generators), so these tests only run when GENMON_CAPTURES is set to
-#          a folder with a captures.json file:
+#          These tests run when GENMON_CAPTURES is set to a folder with a
+#          captures.json file. tests/sim/captures has anonymized captures of
+#          real generators (made with tests/sim/anonymize_capture.py: only the
+#          register data, serial numbers replaced) and their snapshots; the
+#          GitHub CI runs them. Other captures (e.g. the originals, which are
+#          not in the repository) can be kept in a folder of their own.
+#          captures.json:
 #
 #            {
 #              "captures": [
@@ -46,12 +50,17 @@
 #          genmon starts, detects the controller, answers the read commands, and
 #          logs no errors. If the captures.json folder has a "snapshots" folder,
 #          the answers are also compared with snapshots/<name>.json (times are
-#          masked). The snapshots are kept with the captures, not in the
-#          repository, since they show decoded data such as the serial number.
-#          Make new snapshots with:
+#          masked). Snapshots of captures that are not anonymized show decoded
+#          data such as the serial number, so keep them with those captures,
+#          not in the repository. Make new snapshots with:
 #              GENMON_SIM_UPDATE=1 GENMON_CAPTURES=<folder> python3 -m unittest tests.test_genmon_sim
 #
+#          RepositoryCaptureTests (always run, quick) check that each capture
+#          in tests/sim/captures is anonymized.
+#
 #   USAGE: from the root of the repository:
+#              GENMON_CAPTURES=tests/sim/captures python3 -m unittest tests.test_genmon_sim
+#          or another folder of captures:
 #              GENMON_CAPTURES=<folder> python3 -m unittest tests.test_genmon_sim
 #
 # -------------------------------------------------------------------------------
@@ -80,6 +89,7 @@ if CAPTURES_DIR:
     # gensim and genmon run in other folders
     CAPTURES_DIR = os.path.abspath(CAPTURES_DIR)
 GENSIM = os.path.join(REPO_DIR, "tests", "sim", "gensim.py")
+REPO_CAPTURES = os.path.join(REPO_DIR, "tests", "sim", "captures")
 START_TIMEOUT = 90  # seconds for genmon to connect and read the controller
 
 # read commands a client (genserv, add-ons) uses, and whether the answer is JSON
@@ -374,6 +384,48 @@ class GenmonSimulatorTests(unittest.TestCase):
                 if expected is not None:
                     expected = json.loads(mask(json.dumps(expected)))
                 self.assertEqual(current[command], expected)
+
+
+# -------------------------------------------------------------------------------
+class RepositoryCaptureTests(unittest.TestCase):
+    """The captures in the repository (tests/sim/captures) are anonymized:
+    only the register data, serial numbers replaced."""
+
+    def test_captures_are_anonymized(self):
+        sys.path.insert(0, os.path.join(REPO_DIR, "tests", "sim"))
+        import anonymize_capture
+
+        with open(os.path.join(REPO_CAPTURES, "captures.json")) as f:
+            captures = json.load(f)["captures"]
+        self.assertTrue(captures)
+        for capture in captures:
+            with self.subTest(capture=capture["name"]):
+                with open(os.path.join(REPO_CAPTURES, capture["file"])) as f:
+                    data = json.load(f)
+                extra = [key for key in data if key not in anonymize_capture.ALLOWED_KEYS]
+                self.assertEqual(extra, [], "not register data (site name, settings, ...)")
+                # anonymizing again changes nothing: the serial numbers are
+                # the made up ones
+                again, _ = anonymize_capture.anonymize(
+                    data, capture["controllertype"],
+                    capture.get("settings", {}).get("import_config_file"), data.get("Comment"))
+                self.assertEqual(json.loads(json.dumps(again)), data)
+                self.assertTrue(os.path.isfile(os.path.join(REPO_CAPTURES, "snapshots",
+                                                            capture["name"] + ".json")))
+
+    def test_anonymize(self):
+        sys.path.insert(0, os.path.join(REPO_DIR, "tests", "sim"))
+        import anonymize_capture
+
+        capture = {"StartInfo": {"sitename": "Home"}, "PlatformStats": [],
+                   "Registers": {"01f4": "33303030373839363736", "0001": "0000"},
+                   "Strings": {}, "FileData": {}}
+        out, replaced = anonymize_capture.anonymize(capture, "generac_evo_nexus")
+        self.assertEqual(list(out), ["Registers", "Strings", "FileData"])
+        self.assertEqual(out["Registers"]["01f4"], "31323334353637383930")  # 1234567890
+        self.assertEqual(out["Registers"]["0001"], "0000")
+        self.assertEqual(len(replaced), 1)
+        self.assertEqual(anonymize_capture.fake_text("SN-3001 2A"), "XX-1234 5X")
 
 
 if __name__ == "__main__":
