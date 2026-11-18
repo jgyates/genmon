@@ -11,6 +11,10 @@
 #
 #          Needs the coverage package: python3 -m pip install coverage
 #
+#          With GENMON_CAPTURES set (see test_genmon_sim.py) the simulator
+#          tests run too, and with coverage 7.10 or later the genmon.py they
+#          start is measured as well.
+#
 #   USAGE: from the root of the repository:
 #              python3 tests/coverage_report.py
 #          also write an HTML report (one page per file, missed lines marked):
@@ -31,7 +35,7 @@ REPO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RC_FILE = """[run]
 parallel = True
 data_file = {work}/data/.coverage
-source =
+{subprocess}source =
     {repo}
     {repo}/addon
     {work}/tmp
@@ -52,6 +56,18 @@ skip_empty = True
 """
 
 
+def SubprocessSettings():
+    """coverage 7.10 and later also measure the Python programs the tests
+    start (genmon.py and gensim.py in the simulator tests, which run when
+    GENMON_CAPTURES is set) and save their data when they are stopped."""
+    import coverage
+
+    version = tuple(int(x) for x in coverage.__version__.split(".")[:2])
+    if version < (7, 10):
+        return ""
+    return "patch = subprocess\nsigterm = true\n"
+
+
 def main():
     parser = argparse.ArgumentParser(description="Test coverage report for genmon")
     parser.add_argument("--html", metavar="FOLDER", help="also write an HTML report here")
@@ -67,7 +83,7 @@ def main():
         os.makedirs(os.path.join(work, "tmp"))
         rc_file = os.path.join(work, "coveragerc")
         with open(rc_file, "w") as f:
-            f.write(RC_FILE.format(work=work, repo=REPO_DIR))
+            f.write(RC_FILE.format(work=work, repo=REPO_DIR, subprocess=SubprocessSettings()))
         # the tests' temporary folders go under work/tmp, so they are measured
         env = dict(os.environ, TMPDIR=os.path.join(work, "tmp"))
         run = [sys.executable, "-m", "coverage"]

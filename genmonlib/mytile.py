@@ -113,9 +113,10 @@ class MyTile(MyCommon):
                 self.TileType = "gauge"
 
             elif self.Type.lower() == "linevolts":
+                # the default first: the tolerances are from the nominal value
+                self.Nominal = self.SetDefault(self.Nominal, 240)
                 ToleranceTen = round(self.Nominal * 0.1)
                 ToleranceFive = round(self.Nominal * 0.05)
-                self.Nominal = self.SetDefault(self.Nominal, 240)
                 self.Minimum = self.SetDefault(self.Minimum, 0)
                 # self.Maximum = self.SetDefault(self.Maximum, self.Nominal + 20)
                 self.Maximum = self.SetDefault(
@@ -362,25 +363,29 @@ class MyTile(MyCommon):
             elif self.Type.lower() == "pressure":
                 self.Nominal = self.SetDefault(self.Nominal, 100)
                 self.Minimum = self.SetDefault(self.Minimum, 0)
-                self.Maximum = self.SetDefault(self.Maximum, self.Nominal + 10)
-                self.Divisions = self.SetDefault(self.Divisions, int(self.Maximum / 10))
+                self.Maximum = self.SetDefault(self.Maximum, self.WholeNumber(self.Nominal * 1.5))
+                self.Divisions = self.SetDefault(
+                    self.Divisions, max(1, int((self.Maximum - self.Minimum) / 10)))
                 self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
+                # up to and including the maximum
                 self.Labels = self.SetDefault(
                     self.Labels,
                     list(
-                        range(int(self.Minimum), int(self.Maximum), int(self.Divisions))
+                        range(int(self.Minimum), int(self.Maximum) + 1, int(self.Divisions))
                     ),
                 )
-                # TODO
-                values = [
-                    self.Minimum,
-                    self.Nominal - 15,
-                    self.Nominal - 5,
-                    self.Nominal + 5,
-                    self.Nominal + 15,
-                    self.Maximum,
-                ]
-                colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
+                # a percentage of nominal (any units): red when low (the
+                # danger for oil pressure), green 75% to 125%, yellow above,
+                # all within the scale
+                values = [self.Minimum]
+                colors = []
+                for percent, color in [(0.50, self.RED), (0.75, self.YELLOW),
+                                       (1.25, self.GREEN), (None, self.YELLOW)]:
+                    end = self.Maximum if percent is None else self.WholeNumber(self.Nominal * percent)
+                    end = min(max(end, self.Minimum), self.Maximum)
+                    if end > values[-1]:
+                        values.append(end)
+                        colors.append(color)
                 self.ColorZones = self.SetDefault(
                     self.ColorZones, self.CreateColorZoneList(values, colors)
                 )
@@ -450,11 +455,11 @@ class MyTile(MyCommon):
     def CreateLabels(self, Minimum, Nominal, Maximum):
 
         if Maximum - Minimum < 15:
-            return list(range(int(self.Minimum), int(self.Maximum), 2))
+            return list(range(int(Minimum), int(Maximum), 2))
         elif Maximum - Minimum < 30:
-            return list(range(int(self.Minimum), int(self.Maximum), 5))
+            return list(range(int(Minimum), int(Maximum), 5))
         elif Maximum - Minimum < 45:
-            return list(range(int(self.Minimum), int(self.Maximum), 10))
+            return list(range(int(Minimum), int(Maximum), 10))
         else:
             RoundTo = 5
         ReturnList = []
@@ -505,6 +510,15 @@ class MyTile(MyCommon):
         else:
             return Value
 
+    # -------------MyTile:WholeNumber--------------------------------------------
+    # an int when the value has no fraction (150.0 -> 150)
+    @staticmethod
+    def WholeNumber(Value):
+
+        if float(Value).is_integer():
+            return int(Value)
+        return Value
+
     # -------------MyTile:GetGUIInfo---------------------------------------------
     def GetGUIInfo(self):
 
@@ -532,7 +546,8 @@ class MyTile(MyCommon):
             # this check makes the gauge not display distored if the value is out of range,
             # but the above "text" will show the value that is out of range as text
             if isinstance(Value, str):
-                Value = int(Value)
+                # e.g. "12.5"
+                Value = float(Value)
             if Value < self.Minimum or  Value > self.Maximum:
                 if Value < self.Minimum:
                     Value = self.Minimum

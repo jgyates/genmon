@@ -290,7 +290,9 @@ class MyWeather(MySupport):
                     else:
                         wind = self.WeatherData.get_wind(unit=self._GetUnits("speed"))
 
-                    Degrees = round(TempDict.get("deg", 0), 2)
+                    # from the wind data (it was read from the temperature
+                    # data, so it was always 0)
+                    Degrees = round(wind.get("deg", 0), 2)
                     Cardinal = self._DegreesToCardinal(Degrees)
                     
                     if len(Cardinal):
@@ -300,7 +302,7 @@ class MyWeather(MySupport):
                     Data.append(
                         {
                             "Wind": WindString
-                            + str(round(TempDict.get("speed", 0), 2))
+                            + str(round(wind.get("speed", 0), 2))
                             + " "
                             + self._GetUnits("speed", Label=True)
                         }

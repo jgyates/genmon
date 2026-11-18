@@ -21,7 +21,6 @@ class MyThread:
         if Name == None:
             Name = ThreadFunction.__name__
         self.ThreadObj = threading.Thread(target=ThreadFunction, name=Name)
-        self.Name = Name
         self.ThreadObj.daemon = True
         if start:
             self.Start()

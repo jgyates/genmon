@@ -18,6 +18,7 @@ def SetupLogger(logger_name, log_file, level=logging.INFO, stream=False):
     # remove existing logg handlers
     for handler in logger.handlers[:]:  # make a copy of the list
         logger.removeHandler(handler)
+        handler.close()     # e.g. the log file it had open
 
     logger.setLevel(level)
 

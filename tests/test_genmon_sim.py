@@ -112,6 +112,8 @@ def load_captures():
 
 # times and dates change with every run
 MASKS = [
+    # this computer's date and time (the date changes from one day to the next)
+    (re.compile(r'("Monitor Time": ")[^"]*"'), r'\1<NOW>"'),
     (re.compile(r"\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d+)?"), "<DATETIME>"),
     (re.compile(r"\b\d{1,2}:\d{2}:\d{2}\b"), "<TIME>"),
 ]
@@ -367,7 +369,11 @@ class GenmonSimulatorTests(unittest.TestCase):
             saved = json.load(f)
         for command in SNAPSHOT_COMMANDS:
             with self.subTest(snapshot=name, command=command):
-                self.assertEqual(current[command], saved.get(command))
+                # masked again: snapshots made before a mask was added still match
+                expected = saved.get(command)
+                if expected is not None:
+                    expected = json.loads(mask(json.dumps(expected)))
+                self.assertEqual(current[command], expected)
 
 
 if __name__ == "__main__":

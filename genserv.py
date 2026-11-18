@@ -370,6 +370,8 @@ class GenServ(MySupport):
             self.OperatingSystem = "linux"
         elif MyPlatform.IsOSWindows():
             self.OperatingSystem = "windows"
+        elif MyPlatform.IsOSMac():
+            self.OperatingSystem = "mac"
         else:
             self.OperatingSystem = "unknown"
             import platform

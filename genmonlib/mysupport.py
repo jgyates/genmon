@@ -74,8 +74,10 @@ class MySupport(MyCommon):
                 os.mkdir(path)
             with os.fdopen(os.open(source, os.O_RDONLY), "r") as source_fd:
                 data = source_fd.read()
+                # O_TRUNC: a longer file that was there is replaced, not
+                # partly overwritten
                 with os.fdopen(
-                    os.open(destination, os.O_CREAT | os.O_RDWR), "w"
+                    os.open(destination, os.O_CREAT | os.O_RDWR | os.O_TRUNC), "w"
                 ) as dest_fd:
                     dest_fd.write(data)
                     dest_fd.flush()
@@ -653,6 +655,7 @@ class MySupport(MyCommon):
 
         ConfigFilePath = ProgramDefaults.ConfPath
         address = ProgramDefaults.LocalHost
+        log = console   # until the add-on's log file is set up
 
         try:
             opts, args = getopt.getopt(sys.argv[1:], short_opts, long_opts)
@@ -729,7 +732,7 @@ class MySupport(MyCommon):
 
         if MyPlatform.IsOSLinux() and os.geteuid() == 0:
             return True
-        if MyPlatform.IsOSWindows():
+        # Windows and macOS (for development and testing) do not need root
+        if MyPlatform.IsOSWindows() or MyPlatform.IsOSMac():
             return True
-        else:
-            return False
+        return False

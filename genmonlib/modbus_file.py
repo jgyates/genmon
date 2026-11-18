@@ -142,8 +142,11 @@ class ModbusFile(ModbusBase):
 
         if not skipupdate:
             if not self.UpdateRegisterList == None:
+                # IsCoil / IsInput: stored with the coils or input registers,
+                # not as a holding register of the same number
                 self.UpdateRegisterList(
-                    Register, RegValue, IsFile=False, IsString=ReturnString
+                    Register, RegValue, IsFile=False, IsString=ReturnString,
+                    IsCoil=IsCoil, IsInput=IsInput
                 )
 
         return RegValue
@@ -172,7 +175,8 @@ class ModbusFile(ModbusBase):
     # ----------  AdjustInputData  ----------------------------------------------
     def AdjustInputData(self):
 
-        if not len(self.Registers):
+        # some controllers only have input registers or coils
+        if not (len(self.Registers) or len(self.Inputs) or len(self.Coils)):
             self.LogError("Error in AdjustInputData, no data.")
             return False
         #  No need to adjust data for registers, move on to strings and File data

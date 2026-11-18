@@ -263,6 +263,10 @@ class CustomController(GeneratorController):
             ReturnValue, TempValue = self.GetSingleEntry("rated_nominal_voltage")
             if not ReturnValue:
                 return False
+            if isinstance(TempValue, float) and TempValue == 0:
+                # a float register (e.g. Basler) not set: the default, as for
+                # an int 0 (0 V divided by zero in the current gauge)
+                TempValue = 480
             if isinstance(TempValue, int):
                 if TempValue == 0:
                     TempValue = 480
@@ -332,6 +336,10 @@ class CustomController(GeneratorController):
                 self.NominalKW = str(TempValue)
             elif self.StringIsFloat(TempValue) or self.StringIsInt(TempValue):
                 self.NominalKW = str(TempValue)
+            elif not self.StringIsFloat(self.NominalKW):
+                # not in the controller file or genmon.conf: the default, as
+                # for a controller that reports 0
+                self.NominalKW = "100"
             else:
                 self.LogDebug("Nominal kW: " + str(self.NominalKW))
 
@@ -493,130 +501,140 @@ class CustomController(GeneratorController):
             sensor_list = self.controllerimport["gauges"]
 
             for sensor in sensor_list:
-                
-                if "title" not in sensor:
-                    self.LogError("Error in SetupTiles: no " "title" " in sensor entry")
-                    continue
-
-                if "sensor" not in sensor:
-                    self.LogError(
-                        "Error in SetupTiles: sensor (" + sensor["title"] + ") has no ""sensor"" entry"
-                    )
-                    continue
-                if "units" not in sensor:
-                    self.LogError(
-                        "Error in SetupTiles: sensor (" + sensor["title"] + ") has no ""units"" entry"
-                    )
-                    continue
-                units = sensor["units"]
-
-                if "nominal" not in sensor:
-                    self.LogError(
-                        "Error in SetupTiles: sensor (" + sensor["title"] + ") has no ""nominal"" entry"
-                    )
-                    continue
-                
-                # add inclulde object if needed
-                if "include" in sensor.keys() and "include" in self.controllerimport.keys():
-                    includeNames = sensor["include"]
-                    includeList = includeNames.split(",")
-                    for includeName in includeList:
-                        if includeName in self.controllerimport["include"].keys():
-                            includeValue = self.controllerimport["include"][includeName]
-                            if isinstance(includeValue, dict):
-                                sensor = self.MergeDicts(sensor, includeValue)
-                            else:
-                                self.LogError("Error in SetupTiles: include value is not an object: " + str(includeValue))
-                                continue
-                        else:
-                            self.LogError("Error in SetupTiles: entry has include but object name is not in scope of base include object: " + str(sensor))
-                            continue
-                
-                if "reg" not in sensor:
-                    self.LogError("Error in SetupTiles: no " "reg" " in sensor entry")
-                    continue
-
-                # check for "disable" object
-                if "disable" in sensor.keys():
-                # conditionally disable the entry
-                    if "reg_type" in sensor.keys():
-                        reg_type = sensor["reg_type"]
-                    else:
-                        reg_type = None     # holding register
-
-                    title, value = self.GetDisplayEntry(sensor["disable"], inheritreg = sensor["reg"], inheritregtype = reg_type)
-                    if value:
-                        #self.LogDebug("Ignoring gauge " + sensor["title"])
-                        continue
-
-                if "maximum" in sensor.keys():
-                    maximum = sensor["maximum"]
-                else:
-                    maximum = None
-                if "values" in sensor:
-                    values = sensor["values"]
-                else:
-                    values = None
-
-                if not isinstance(sensor["nominal"], int) and sensor["nominal"].lower() == "unknown":
-                    if sensor["sensor"].lower() == "power" or sensor["sensor"].lower() == "powergraph":
-                        nominal = float(self.NominalKW)
-                    elif sensor["sensor"].lower() == "linevolts":
-                        nominal = self.NominalLineVolts
-                    elif sensor["sensor"].lower() == "frequency":
-                        try:
-                            nominal = int(self.NominalFreq)
-                        except:
-                            nominal = 60
-                    elif sensor["sensor"].lower() == "batteryvolts":
-                        try:
-                            nominal = self.NominalBatteryVolts
-                        except:
-                            nominal = 12
-                    elif sensor["sensor"].lower() == "rpm":
-                        try:
-                            nominal = int(self.NominalRPM)
-                        except:
-                            nominal = 1800
-                    elif sensor["sensor"].lower() == "current":
-                        nominal = round((float(self.NominalKW) * 1000) / self.NominalLineVolts,0)
-                    else:
-                        nominal = None
-                        self.LogError("Nominal is unknown for type " + sensor["sensor"])
-                else:
-                    if sensor["sensor"].lower() == "temperature":
-                        if "nominal" in sensor.keys():
-                            nominal = self.ProcessTemperatureModifier(sensor, sensor["nominal"], units = False)
-                        if "maximum" in sensor.keys():
-                            maximum = self.ProcessTemperatureModifier(sensor, sensor["maximum"], units = False)
-                        if "units" in sensor.keys():
-                            units = self.ProcessTemperatureModifier(sensor, sensor["units"], units = True)
-                    else:
-                        nominal = sensor["nominal"]
-                
-                if maximum == None:
-                    maximum = round(nominal * 1.25, 0)
-                    #self.LogDebug(f"SetupTiles: Max set to {sensor["sensor"].lower()}: {maximum}, nominal {nominal}")
-                #else:
-                    #self.LogDebug(f"SetupTiles: not set Max to {sensor["sensor"].lower()}:{maximum}, nominal {nominal}")
-
-                Tile = MyTile(
-                    self.log,
-                    title=sensor["title"],
-                    type=sensor["sensor"],
-                    units=units,
-                    nominal=nominal,
-                    maximum=maximum,
-                    values=values,
-                    callback=self.GetGaugeValue,
-                    callbackparameters=(sensor["title"],),
-                )
-                self.TileList.append(Tile)
+                # an error in one gauge (e.g. an unknown nominal value) does not
+                # stop the other gauges and the common tiles from being set up
+                try:
+                    self.SetupTile(sensor)
+                except Exception as e1:
+                    self.LogErrorLine("Error in SetupTiles: " + str(sensor.get("title", sensor)) + ": " + str(e1))
 
             self.SetupCommonTiles()
 
         except Exception as e1:
             self.LogErrorLine("Error in SetupTiles: " + str(e1))
+
+    # -------------CustomController:SetupTile------------------------------------
+    # one gauge of the "gauges" list in the import file
+    def SetupTile(self, sensor):
+        
+        if "title" not in sensor:
+            self.LogError("Error in SetupTiles: no " "title" " in sensor entry")
+            return
+
+        if "sensor" not in sensor:
+            self.LogError(
+                "Error in SetupTiles: sensor (" + sensor["title"] + ") has no ""sensor"" entry"
+            )
+            return
+        if "units" not in sensor:
+            self.LogError(
+                "Error in SetupTiles: sensor (" + sensor["title"] + ") has no ""units"" entry"
+            )
+            return
+        units = sensor["units"]
+
+        if "nominal" not in sensor:
+            self.LogError(
+                "Error in SetupTiles: sensor (" + sensor["title"] + ") has no ""nominal"" entry"
+            )
+            return
+        
+        # add inclulde object if needed
+        if "include" in sensor.keys() and "include" in self.controllerimport.keys():
+            includeNames = sensor["include"]
+            includeList = includeNames.split(",")
+            for includeName in includeList:
+                if includeName in self.controllerimport["include"].keys():
+                    includeValue = self.controllerimport["include"][includeName]
+                    if isinstance(includeValue, dict):
+                        sensor = self.MergeDicts(sensor, includeValue)
+                    else:
+                        self.LogError("Error in SetupTiles: include value is not an object: " + str(includeValue))
+                        continue
+                else:
+                    self.LogError("Error in SetupTiles: entry has include but object name is not in scope of base include object: " + str(sensor))
+                    continue
+        
+        if "reg" not in sensor:
+            self.LogError("Error in SetupTiles: no " "reg" " in sensor entry")
+            return
+
+        # check for "disable" object
+        if "disable" in sensor.keys():
+        # conditionally disable the entry
+            if "reg_type" in sensor.keys():
+                reg_type = sensor["reg_type"]
+            else:
+                reg_type = None     # holding register
+
+            title, value = self.GetDisplayEntry(sensor["disable"], inheritreg = sensor["reg"], inheritregtype = reg_type)
+            if value:
+                #self.LogDebug("Ignoring gauge " + sensor["title"])
+                return
+
+        if "maximum" in sensor.keys():
+            maximum = sensor["maximum"]
+        else:
+            maximum = None
+        if "values" in sensor:
+            values = sensor["values"]
+        else:
+            values = None
+
+        if not isinstance(sensor["nominal"], int) and sensor["nominal"].lower() == "unknown":
+            if sensor["sensor"].lower() == "power" or sensor["sensor"].lower() == "powergraph":
+                nominal = float(self.NominalKW)
+            elif sensor["sensor"].lower() == "linevolts":
+                nominal = self.NominalLineVolts
+            elif sensor["sensor"].lower() == "frequency":
+                try:
+                    nominal = int(self.NominalFreq)
+                except:
+                    nominal = 60
+            elif sensor["sensor"].lower() == "batteryvolts":
+                try:
+                    nominal = self.NominalBatteryVolts
+                except:
+                    nominal = 12
+            elif sensor["sensor"].lower() == "rpm":
+                try:
+                    nominal = int(self.NominalRPM)
+                except:
+                    nominal = 1800
+            elif sensor["sensor"].lower() == "current":
+                nominal = round((float(self.NominalKW) * 1000) / self.NominalLineVolts,0)
+            else:
+                nominal = None
+                self.LogError("Nominal is unknown for type " + sensor["sensor"])
+        else:
+            if sensor["sensor"].lower() == "temperature":
+                if "nominal" in sensor.keys():
+                    nominal = self.ProcessTemperatureModifier(sensor, sensor["nominal"], units = False)
+                if "maximum" in sensor.keys():
+                    maximum = self.ProcessTemperatureModifier(sensor, sensor["maximum"], units = False)
+                if "units" in sensor.keys():
+                    units = self.ProcessTemperatureModifier(sensor, sensor["units"], units = True)
+            else:
+                nominal = sensor["nominal"]
+        
+        if maximum == None:
+            maximum = round(nominal * 1.25, 0)
+            #self.LogDebug(f"SetupTiles: Max set to {sensor["sensor"].lower()}: {maximum}, nominal {nominal}")
+        #else:
+            #self.LogDebug(f"SetupTiles: not set Max to {sensor["sensor"].lower()}:{maximum}, nominal {nominal}")
+
+        Tile = MyTile(
+            self.log,
+            title=sensor["title"],
+            type=sensor["sensor"],
+            units=units,
+            nominal=nominal,
+            maximum=maximum,
+            values=values,
+            callback=self.GetGaugeValue,
+            callbackparameters=(sensor["title"],),
+        )
+        self.TileList.append(Tile)
 
     # ------------ CustomController:WaitAndPergeforTimeout ----------------------
     def WaitAndPergeforTimeout(self):
@@ -696,7 +714,7 @@ class CustomController(GeneratorController):
                     self.LogErrorLine("Error in MasterEmulation: " + str(e1))
 
         except Exception as e1:
-            self.LogErrorLing("Error in UpdateLogRegistersAsMaster: " + str(e1))
+            self.LogErrorLine("Error in UpdateLogRegistersAsMaster: " + str(e1))
 
     # -------------CustomController:MasterEmulation------------------------------
     def MasterEmulation(self):
@@ -1313,7 +1331,8 @@ class CustomController(GeneratorController):
             Time.append({"Monitor Time": datetime.datetime.now().strftime("%A %B %d, %Y %H:%M:%S")})
             if "datetime" in self.controllerimport.keys():
                 retval, gentime =  self.GetSingleEntry("datetime")
-                if retval or len(gentime) == 0:
+                # not shown if the generator time could not be read
+                if retval and gentime is not None:
                     Time.append({"Generator Time": gentime})
 
         except Exception as e1:
@@ -1744,7 +1763,10 @@ class CustomController(GeneratorController):
                         else:   
                             ReturnValue = self.ProcessExecModifier(entry, int(self.ProcessTemperatureModifier(entry, value)))
                 elif entry["type"] == "float":
-                    ReturnValue = self.config.ReadValue(Register, return_type=float, default=ReturnValue)
+                    value = self.config.ReadValue(Register, return_type=float, default=None)
+                    if value is None:
+                        # not in the conf file: the entry's default, if any
+                        return ReturnTitle, ReturnValue
                     value = self.ProcessEndianModifiers(entry, value)
                     value = self.ProcessMaskModifier(entry, value)
                     value = self.ProcessBitModifiers(entry, value, ReturnFloat=True)
@@ -1834,7 +1856,14 @@ class CustomController(GeneratorController):
                 else:
                     if separator == None or separator == "":
                         if "exec" in entry.keys():
-                            ReturnValue = self.ProcessExecModifier(entry, tuple(value_list ))
+                            # as with format: all items must be present (a
+                            # missing one would shift the others' positions)
+                            if len(value_list) and len(value_list) == len(list_entry):
+                                ReturnValue = self.ProcessExecModifier(entry, tuple(value_list ))
+                                if isinstance(ReturnValue, tuple):
+                                    # the exec failed (e.g. an invalid date): the
+                                    # items can not be shown as one value
+                                    ReturnValue = None
                         else:
                             # no way to join them given: one item per line
                             # (a tuple can not be shown as text)
@@ -1932,12 +1961,13 @@ class CustomController(GeneratorController):
                 value = value << int(entry["shiftleft"])
             if "ieee754" in entry.keys() and ReturnFloat:
                 # Use this for testing: https://www.h-schmidt.net/FloatConverter/IEEE754.html
+                # the bits read as an unsigned int, then as a float of that size
                 if entry["ieee754"].lower() == "half":  # 16 bits
-                    value = float(struct.unpack('f', struct.pack('H', int(value)))[0])
+                    value = float(struct.unpack('e', struct.pack('H', int(value)))[0])
                 elif entry["ieee754"].lower() == "single":  # 32 bits
                     value = float(struct.unpack('f', struct.pack('I', int(value)))[0])
                 elif entry["ieee754"].lower() == "double":  # 64 bits
-                    value = float(struct.unpack('f', struct.pack('Q', int(value)))[0])
+                    value = float(struct.unpack('d', struct.pack('Q', int(value)))[0])
                 else:
                     self.LogError("Error converting IEEE754 floating point: invalid ieee754 type: " + str(entry))
                 if math.isnan(value):

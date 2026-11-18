@@ -35,6 +35,8 @@ from addon_fixture import REPO_DIR, AddOnFixture  # noqa: E402
 try:
     from pyasn1.codec.ber import decoder, encoder
     from pysnmp.proto import api
+    if not hasattr(api, "PROTOCOL_MODULES"):
+        api = None  # pysnmp before 7 (gensnmp.py needs 7)
 except ImportError:  # see tests/requirements.txt
     api = None
 
@@ -96,7 +98,7 @@ def fake_udp(name):
     return module
 
 
-@unittest.skipIf(api is None, "pysnmp is not installed")
+@unittest.skipIf(api is None, "pysnmp 7 is not installed")
 class SNMPTests(unittest.TestCase):
 
     def start(self, controller="Evolution 2.0, Air Cooled", genmon_conf=None, **settings):

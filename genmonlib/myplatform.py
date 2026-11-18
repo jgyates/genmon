@@ -70,7 +70,7 @@ class MyPlatform(MyCommon):
         if self.IsOSLinux():
             if self.IsPlatformRaspberryPi():
                 return self.GetRaspberryPiInfo()
-        elif self.IsOSWindows():
+        elif self.IsOSWindows() or self.IsOSMac():
             # TODO
             return None
         else:
@@ -82,7 +82,7 @@ class MyPlatform(MyCommon):
 
         if self.IsOSLinux():
             return self.GetLinuxInfo()
-        elif self.IsOSWindows():
+        elif self.IsOSWindows() or self.IsOSMac():
             try:
                 import platform
                 WindowsInfo = []
@@ -120,7 +120,7 @@ class MyPlatform(MyCommon):
                 return "Unknown"
         except Exception as e1:
             self.LogErrorLine("Error in PlatformBitDepth: " + str(e1))
-            "Unknown"
+            return "Unknown"
 
     # ------------ MyPlatform::IsOSLinux-----------------------------------------
     @staticmethod
@@ -130,11 +130,18 @@ class MyPlatform(MyCommon):
             return True
         return False
 
+    # ------------ MyPlatform::IsOSMac-------------------------------------------
+    @staticmethod
+    def IsOSMac():
+
+        return sys.platform == "darwin"
+
     # ------------ MyPlatform::IsOSWindows-----------------------------------------
     @staticmethod
     def IsOSWindows():
 
-        if "win" in sys.platform:
+        # "win32" or "cygwin" ("win" alone also matched macOS, "darwin")
+        if sys.platform.startswith(("win", "cygwin")):
             return True
         return False
 
@@ -540,7 +547,9 @@ class MyPlatform(MyCommon):
                         continue
                     ListItems = line.split()
                     if len(ListItems) > 4:
-                        return int(ListItems[3].replace(".", ""))
+                        # without the sign, as from "iw" (e.g. 50 for -50 dBm):
+                        # the caller makes it negative
+                        return abs(int(ListItems[3].replace(".", "")))
                 return ReturnValue
         except Exception as e1:
             return 0
