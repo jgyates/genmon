@@ -1384,7 +1384,7 @@ class PowerZonePro(GeneratorController):
             elif State == 6:
                 return "Engine Running Exercise With Transfer"
             elif State == 7:
-                return "Engine Running Utlity Loss"
+                return "Engine Running Utility Loss"
             elif State == 8:
                 return "Engine Stopped Auto"
             elif State == 9:
@@ -2962,14 +2962,14 @@ class PowerZonePro(GeneratorController):
                 )
 
                 return "Remote command sent successfully (ackalarm)"
-            elif Command == "cleartalarm":
+            elif Command == "clearalarm":
                 Data = []
                 Data.append(0)
                 Data.append(4)
                 self.ModBus.ProcessWriteTransaction(
                     self.Reg.ALARM_GLOBALS[REGISTER], len(Data) // 2, Data
                 )
-                return "Remote command sent successfully (ackalarm)"
+                return "Remote command sent successfully (clearalarm)"
             elif Command == "resetallalarm":
                 Data = []
                 Data.append(0)
@@ -2977,15 +2977,15 @@ class PowerZonePro(GeneratorController):
                 self.ModBus.ProcessWriteTransaction(
                     self.Reg.ALARM_GLOBALS[REGISTER], len(Data) // 2, Data
                 )
-                return "Remote command sent successfully (ackalarm)"
-            elif Command == "silencetalarm":
+                return "Remote command sent successfully (resetallalarm)"
+            elif Command == "silencealarm":
                 Data = []
                 Data.append(0)
                 Data.append(8)
                 self.ModBus.ProcessWriteTransaction(
                     self.Reg.ALARM_GLOBALS[REGISTER], len(Data) // 2, Data
                 )
-                return "Remote command sent successfully (ackalarm)"
+                return "Remote command sent successfully (silencealarm)"
                 """
                 # This does not work
                 elif Command == "off":

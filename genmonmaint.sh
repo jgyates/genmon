@@ -51,15 +51,6 @@ check_os(){
 }
 
 #-------------------------------------------------------------------------------
-is_pi () {
-  ARCH=$(dpkg --print-architecture)
-  if [ "$ARCH" = "armhf" ] || [ "$ARCH" = "arm64" ] ; then
-    return 0
-  else
-    return 1
-  fi
-}
-#-------------------------------------------------------------------------------
 is_pifive() {
   grep -q "^Revision\s*:\s*[ 123][0-9a-fA-F][0-9a-fA-F]4[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]$" /proc/cpuinfo
   return $?

@@ -83,6 +83,11 @@ All notable changes to this project will be documented in this file.
 - Added lint checks (pyflakes, shellcheck) to CI and removed unused code
 - Added anonymized register captures so CI tests the Generac and custom controllers with the generator simulator
 - genmonmaint.sh now handles folder names with spaces, and fixed the restore and update history with such names
+- Added tests for the Evolution, Nexus, H-100 and Power Zone controllers (commands, states, alarms, outages)
+- Power Zone remote commands cleartalarm and silencetalarm renamed clearalarm and silencealarm, with matching replies
+- Fixed Power Zone engine state spelling "Engine Running Utility Loss"
+- Evolution engine state 9 is now always "Stopped", and removed the unused "Off via Remote Command" switch state
+- Evolution setquiet now only accepts on or off (values like "none" turned quiet mode on)
 
 
 ## 2.0.02 -2026-08-04

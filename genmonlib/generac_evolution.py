@@ -2163,10 +2163,9 @@ class Evolution(GeneratorController):
             return "Not supported on this controller."
 
         # extract quiet mode setting from Command String
-        # format is setquiet=yes or setquiet=no
+        # format is setquiet=on or setquiet=off (any case)
         msgbody = "Invalid command syntax for command setquiet"
         try:
-            # format is setquiet=yes or setquiet=no
             CmdList = CmdString.split("=")
             if len(CmdList) != 2:
                 self.LogError(
@@ -2184,11 +2183,12 @@ class Evolution(GeneratorController):
                 )
                 return msgbody
 
-            Mode = CmdList[1].strip()
+            Mode = CmdList[1].strip().lower()
 
-            if "on" in Mode.lower():
+            # exactly on or off (any value with "on" in it, e.g. "none", was on)
+            if Mode == "on":
                 ModeValue = 0x01
-            elif "off" in Mode.lower():
+            elif Mode == "off":
                 ModeValue = 0x00
             else:
                 self.LogError(
@@ -4498,8 +4498,6 @@ class Evolution(GeneratorController):
             return "Running Remote Transfer"  # Power Zone 200
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00180000):
             return "Running - Transfer Switch Activated"  # Power Zone 200
-        elif self.BitIsEqual(RegVal, 0x001F0000, 0x00090000):
-            return "Stopped with Inhibit Active"
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00080000):
             return "Stopped in Alarm"
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x000A0000):
@@ -4578,8 +4576,6 @@ class Evolution(GeneratorController):
             return "Auto"
         elif self.BitIsEqual(RegVal, 0x0FFFF, 0x07):
             return "Off"
-        elif self.BitIsEqual(RegVal, 0x000F0000, 0x000F0000):   # added for Evo 4.5L
-            return "Off via Remote Command"
         elif self.BitIsEqual(RegVal, 0x0FFFF, 0x06):
             return "Manual"
         elif self.BitIsEqual(RegVal, 0x0FFFF, 0x17):
