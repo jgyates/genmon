@@ -90,6 +90,8 @@ All notable changes to this project will be documented in this file.
 - Evolution setquiet now only accepts on or off (values like "none" turned quiet mode on)
 - Config (-c) and log (-l) folders now work with or without a trailing slash (backup, restore, log archive, sending log files)
 - Folder names with spaces now work for startgenmon.sh and for backup, restore and log archive from the web interface
+- Added tests/run_pi_tests.sh to test genmon on a Raspberry Pi (unit tests, simulator, and live tests with every capture)
+- Simulator tests now run on a system where genmon is installed and running
 
 
 ## 2.0.02 -2026-08-04

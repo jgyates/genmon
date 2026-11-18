@@ -206,6 +206,9 @@ class SimulatedGenerator(object):
             "update_check": "False",
             "autofeedback": "False",
             "disableweather": "True",
+            # another genmon may be running on this computer (e.g. a Pi with
+            # genmon installed): this one has its own folders and ports
+            "multi_instance": "True",
         }
         if "fueltype" in self.capture:
             settings["fueltype"] = self.capture["fueltype"]
