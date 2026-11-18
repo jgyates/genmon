@@ -719,11 +719,11 @@ class Loader(MySupport):
                     if os.path.isfile(SourceFile):
                         log.error("Moving " + SourceFile + " to " + ConfigFilePath)
                         if not MySupport.CopyFile(
-                            SourceFile, ConfigFilePath + File, move=True, log=log
+                            SourceFile, os.path.join(ConfigFilePath, File), move=True, log=log
                         ):
                             log.error("Error: using alternate move method")
-                            move(SourceFile, ConfigFilePath + File)
-                        if not os.access(ConfigFilePath + File, os.R_OK):
+                            move(SourceFile, os.path.join(ConfigFilePath, File))
+                        if not os.access(os.path.join(ConfigFilePath, File), os.R_OK):
                             pass
                 except Exception as e1:
                     log.error("Error moving " + SourceFile + ": " + str(e1))

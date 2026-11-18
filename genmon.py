@@ -708,12 +708,12 @@ class Monitor(MySupport):
             ]
             # Files in /var/log
             for File in FilesToSend:
-                LogFile = self.LogLocation + File
+                LogFile = os.path.join(self.LogLocation, File)
                 if os.path.isfile(LogFile):
                     LogList.append(LogFile)
             # Non settings realated files in conf folder (typically /etc/genmon)
             for File in DataFilesToSend:
-                LogFile = self.ConfigFilePath + File
+                LogFile = os.path.join(self.ConfigFilePath, File)
                 if os.path.isfile(LogFile):
                     LogList.append(LogFile)
             return LogList

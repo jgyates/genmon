@@ -481,10 +481,10 @@ function printhelp() {
   echo "  -v           Display github hash for current source tree"
   echo "  -C           Remove *.pyc files (clean pre-compiled python files)"
   echo "  -n           Do not prompt for Y/N, assume yes"
-  echo "  -c           Specify full path to config file directory"
-  echo "  -p           Specify 2 or 3 for python version. 2 is default"
+  echo "  -c           Specify full path to config file directory (trailing slash optional)"
+  echo "  -p           Specify 2 or 3 for python version. 3 is default"
   echo "  -s           Just copy conf files"
-  echo "  -l           Specify the full path of the log directory to archive"
+  echo "  -l           Specify the full path of the log directory to archive (trailing slash optional)"
   echo "  -f           Update OS software and apt repository flags if needed"
   echo "  -h           Display help"
   echo ""
@@ -552,6 +552,11 @@ while getopts ":hfp:bt:iruvnc:Csl:" opt; do
   esac
 done
 shift $((OPTIND -1))
+
+# -c and -l work with or without a trailing slash (the paths below are
+# built as folder + file name)
+[[ "$config_path" != */ ]] && config_path="$config_path/"
+[[ "$log_path" != */ ]] && log_path="$log_path/"
 
 echo ""
 if [ "$update_os" = true ] ; then

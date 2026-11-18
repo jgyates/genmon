@@ -18,6 +18,7 @@ import json
 import os
 import os.path
 import secrets
+import shlex
 import signal
 import subprocess
 import sys
@@ -2324,7 +2325,7 @@ class GenServ(MySupport):
     # Separate thread to restart so the flask request will return
     def _do_restart(self):
         time.sleep(2)
-        if not self.RunBashScript("startgenmon.sh restart -c " + self.ConfigFilePath):
+        if not self.RunBashScript("startgenmon.sh restart -c " + shlex.quote(self.ConfigFilePath)):
             self.LogError("Error in Restart")
 
     # -------------------------------------------------------------------------------
@@ -2353,18 +2354,18 @@ class GenServ(MySupport):
     # -------------------------------------------------------------------------------
     def GetLogs(self):
         # update
-        if not self.RunBashScript("genmonmaint.sh -l " + self.loglocation):  # archive logs
+        if not self.RunBashScript("genmonmaint.sh -l " + shlex.quote(self.loglocation)):  # archive logs
             self.LogError("Error in GetLogs")
 
     # -------------------------------------------------------------------------------
     def Backup(self):
         # update
-        if not self.RunBashScript("genmonmaint.sh -b -c " + self.ConfigFilePath):  # backup
+        if not self.RunBashScript("genmonmaint.sh -b -c " + shlex.quote(self.ConfigFilePath)):  # backup
             self.LogError("Error in Backup")
 
     # -------------------------------------------------------------------------------
     def RestoreBackup(self, ArchivePath):
-        return self.RunBashScript("genmonmaint.sh -t " + ArchivePath + " -c " + self.ConfigFilePath)
+        return self.RunBashScript("genmonmaint.sh -t " + shlex.quote(ArchivePath) + " -c " + shlex.quote(self.ConfigFilePath))
 
     # -------------------------------------------------------------------------------
     def RunBashScript(self, ScriptName, log = False, return_output = False):
@@ -2377,9 +2378,12 @@ class GenServ(MySupport):
                 command = os.path.join(pathtoscript, "OtherApps", "win",ScriptName)
             else:
                 pathtoscript = os.path.dirname(os.path.realpath(__file__))
-                script = os.path.join(pathtoscript, ScriptName)
-                command = "/bin/bash "
-                command = command + script
+                # "script.sh args": the script path quoted (spaces in the
+                # genmon folder name); the callers quote the arguments
+                name, _, args = ScriptName.partition(" ")
+                command = "/bin/bash " + shlex.quote(os.path.join(pathtoscript, name))
+                if args:
+                    command += " " + args
             self.LogError("Script: " + command)
 
             success = True

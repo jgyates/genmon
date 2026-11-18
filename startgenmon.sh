@@ -6,7 +6,7 @@
 PARAMS=""
 genmondir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 pythoncommand="python3"
-config_path=""
+config_args=()
 usepython3=true
 found_action=false
 managedpackages=false
@@ -69,7 +69,7 @@ function printhelp(){
   echo ""
   echo "valid options:"
   echo "   -h      display help"
-  echo "   -c      path of config files"
+  echo "   -c      path of config files (trailing slash optional)"
   echo "   -p      Specifiy 2 or 3 for python version. 2 is default"
   echo ""
 }
@@ -84,7 +84,7 @@ while (( "$#" )); do
       ;;
     -c)
       if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
-        config_path="-c $2"
+        config_args=(-c "$2")
         shift 2
       else
         echo "Error: Argument for $1 is missing" >&2
@@ -112,28 +112,28 @@ for val in $PARAMS; do
       echo "Starting genmon python scripts"
       env_activate
       found_action=true
-      sudo $pythoncommand "$genmondir/genloader.py" -s $config_path
+      sudo $pythoncommand "$genmondir/genloader.py" -s "${config_args[@]}"
       env_deactivate
       ;;
     stop)
       found_action=true
       env_activate
       echo "Stopping genmon python scripts"
-      sudo $pythoncommand "$genmondir/genloader.py" -x $config_path
+      sudo $pythoncommand "$genmondir/genloader.py" -x "${config_args[@]}"
       env_deactivate
       ;;
     hardstop)
       found_action=true
       env_activate
       echo "Hard Stopping genmon python scripts"
-      sudo $pythoncommand "$genmondir/genloader.py" -z $config_path
+      sudo $pythoncommand "$genmondir/genloader.py" -z "${config_args[@]}"
       env_deactivate
       ;;
     restart)
       found_action=true
       env_activate
       echo "Restarting genmon python scripts"
-      sudo $pythoncommand "$genmondir/genloader.py" -r $config_path
+      sudo $pythoncommand "$genmondir/genloader.py" -r "${config_args[@]}"
       env_deactivate
       ;;
     *)
