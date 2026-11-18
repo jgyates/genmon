@@ -160,33 +160,43 @@ class GenSMS(MySupport):
             sys.exit(1)
 
     # ----------  GenSMS::SendNotice --------------------------------------------
-    # called by the message queue, return False to have the queue retry
-    def SendNotice(self, Message):
+    # called by the message queue, return False to have the queue retry.
+    # pending: the numbers this message has not been sent to yet. The queue
+    # passes the same list to each retry, so a retry is only sent to the
+    # numbers that did not get it.
+    def SendNotice(self, Message, pending=None):
 
+        if pending is None:
+            pending = list(self.ToNumberList)
         try:
             if self.SiteName != None and len(self.SiteName):
                 Message = self.SiteName + ": " + Message
 
             client = Client(self.AccountSID, self.AuthToken)
-
-            # send to multiple recipient(s)
-            for recipient in self.ToNumberList:
-                message = client.messages.create(
-                    to=recipient, from_=self.FromNumber, body=Message
-                )
-                self.LogConsole(message.sid)
-                self.LogDebug("Sent to " + recipient + ": " + Message)
-            return True
         except Exception as e1:
             self.LogErrorLine("Error in SendNotice: " + str(e1))
             self.LogConsole("Error in SendNotice: " + str(e1))
             return False
 
+        # send to multiple recipient(s)
+        for recipient in list(pending):
+            try:
+                message = client.messages.create(
+                    to=recipient, from_=self.FromNumber, body=Message
+                )
+                self.LogConsole(message.sid)
+                self.LogDebug("Sent to " + recipient + ": " + Message)
+                pending.remove(recipient)
+            except Exception as e1:
+                self.LogErrorLine("Error in SendNotice sending to " + recipient + ": " + str(e1))
+                self.LogConsole("Error in SendNotice sending to " + recipient + ": " + str(e1))
+        return not len(pending)
+
     # ----------  GenSMS::QueueNotice -------------------------------------------
     def QueueNotice(self, Message):
 
         self.LogConsole(Message)
-        self.Queue.SendMessage(Message)
+        self.Queue.SendMessage(Message, pending=list(self.ToNumberList))
 
     # ----------  GenSMS::NotifyState -------------------------------------------
     # common handler for simple on / off state callbacks

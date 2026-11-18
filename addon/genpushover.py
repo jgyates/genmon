@@ -240,27 +240,23 @@ class GenPushover(MySupport):
                 self.LogError("Unable to authenticate app ID")
                 return False
 
-            # userids always receives every message. extra_userids is a second,
-            # optional group of recipients (e.g. a family member) who only want
-            # a subset of notification categories, controlled by the
-            # extra_notify_* settings
-            Recipients = list(self.UserIDs)
-            if category == None or self.ExtraNotifyCategories.get(category, True):
-                Recipients += self.ExtraUserIDs
+            # the users this message has not been sent to yet. The queue passes
+            # the same list to each retry, so a retry is only sent to the users
+            # that did not get it.
+            pending = kwargs.get("pending", None)
+            if pending is None:
+                pending = self.GetRecipients(category)
 
-            AllSuccessful = True
-            for SingleUserID in Recipients:
+            for SingleUserID in list(pending):
                 try:
                     user = app.get_user(SingleUserID)
 
                     if user == None:
                         self.LogError("Unable to get user context for " + SingleUserID)
-                        AllSuccessful = False
                         continue
 
                     if not user.is_authenticated:
                         self.LogError("Unable to authenticate user ID " + SingleUserID)
-                        AllSuccessful = False
                         continue
 
                     message = user.create_message(
@@ -270,6 +266,7 @@ class GenPushover(MySupport):
                     message.send()
 
                     self.LogConsole(message.id)
+                    pending.remove(SingleUserID)
                 except Exception as e1:
                     self.LogErrorLine(
                         "Send Notice Error for user " + SingleUserID + ": " + str(e1)
@@ -277,9 +274,8 @@ class GenPushover(MySupport):
                     self.LogConsole(
                         "Send Notice Error for user " + SingleUserID + ": " + str(e1)
                     )
-                    AllSuccessful = False
 
-            return AllSuccessful
+            return not len(pending)
         except Exception as e1:
             self.LogErrorLine("Send Notice Error: " + str(e1))
             self.LogConsole("Send Notice Error: " + str(e1))
@@ -289,7 +285,19 @@ class GenPushover(MySupport):
     def QueueNotice(self, Message, **kwargs):
 
         self.LogConsole(Message)
+        kwargs["pending"] = self.GetRecipients(kwargs.get("category", None))
         self.Queue.SendMessage(Message, **kwargs)
+
+    # ----------  GenPushover::GetRecipients ------------------------------------
+    # userids always receives every message. extra_userids is a second,
+    # optional group of recipients (e.g. a family member) who only want a subset
+    # of notification categories, controlled by the extra_notify_* settings
+    def GetRecipients(self, category):
+
+        Recipients = list(self.UserIDs)
+        if category == None or self.ExtraNotifyCategories.get(category, True):
+            Recipients += self.ExtraUserIDs
+        return Recipients
 
     # ----------  GenPushover::NotifyState --------------------------------------
     # common handler for simple on / off state callbacks

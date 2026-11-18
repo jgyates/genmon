@@ -535,7 +535,7 @@ class MySupport(MyCommon):
         try:
             import requests
 
-            ip = requests.get("http://ipinfo.io/json").json()["ip"]
+            ip = requests.get("http://ipinfo.io/json", timeout=30).json()["ip"]
             return ip.strip()
         except Exception as e1:
             self.LogErrorLine("Error getting WAN IP: " + str(e1))

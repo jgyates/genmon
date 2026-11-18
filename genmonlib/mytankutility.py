@@ -49,7 +49,7 @@ class tankutility(MyCommon):
         try:
             ## Register user name and password with the API and get an authorization token for subsequent queries
             url = self.urljoin(self.BASEURL, "getToken")
-            query = requests.get(url, auth=(self.username, self.password))
+            query = requests.get(url, auth=(self.username, self.password), timeout=30)
             if query.status_code != 200:
                 self.LogError(
                     "tankutility: Error logging in, error code: "
@@ -82,7 +82,7 @@ class tankutility(MyCommon):
                 return False
             url = self.urljoin(self.BASEURL, "devices")
             params = (("token", self.token),)
-            query = requests.get(url, params=params)
+            query = requests.get(url, params=params, timeout=30)
             if query.status_code != 200:
                 self.LogError(
                     "tankutility: Unable to obtain device list from the API, Error code: "
@@ -109,7 +109,7 @@ class tankutility(MyCommon):
                 return None
             url = self.urljoin(self.BASEURL, "devices", deviceID)
             params = (("token", self.token),)
-            query = requests.get(url, params=params)
+            query = requests.get(url, params=params, timeout=30)
             if query.status_code != 200:
                 self.LogError(
                     "tankutility: Unable to obtain device info from the API, Error code: "

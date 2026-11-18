@@ -64,7 +64,7 @@ class centriconnect(MyCommon):
 
             try:
                 # Make the GET request with query parameters
-                response = requests.get(self.url, params=params)
+                response = requests.get(self.url, params=params, timeout=30)
                 response.raise_for_status()  # Check for HTTP errors
 
                 # Parse the JSON response if available

@@ -64,6 +64,7 @@ class GenCallMeBot(MySupport):
             self.console = console
             self.loglocation = loglocation
             self.ConfigFilePath = ConfigFilePath
+            self.sitename = None
             
             self.config = MyConfig(
                 filename=os.path.join(ConfigFilePath, "gencallmebot.conf"),
@@ -119,12 +120,12 @@ class GenCallMeBot(MySupport):
         try:
 
             self.LogDebug("Type:" +  self.notification_type)
-            self.Generator = ClientInterface(host=address, port=port, log=log)
+            self.Generator = ClientInterface(host=host, port=port, log=log)
             self.sitename = self.Generator.ProcessMonitorCommand("generator: getsitename")
             self.Queue = MyMsgQueue(config=self.config, log=log, callback=self.SendNotice, minimum_wait_between_messages = self.minimum_wait_between_messages)
 
             self.GenNotify = GenNotify(
-                host=address,
+                host=host,
                 port=port,
                 onready=self.OnReady,
                 onexercise=self.OnExercise,
@@ -302,8 +303,11 @@ class GenCallMeBot(MySupport):
     def SendNotice(self, Message):
 
         try:
+            # like the other notification add-ons, start with the site name
+            if self.sitename != None and len(self.sitename):
+                Message = self.sitename + ": " + Message
             response = requests.post(
-                self.webhook_url + urllib.parse.quote(Message)
+                self.webhook_url + urllib.parse.quote(Message), timeout=30
             )
             if response.status_code != 200:
                 raise ValueError(
