@@ -5,6 +5,9 @@ flask
 pyotp
 pyopenssl
 requests
+# genhalink.py and genhubitat.py (the API server and its certificate)
+aiohttp
+cryptography
 # genmon.py and the controller code
 crcmod
 pyserial

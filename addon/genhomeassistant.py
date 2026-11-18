@@ -949,26 +949,16 @@ class MyHomeAssistant(MySupport):
 
             self.LogDebug("Controller type detected: " + self.ControllerType)
 
-            # Check enhanced exercise support from maintenance data
+            # Check enhanced exercise support (biweekly and monthly exercise):
+            # genmon reports it in the exercise info of gui_status_json, as
+            # "True" / "False" (Evolution) or False (other controllers)
             self.EnhancedExerciseMode = False
             try:
-                if self.NumericJSON:
-                    maint_data = self._send_command("generator: maint_num_json")
-                else:
-                    maint_data = self._send_command("generator: maint_json")
-                maint = json.loads(maint_data)
-                exercise_info = self._get_value_from_path(maint, "Maintenance/Exercise")
-                if exercise_info:
-                    # Look for EnhancedExerciseMode in exercise info
-                    if isinstance(exercise_info, list):
-                        for item in exercise_info:
-                            if isinstance(item, dict):
-                                if "Enhanced Exercise Mode" in item:
-                                    mode_val = item["Enhanced Exercise Mode"]
-                                    if isinstance(mode_val, dict):
-                                        mode_val = mode_val.get("value", "False")
-                                    self.EnhancedExerciseMode = str(mode_val).lower() not in ["false", "disabled", "off"]
-                                    break
+                gui = json.loads(self._send_command("generator: gui_status_json"))
+                exercise_info = gui.get("ExerciseInfo", {})
+                if isinstance(exercise_info, dict):
+                    mode_val = exercise_info.get("EnhancedExerciseMode", False)
+                    self.EnhancedExerciseMode = str(mode_val).lower() in ["true", "on", "enabled", "yes"]
                 self.LogDebug(f"Enhanced exercise mode: {self.EnhancedExerciseMode}")
             except Exception as e_ex:
                 self.LogDebug(f"Could not determine enhanced exercise mode: {e_ex}")
@@ -1419,6 +1409,13 @@ class MyHomeAssistant(MySupport):
                         self.LogDebug(f"Found existing entity: {entity_key}")
                 return
 
+            # Handle Home Assistant status (birth message)
+            if topic == f"{self.DiscoveryPrefix}/status":
+                if payload == "online":
+                    self.LogDebug("Home Assistant restarted, republishing discovery")
+                    self._publish_discovery()
+                return
+
             # Parse topic to determine entity type and id
             # Format: {base_topic}/{entity_type}/{entity_id}/set or /command
             parts = topic.split("/")
@@ -1428,12 +1425,6 @@ class MyHomeAssistant(MySupport):
             entity_type = parts[-3]
             entity_id = parts[-2]
             action = parts[-1]
-
-            # Handle Home Assistant status (birth message)
-            if topic == f"{self.DiscoveryPrefix}/status" and payload == "online":
-                self.LogDebug("Home Assistant restarted, republishing discovery")
-                self._publish_discovery()
-                return
 
             # Handle update entity install command
             if action == "command" and entity_type == "update":
@@ -1710,10 +1701,11 @@ class MyHomeAssistant(MySupport):
     def _parse_exercise_time(self, exercise_str):
         """Parse exercise time string from genmon and update settings.
 
-        Examples:
+        Examples (genmon/generac_evolution.py GetExerciseTime):
         - "Weekly Sunday 16:00 Quiet Mode Off"
-        - "BiWeekly Monday 13:30 Quiet Mode On"
-        - "Monthly Day 15 09:00 Quiet Mode Off"
+        - "Biweekly Monday 13:30 Quiet Mode On"
+        - "Monthly Day-15 09:00 Quiet Mode Off"
+        ("BiWeekly" and "Monthly Day 15 09:00" are also accepted)
         """
         try:
             if not exercise_str:
@@ -1723,22 +1715,26 @@ class MyHomeAssistant(MySupport):
             if len(parts) < 3:
                 return
 
-            # Parse frequency (first word)
-            freq = parts[0]
-            if freq in ["Weekly", "BiWeekly", "Monthly"]:
+            # Parse frequency (first word), as the select options spell it
+            frequencies = {"weekly": "Weekly", "biweekly": "BiWeekly", "monthly": "Monthly"}
+            freq = frequencies.get(parts[0].lower(), parts[0])
+            if freq in frequencies.values():
                 self.ExerciseSettings["frequency"] = freq
 
             if freq == "Monthly":
-                # Format: "Monthly Day 15 09:00 ..."
-                if len(parts) >= 4 and parts[1] == "Day":
+                # Format: "Monthly Day-15 09:00 ..." or "Monthly Day 15 09:00 ..."
+                day_match = re.match(r"^Day-?(\d+)$", parts[1], re.IGNORECASE)
+                if parts[1] == "Day" and len(parts) >= 4:
+                    day_str, time_part = parts[2], parts[3]
+                elif day_match:
+                    day_str, time_part = day_match.group(1), parts[2]
+                else:
+                    day_str, time_part = None, parts[2]
+                if day_str is not None:
                     try:
-                        self.ExerciseSettings["day_of_month"] = int(parts[2])
+                        self.ExerciseSettings["day_of_month"] = int(day_str)
                     except ValueError:
                         pass
-                    time_part = parts[3]
-                else:
-                    # Try alternate format
-                    time_part = parts[2] if len(parts) > 2 else "12:00"
             else:
                 # Format: "Weekly Sunday 16:00 ..."
                 day_of_week = parts[1]
