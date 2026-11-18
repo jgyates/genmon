@@ -21,7 +21,7 @@ All notable changes to this project will be documented in this file.
 - Fixed bug with custom controller handling some types of ieee754 values
 - misc security improvements
 - Added code hash value to About page
-- Local LAN socket access to genmon is now disabled by default if authentication is enabled in the web interface. If you want enable this then look at the advanced seeting named "Allow LAN access to genmon" 
+- Local LAN socket access to genmon is now disabled by default if authentication is enabled in the web interface. If you want enable this then look at the advanced setting named "Allow LAN access to genmon" 
 - remove numerous python 2.x references in the code that are no longer used
 - Update to make config and JSON file writes atomic to reduce file corruption if power is lost
 - made iteration object in custom_controller be an int or an object
@@ -36,7 +36,32 @@ All notable changes to this project will be documented in this file.
 - added CI scripts to repo
 - added test scripts for add on programs
 - Added support for TLS 1.3 in upcoming python 3.14 for MQTT based addon programs
-- updated pyasn1 to 0.6.5
+- security update: updated pyasn1 to 0.6.5
+- MQTT based add ons now default to TLS version Auto (TLS 1.2 or newer). Existing settings are kept, note many brokers no longer accept TLS 1.0
+- Low fuel messages now use the Fuel notification category and software update messages use the Updates category
+- Fixed processing more than one email command at a time
+- Fixed duplicate notifications when only some recipients failed (Pushover, Twilio SMS, VoIP SMS)
+- Fixed gencallmebot site name, timeout and startup issues
+- Added timeouts to web requests in add ons
+- Fixed gentankutil sending tank 1 values as tank 2 when tank 2 could not be read
+- Fixed gentankdiy reporting an empty tank on a read error
+- Fixed genmopeka reporting 0% before the first sensor reading
+- Fixed genexercise biweekly exercise running weekly
+- Fixed custom controller list values with no separator
+- Fixed genmqtt and genmqttin cert_reqs Optional and invalid TLS settings
+- Fixed genmqtt numeric JSON objects in lists
+- Fixed genmqttin fuel range check, CT power total and voltage legs
+- Fixed genhomeassistant biweekly / monthly exercise and republishing after a Home Assistant restart
+- genhomeassistant buttons now follow controller capabilities (start, transfer, set time)
+- genhubitat updated with genhalink fixes (waits for genmon to start, set time button)
+- genhalink and genhubitat now read monitor_address and use data/homeassistant/userdefined.json
+- Fixed gensnmp walk order, high CPU when genmon data is not available, and the Evo Liquid Cooled nominal frequency OID
+- Fixed genalexa delay after network errors, now uses start instead of start / transfer if there is no transfer switch
+- Fixed gengpioin when the conf file is missing
+- Corrected gengpioledblink pin description (header pin number, not GPIO number)
+- gentemp sensors are now ordered by device ID, sensor names may need to be reordered
+- gencustomgpio now writes userdefined.json atomically
+- Removed deprecated pyOpenSSL calls for self signed certificates
 
 ## 2.0.02 -2026-08-04
 - New add on for Hubitat Elevation hub, Thanks @bdwilson
