@@ -14,7 +14,6 @@ import json
 import os
 import re
 import signal
-import ssl
 import subprocess
 import sys
 import threading
@@ -42,6 +41,7 @@ try:
     from genmonlib.mylog import SetupLogger
     from genmonlib.mysupport import MySupport
     from genmonlib.mythread import MyThread
+    from genmonlib.mytls import TLSClientContext
     from genmonlib.program_defaults import ProgramDefaults
 
 except Exception as e1:
@@ -894,7 +894,7 @@ class MyHomeAssistant(MySupport):
 
         # TLS configuration
         self.CertificateAuthorityPath = config.ReadValue("cert_authority_path", default="")
-        self.TLSVersion = config.ReadValue("tls_version", default="1.2")
+        self.TLSVersion = config.ReadValue("tls_version", default="Auto")
         self.CertReqs = config.ReadValue("cert_reqs", default="Required")
         self.ClientCertificatePath = config.ReadValue("client_cert_path", default="")
         self.ClientKeyPath = config.ReadValue("client_key_path", default="")
@@ -1316,29 +1316,22 @@ class MyHomeAssistant(MySupport):
 
         # TLS setup
         if self.CertificateAuthorityPath and os.path.isfile(self.CertificateAuthorityPath):
-            cert_reqs = ssl.CERT_REQUIRED
-            if self.CertReqs.lower() == "none":
-                cert_reqs = ssl.CERT_NONE
-            elif self.CertReqs.lower() == "optional":
-                cert_reqs = ssl.CERT_OPTIONAL
-
-            tls_version = ssl.PROTOCOL_TLSv1_2
-            if self.TLSVersion == "1.0":
-                tls_version = ssl.PROTOCOL_TLSv1
-            elif self.TLSVersion == "1.1":
-                tls_version = ssl.PROTOCOL_TLSv1_1
-
             certfile = self.ClientCertificatePath.strip() or None
             keyfile = self.ClientKeyPath.strip() or None
 
-            self.MQTTclient.tls_set(
-                ca_certs=self.CertificateAuthorityPath,
-                certfile=certfile,
-                keyfile=keyfile,
-                cert_reqs=cert_reqs,
-                tls_version=tls_version,
+            self.MQTTclient.tls_set_context(
+                TLSClientContext(
+                    self.CertificateAuthorityPath,
+                    cert_file=certfile,
+                    key_file=keyfile,
+                    cert_reqs=self.CertReqs,
+                    tls_version=self.TLSVersion,
+                    log=self.log,
+                )
             )
-            self.MQTTPort = 8883
+            # the MQTT port for TLS, unless another port was set
+            if self.MQTTPort == 1883:
+                self.MQTTPort = 8883
 
         # Set Last Will and Testament
         availability_topic = f"{self.BaseTopic}/status"

@@ -635,11 +635,11 @@
       "value": 3.0
      },
      "tls_version": {
-      "bounds": "1.0,1.1,1.2",
-      "description": "TLS version to use. Default is 1.2. Ignored if CA certificate is not used.",
+      "bounds": "Auto,1.3,1.2,1.1,1.0",
+      "description": "(Optional) TLS version used. Auto (the default) uses TLS 1.2 or newer, whatever the broker supports. Most brokers no longer allow 1.0 or 1.1. This is ignored if a CA cert file is not used.",
       "display_name": "TLS Version",
       "type": "list",
-      "value": "1.2"
+      "value": "Auto"
      },
      "username": {
       "bounds": "minmax:4:50",
@@ -770,7 +770,7 @@
      },
      "cert_authority_path": {
       "bounds": "",
-      "description": "(Optional) Full path to Certificate Authority file. Leave empty to not use SSL/TLS. If used port will be forced to 8883.",
+      "description": "(Optional) Full path to Certificate Authority file. Leave empty to not use SSL/TLS. If used and the port is 1883, port 8883 is used.",
       "display_name": "SSL/TLS CA certificate file",
       "type": "string",
       "value": ""
@@ -881,11 +881,11 @@
       "value": false
      },
      "tls_version": {
-      "bounds": "1.0,1.1,1.2",
-      "description": "(Optional) TLS version used (integer). Default is 1.0. Must be 1.0, 1.1, or 1.2. This is ignored if a CA cert file is not used. ",
+      "bounds": "Auto,1.3,1.2,1.1,1.0",
+      "description": "(Optional) TLS version used. Auto (the default) uses TLS 1.2 or newer, whatever the broker supports. Most brokers no longer allow 1.0 or 1.1. This is ignored if a CA cert file is not used.",
       "display_name": "TLS Version",
       "type": "list",
-      "value": "1.0"
+      "value": "Auto"
      },
      "username": {
       "bounds": "minmax:4:50",
@@ -905,7 +905,7 @@
     "parameters": {
      "cert_authority_path": {
       "bounds": "",
-      "description": "(Optional) Full path to Certificate Authority file. Leave empty to not use SSL/TLS. If used port will be forced to 8883.",
+      "description": "(Optional) Full path to Certificate Authority file. Leave empty to not use SSL/TLS. If used and the port is 1883, port 8883 is used.",
       "display_name": "SSL/TLS CA certificate file",
       "type": "string",
       "value": ""
@@ -995,11 +995,11 @@
       "value": false
      },
      "tls_version": {
-      "bounds": "1.0,1.1,1.2",
-      "description": "(Optional) TLS version used (integer). Default is 1.0. Must be 1.0, 1.1, or 1.2. This is ignored if a CA cert file is not used. ",
+      "bounds": "Auto,1.3,1.2,1.1,1.0",
+      "description": "(Optional) TLS version used. Auto (the default) uses TLS 1.2 or newer, whatever the broker supports. Most brokers no longer allow 1.0 or 1.1. This is ignored if a CA cert file is not used.",
       "display_name": "TLS Version",
       "type": "list",
-      "value": "1.0"
+      "value": "Auto"
      },
      "topics": {
       "bounds": "",

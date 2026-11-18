@@ -13,7 +13,6 @@
 import json
 import os
 import signal
-import ssl
 import sys
 import threading
 import time
@@ -42,6 +41,7 @@ try:
     from genmonlib.mylog import SetupLogger
     from genmonlib.mysupport import MySupport
     from genmonlib.mythread import MyThread
+    from genmonlib.mytls import TLSClientContext
     from genmonlib.program_defaults import ProgramDefaults
 
 except Exception as e1:
@@ -449,7 +449,7 @@ class MyMQTT(MyCommon):
                 "cert_authority_path", default=""
             )
             self.TLSVersion = config.ReadValue(
-                "tls_version", return_type=str, default="1.0"
+                "tls_version", return_type=str, default="Auto"
             )
             self.CertReqs = config.ReadValue(
                 "cert_reqs", return_type=str, default="Required"
@@ -514,31 +514,6 @@ class MyMQTT(MyCommon):
 
             if len(self.CertificateAuthorityPath):
                 if os.path.isfile(self.CertificateAuthorityPath):
-                    cert_reqs = ssl.CERT_REQUIRED
-                    if self.CertReqs.lower() == "required":
-                        cert_reqs = ssl.CERT_REQUIRED
-                    elif self.CertReqs.lower() == "optional":
-                        cert_reqs = ssl.CERT_REQUIRED
-                    elif self.CertReqs.lower() == "none":
-                        cert_reqs = ssl.CERT_NONE
-                    else:
-                        self.LogError(
-                            "Error: invalid cert required specified, defaulting to required: "
-                            + self.CertReq
-                        )
-
-                    use_tls = ssl.PROTOCOL_TLSv1
-                    if self.TLSVersion == "1.0" or self.TLSVersion == "1":
-                        use_tls = ssl.PROTOCOL_TLSv1
-                    elif self.TLSVersion == "1.1":
-                        use_tls = ssl.PROTOCOL_TLSv1_1
-                    elif self.TLSVersion == "1.2":
-                        use_tls = ssl.PROTOCOL_TLSv1_2
-                    else:
-                        self.LogError(
-                            "Error: invalid TLS version specified, defaulting to 1.0: "
-                            + self.TLSVersion
-                        )
                     certfile = None
                     keyfile = None
                     # strip off any whitespace
@@ -550,14 +525,19 @@ class MyMQTT(MyCommon):
                     if len(self.ClientKeyPath):
                         keyfile = self.ClientKeyPath
 
-                    self.MQTTclient.tls_set(
-                        ca_certs=self.CertificateAuthorityPath,
-                        certfile=certfile,
-                        keyfile=keyfile,
-                        cert_reqs=cert_reqs,
-                        tls_version=use_tls,
+                    self.MQTTclient.tls_set_context(
+                        TLSClientContext(
+                            self.CertificateAuthorityPath,
+                            cert_file=certfile,
+                            key_file=keyfile,
+                            cert_reqs=self.CertReqs,
+                            tls_version=self.TLSVersion,
+                            log=self.log,
+                        )
                     )
-                    self.MQTTPort = 8883  # port for SSL
+                    # the MQTT port for TLS, unless another port was set
+                    if self.MQTTPort == 1883:
+                        self.MQTTPort = 8883
                 else:
                     self.LogError(
                         "Error: Unable to  find CA cert file: "

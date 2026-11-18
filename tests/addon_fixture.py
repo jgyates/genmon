@@ -18,6 +18,7 @@
 
 import glob
 import importlib
+import inspect
 import json
 import logging
 import os
@@ -170,7 +171,11 @@ class AddOnFixture(object):
 
         cls = getattr(self.module, self.class_name)
         args = dict(log=self.log, loglocation=self.folder, ConfigFilePath=self.folder,
-                    host="127.0.0.1", port=9082, console=self.log)
+                    configfilepath=self.folder, host="127.0.0.1", port=9082, console=self.log)
+        # only the arguments this add-on takes (genmqtt.py names the config
+        # folder configfilepath)
+        accepted = inspect.signature(cls.__init__).parameters
+        args = {name: value for name, value in args.items() if name in accepted}
         if self.loop_in_init:
             with mock.patch.object(self.module.time, "sleep",
                                    side_effect=RuntimeError("end of the test's __init__")):

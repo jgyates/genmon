@@ -639,7 +639,7 @@ ADDONS = (
                     False),
               Param("cert_authority_path", "string", "SSL/TLS CA certificate file",
                     "(Optional) Full path to Certificate Authority file. Leave empty to not "
-                    "use SSL/TLS. If used port will be forced to 8883.",
+                    "use SSL/TLS. If used and the port is 1883, port 8883 is used.",
                     ""),
               Param("client_cert_path", "string", "Client Certificate File",
                     "Optional. Full path the client certificate file. Leave empty to not use "
@@ -649,9 +649,10 @@ ADDONS = (
                     "Optional. Full path the client key file. Leave empty to not use MTLS.",
                     ""),
               Param("tls_version", "list", "TLS Version",
-                    "(Optional) TLS version used (integer). Default is 1.0. Must be 1.0, 1.1, "
-                    "or 1.2. This is ignored if a CA cert file is not used. ",
-                    "1.0", "1.0,1.1,1.2"),
+                    "(Optional) TLS version used. Auto (the default) uses TLS 1.2 or newer, "
+                    "whatever the broker supports. Most brokers no longer allow 1.0 or 1.1. "
+                    "This is ignored if a CA cert file is not used.",
+                    "Auto", "Auto,1.3,1.2,1.1,1.0"),
               Param("cert_reqs", "list", "Certificate Requirements",
                     "(Optional) Defines the certificate requirements that the client imposes "
                     "on the broker. Used if Certificate Authority file is used.",
@@ -725,7 +726,7 @@ ADDONS = (
                     "", "minmax:4:50"),
               Param("cert_authority_path", "string", "SSL/TLS CA certificate file",
                     "(Optional) Full path to Certificate Authority file. Leave empty to not "
-                    "use SSL/TLS. If used port will be forced to 8883.",
+                    "use SSL/TLS. If used and the port is 1883, port 8883 is used.",
                     ""),
               Param("client_cert_path", "string", "Client Certificate File",
                     "Optional. Full path the client certificate file. Leave empty to not use "
@@ -735,9 +736,10 @@ ADDONS = (
                     "Optional. Full path the client key file. Leave empty to not use MTLS.",
                     ""),
               Param("tls_version", "list", "TLS Version",
-                    "(Optional) TLS version used (integer). Default is 1.0. Must be 1.0, 1.1, "
-                    "or 1.2. This is ignored if a CA cert file is not used. ",
-                    "1.0", "1.0,1.1,1.2"),
+                    "(Optional) TLS version used. Auto (the default) uses TLS 1.2 or newer, "
+                    "whatever the broker supports. Most brokers no longer allow 1.0 or 1.1. "
+                    "This is ignored if a CA cert file is not used.",
+                    "Auto", "Auto,1.3,1.2,1.1,1.0"),
               Param("cert_reqs", "list", "Certificate Requirements",
                     "(Optional) Defines the certificate requirements that the client imposes "
                     "on the broker. Used if Certificate Authority file is used.",
@@ -812,8 +814,10 @@ ADDONS = (
                     "Full path to Certificate Authority file. Leave empty to not use SSL/TLS.",
                     ""),
               Param("tls_version", "list", "TLS Version",
-                    "TLS version to use. Default is 1.2. Ignored if CA certificate is not used.",
-                    "1.2", "1.0,1.1,1.2"),
+                    "(Optional) TLS version used. Auto (the default) uses TLS 1.2 or newer, "
+                    "whatever the broker supports. Most brokers no longer allow 1.0 or 1.1. "
+                    "This is ignored if a CA cert file is not used.",
+                    "Auto", "Auto,1.3,1.2,1.1,1.0"),
               Param("cert_reqs", "list", "Certificate Requirements",
                     "Certificate requirements that the client imposes on the broker.",
                     "Required", "None,Optional,Required"),
