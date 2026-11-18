@@ -76,6 +76,11 @@ All notable changes to this project will be documented in this file.
 - Fixed getdebug command error when a thread has stopped
 - macOS is no longer detected as Windows (in testing modes)
 - Added tests for custom controllers and shared library modules
+- Fixed Power Zone Pro Oil Filter Life, Air Filter Life and Target RPM (Low Speed) on the maintenance page
+- Fixed Power Zone Pro input "Transfer Generator Power / Bias Share Active" label
+- Fixed add ons and the web interface checking for genmon in a tight loop while genmon starts
+- genmonmaint.sh stops an update, backup or restore if it cannot change to the genmon folder
+- Added lint checks (pyflakes, shellcheck) to CI and removed unused code
 
 ## 2.0.02 -2026-08-04
 - New add on for Hubitat Elevation hub, Thanks @bdwilson
