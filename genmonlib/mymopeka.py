@@ -28,7 +28,7 @@ except Exception:
     print("The required library bleson is not installed.")
     sys.exit(2)
 
-# derived from https://github.com/spbrogan/mopeka_pro_check (abandond project)
+# derived from https://github.com/spbrogan/mopeka_pro_check (abandoned project)
 
 # converting sensor value to height - contact Mopeka for other fluids/gases
 MOPEKA_TANK_LEVEL_COEFFICIENTS_PROPANE = (0.573045, -0.002822, -0.00000535)
@@ -298,7 +298,7 @@ class MopekaBT(MySupport):
         self.discovered_sensors = dict()    # discovery mode
         self.mode = mode
         self.scan_active = False
-        self.hci_index = hci_index  # select BT controller if multiple controlelrs in system
+        self.hci_index = hci_index  # select BT controller if multiple controllers in system
         self.controller = None
         self.ignored_advertisments = 0
         self.processed_advertisments = 0

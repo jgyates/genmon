@@ -436,7 +436,7 @@ ADDONS = (
                     "", "required minmax:10:50"),
               Param("to_number", "string", "Recipient Phone Number",
                     "Mobile number to send SMS message to. This can be any mobile number. "
-                    "Separate multilpe recipients with commas.",
+                    "Separate multiple recipients with commas.",
                     "", "required InternationalPhone"),
               Param("from_number", "string", "Twilio Phone Number",
                     "Number to send SMS message from. This should be a twilio phone number.",
@@ -461,7 +461,7 @@ ADDONS = (
                     "", "required InternationalPhone"),
               Param("destination", "string", "Recipient Phone Number",
                     "Mobile number to send SMS message to. This can be any mobile number. "
-                    "Separate multilpe recipients with commas.",
+                    "Separate multiple recipients with commas.",
                     "", "required InternationalPhone"),
           )),
     # not shown: modem_type, the type of modem used. For future use. Presently
@@ -678,7 +678,7 @@ ADDONS = (
                     "will be the displayed label for each topic value.",
                     ""),
               Param("units", "string", "Units",
-                    "Comma separated list of units for each topic listed above. If no labled "
+                    "Comma separated list of units for each topic listed above. If no labeled "
                     "is used for a given topic, use a space. If using the imported MQTT data "
                     "for genmon calculations, for power use W or kW, for current use A, for "
                     "voltage use V. ",
@@ -691,7 +691,7 @@ ADDONS = (
               Param("exclude_gauge", "string", "Exclude Gauge",
                     "Comma separated list of Displayed Names that will not be displayed as a "
                     "gauge. If you enable 'Use Data for Calculations' then you can remove "
-                    "duplicate gagues with this setting if they show up in the user interface.",
+                    "duplicate gauges with this setting if they show up in the user interface.",
                     ""),
               Param("nominal_values", "string", "Nominal Values",
                     "Comma separated list of nominal values for each topic listed above.",
@@ -877,7 +877,7 @@ ADDONS = (
                     "CallMeBot username required for Telegram Notifications.",
                     "", "required username"),
               Param("recipient_number", "string", "Recipient Number",
-                    "Recipient Number requried for WhatsApp Notification. Must be without "
+                    "Recipient Number required for WhatsApp Notification. Must be without "
                     "spaces and start with a plus. For Signal this must be the numeric key "
                     "sent to your signal account when registering with CallMeBot (in the form "
                     "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)",
@@ -923,7 +923,7 @@ ADDONS = (
                     "warmup time for Transfer type exercise cycles.",
                     12, "number range:5:60"),
               Param("exercise_warmup", "float", "Warmup Duration",
-                    "The duration of the warmup time. Note: this time only appies to the "
+                    "The duration of the warmup time. Note: this time only applies to the "
                     "transfer type of exercise cycle. Zero will disable the warmup period.",
                     0, "number range:0:30"),
           )),
@@ -1061,7 +1061,7 @@ ADDONS = (
               Param("use_integer", "boolean", "Force Integers",
                     "If enabled, integer values (no units) will be returned when applicable in "
                     "the Status, Maintenance (Evo/Nexus only) and Outage data. Enabling this "
-                    "value also enables 'Use Numerics'. Floating point numberic values are "
+                    "value also enables 'Use Numerics'. Floating point numeric values are "
                     "returned as strings",
                     False),
           )),
@@ -1077,7 +1077,7 @@ ADDONS = (
                     "enable to use Celsius, disable for Fahrenheit",
                     False),
               Param("blacklist", "string", "Sensor Device Blacklist",
-                    "Comma separated blacklist. If these vaues are found in 1 wire temperature "
+                    "Comma separated blacklist. If these values are found in 1 wire temperature "
                     "sensor device names the sensor will be ignored.",
                     ""),
               Param("device_labels", "string", "Sensor Names",

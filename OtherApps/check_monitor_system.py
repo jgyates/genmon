@@ -47,7 +47,7 @@ def main(argv):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # now connect to the server on our port
         s.connect((myhostaddress, 9082))
-        s.settimeout(8.0)  #  blok on recv
+        s.settimeout(8.0)  #  block on recv
     except:
         print("CRITICAL: Monitor Program not running")
         sys.exit(2)

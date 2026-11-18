@@ -297,7 +297,7 @@ class GenTankData(MySupport):
             self.LogErrorLine("Error in CheckTanksReponse: " + str(e1))
 
     #---------------------CheckTimeDiffExpired----------------------------------
-    # check that numner of minutes has expired since a given time
+    # check that number of minutes has expired since a given time
     def CheckTimeDiffExpired(self, time, min):
 
         try:

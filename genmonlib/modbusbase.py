@@ -116,7 +116,7 @@ class ModbusBase(MySupport):
     MIN_WR_REQ_PACKET_LENGTH = 0x09
     MIN_FILE_READ_REQ_PACKET_LENGTH = 0x0C
     MAX_MODBUS_PACKET_SIZE = 0x100
-    # Varible limits
+    # Variable limits
     MAX_REGISTER = 0xFFFF
     MIN_REGISTER = 0x0
     MAX_FILE_RECORD_NUM = 0x270F  # 9999 decimal
@@ -193,7 +193,7 @@ class ModbusBase(MySupport):
         self.UseTCP = False
         self.AdditionalModbusTimeout = 0
         self.ModBusPacketTimoutMS = 0
-        self.ResponseAddress = None  # Used if recieve packes have a different address than sent packets
+        self.ResponseAddress = None  # Used if received packets have a different address than sent packets
         self.debug = False
         self.UseModbusFunction4 = use_fc4
 

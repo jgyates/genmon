@@ -150,7 +150,7 @@
      },
      "recipient_number": {
       "bounds": "",
-      "description": "Recipient Number requried for WhatsApp Notification. Must be without spaces and start with a plus. For Signal this must be the numeric key sent to your signal account when registering with CallMeBot (in the form xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)",
+      "description": "Recipient Number required for WhatsApp Notification. Must be without spaces and start with a plus. For Signal this must be the numeric key sent to your signal account when registering with CallMeBot (in the form xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)",
       "display_name": "Recipient Number",
       "type": "string",
       "value": ""
@@ -354,7 +354,7 @@
      },
      "exercise_warmup": {
       "bounds": "number range:0:30",
-      "description": "The duration of the warmup time. Note: this time only appies to the transfer type of exercise cycle. Zero will disable the warmup period.",
+      "description": "The duration of the warmup time. Note: this time only applies to the transfer type of exercise cycle. Zero will disable the warmup period.",
       "display_name": "Warmup Duration",
       "type": "float",
       "value": 0.0
@@ -940,7 +940,7 @@
      },
      "exclude_gauge": {
       "bounds": "",
-      "description": "Comma separated list of Displayed Names that will not be displayed as a gauge. If you enable 'Use Data for Calculations' then you can remove duplicate gagues with this setting if they show up in the user interface.",
+      "description": "Comma separated list of Displayed Names that will not be displayed as a gauge. If you enable 'Use Data for Calculations' then you can remove duplicate gauges with this setting if they show up in the user interface.",
       "display_name": "Exclude Gauge",
       "type": "string",
       "value": ""
@@ -1017,7 +1017,7 @@
      },
      "units": {
       "bounds": "",
-      "description": "Comma separated list of units for each topic listed above. If no labled is used for a given topic, use a space. If using the imported MQTT data for genmon calculations, for power use W or kW, for current use A, for voltage use V. ",
+      "description": "Comma separated list of units for each topic listed above. If no labeled is used for a given topic, use a space. If using the imported MQTT data for genmon calculations, for power use W or kW, for current use A, for voltage use V. ",
       "display_name": "Units",
       "type": "string",
       "value": ""
@@ -1517,7 +1517,7 @@
      },
      "to_number": {
       "bounds": "required InternationalPhone",
-      "description": "Mobile number to send SMS message to. This can be any mobile number. Separate multilpe recipients with commas.",
+      "description": "Mobile number to send SMS message to. This can be any mobile number. Separate multiple recipients with commas.",
       "display_name": "Recipient Phone Number",
       "type": "string",
       "value": "+15551234567"
@@ -1612,7 +1612,7 @@
     "parameters": {
      "destination": {
       "bounds": "required InternationalPhone",
-      "description": "Mobile number to send SMS message to. This can be any mobile number. Separate multilpe recipients with commas.",
+      "description": "Mobile number to send SMS message to. This can be any mobile number. Separate multiple recipients with commas.",
       "display_name": "Recipient Phone Number",
       "type": "string",
       "value": ""
@@ -1670,7 +1670,7 @@
      },
      "use_integer": {
       "bounds": "",
-      "description": "If enabled, integer values (no units) will be returned when applicable in the Status, Maintenance (Evo/Nexus only) and Outage data. Enabling this value also enables 'Use Numerics'. Floating point numberic values are returned as strings",
+      "description": "If enabled, integer values (no units) will be returned when applicable in the Status, Maintenance (Evo/Nexus only) and Outage data. Enabling this value also enables 'Use Numerics'. Floating point numeric values are returned as strings",
       "display_name": "Force Integers",
       "type": "boolean",
       "value": false
@@ -1782,7 +1782,7 @@
     "parameters": {
      "blacklist": {
       "bounds": "",
-      "description": "Comma separated blacklist. If these vaues are found in 1 wire temperature sensor device names the sensor will be ignored.",
+      "description": "Comma separated blacklist. If these values are found in 1 wire temperature sensor device names the sensor will be ignored.",
       "display_name": "Sensor Device Blacklist",
       "type": "string",
       "value": ""
@@ -2192,7 +2192,7 @@
     "Maximum Entries in Outage Log",
     30,
     "100",
-    "The maximimum number of entries allowed in the outage log. You may increase this value from the default of 100 however if you notice a drop in the web UI performance you should reduce this back to the default value.",
+    "The maximum number of entries allowed in the outage log. You may increase this value from the default of 100 however if you notice a drop in the web UI performance you should reduce this back to the default value.",
     "digits",
     "<CONF>/genmon.conf",
     "GenMon",
@@ -2214,7 +2214,7 @@
     "Preferred Network Adapter",
     55,
     "",
-    "If genmon failes to identify your network adapter correctly in cases where multiple adapaters are present, set this value to the adapater name that you would like genmon to report as the active network device. Note: only WLAN adapters display statistics.",
+    "If genmon fails to identify your network adapter correctly in cases where multiple adapters are present, set this value to the adapter name that you would like genmon to report as the active network device. Note: only WLAN adapters display statistics.",
     0,
     "<CONF>/genmon.conf",
     "GenMon",
@@ -2390,7 +2390,7 @@
     "Initialization Wait Time (seconds)",
     10,
     15,
-    "The time in seconds to delay waiting for genmon intilization to complete. Some USB serial ports may be slow to open and this can be increased from the default value for greater compatiblity. Note that increasing this value could also cause an increase the time before the web interface is available if you have comms issues.",
+    "The time in seconds to delay waiting for genmon initialization to complete. Some USB serial ports may be slow to open and this can be increased from the default value for greater compatibility. Note that increasing this value could also cause an increase the time before the web interface is available if you have comms issues.",
     "digits",
     "<CONF>/genmon.conf",
     "GenMon",
@@ -2519,7 +2519,7 @@
     "Disable Sensor Log",
     14,
     false,
-    "If enabled, the logging of sensor data will be disabled. This also disbles the graphs of sensors in the web interface.",
+    "If enabled, the logging of sensor data will be disabled. This also disables the graphs of sensors in the web interface.",
     "",
     "<CONF>/genmon.conf",
     "GenMon",
@@ -3279,7 +3279,7 @@
     "parameters": {
      "destination": {
       "bounds": "required InternationalPhone",
-      "description": "Mobile number to send SMS message to. This can be any mobile number. Separate multilpe recipients with commas.",
+      "description": "Mobile number to send SMS message to. This can be any mobile number. Separate multiple recipients with commas.",
       "display_name": "Recipient Phone Number",
       "type": "string",
       "value": ""

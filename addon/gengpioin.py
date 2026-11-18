@@ -259,13 +259,13 @@ if __name__ == "__main__":
 
         Settings = ""
         if DefaultPullup == GPIO.PUD_OFF:
-            Settings += " Resitor Pull Off "
+            Settings += " Resistor Pull Off "
         elif DefaultPullup == GPIO.PUD_UP:
-            Settings += " Resitor Pull Up "
+            Settings += " Resistor Pull Up "
         elif DefaultPullup == GPIO.PUD_DOWN:
-            Settings += " Resitor Pull Down "
+            Settings += " Resistor Pull Down "
         else:
-            Settings += " Resitor Pull Unknown "
+            Settings += " Resistor Pull Unknown "
 
         if DefaultTrigger == GPIO.RISING:
             Settings += " Trigger Rising "

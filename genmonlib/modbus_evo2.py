@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -------------------------------------------------------------------------------
 #    FILE: modbus_evo2.py
-# PURPOSE: Modbus specific fuctions for Evolution 2
+# PURPOSE: Modbus specific functions for Evolution 2
 #
 #  AUTHOR: Jason G Yates
 #    DATE: 23-08-2020
@@ -72,7 +72,7 @@ class ModbusEvo2(ModbusProtocol):
                 self.UnlockBybass = self.config.ReadValue(
                     "evo2_bypass_encapsulation", return_type=bool, default=False
                 )
-            # initilization vector
+            # initialization vector
             self.iv = (
                 b"\xC0\x94\xFB\xEB\xF5\x96\x43\x7F\xA2\x2E\xFA\x84\xFC\xC5\x21\x52"
             )
@@ -151,7 +151,7 @@ class ModbusEvo2(ModbusProtocol):
 
             self.LastUnlockTime = datetime.datetime.now()
             self.LastExectpionCount = self.ExcepAck
-            # create the orignal read registers packet
+            # create the original read registers packet
             MasterPacket = self.CreateMasterPacket(Register, length=int(Length))
 
             if len(MasterPacket) == 0:
@@ -248,7 +248,7 @@ class ModbusEvo2(ModbusProtocol):
 
         try:
 
-            # Here we get the full packets sent from the master (us) and the recived packet (slave)
+            # Here we get the full packets sent from the master (us) and the received packet (slave)
             MasterRegister = "%04x" % (self.GetRegisterFromPacket(MasterPacket))
             if MasterRegister == self.ModbusEncapsulationRegister:
 
@@ -288,7 +288,7 @@ class ModbusEvo2(ModbusProtocol):
                 # SlaveData = list(sp_plaintext)
                 # self.LogHexList(SlaveData, prefix = "Returned Slave Packet")
                 if MasterControl == [self.MBUS_EVO2_CMD_PREFIX, self.MBUS_EVO2_CMD_3]:
-                    self.LogDebug("Unlock Response sent/recieved")
+                    self.LogDebug("Unlock Response sent/received")
                 return ""
             else:
                 return self._URFP(MasterPacket, SlavePacket, SkipUpdate, ReturnString)

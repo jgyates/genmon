@@ -171,11 +171,11 @@ class GenMopekaData(MySupport):
 
             if len(self.tank_address) > 4:
                 self.LogError(
-                    "Only four tanks sensors are supportd. Found "
+                    "Only four tanks sensors are supported. Found "
                     + str(len(self.tank_address))
                 )
                 self.LogConsole(
-                    "Only four tanks sensors are supportd. Found "
+                    "Only four tanks sensors are supported. Found "
                     + str(len(self.tank_address))
                 )
                 sys.exit(1)
@@ -363,7 +363,7 @@ class GenMopekaData(MySupport):
                     sys.exit(1)
 
                 if dimensions["cap"] == "torispherical":
-                    # the fluids lib assumes the cap lenght is 25% of the diameter for vertical tanks
+                    # the fluids lib assumes the cap length is 25% of the diameter for vertical tanks
                     self.Tank = TANK(
                         D=dimensions["diameter"],
                         L=dimensions["length"],

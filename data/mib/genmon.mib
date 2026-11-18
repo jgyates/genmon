@@ -1345,7 +1345,7 @@ pzrpm OBJECT-TYPE
  MAX-ACCESS read-only
  STATUS current
  DESCRIPTION
-  "(PowerZone) The current engine RPM. Returns 0 if the genrator is not running."
+  "(PowerZone) The current engine RPM. Returns 0 if the generator is not running."
  ::= { pzengine 6 }
 
 pzfrequency OBJECT-TYPE

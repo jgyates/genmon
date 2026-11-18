@@ -23,7 +23,7 @@ try:
     import paho.mqtt.client as mqtt
 except Exception as e1:
     print(
-        "\n\nThe program requies the paho-mqtt module to be installed. Please use 'sudo pip install paho-mqtt' to install.\n"
+        "\n\nThe program requires the paho-mqtt module to be installed. Please use 'sudo pip install paho-mqtt' to install.\n"
     )
     print("Error: " + str(e1))
     sys.exit(2)
@@ -250,7 +250,7 @@ class MyGenPush(MySupport):
     # ------------ MyGenPush::CheckDictForChanges -------------------------------
     # This function is recursive, it will turn a nested dict into a flat dict keys
     # that have a directory structure with corrposonding values and determine if
-    # anyting changed. If it has then call our callback function
+    # anything changed. If it has then call our callback function
     def CheckDictForChanges(self, node, PathPrefix):
 
         CurrentPath = PathPrefix
@@ -384,7 +384,7 @@ class MyMQTT(MyCommon):
         self.PollTime = 2
         self.FlushInterval = float(
             "inf"
-        )  # default to inifite flush interval (e.g., never)
+        )  # default to infinite flush interval (e.g., never)
         self.debug = False
 
         try:

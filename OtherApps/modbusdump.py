@@ -25,7 +25,7 @@ except Exception as e1:
 
     managedfile = "/usr/lib/python" + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "/EXTERNALLY-MANAGED"
     if os.path.isfile(managedfile):
-        print("\n\nYou appear to be running in a managed python environemnt. To run this program see this page: ")
+        print("\n\nYou appear to be running in a managed python environment. To run this program see this page: ")
         print("\n\n  https://github.com/jgyates/genmon/wiki/Appendix-S---Working-in-a-Managed-Python-Environment\n")
     else:
         print("\nThe required python libraries are not installed. You must run the setup script first.\n")
@@ -192,21 +192,21 @@ if __name__ == "__main__":  #
     HelpStr += "\n"
     HelpStr += "\n      -r  Baud rate of serial port (9600, 115300, etc)"
     HelpStr += "\n      -p  Operating System device name of the serail port (/dev/serial0)"
-    HelpStr += "\n      -a  Modbus address to query in hexidecimal, 0 - ff (e.g. 9d, 10, ff) or 'all' to probe all addresses"
+    HelpStr += "\n      -a  Modbus address to query in hexadecimal, 0 - ff (e.g. 9d, 10, ff) or 'all' to probe all addresses"
     HelpStr += "\n      -s  Starting modbus register to read (decimal number)"
     HelpStr += "\n      -e  Ending modbus register to read (decimal number, must be greater than start register)"
     HelpStr += "\n      -b  Stop bits. If omitted 1 stop bit, if present use 1.5 stop bits"
     HelpStr += "\n      -x  Omit for no parity. -x 1 for odd parity, -x 2 for even parity"
     HelpStr += "\n      -w  write this value to register instead of read. Start register is used as register"
-    HelpStr += "\n      -c  read or write coils (bits) instead of holding register (modbu fuction 0x01 and 0x0f)"
+    HelpStr += "\n      -c  read or write coils (bits) instead of holding register (modbus function 0x01 and 0x0f)"
     HelpStr += "\n      -i  IP address if modbus over TCP is used"
     HelpStr += "\n      -t  TCP port if modbus over TCP is used"
     HelpStr += "\n      -m  Use Modbus TCP, if omitted and IP and port provided then use Modbus RTU over TCP"
-    HelpStr += "\n      -n  read input registers instead of holding registers (modbus fuction 0x04)"
-    HelpStr += "\n      -u  use single register writes for holding (modbus function 0x06) and coil writes (modbus fuction 0x05)"
+    HelpStr += "\n      -n  read input registers instead of holding registers (modbus function 0x04)"
+    HelpStr += "\n      -u  use single register writes for holding (modbus function 0x06) and coil writes (modbus function 0x05)"
     HelpStr += "\n      -d  delay between modbus requests in milliseconds (e.g. 10 for 10 ms)"
     HelpStr += "\n      -l  length of each read. 16 bit incriments. Use 1 for 16 bit, 2 for 32 bit, 3 for 48 bit, etc"
-    HelpStr += "\n\n     Default read and write use holding registers (modbus fuction 0x03 and 0x10)"
+    HelpStr += "\n\n     Default read and write use holding registers (modbus function 0x03 and 0x10)"
     HelpStr += "\n \n"
 
     try:

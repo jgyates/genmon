@@ -32,7 +32,7 @@ class GaugeDIY(MySupport):
 
         self.config = config
         self.log = log
-        self.consle = console
+        self.console = console
         # read in parameters from config file
 
         self.debug = self.config.ReadValue("debug", return_type=bool, default=False)

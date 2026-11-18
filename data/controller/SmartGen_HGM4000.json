@@ -518,7 +518,7 @@
       },
       {"title": "Inputs",
       "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy",
-      "comment2": "You can change the title to indicate the input's funtion or remove unused inputs",
+      "comment2": "You can change the title to indicate the input's function or remove unused inputs",
       "container": true,
       "value" : [
         {
@@ -615,7 +615,7 @@
       },
       {"title": "Outputs",
       "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy",
-      "comment2": "You can change the title to indicate the output's funtion or remove unused outputs",
+      "comment2": "You can change the title to indicate the output's function or remove unused outputs",
       "container": true,
       "value" : [
           {
@@ -1316,7 +1316,7 @@
     "comment": "the settime object, if present can enable writing of the date and time to the controller",
     "comment2": "the 'command_sequence' list is required. It defines the registers and what to write to each register",
     "comment3": "The hour,minute,month,date,year entries are like the 'exec' entries in that they are python code that",
-    "comment4": "format the date and time input into the formate expected in the modbus register.",
+    "comment4": "format the date and time input into the format expected in the modbus register.",
     "comment5": "If multiple entries are in one register command object, the values will be logical OR'ed to create a single value",
     "comment6": "Fixme! This isn't working and I'm not sure if it ever will",
     "command_sequence": [

@@ -1,5 +1,5 @@
 #!/bin/bash
-# bash script to start, stop or restart genmon. the scrip calls genloader.py
+# bash script to start, stop or restart genmon. the script calls genloader.py
 # with the needed command line parameters and can use python 2.7 or 3.x to call
 # genloader.py
 #-------------------------------------------------------------------------------
@@ -70,7 +70,7 @@ function printhelp(){
   echo "valid options:"
   echo "   -h      display help"
   echo "   -c      path of config files (trailing slash optional)"
-  echo "   -p      Specifiy 2 or 3 for python version. 2 is default"
+  echo "   -p      Specify 2 or 3 for python version. 2 is default"
   echo ""
 }
 

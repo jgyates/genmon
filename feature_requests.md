@@ -19,7 +19,7 @@
 - Add the ability to report the temperature of mopeka tank sensors in the UI and SNMP/MQTT
 - Add the ability to set the name of external tank
 - [Add reading watchdog in gentankutil](https://github.com/jgyates/genmon/issues/1018)
-- [Keep alive for Silk broswers](https://github.com/jgyates/genmon/discussions/1059)
+- [Keep alive for Silk browsers](https://github.com/jgyates/genmon/discussions/1059)
 - [Add on to monitor key values and alert if out of range](https://github.com/jgyates/genmon/discussions/1089)
 - [Manual Start and Transfer but stop after x minutes](https://github.com/jgyates/genmon/discussions/1174) @jkh62
 - [Add device specific messaging to pushover](https://github.com/jgyates/genmon/issues/1246) @noumenon272

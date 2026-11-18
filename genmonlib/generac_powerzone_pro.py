@@ -133,7 +133,7 @@ class PowerZoneProReg(object):
     # Flag 3: Warning
     # Flag 4: DTC
     # Flag 5: Horn is on
-    KEY_SWITCH_STATE = ["01b6", 2]  # Key Switch Postion
+    KEY_SWITCH_STATE = ["01b6", 2]  # Key Switch Position
     # 1 = Off
     # 2 = Manual
     # 4 = Auto
@@ -343,7 +343,7 @@ class PowerZoneProIO(object):
         ("0005", 0x0001): "Not In Auto",
         ("0002", 0x0100): "Generator Running",
         # ("0007", 0x0001) : "Generator Power",
-        # DOF Resutls
+        # DOF Results
         ("0070", 0x8000): "COMMON DTC",
         ("0070", 0x4000): "COMMON WARNING",
         ("0070", 0x2000): "COMMON ALARM",
@@ -363,7 +363,7 @@ class PowerZoneProIO(object):
         ("0071", 0x8000): "GEN RUNNING IN QUIETTEST",
         ("0071", 0x4000): "GEN IN WARMUP",
         ("0071", 0x2000): "GEN READY TO ACCEPT LOAD",
-        ("0071", 0x1000): "GEN SYNCHING TO BUS/UTILITY",
+        ("0071", 0x1000): "GEN SYNCING TO BUS/UTILITY",
         ("0071", 0x0800): "GEN HOLDOFF ALARMS ENABLED",
         ("0071", 0x0400): "GEN IN COOLDOWN",
         ("0071", 0x0200): "LINE POWER",
@@ -403,7 +403,7 @@ class PowerZoneProIO(object):
 # ---------------------------RegisterStringEnum:RegisterStringEnum---------------
 class RegisterStringEnum(object):
 
-    # Note, the first value is the register (in hex string), the second is the numbert of bytes
+    # Note, the first value is the register (in hex string), the second is the number of bytes
     # third is if the result is stored as a string
     PRODUCT_VERSION_DATE = ["000a", 192, False]
     MAINT_LIFE_REMAINING = ["0167", 18, False]
@@ -433,7 +433,7 @@ class RegisterStringEnum(object):
 # ---------------------------RegisterFileEnum:RegisterFileEnum-------------------
 class RegisterFileEnum(object):
 
-    # Note, the first value is the register (in hex string), the second is the numbert of bytes
+    # Note, the first value is the register (in hex string), the second is the number of bytes
     # third is if the result is stored as a string
 
     # Nameplate, Serial Number, etc
@@ -870,7 +870,7 @@ class PowerZonePro(GeneratorController):
 
     # ------------ PowerZonePro:WaitAndPergeforTimeout -----------------------------
     def WaitAndPergeforTimeout(self):
-        # if we get here a timeout occured, and we have recieved at least one good packet
+        # if we get here a timeout occurred, and we have received at least one good packet
         # this logic is to keep from receiving a packet that we have already requested once we
         # timeout and start to request another
         # Wait for a bit to allow any missed response from the controller to arrive
@@ -1529,7 +1529,7 @@ class PowerZonePro(GeneratorController):
             StartInfo["ResetAlarms"] = False
             StartInfo["AckAlarms"] = True
             StartInfo["RemoteTransfer"] = self.HTSTransferSwitch  # Remote start and transfer command
-            StartInfo["RemoteButtons"] = False  # Remote controll of Off/Auto/Manual
+            StartInfo["RemoteButtons"] = False  # Remote control of Off/Auto/Manual
             StartInfo["ExerciseControls"] = False  # self.SmartSwitch
             StartInfo["WriteQuietMode"] = True
             StartInfo["SetGenTime"] = True

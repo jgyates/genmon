@@ -1,0 +1,10 @@
+# Settings for codespell (spelling mistakes in code, comments and text), run by
+# tests/run_lint.sh. Run it by hand with: uvx codespell==2.3.0
+#   skip: the changelog (old entries kept as written), register captures,
+#     third party and binary files
+#   ignore-words-list: correct words codespell does not know (lower case):
+#     assertin (unittest assertIn), onlyonce (a notification setting),
+#     ons (add-ons), ect / cht (Kohler fault abbreviations), filetests (a class)
+[codespell]
+skip = .git,changelog.md,tests/sim/captures/*,*.min.js,*.png,*.jpg,*.jpeg,*.gif,*.ico,*.svg,*.pdf,*.pptx,*.zip,*.gz,*.webmanifest
+ignore-words-list = assertin,onlyonce,ons,ect,cht,filetests

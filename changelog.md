@@ -98,6 +98,7 @@ All notable changes to this project will be documented in this file.
 - Fixed custom controller buttons in simulation mode, and IEEE 754 half / double values in the base controller
 - Added tests for the shared controller code (buttons, maintenance log, add-on data, power log) and the Modbus protocol
 - Maintenance log entries with an invalid date, type or comment are now rejected (they were saved)
+- Fixed spelling in messages, tooltips, alarm descriptions, comments and docs; added a spell check (codespell) to the lint checks
 
 
 ## 2.0.02 -2026-08-04

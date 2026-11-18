@@ -360,7 +360,7 @@ class MyPlatform(MyCommon):
                 if throttle_file != None:
                     file = open(throttle_file)
                 else:
-                    # this method is depricated
+                    # this method is deprecated
                     file = open("/sys/devices/platform/soc/soc:firmware/get_throttled")
                 status = file.read()
                 return self.ParseThrottleStatus(int(status))

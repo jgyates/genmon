@@ -103,7 +103,7 @@ def AddItemToConfFile(FileName, Entry, Value, Check=False):
 
 
 # ---------------------MySupport::RemoveItemFromConfFile------------------------
-# Remoce config item or validate it is not there
+# Remove config item or validate it is not there
 def RemoveItemFromConfFile(FileName, Entry, Value, Check=False):
 
     try:

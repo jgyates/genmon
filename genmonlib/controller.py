@@ -70,10 +70,10 @@ class GeneratorController(MySupport):
         self.CheckForAlarmEvent = (
             threading.Event()
         )  # Event to signal checking for alarm
-        self.Holding = collections.OrderedDict()  # dict for registers and values (modbus fuction 03)
+        self.Holding = collections.OrderedDict()  # dict for registers and values (modbus function 03)
         self.Strings = collections.OrderedDict()    # dict for registers read a string data
         self.FileData = collections.OrderedDict()   # dict for modbus file reads (modbus function 0x14)
-        self.Coils = collections.OrderedDict()      # dict for modbus coil reads (modbus fuction 01)
+        self.Coils = collections.OrderedDict()      # dict for modbus coil reads (modbus function 01)
         self.Inputs = collections.OrderedDict()     # dict for modbus input registers (modbus function 4)
         self.NotChanged = 0  # stats for registers
         self.Changed = 0  # stats for registers
@@ -145,7 +145,7 @@ class GeneratorController(MySupport):
         self.DisableOutageCheck = False
 
         self.ProgramStartTime = datetime.datetime.now() # used for com metrics
-        self.OutageStartTime = (self.ProgramStartTime)  # if these two are the same, no outage has occured
+        self.OutageStartTime = (self.ProgramStartTime)  # if these two are the same, no outage has occurred
         self.OutageReoccuringNoticeTime = (self.ProgramStartTime)
         self.OutageNoticeDelayTime = None
         self.LastOutageDuration = self.OutageStartTime - self.OutageStartTime
@@ -422,7 +422,7 @@ class GeneratorController(MySupport):
                 # invalid value
                 return
             if UtilityVolts >= (self.NominalLineVolts * 2.5):
-                # ivalid value
+                # invalid value
                 return
 
             # first time thru set the values to the same voltage level
@@ -501,7 +501,7 @@ class GeneratorController(MySupport):
                 return
             self.OutageReoccuringNoticeTime = datetime.datetime.now()
             OutageStr = str(LastOutageDuration).split(".")[0]      # remove microseconds from string
-            msgbody = ("\nUtility Outage Status: Untility power still out at " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ". Duration of outage " + OutageStr)
+            msgbody = ("\nUtility Outage Status: Utility power still out at " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ". Duration of outage " + OutageStr)
             self.MessagePipe.SendMessage("Recurring Outage Notice at " + self.SiteName,msgbody,msgtype="outage")
         except Exception as e1:
             self.LogErrorLine("Error in SendRecuringOutageNotice: " + str(e1))
@@ -1083,7 +1083,7 @@ class GeneratorController(MySupport):
                     self.LogError("Error in GetButtonsCommon: invalid button defined validateing command_sequence:(not list) "+ str(button))
                     continue
                 
-                # valiate command sequeuence
+                # validate command sequeuence
                 CommandError = False
                 for command in button["command_sequence"]:
                     if not "reg" in command.keys() or not isinstance(command["reg"], str):
@@ -1178,7 +1178,7 @@ class GeneratorController(MySupport):
                                 elif "length" in gm_cmd and gm_cmd["length"] == 4:
                                     gm_cmd["value"] = "%08x" % int(ui_cmd["value"])
                                 else:
-                                    self.LogError("Error in ExecuteRemoteCommand: only 2 or 4 supported for int lenght: " + str(gm_cmd))
+                                    self.LogError("Error in ExecuteRemoteCommand: only 2 or 4 supported for int length: " + str(gm_cmd))
                                     return "Error in ExecuteRemoteCommand, invalid length of input"
                             else:
                                 self.LogError("Error in ExecuteRemoteCommand, unsupported type: " + str(ui_cmd))
@@ -1907,7 +1907,7 @@ class GeneratorController(MySupport):
                 return "OK"
 
             # if we get here the power log is 85% full or greater so let's try to reduce the size by
-            # deleting entires that are older than the input Minutes
+            # deleting entries that are older than the input Minutes
             CmdString = "power_log_json=%d" % Minutes
             PowerLog = self.GetPowerHistory(CmdString, NoReduce=True)
 
@@ -2004,14 +2004,14 @@ class GeneratorController(MySupport):
                 return inputlist
             if len(inputlist) % 2 == 0:
                 # even
-                Lenght = len(inputlist)
+                Length = len(inputlist)
                 isEven = True
             else:
-                Lenght = len(inputlist) - 1
+                Length = len(inputlist) - 1
                 isEven = False
             OutList = []
 
-            for k in range(0,Lenght,2):
+            for k in range(0,Length,2):
                 try:
                     # check to see if there are zero entries for the power
                     if float(inputlist[k][1]) == 0 or float(inputlist[k+1][1]) == 0:
@@ -2020,7 +2020,7 @@ class GeneratorController(MySupport):
                     else:
                         OutList.append(self.AverageTwoSamples(inputlist[k],inputlist[k+1]))
                 except Exception as e1:
-                    self.LogErrorLine("Error in ReduceList (2): " + str(e1) +", " + str(k) + ", " + str(Lenght))
+                    self.LogErrorLine("Error in ReduceList (2): " + str(e1) +", " + str(k) + ", " + str(Length))
                     self.LogErrorLine("isEven = " + str(isEven))
             if not isEven:
                 OutList.append(inputlist[-1])
@@ -2053,7 +2053,7 @@ class GeneratorController(MySupport):
             self.LogDebug("Post Reduce RemovePowerSamples:" + str(len(NewList)))'
             '''
             # This will just remove all samples but the first MaxSize. This will only do anything if the above
-            # code failes to find valid samples to remove (i.e. all samples are zero)
+            # code fails to find valid samples to remove (i.e. all samples are zero)
             if len(inputList) > MaxSize:
                 NewList = inputList[:MaxSize]
 
@@ -2283,7 +2283,7 @@ class GeneratorController(MySupport):
             return 0, 0
 
     # ----------  GeneratorController::DecimateList-----------------------------
-    # Sensor loging helper
+    # Sensor logging helper
     def DecimateList(self, inputList, MaxSize):
         try:
             if len(inputList) <= MaxSize:
@@ -2519,7 +2519,7 @@ class GeneratorController(MySupport):
         return []
 
     # ----------  GeneratorController::CollectControllerSensorData--------------
-    # This fuction is overriden in the child controller specific class and 
+    # This function is overridden in the child controller specific class and 
     # is called periodically to write sensor data to log files
     def CollectControllerSensorData(self):
 
@@ -3397,7 +3397,7 @@ class GeneratorController(MySupport):
                     FuelRemaining = FuelRemaining * 0.264172
                 elif Units.lower() == "cubic feet" and self.UseMetric == True:
                     # this means that fuel left is Liters and fuel per hour is cu feet
-                    # so convert remaing fuel to cubic feet
+                    # so convert remaining fuel to cubic feet
                     # 1 L = 0.0353147 cu ft
                     FuelRemaining = FuelRemaining * 0.0353147
             except Exception as e1:

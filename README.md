@@ -50,7 +50,7 @@ The software supports the following features:
             - Hours till next scheduled service
             - Total Run Hours
             - Firmware and Hardware versions
-        * Various statics from the generator monitor including time since program launched,
+        * Various statistics from the generator monitor including time since program launched,
               MODBUS / serial communications health and program health.
 * Email notification of :
     - Engine state change
@@ -108,7 +108,7 @@ Gemmon supports several type of generator controllers. The following table shows
 
 | Controller | Description | Setup |
 |---|---|---|
-| Evolution 1.0 Air Cooled, Evolution 2.0 Air Cooled, Evolution Liquid Cooled, [Evolution Liquid Cooled 4.5L](https://github.com/jgyates/genmon/wiki/Appendix-D-Known-Issues#18-liquid-cooled-45l-model-serial-data-rate), Nexus Air Cooled, Nexus Liquid Cooled, Generac PowerPact, Generac Synergy and [Power Zone 200](https://github.com/jgyates/genmon/wiki/Appendix-T-Generac-Power-Zone-200-Information) | Generac Residential | Use the defaul setting. Settings -> Advanced -> Controller Type -> evolution_nexus |
+| Evolution 1.0 Air Cooled, Evolution 2.0 Air Cooled, Evolution Liquid Cooled, [Evolution Liquid Cooled 4.5L](https://github.com/jgyates/genmon/wiki/Appendix-D-Known-Issues#18-liquid-cooled-45l-model-serial-data-rate), Nexus Air Cooled, Nexus Liquid Cooled, Generac PowerPact, Generac Synergy and [Power Zone 200](https://github.com/jgyates/genmon/wiki/Appendix-T-Generac-Power-Zone-200-Information) | Generac Residential | Use the default setting. Settings -> Advanced -> Controller Type -> evolution_nexus |
 | [Generac H-100 and G-Panel](https://github.com/jgyates/genmon/wiki/Appendix-G-Generac-H-100,-G-Panel-and-PowerZone-Controllers) | Industrial Generac | Settings -> Advanced -> Controller Type -> h_100 |
 | [Generac Power Zone Pro](https://github.com/jgyates/genmon/wiki/Appendix-G-Generac-H-100,-G-Panel-and-PowerZone-Controllers) | Industrial Generac | Settings -> Advanced -> Controller Type -> powerzone_pro |
 | [Generac Power Zone 410](https://github.com/jgyates/genmon/wiki/Appendix-G-Generac-H-100,-G-Panel-and-PowerZone-Controllers) | Industrial Generac | Settings -> Advanced -> Controller Type -> custom, then Settings -> Advanced -> Custom Controller Config File -> Power_Zone_410.json |

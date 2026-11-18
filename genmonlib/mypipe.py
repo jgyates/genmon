@@ -43,7 +43,7 @@ class MyPipe(MySupport):
         if self.Simulation:
             return
 
-        # refernce time for resetting daily messages
+        # reference time for resetting daily messages
         self.DailyTime = datetime.datetime.now()
         # dict for holding one time messages
         self.OneTimeMessages = {}

@@ -109,7 +109,7 @@ class HPanelReg(object):
     ]  # High Byte is True if Auto, Low Byte True if Manual (False if Off)
     DI_STATE_1 = ["01a1", 2]  # * Different on G-Panel
     DI_STATE_2 = ["01a2", 2]  # * Different on G-Panel
-    QUIETTEST_STATUS = ["022b", 2]  # Quiet Test Status and reqest
+    QUIETTEST_STATUS = ["022b", 2]  # Quiet Test Status and request
 
     # EXT_SW_XX regististers are for HTS/MTS/STS Switches
     EXT_SW_GENERAL_STATUS = ["0ea1", 2]  # External Switch General Status
@@ -297,7 +297,7 @@ class HPanelIO(object):
         (
             "0083",
             0x0040,
-        ): "Oil Pressure Low Alarm - Oil Pressure has gone below mimimum alarm limit.",
+        ): "Oil Pressure Low Alarm - Oil Pressure has gone below minimum alarm limit.",
         (
             "0083",
             0x0020,
@@ -326,7 +326,7 @@ class HPanelIO(object):
         (
             "0084",
             0x8000,
-        ): "Coolant Level Low Warning - Coolant Level has gone below mimimum warning limit.",
+        ): "Coolant Level Low Warning - Coolant Level has gone below minimum warning limit.",
         (
             "0084",
             0x4000,
@@ -338,7 +338,7 @@ class HPanelIO(object):
         (
             "0084",
             0x1000,
-        ): "Fuel Level Low Alarm - Fuel Level has gone below mimimum alarm limit.",
+        ): "Fuel Level Low Alarm - Fuel Level has gone below minimum alarm limit.",
         (
             "0084",
             0x0800,
@@ -346,7 +346,7 @@ class HPanelIO(object):
         (
             "0084",
             0x0400,
-        ): "Fuel Level Low Warning - Fuel Level has gone below mimimum warning limit.",
+        ): "Fuel Level Low Warning - Fuel Level has gone below minimum warning limit.",
         (
             "0084",
             0x0200,
@@ -358,7 +358,7 @@ class HPanelIO(object):
         (
             "0084",
             0x0080,
-        ): "Analog Input 6 Low Alarm - Analog Input 6 has gone below mimimum alarm limit (Fuel Pressure or Inlet Air Temperature).",
+        ): "Analog Input 6 Low Alarm - Analog Input 6 has gone below minimum alarm limit (Fuel Pressure or Inlet Air Temperature).",
         (
             "0084",
             0x0040,
@@ -366,7 +366,7 @@ class HPanelIO(object):
         (
             "0084",
             0x0020,
-        ): "Analog Input 6 Low Warning - Analog Input 6 has gone below mimimum warning limit (Fuel Pressure or Inlet Air Temperature).",
+        ): "Analog Input 6 Low Warning - Analog Input 6 has gone below minimum warning limit (Fuel Pressure or Inlet Air Temperature).",
         (
             "0084",
             0x0010,
@@ -613,7 +613,7 @@ class GPanelReg(object):
     ]  # High Byte is True if Auto, Low Byte True if Manual (False if Off)
     DI_STATE_1 = ["01a1", 2]  # * Different on G-Panel
     DI_STATE_2 = ["01a2", 2]  # * Different on G-Panel
-    QUIETTEST_STATUS = ["022b", 2]  # Quiet Test Status and reqest
+    QUIETTEST_STATUS = ["022b", 2]  # Quiet Test Status and request
 
     # EXT_SW_XX regististers are for HTS/MTS/STS Switches
     EXT_SW_GENERAL_STATUS = ["0ea1", 2]  # External Switch General Status
@@ -806,7 +806,7 @@ class GPanelIO(object):
         ("0084", 0x0100): "Exhaust Temp Alarm",
         ("0084", 0x0080): "Flame Detection",
         ("0084", 0x0040): "Carbon Monixide Alarm",
-        ("0084", 0x0020): "Vacume Sensor Fault Alarm",
+        ("0084", 0x0020): "Vacuum Sensor Fault Alarm",
         ("0084", 0x0010): "Cam Mapped O P",
         ("0084", 0x0008): "Crank Mapped O P",
         ("0084", 0x0004): "Gas Flow Sensor Fault Alarm",
@@ -842,7 +842,7 @@ class GPanelIO(object):
 class RegisterStringEnum(object):
 
     # These Values are the same for H-Panel, and G-Panel
-    # Note, the first value is the register (in hex string), the second is the numbert of bytes
+    # Note, the first value is the register (in hex string), the second is the number of bytes
     # third is if the result is stored as a string
     CONTROLLER_NAME = ["0020", 0x40, True]  #
     VERSION_DATE = ["0040", 0x40, True]
@@ -1582,7 +1582,7 @@ class HPanel(GeneratorController):
 
     # ------------ HPanel:WaitAndPergeforTimeout --------------------------------
     def WaitAndPergeforTimeout(self):
-        # if we get here a timeout occured, and we have recieved at least one good packet
+        # if we get here a timeout occurred, and we have received at least one good packet
         # this logic is to keep from receiving a packet that we have already requested once we
         # timeout and start to request another
         # Wait for a bit to allow any missed response from the controller to arrive
@@ -2222,7 +2222,7 @@ class HPanel(GeneratorController):
             StartInfo["AckAlarms"] = True
             StartInfo["ResetAlarms"] = False
             StartInfo["RemoteTransfer"] = self.HTSTransferSwitch  # Remote start and transfer command
-            StartInfo["RemoteButtons"] = False  # Remote controll of Off/Auto/Manual
+            StartInfo["RemoteButtons"] = False  # Remote control of Off/Auto/Manual
             StartInfo["ExerciseControls"] = False  # self.SmartSwitch
             StartInfo["WriteQuietMode"] = False
             StartInfo["SetGenTime"] = True
@@ -3558,7 +3558,7 @@ class HPanel(GeneratorController):
             Data.append(Value3 >> 8)  # value to be written (High byte)
             Data.append(Value3 & 0x00FF)  # value written (Low byte)
 
-            # NOTE the industrial models can operate in standalong and parallel mode. If in parallel mode
+            # NOTE the industrial models can operate in standalone and parallel mode. If in parallel mode
             # the main System Controller (SC) is addressed by the modbus registers 0 - 4095, each
             # parallel generator controller can be bypassed directly via pass through by adding generator
             # number (1, 2, 3, etc) to the high eight bits of the modbus address (i.e. add 4096 for 1,

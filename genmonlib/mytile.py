@@ -16,7 +16,7 @@
 from genmonlib.mycommon import MyCommon
 
 
-# See http://bernii.github.io/gauge.js/ for gauage paraeters
+# See http://bernii.github.io/gauge.js/ for gauge parameters
 class MyTile(MyCommon):
     # ---------------------MyTile::__init__--------------------------------------
     def __init__(
@@ -61,7 +61,7 @@ class MyTile(MyCommon):
         3.) gauge min Value (usually 0)
         4.) gauge maximum value (eg 260)
         5.) Divisions (the large line, (eg 50, 100, 150, 200, 250)
-        6.) sub divisions (eg every 10, ie the samll lines)
+        6.) sub divisions (eg every 10, ie the small lines)
         7.) labels... (eg put labels at 100 & 200)
         8.) color zones
         """

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -------------------------------------------------------------------------------
 #    FILE: genexercise.py
-# PURPOSE: genexercise.py add enhanced exercise functionality for Evolution and Nexus cotrollers
+# PURPOSE: genexercise.py add enhanced exercise functionality for Evolution and Nexus controllers
 #
 #  AUTHOR: jgyates
 #    DATE: 02-23-2019
@@ -530,7 +530,7 @@ class GenExercise(MySupport):
         time.sleep(1)
         
         if not self.ExerciseFrequency.lower() in ["post-controller"]:
-            self.LogDebug("Error: PostExerciseThread entered without proper initilization. Exiting thread.")
+            self.LogDebug("Error: PostExerciseThread entered without proper initialization. Exiting thread.")
             return
         while True:
             try:

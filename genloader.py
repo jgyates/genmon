@@ -1,6 +1,6 @@
 # -------------------------------------------------------------------------------
 #    FILE: genloader.py
-# PURPOSE: app for loading specific moduels for genmon
+# PURPOSE: app for loading specific modules for genmon
 #
 #  AUTHOR: Jason G Yates
 #    DATE: 12-Sept-2018
@@ -637,7 +637,7 @@ class Loader(MySupport):
             return False
 
     # ---------------------------------------------------------------------------
-    # check for other tools that are needed by pip libaries
+    # check for other tools that are needed by pip libraries
     def CheckToolsNeeded(self):
         try:
 
@@ -903,7 +903,7 @@ class Loader(MySupport):
 
         ErrorOccured = False
         if not len(self.CachedConfig):
-            self.LogInfo("Error: Empty configruation found.")
+            self.LogInfo("Error: Empty configuration found.")
             return False
 
         for Module, Settings in self.CachedConfig.items():
@@ -1134,7 +1134,7 @@ class Loader(MySupport):
                     TempDict["module"] = self.config.ReadValue("module")
                 else:
                     self.LogError(
-                        "Error in GetConfig: expcting module in section "
+                        "Error in GetConfig: expecting module in section "
                         + str(SectionName)
                     )
                     TempDict["module"] = None
@@ -1145,7 +1145,7 @@ class Loader(MySupport):
                     )
                 else:
                     self.LogError(
-                        "Error in GetConfig: expcting enable in section "
+                        "Error in GetConfig: expecting enable in section "
                         + str(SectionName)
                     )
                     TempDict["enable"] = False
@@ -1156,7 +1156,7 @@ class Loader(MySupport):
                     )
                 else:
                     self.LogError(
-                        "Error in GetConfig: expcting hardstop in section "
+                        "Error in GetConfig: expecting hardstop in section "
                         + str(SectionName)
                     )
                     TempDict["hardstop"] = False
@@ -1165,7 +1165,7 @@ class Loader(MySupport):
                     TempDict["conffile"] = self.config.ReadValue("conffile")
                 else:
                     self.LogError(
-                        "Error in GetConfig: expcting confile in section "
+                        "Error in GetConfig: expecting confile in section "
                         + str(SectionName)
                     )
                     TempDict["conffile"] = None
@@ -1174,7 +1174,7 @@ class Loader(MySupport):
                     TempDict["args"] = self.config.ReadValue("args")
                 else:
                     self.LogError(
-                        "Error in GetConfig: expcting args in section "
+                        "Error in GetConfig: expecting args in section "
                         + str(SectionName)
                     )
                     TempDict["args"] = None
@@ -1185,7 +1185,7 @@ class Loader(MySupport):
                     )
                 else:
                     self.LogError(
-                        "Error in GetConfig: expcting priority in section "
+                        "Error in GetConfig: expecting priority in section "
                         + str(SectionName)
                     )
                     TempDict["priority"] = None
@@ -1566,7 +1566,7 @@ if __name__ == "__main__":
     HelpStr += "   Example: python genloader.py -s\n"
     HelpStr += "            python genloader.py -r\n"
     HelpStr += "\n      -s  Start Genmon modules"
-    HelpStr += "\n      -r  Restart Genmon moduels"
+    HelpStr += "\n      -r  Restart Genmon modules"
     HelpStr += "\n      -x  Stop Genmon modules"
     HelpStr += "\n      -z  Hard stop Genmon modules"
     HelpStr += "\n      -c  Path of genmon.conf file i.e. /etc/"

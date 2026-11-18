@@ -80,7 +80,7 @@ class GenCallMeBot(MySupport):
             try:
                 self.notification_type = self.notification_type.lower()
             except Exception:
-                self.LogErrorLine("Error reading gencallmebot.conf: notifcation type is not a valid string")
+                self.LogErrorLine("Error reading gencallmebot.conf: notification type is not a valid string")
                 sys.exit(1)
                 
             if (self.notification_type.lower() == "whatsapp") or (self.notification_type.lower() == "signal"):

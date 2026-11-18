@@ -104,7 +104,7 @@ MIN_REQ_PACKET_LENGTH = 0x08
 MIN_WR_REQ_PACKET_LENGTH = 0x09
 MIN_FILE_READ_REQ_PACKET_LENGTH = 0x0C
 MAX_MODBUS_PACKET_SIZE = 0x100
-# Varible limits
+# Variable limits
 MAX_REGISTER = 0xFFFF
 MIN_REGISTER = 0x0
 MAX_FILE_RECORD_NUM = 0x270F  # 9999 decimal
@@ -468,7 +468,7 @@ class GenSim(MySupport):
 
             if not len(Packet) == MIN_PACKET_ERR_LENGTH:
                 self.ComValidationError += 1
-                self.LogError("Validation Error: CreateExceptionPacket lenght incorrect: " + str(len(Packet)))
+                self.LogError("Validation Error: CreateExceptionPacket length incorrect: " + str(len(Packet)))
             return Packet
         except Exception as e1:
             self.LogErrorLine("Error in CreateExceptionPacket: " + str(e1))
@@ -848,7 +848,7 @@ class GenSim(MySupport):
         self.LogConsole("Connected with " + addr[0] + ":" + str(addr[1]))
         Buffer = []
         try:
-            #conn.settimeout(2)   # only blok on recv for a small amount of time
+            #conn.settimeout(2)   # only block on recv for a small amount of time
 
             while True:
                 try:
@@ -921,7 +921,7 @@ class GenSim(MySupport):
     def SetupServerSocket(self):
         #create an INET, STREAMing socket
         self.ServerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # set some socket options so we can resuse the port
+        # set some socket options so we can reuse the port
         self.ServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.ServerSocket.settimeout(.5)
         #bind the socket to a host, and a port

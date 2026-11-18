@@ -388,7 +388,7 @@ class MySupport(MyCommon):
             return False
     # ------------ MySupport::ProcessDispatch -----------------------------------
     # This function is recursive, it will turn a dict with callable functions into
-    # all of the callable functions resolved to stings (by calling the functions).
+    # all of the callable functions resolved to strings (by calling the functions).
     # If string output is needed instead of a dict output, ProcessDispatchToString
     # is called
     def ProcessDispatch(self, node, InputBuffer, indent=0):
@@ -582,7 +582,7 @@ class MySupport(MyCommon):
         try:
             import psutil
         except:
-            return False  # incase psutil is not installed load anyway
+            return False  # in case psutil is not installed load anyway
         try:
             prog_name = os.path.basename(prog_name)
             for q in psutil.process_iter():

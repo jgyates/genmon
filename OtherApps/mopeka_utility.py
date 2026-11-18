@@ -25,7 +25,7 @@ except Exception as e1:
 
     managedfile = "/usr/lib/python" + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "/EXTERNALLY-MANAGED"
     if os.path.isfile(managedfile):
-        print("\n\nYou appear to be running in a managed python environemnt. To run this program see this page: ")
+        print("\n\nYou appear to be running in a managed python environment. To run this program see this page: ")
         print("\n\n  https://github.com/jgyates/genmon/wiki/Appendix-S---Working-in-a-Managed-Python-Environment\n")
     else:
         print("\nThe required python libraries are not installed. You must run the setup script first.\n")
@@ -111,9 +111,9 @@ if __name__ == "__main__":
         service.Stop()
 
         print("Discovery Stats: \n")
-        print("\tProcessed Advertisments: " + str(service.processed_advertisments))
-        print("\tIgnored Advertisments: " + str(service.ignored_advertisments))
-        print("\tZero Length Advertisments: " + str(service.zero_lenght_advertisments))
+        print("\tProcessed Advertisements: " + str(service.processed_advertisments))
+        print("\tIgnored Advertisements: " + str(service.ignored_advertisments))
+        print("\tZero Length Advertisements: " + str(service.zero_lenght_advertisments))
         print(f"\nFinished Discovery.  Found {len(service.discovered_sensors)} new sensor(s):\n")
 
         for sensor in service.discovered_sensors.values():

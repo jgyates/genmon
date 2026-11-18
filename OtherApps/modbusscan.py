@@ -23,10 +23,10 @@ try:
 except Exception:
     managedfile = "/usr/lib/python" + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "/EXTERNALLY-MANAGED"
     if os.path.isfile(managedfile):
-        print("\n\nYou appear to be running in a managed python environemnt. To run this program see this page: ")
+        print("\n\nYou appear to be running in a managed python environment. To run this program see this page: ")
         print("\n\n  https://github.com/jgyates/genmon/wiki/Appendix-S---Working-in-a-Managed-Python-Environment\n")
     else:
-        print("\nThe python serial libary is not install. You must run the setup script first.\n")
+        print("\nThe python serial library is not install. You must run the setup script first.\n")
         print("\n\n   https://github.com/jgyates/genmon/wiki/3.3--Setup-genmon-software")
     sys.exit(1)
 

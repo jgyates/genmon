@@ -52,7 +52,7 @@ def input_float(prompt, ndec=2):
 
 # ---------------------check_ap_table--------------------------------------------
 def check_ap_table():
-    """Checks to mke sure the angle-percentage table is linear"""
+    """Checks to make sure the angle-percentage table is linear"""
 
     if gauge.ap_table != None and len(gauge.ap_table) > 2:
         increasing = gauge.ap_table[0][0] < gauge.ap_table[-1][0]

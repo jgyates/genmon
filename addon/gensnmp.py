@@ -751,7 +751,7 @@ class GenSNMP(MySupport):
     # ------------ GenSNMP::CheckDictForChanges ---------------------------------
     # This function is recursive, it will turn a nested dict into a flat dict keys
     # that have a directory structure with corrposonding values and determine if
-    # anyting changed. If it has then call our callback function
+    # anything changed. If it has then call our callback function
     def CheckDictForChanges(self, node, PathPrefix):
 
         CurrentPath = PathPrefix

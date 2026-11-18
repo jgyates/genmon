@@ -790,7 +790,7 @@ if __name__ == "__main__":
                 p.poll(100)
                 time.sleep(0.1)
             except Exception as e:
-                log.error("Exception occured in main loop: " + str(e))
+                log.error("Exception occurred in main loop: " + str(e))
                 time.sleep(60)
                 # break
 

@@ -429,7 +429,7 @@ class CustomController(GeneratorController):
                         Length = int(RegisterData)
                     if Length % 2 != 0:
                         self.LogError(
-                            "Error: Controller Import: modbus register lenghts must be divisible by 2 (holding_registers): "
+                            "Error: Controller Import: modbus register lengths must be divisible by 2 (holding_registers): "
                             + str(Register)
                             + ":"
                             + str(Length)
@@ -445,7 +445,7 @@ class CustomController(GeneratorController):
                         Length = RegisterData
                     if Length % 2 != 0:
                         self.LogError(
-                            "Error: Controller Import: modbus register lenghts must be divisible by 2 (input_registers): "
+                            "Error: Controller Import: modbus register lengths must be divisible by 2 (input_registers): "
                             + str(Register)
                             + ":"
                             + str(Length)
@@ -462,7 +462,7 @@ class CustomController(GeneratorController):
                         Length = RegisterData
                     if Length != 1:
                         self.LogError(
-                            "Error: Controller Import: modbus register lenghts must be 1 for coil registers"
+                            "Error: Controller Import: modbus register lengths must be 1 for coil registers"
                             + str(Register)
                             + ":"
                             + str(Length)
@@ -637,7 +637,7 @@ class CustomController(GeneratorController):
 
     # ------------ CustomController:WaitAndPergeforTimeout ----------------------
     def WaitAndPergeforTimeout(self):
-        # if we get here a timeout occured, and we have recieved at least one good packet
+        # if we get here a timeout occurred, and we have received at least one good packet
         # this logic is to keep from receiving a packet that we have already requested once we
         # timeout and start to request another
         # Wait for a bit to allow any missed response from the controller to arrive
@@ -652,7 +652,7 @@ class CustomController(GeneratorController):
     # -------------CustomController:RegisterIsLog-------------------------------- 
     def RegisterIsLog(self, Register):
         try:
-            # return True for sucess, Register Length (in bytes), and text name
+            # return True for success, Register Length (in bytes), and text name
             if not "log_registers" in self.controllerimport.keys():
                 return False, 0, ""
             RegInt = int(Register,16)
@@ -1101,7 +1101,7 @@ class CustomController(GeneratorController):
             StartInfo["ResetAlarms"] = False
             StartInfo["AckAlarms"] = False
             StartInfo["RemoteTransfer"] = False  # Remote start and transfer command
-            StartInfo["RemoteButtons"] = False  # Remote controll of Off/Auto/Manual
+            StartInfo["RemoteButtons"] = False  # Remote control of Off/Auto/Manual
             StartInfo["ExerciseControls"] = False  # self.SmartSwitch
             StartInfo["WriteQuietMode"] = False
             StartInfo["SetGenTime"] = ("settime" in self.controllerimport.keys())
@@ -1380,7 +1380,7 @@ class CustomController(GeneratorController):
             # attempt to make the seconds zero when we set the generator time so it will
             # be very close to the system time
             # Testing has show that this is not really achieving the seconds synced up, but
-            # it does make the time offset consistant
+            # it does make the time offset consistent
             while d.second != 0:
                 time.sleep(60 - d.second)  # sleep until seconds are zero
                 d = datetime.datetime.now()
@@ -1414,7 +1414,7 @@ class CustomController(GeneratorController):
         
             if CommandError:
                 return "Error setting time"
-            # not that all the commands have been created we can execute the comand sequenc
+            # not that all the commands have been created we can execute the command sequence
             with self.ModBus.CommAccessLock:
                 return self.ExecuteCommandSequence(settime_copy["command_sequence"])
 
@@ -1670,19 +1670,19 @@ class CustomController(GeneratorController):
                 return ReturnTitle, ReturnValue
             
             if entry["type"] == "bits" and not "value" in entry.keys():
-                self.LogError("Error: value (requried for bits) not found in input to GetDisplayEntry: " + str(entry))
+                self.LogError("Error: value (required for bits) not found in input to GetDisplayEntry: " + str(entry))
                 return ReturnTitle, ReturnValue
             if entry["type"] == "bits" and not "text" in entry.keys():
                 self.LogError("Error: text not found in input to GetDisplayEntry: " + str(entry))
                 return ReturnTitle, ReturnValue
             if entry["type"] == "float" and (not "multiplier" in entry.keys() and not "ieee754" in entry.keys()):
-                self.LogError("Error: multiplier or ieee754 (requried for float) not found in input to GetDisplayEntry: "+ str(entry))
+                self.LogError("Error: multiplier or ieee754 (required for float) not found in input to GetDisplayEntry: "+ str(entry))
                 return ReturnTitle, ReturnValue
             if entry["type"] == "regex" and not "regex" in entry.keys():
                 self.LogError("Error: regex not found in input to GetDisplayEntry: " + str(entry))
                 return ReturnTitle, ReturnValue
             if "multiplier" in entry and entry["multiplier"] == 0:
-                self.LogError("Error: multiplier (requried for float) must not be zero in input to GetDisplayEntry: " + str(entry))
+                self.LogError("Error: multiplier (required for float) must not be zero in input to GetDisplayEntry: " + str(entry))
                 return ReturnTitle, ReturnValue
             if (entry["type"] in ["int", "bits", "regex"] and not "mask" in entry):  # required
                 self.LogError("Error: mask not found in input to GetDisplayEntry: " + str(entry))
@@ -2452,7 +2452,7 @@ class CustomController(GeneratorController):
             # if we get here we must convert the data.
             if not "outputvoltage" in self.controllerimport.keys():
                 self.LogDebug(
-                    "WARNING: no outputvoltage in custom controller defintion"
+                    "WARNING: no outputvoltage in custom controller definition"
                 )
                 Voltage = None
             else:

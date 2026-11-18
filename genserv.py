@@ -1630,7 +1630,7 @@ class GenServ(MySupport):
                     config = self.ConfigFiles[filename]
             except Exception as e1:
                 self.LogErrorLine(
-                    "Unknow file in UpdateConfigFile: " + filename + ": " + str(e1)
+                    "Unknown file in UpdateConfigFile: " + filename + ": " + str(e1)
                 )
                 return default
 
@@ -1694,7 +1694,7 @@ class GenServ(MySupport):
                 config = self.ConfigFiles[FileName]
             except Exception as e1:
                 self.LogErrorLine(
-                    "Unknow file in UpdateConfigFile: " + FileName + ": " + str(e1)
+                    "Unknown file in UpdateConfigFile: " + FileName + ": " + str(e1)
                 )
                 return False
 
@@ -1834,7 +1834,7 @@ class GenServ(MySupport):
                 if not self.SettingShown(setting.when):
                     continue
                 if setting.file not in Files:
-                    self.LogError("Invaild Config File in " + caller + ": " + str(setting.file))
+                    self.LogError("Invalid Config File in " + caller + ": " + str(setting.file))
                     continue
                 FileName, Section = Files[setting.file]
                 bounds = self.SettingValue(setting.bounds)
@@ -1892,7 +1892,7 @@ class GenServ(MySupport):
         ### array containing information on the parameters
         ## 1st: email address
         ## 2nd: sort order, aka row number
-        ## 3rd: comma delimited list of notidications that are enabled
+        ## 3rd: comma delimited list of notifications that are enabled
         NotificationSettings = {}
         # e.g. {'myemail@gmail.com': [1]}
         # e.g. {'myemail@gmail.com': [1, 'error,warn,info']}

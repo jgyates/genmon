@@ -24,7 +24,7 @@ try:
     import paho.mqtt.client as mqtt
 except Exception as e1:
     print(
-        "\n\nThe program requies the paho-mqtt module to be installed. Please use 'sudo pip install paho-mqtt' to install.\n"
+        "\n\nThe program requires the paho-mqtt module to be installed. Please use 'sudo pip install paho-mqtt' to install.\n"
     )
     print("Error: " + str(e1))
     sys.exit(2)
@@ -161,7 +161,7 @@ class MyMQTT(MyCommon):
             if self.exclude_gauge != None and len(self.exclude_gauge):
                 for exclude in self.exclude_gauge:
                     if not exclude in self.labels:
-                        self.LogError("Invalid gague in exclude gauge list: " + str(exclude))
+                        self.LogError("Invalid gauge in exclude gauge list: " + str(exclude))
             if len(self.topics) != len(self.types):
                 self.LogError("Number of topics does not equal the number of types. " + str(len(self.topics)) +", " + str(len(self.types)))
                 sys.exit(1)

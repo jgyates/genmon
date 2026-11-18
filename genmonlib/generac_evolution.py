@@ -312,7 +312,7 @@ class Evolution(GeneratorController):
             "1fa6": [2, 0],  # Power Zone 200 Utility volts L2
             "2134": [2, 0],  # Power Zone 200 Real Power kW
             "2135": [2, 0],  # Power Zone 200 Reactive Power kW
-            "2136": [2, 0],  # Power Zone 200 Apparant Power kW
+            "2136": [2, 0],  # Power Zone 200 Apparent Power kW
             "2137": [2, 0],  # Power Zone 200 Last Run Minutes (duration of the last generator run in minutes)
             "2138": [2, 0],  # Power Zone 200 Last Run kWH (last generator run in kWH)
             "2166": [2, 0],  # Power Zone 200 Transfer switch active = 1
@@ -439,7 +439,7 @@ class Evolution(GeneratorController):
                     break
                 if not self.PowerZone200 and Reg in self.LCIgnoreRegisters:
                     continue
-                # The divide by 2 is due to the diference in the values in our dict are bytes
+                # The divide by 2 is due to the difference in the values in our dict are bytes
                 # but modbus makes register request in word increments so the request needs to
                 # in word multiples, not bytes
                 self.ModBus.ProcessTransaction(Reg, int(Info[self.REGLEN] // 2))
@@ -1411,8 +1411,8 @@ class Evolution(GeneratorController):
         msgbody += "The software has made it's best effort to identify your generator controller type however since "
         msgbody += "your generator is one that we have not validated, your generator controller may be incorrectly identified. "
         msgbody += "To validate this variant, please submit the output of the following command (generator: registers)"
-        msgbody += "and your model numbert to the following project thread: https://github.com/jgyates/genmon/issues/10. "
-        msgbody += "Once your feedback is receivd we an add your model product code and controller type to the list in the software."
+        msgbody += "and your model number to the following project thread: https://github.com/jgyates/genmon/issues/10. "
+        msgbody += "Once your feedback is received we an add your model product code and controller type to the list in the software."
 
         if self.EvolutionController == None:
 
@@ -1584,7 +1584,7 @@ class Evolution(GeneratorController):
                         localSyncError != self.ModBus.ComSyncError
                         or localTimeoutCount != self.ModBus.ComTimoutError
                     ) and self.ModBus.RxPacketCount:
-                        # if we get here a timeout occured, and we have recieved at least one good packet
+                        # if we get here a timeout occurred, and we have received at least one good packet
                         # this logic is to keep from receiving a packet that we have already requested once we
                         # timeout and start to request another
                         # Wait for a bit to allow any missed response from the controller to arrive
@@ -1601,7 +1601,7 @@ class Evolution(GeneratorController):
 
             if self.IsStopping:
                 return
-            # The divide by 2 is due to the diference in the values in our dict are bytes
+            # The divide by 2 is due to the difference in the values in our dict are bytes
             # but modbus makes register request in word increments so the request needs to
             # in word multiples, not bytes
             self.ModBus.ProcessTransaction(Reg, int(Info[self.REGLEN] // 2))
@@ -2222,7 +2222,7 @@ class Evolution(GeneratorController):
         # attempt to make the seconds zero when we set the generator time so it will
         # be very close to the system time
         # Testing has show that this is not really achieving the seconds synced up, but
-        # it does make the time offset consistant
+        # it does make the time offset consistent
         while d.second != 0:
             time.sleep(60 - d.second)  # sleep until seconds are zero
             d = datetime.datetime.now()
@@ -2370,7 +2370,7 @@ class Evolution(GeneratorController):
 
         else:
             self.LogError(
-                "Validation Error: Invalid register or length (Unkown) %s %s"
+                "Validation Error: Invalid register or length (Unknown) %s %s"
                 % (Register, Value)
             )
             ValidationOK = False
@@ -3271,7 +3271,7 @@ class Evolution(GeneratorController):
                 AuxAlarmLog = {"Auxiliary Alarm Log": alarm_list}
                 LogDict = self.MergeDicts(LogDict, AuxAlarmLog)
 
-            # These registes are not parsed to display strings but are returned in the raw register dump
+            # These registers are not parsed to display strings but are returned in the raw register dump
             if self.PowerZone200 and RawOutput:
                 PowerZoneAlarmRegs = {}
                 for Register in range(POWER_ZONE_200_ALARM_REG,POWER_ZONE_200_ALARM_REG+POWER_ZONE_200_ALARM_LENGTH):
@@ -3383,7 +3383,7 @@ class Evolution(GeneratorController):
     # ----------  Evolution:ParsePZ200AlarmEntry--------------------------------
     # PZ200 alarm logs entries are 20 chars log
     #   CCAAMMHHBBSSYYDDXXX
-    #     CC   = code  (Unknow value, possibly a code for displaying a string value)
+    #     CC   = code  (Unknown value, possibly a code for displaying a string value)
     #     AA   = Action
     #     MM   = Minutes
     #     HH   = Hours
@@ -3696,7 +3696,7 @@ class Evolution(GeneratorController):
             0x0C: "Canbus Error",  # Validated on Nexus Liquid Cooled
             0x0D: "Missing Cam Pulse",  # Validate on Nexus Liquid Cooled
             0x0E: "Missing Crank Pulse",  # Validate on Nexus Liquid Cooled
-            0x0F: "Govenor Fault",  # Validated on Nexus Liquid Cooled
+            0x0F: "Governor Fault",  # Validated on Nexus Liquid Cooled
             0x10: "Ignition Fault",  # Validate on Nexus Liquid Cooled
             0x14: "Low Battery",  # Validated on Nexus Air Cooled
             0x16: "Change Oil & Filter",  # Validated on Nexus Air Cooled
@@ -3888,7 +3888,7 @@ class Evolution(GeneratorController):
                     return "Warning Code Unknown: %d" % int(ErrorCode, 16)
                 else:
                     # This can occur if the controller was power cycled and no alarms have occurred since power applied
-                    return "Error Code 0000: No alarms occured since controller has been power cycled.\n"
+                    return "Error Code 0000: No alarms occurred since controller has been power cycled.\n"
 
             with open(self.AlarmFile, "r") as AlarmFile:  # opens file
 
@@ -4107,7 +4107,7 @@ class Evolution(GeneratorController):
                 if not "unknown" in AlarmStr.lower():
                     outString = AlarmStr
             else:
-                self.LogDebug(f"Unabled to get error code for {Value}")
+                self.LogDebug(f"Unable to get error code for {Value}")
         return outString
 
     # ------------ Evolution:GetAlarmStatePowerZone200 -------------------------
@@ -4391,7 +4391,7 @@ class Evolution(GeneratorController):
         #   7           Auto                Ignition
         #   8           Manual              Transfer
 
-        # get the inputs registes
+        # get the inputs registers
         Value = self.GetRegisterValueFromList("0052")
         if len(Value) != 4:
             return ""
@@ -4961,7 +4961,7 @@ class Evolution(GeneratorController):
                 CurrentFloat = self.signed32(CurrentFloat)
                 CurrentFloat = abs(CurrentFloat)
 
-                # Dict is formated this way:  ModelID: [ divisor, offset to register]
+                # Dict is formatted this way:  ModelID: [ divisor, offset to register]
                 ModelLookUp_EvoAC = {  # ID : [KW or KVA Rating, Hz Rating, Voltage Rating, Phase]
                     1: None,  # ["9KW", "60", "120/240", "1"],
                     2: None,  # ["14KW", "60", "120/240", "1"],
@@ -4998,7 +4998,7 @@ class Evolution(GeneratorController):
                                 # calculate the total current on both legs
                                 Divisor = 20.0  # Default Divisor This is 20 because CT1 + CT2 / 2 is average / 10 again because the CT is divide by 10
                             else:
-                                # calcualate one leg
+                                # calculate one leg
                                 Divisor = 10.0  # just use 10 as this is a div by 10 CT 
                         else:
                             Divisor = (
@@ -5022,7 +5022,7 @@ class Evolution(GeneratorController):
             Voltage = self.GetVoltageOutput(ReturnInt=True)
             if (
                 Voltage > 100
-            ):  # only bounds check if the voltage is over 100V to give things a chance to stabalize
+            ):  # only bounds check if the voltage is over 100V to give things a chance to stabilize
                 if (
                     CurrentOutput
                     > ((float(self.NominalKW) * 1000) / self.NominalLineVolts) + 2
@@ -5645,7 +5645,7 @@ class Evolution(GeneratorController):
                         % (self.SavedFirmwareVersion, FWVersionString)
                     )
                     self.LogError(
-                        "Frimware Changed from %s to %s"
+                        "Firmware Changed from %s to %s"
                         % (self.SavedFirmwareVersion, FWVersionString)
                     )
                     msgbody += self.GetMessageText()

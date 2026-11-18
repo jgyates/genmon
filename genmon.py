@@ -65,7 +65,7 @@ class Monitor(MySupport):
             self.ConfigFilePath = ConfigFilePath
 
         self.ConnectionList = []  # list of incoming connections for heartbeat
-        # defautl values
+        # default values
         self.SiteName = "Home"
         self.ServerSocket = None
         self.ServerIPAddress = ""
@@ -711,7 +711,7 @@ class Monitor(MySupport):
                 LogFile = os.path.join(self.LogLocation, File)
                 if os.path.isfile(LogFile):
                     LogList.append(LogFile)
-            # Non settings realated files in conf folder (typically /etc/genmon)
+            # Non settings related files in conf folder (typically /etc/genmon)
             for File in DataFilesToSend:
                 LogFile = os.path.join(self.ConfigFilePath, File)
                 if os.path.isfile(LogFile):
@@ -814,7 +814,7 @@ class Monitor(MySupport):
                 msgbody = ""
 
             if (len(command)) == 0:
-                msgsubject = "Error in Genmon Command (Lenght is zero)"
+                msgsubject = "Error in Genmon Command (Length is zero)"
                 msgbody += "Invalid GENERATOR command: zero length command."
                 LocalError = True
 
@@ -1609,7 +1609,7 @@ class Monitor(MySupport):
 
         # create an INET, STREAMing socket
         self.ServerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # set some socket options so we can resuse the port
+        # set some socket options so we can reuse the port
         self.ServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.ServerSocket.settimeout(0.5)
         # bind the socket to a host, and a port

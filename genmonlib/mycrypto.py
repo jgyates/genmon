@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -------------------------------------------------------------------------------
 #    FILE: mycrypto.py
-# PURPOSE: AES Encyption using python cryptography module
+# PURPOSE: AES Encryption using python cryptography module
 #
 #  AUTHOR: Jason G Yates
 #    DATE: 08-23-2020
@@ -126,7 +126,7 @@ class MyCrypto(MyCommon):
 
             if len(plaintext_buff) % self.blocksize:
                 self.LogDebug(
-                    "MyCrypto:EncryptBuff: WARNING: buffer is not a multipe of blocksize"
+                    "MyCrypto:EncryptBuff: WARNING: buffer is not a multiple of blocksize"
                 )
             index1 = 0
             index2 = self.blocksize
@@ -172,7 +172,7 @@ class MyCrypto(MyCommon):
 
             if len(crypttext_buff) % self.blocksize:
                 self.LogDebug(
-                    "MyCrypto:DecryptBuff: WARNING: buffer is not a multipe of blocksize"
+                    "MyCrypto:DecryptBuff: WARNING: buffer is not a multiple of blocksize"
                 )
 
             index1 = 0

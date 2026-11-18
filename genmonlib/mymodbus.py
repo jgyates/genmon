@@ -207,7 +207,7 @@ class ModbusProtocol(ModbusBase):
                 # protocol ID is zero
                 if self.Slave.Buffer[2] != 0 or self.Slave.Buffer[3] != 0:
                     self.LogError(
-                        "ModbusTCP protocool ID non zero: %x %x"
+                        "ModbusTCP protocol ID non zero: %x %x"
                         % (self.Slave.Buffer[2], self.Slave.Buffer[3])
                     )
                     self.DiscardByte(reason="protocol error")
@@ -390,7 +390,7 @@ class ModbusProtocol(ModbusBase):
         self.LogError("Discarding byte slave: %02x : %s " % (discard, str(reason)))
 
     # -------------ModbusProtocol::PWT-------------------------------------------
-    # called from derived calls to get to overridded function ProcessWriteTransaction
+    # called from derived calls to get to the overridden function ProcessWriteTransaction
     def _PWT(self, Register, Length, Data, min_response_override=None, IsCoil = False, IsSingle = False):
 
         try:
@@ -432,7 +432,7 @@ class ModbusProtocol(ModbusBase):
         return self._PWT(Register, Length, Data, IsCoil = IsCoil, IsSingle=IsSingle)
 
     # -------------ModbusProtocol::PT--------------------------------------------
-    # called from derived calls to get to overridded function ProcessTransaction
+    # called from derived calls to get to the overridden function ProcessTransaction
     def _PT(self, Register, Length, skipupdate=False, ReturnString=False, IsCoil = False, IsInput = False):
 
         MasterPacket = []
@@ -746,7 +746,7 @@ class ModbusProtocol(ModbusBase):
                 if (length % 8 > 0):
                     ByteCount += 1
                 Packet.append(ByteCount)  # byte count
-                # multiple coil writes are bits in a byte, but the data passed in is in a byte arry with each write being two bytes
+                # multiple coil writes are bits in a byte, but the data passed in is in a byte array with each write being two bytes
                 # as a result we have to skip bytes in data[] as only the low bit contains the coil data
                 # our goal here is to take every other byte in the data[] array and take the last bit of that byte
                 # then line the bits up as the modbus data sent
@@ -1018,7 +1018,7 @@ class ModbusProtocol(ModbusBase):
                 MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] == self.MBUS_CMD_READ_INPUT_REGS or
                 MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] == self.MBUS_CMD_READ_COILS
             ):
-                IsCoil = False      # Mobus funciton 01
+                IsCoil = False      # Mobus function 01
                 IsInput = False     # Modubs function 04
                 # get value from slave packet
                 length = SlavePacket[self.MBUS_OFF_RESPONSE_LEN]
@@ -1060,7 +1060,7 @@ class ModbusProtocol(ModbusBase):
             ):
                 payloadLen = SlavePacket[self.MBUS_OFF_FILE_PAYLOAD_LEN]
                 if not self.AlternateFileProtocol:
-                    # TODO This is emperical
+                    # TODO This is empirical
                     payloadLen -= 1
                 for i in range(
                     self.MBUS_OFF_FILE_PAYLOAD,
