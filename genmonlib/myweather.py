@@ -8,7 +8,6 @@
 # MODIFICATIONS:
 # -------------------------------------------------------------------------------
 
-import collections
 import datetime
 import threading
 import time

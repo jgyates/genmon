@@ -114,7 +114,7 @@ class MySupport(MyCommon):
             Socket.connect((ProgramDefaults.LocalHost, self.ServerSocketPort))
             Socket.close()
             return True
-        except Exception as e1:
+        except Exception:
             if Socket != None:
                 Socket.close()
             return False
@@ -139,7 +139,7 @@ class MySupport(MyCommon):
         try:
             re.compile(input_str)
             return True
-        except Exception as e1:
+        except Exception:
             return False
     # ---------- MySupport::InternetConnected------------------------------------
     # Note: this function, if the internet connection is not present could
@@ -382,7 +382,7 @@ class MySupport(MyCommon):
     def IsString(self, inputvalue):
 
         try:
-            temp = inputvalue.lower()
+            inputvalue.lower()
             return True
         except:
             return False

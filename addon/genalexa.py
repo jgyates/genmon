@@ -50,7 +50,6 @@ try:
     from genmonlib.myclient import ClientInterface
     from genmonlib.mycommon import MyCommon
     from genmonlib.myconfig import MyConfig
-    from genmonlib.mylog import SetupLogger
     from genmonlib.mysupport import MySupport
 except Exception as e1:
     print(

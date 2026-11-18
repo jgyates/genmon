@@ -35,7 +35,6 @@ try:
         render_template,
         request,
         send_file,
-        send_from_directory,
         session,
         url_for,
     )
@@ -59,7 +58,6 @@ try:
     from genmonlib.myclient import ClientInterface
     from genmonlib.myconfig import MyConfig
     from genmonlib.myfileutil import AtomicWrite
-    from genmonlib.mylog import SetupLogger
     from genmonlib.mymail import MyMail
     from genmonlib.mysupport import MySupport
     from genmonlib.myplatform import MyPlatform
@@ -94,7 +92,6 @@ from urllib.parse import parse_qs
 from urllib.parse import parse_qsl
 
 import datetime
-import re
 
 # -------------------------------------------------------------------------------
 app = Flask(__name__, static_url_path="")
@@ -123,7 +120,7 @@ def ServePage(page_file):
 if os.path.isfile(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), "genservext.py")
 ):
-    import genservext
+    import genservext  # noqa: F401  (runs the site's extension)
 
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 300
 
@@ -408,7 +405,7 @@ class GenServ(MySupport):
 
         # This waits for genmon to init the serial port etc
         if not self.MyClientInterface.WaitForReady(timeout=self.wait_for_init_seconds):
-            self.LogError(f" Timeout waiting for genmon to become ready")
+            self.LogError(" Timeout waiting for genmon to become ready")
 
         # This waits for comms (serial, TCP, etc) to read the generator data
         Start = datetime.datetime.now()
@@ -2060,7 +2057,7 @@ class GenServ(MySupport):
                 if len(regdata):
                     self.CachedRegisterDescriptions = regdata
                     foundRegText = True
-            except Exception as e1:
+            except Exception:
                 self.LogErrorLine("Error in CacheToolTips reading reg data")
 
             # get controller used
@@ -2616,7 +2613,7 @@ class GenServ(MySupport):
             if len(data) > MAX_UPLOAD:
                 return jsonify({"status": "error", "message": "File too large. Maximum size is 10 MB."}), 400
 
-            import tarfile, io, tempfile
+            import tarfile, io
 
             # Validate it's a real tar.gz archive
             try:
@@ -2740,7 +2737,7 @@ class GenServ(MySupport):
                 # sorts keys alphabetically by default and would destroy it.
                 json.loads(commandResponse)
                 return Response(commandResponse, mimetype="application/json")
-            except Exception as e1:
+            except Exception:
                 return commandResponse
         if not session.get("logged_in"):
             return self._render_login()
@@ -2749,7 +2746,7 @@ class GenServ(MySupport):
             try:
                 json.loads(commandResponse)
                 return Response(commandResponse, mimetype="application/json")
-            except Exception as e1:
+            except Exception:
                 return commandResponse
 
     # -------------------------------------------------------------------------------
@@ -3070,7 +3067,7 @@ class GenServ(MySupport):
                     }
                     command = "generator: notify_message=" + json.dumps(message)
 
-                    data = self.MyClientInterface.ProcessMonitorCommand(command)
+                    self.MyClientInterface.ProcessMonitorCommand(command)
                     self.securityMessageSent = datetime.datetime.now()
 
     # -------------------------------------------------------------------------------
@@ -3087,7 +3084,6 @@ class GenServ(MySupport):
             return False
         try:
             from ldap3 import ALL, Connection, Server
-            from ldap3.utils.dn import escape_rdn
             from ldap3.utils.conv import escape_filter_chars
         except ImportError as importException:
             self.LogError(

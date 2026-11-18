@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from genmonlib import myfileutil
 from genmonlib.myconfig import MyConfig
-from genmonlib.myfileutil import AtomicWrite, FileLock
+from genmonlib.myfileutil import AtomicWrite
 
 SAMPLE_CONF = """# comment line
 [GenMon]

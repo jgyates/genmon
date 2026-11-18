@@ -15,7 +15,6 @@ import os
 import sys
 import re
 from shutil import copyfile
-import subprocess
 from subprocess import PIPE, Popen
 
 BOOT_CONFIG = "/boot/config.txt"
@@ -215,7 +214,6 @@ def ServiceIsEnabled(servicename):
     try:
         process = Popen(["systemctl", "status", servicename], stdout=PIPE)
         output, _error = process.communicate()
-        rc = process.returncode
         return not CheckServiceOutput(output)
 
     except Exception as e1:
@@ -228,7 +226,6 @@ def ServiceIsDisabled(servicename):
     try:
         process = Popen(["systemctl", "status", servicename], stdout=PIPE)
         output, _error = process.communicate()
-        rc = process.returncode
         return CheckServiceOutput(output)
 
     except Exception as e1:
@@ -242,15 +239,12 @@ def DisableService(servicename, enable=False):
         if not enable:
             process = Popen(["systemctl", "stop", servicename], stdout=PIPE)
             output, _error = process.communicate()
-            rc = process.returncode
             process = Popen(["systemctl", "disable", servicename], stdout=PIPE)
             output, _error = process.communicate()
-            rc = process.returncode
             return True
         else:
             process = Popen(["systemctl", "enable", servicename], stdout=PIPE)
             output, _error = process.communicate()
-            rc = process.returncode
             return True
     except Exception as e1:
         print(
@@ -331,7 +325,7 @@ def UseLegacySerialEnable():
         if int(PiMajorVersion) >= 5:
             return False
         return True
-    except Exception as e1:
+    except Exception:
         print("Error in UseLegacySerialEnable: " + GetErrorInfo())
         return False
 # ------------ IsPlatformRaspberryPi -------------------------------------------
@@ -341,7 +335,7 @@ def IsPlatformRaspberryPi():
         if model != None and "raspberry" in model.lower():
             return True 
         return False
-    except Exception as e1:
+    except Exception:
         print("Error in IsPlatformRaspberryPi: " + GetErrorInfo())
         return False
 # ------------ GetRaspberryPiModel ---------------------------------------------
@@ -351,7 +345,7 @@ def GetRaspberryPiModel():
         output, _error = process.communicate()
         output = output.decode("utf-8")
         return str(output.rstrip("\x00"))
-    except Exception as e1:
+    except Exception:
         return None
 
 # ------------------main---------------------------------------------------------

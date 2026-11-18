@@ -322,8 +322,7 @@ class PowerZoneProIO(object):
         ("006a", 0x0800): "Remote Stop 1",
         ("006a", 0x0400): "Battery Charger Fault 1",
         ("006a", 0x0200): "Transfer Line Power / Bias Sync Active",
-        ("006a", 0x0100): "Transfer Generator Power",
-        ("006a", 0x0100): "Bias Share Active",
+        ("006a", 0x0100): "Transfer Generator Power / Bias Share Active",
         ("006a", 0x0080): "User Config 01",
         ("006a", 0x0040): "User Config 02 / LS AVR Alarm",
         ("006a", 0x0020): "User Config 05 / Inhibit Deadbus Connect",
@@ -1144,7 +1143,7 @@ class PowerZonePro(GeneratorController):
                 return []
             return ""
         except Exception as e1:
-            self.LogErrorLine(f"Error in GetAlarmState: " + str(e1))
+            self.LogErrorLine("Error in GetAlarmState: " + str(e1))
             return ""
     
     # ------------ PowerZonePro:RegisterIsFileRecord -------------------------------
@@ -1189,7 +1188,6 @@ class PowerZonePro(GeneratorController):
     def RegisterIsBaseRegister(self, Register, Value, validate_length=False):
 
         try:
-            found = False
             RegisterList = self.Reg.GetRegList()
             for ListReg in RegisterList:
                 if Register.lower() == ListReg[REGISTER].lower():
@@ -1479,7 +1477,6 @@ class PowerZonePro(GeneratorController):
             if len(input_string) < 16:
                 return "Unknown"
 
-            OutString = ""
             Date = "%02d/%02d/%02d" % (
                 self.GetIntFromString(input_string, 6, 1, decimal=True),
                 self.GetIntFromString(input_string, 5, 1, decimal=True),
@@ -1617,7 +1614,6 @@ class PowerZonePro(GeneratorController):
         RetValue = collections.OrderedDict()
         LogList = []
         RetValue["Logs"] = LogList
-        UnknownFound = False
 
         # # TODO:
 
@@ -1636,10 +1632,9 @@ class PowerZonePro(GeneratorController):
                 LogRawData += self.GetParameterFileValue(Register, ReturnString=False)
 
             if len(LogRawData) != 0:
-                CurrentIndex = self.GetIntFromString(LogRawData, 0, 2)
+                # bytes 0-1: the current index
                 LogRawData = LogRawData[4:]
                 EntrySize = 17 * 2
-                RawEntry = ""
                 for index in range(0, len(LogRawData), EntrySize):
                     if (index + EntrySize) <= len(LogRawData):
                         LogEntry = self.ParseLogEntry(
@@ -1651,7 +1646,7 @@ class PowerZonePro(GeneratorController):
                             continue
                         LocalEvent.append(LogEntry)
 
-            LocalAlarm = []
+            # the alarm log (not shown yet: not decoded)
 
             LogRawData = ""
             for RegValue in range(
@@ -1661,10 +1656,9 @@ class PowerZonePro(GeneratorController):
                 LogRawData += self.GetParameterFileValue(Register, ReturnString=False)
 
             if len(LogRawData) != 0:
-                CurrentIndex = self.GetIntFromString(LogRawData, 0, 2)
+                # bytes 0-1: the current index
                 LogRawData = LogRawData[4:]
                 EntrySize = 17 * 2
-                RawEntry = ""
                 for index in range(0, len(LogRawData), EntrySize):
                     if (index + EntrySize) <= len(LogRawData):
                         LogEntry = self.ParseLogEntry(
@@ -1852,7 +1846,6 @@ class PowerZonePro(GeneratorController):
 
             if not self.SmartSwitch:
                 pass
-                Exercise = []
                 # Maintenance["Maintenance"].append({"Exercise" : Exercise
                 # Exercise["Exercise Time" : self.GetExerciseTime()
                 # Exercise["Exercise Duration" : self.GetExerciseDuration()
@@ -2689,10 +2682,11 @@ class PowerZonePro(GeneratorController):
                 BioFuelLife = self.GetIntFromString(MaintData, 16, 2)
 
                 MaintTimes.append({"Oil Life": str(OilLife / 100.0) + " %"})
-                MaintTimes.append({"Oil Filter Life": str(OilLife / 100.0) + " %"})
+                MaintTimes.append({"Oil Filter Life": str(OilFilterLife / 100.0) + " %"})
                 MaintTimes.append(
                     {"Spark Plug Life": str(SparkPlugLife / 100.0) + " %"}
                 )
+                MaintTimes.append({"Air Filter Life": str(AirFilterLife / 100.0) + " %"})
                 MaintTimes.append({"Battery Life": str(BatteryLife / 100.0) + " %"})
                 MaintTimes.append(
                     {"General Maintenance Life": str(GeneralMaintLife / 100.0) + " %"}
@@ -2738,7 +2732,7 @@ class PowerZonePro(GeneratorController):
 
                 GeneratorSettings.append({"Target RPM (Normal)": str(TargetRPMNormal)})
                 GeneratorSettings.append(
-                    {"Target RPM (Low Speed)": str(TargetRPMNormal)}
+                    {"Target RPM (Low Speed)": str(TargetRPMLowSpeed)}
                 )
                 GeneratorSettings.append(
                     {
@@ -3174,17 +3168,12 @@ class PowerZonePro(GeneratorController):
     def GetBaseStatus(self):
         try:
             EngineStatus = self.GetEngineState().lower()
-            GeneratorStatus = self.GetGeneratorStatus().lower()
             SwitchState = self.GetSwitchState().lower()
 
             if "running" in EngineStatus:
                 IsRunning = True
             else:
                 IsRunning = False
-            if "stopped" in GeneratorStatus:
-                IsStopped = True
-            else:
-                IsStopped = False
             if (
                 "exercising" in EngineStatus
                 or "exercise" in EngineStatus

@@ -16,12 +16,12 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import datetime, time, sys, signal, os, threading, socket, atexit, collections, json, math
+import datetime, time, sys, signal, os, threading, socket, collections, json, math
 import subprocess, platform, ipaddress
 
 try:
     import crcmod
-except Exception as e1:
+except Exception:
     print("crcmod library is not installed!")
     sys.exit(1)
 
@@ -180,7 +180,7 @@ class GenSim(MySupport):
         self.Address = self.config.ReadValue("address", default = "9d")
         try:
             self.Address = int(self.Address, 16)
-        except Exception as e1:
+        except Exception:
             self.LogInfo("Error: invalid address: " + str(self.Address))
 
         self.debug = self.config.ReadValue("debug", return_type = bool, default = False)
@@ -395,8 +395,8 @@ class GenSim(MySupport):
                                 if len(RegEntry[0])  and len(RegEntry[1]):
                                     try:
                                         if Section == REGISTERS:
-                                            HexVal = int(RegEntry[0], 16)
-                                            HexVal = int(RegEntry[1], 16)
+                                            int(RegEntry[0], 16)  # both must be hex
+                                            int(RegEntry[1], 16)
                                             self.Holding[RegEntry[0]] = RegEntry[1]
 
                                     except:
@@ -623,7 +623,7 @@ class GenSim(MySupport):
             if self.StringIsHex(Value):
                 try:
                     ByteArray = bytearray.fromhex(Value)
-                except Exception as e1:
+                except Exception:
                     self.LogErrorLine("Error decoding hex string: " + RegStr + ": <" + Value + ">")
                     ByteArray = bytearray()     # served as zeros below
             else:
@@ -878,7 +878,7 @@ class GenSim(MySupport):
                         self.ConnectionList.remove(conn)
                         conn.close()
                         break
-                except socket.timeout as e1:
+                except socket.timeout:
 
                     if len(self.BindAddress):
                         # listening on one address, a network change does not matter
@@ -907,7 +907,7 @@ class GenSim(MySupport):
                     self.LogErrorLine("Error in SocketWorkThread: " + str(e1))
                     del Buffer[:]
 
-        except socket.error as msg:
+        except socket.error:
             pass
         try:
             self.ConnectionList.remove(conn)

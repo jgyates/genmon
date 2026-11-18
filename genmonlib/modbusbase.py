@@ -247,7 +247,7 @@ class ModbusBase(MySupport):
                 except:
                     self.ResponseAddress = None
         else:
-            self.loglocation = default = "./"
+            self.loglocation = "./"
 
         self.CommAccessLock = (
             threading.RLock()

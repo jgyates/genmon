@@ -6,7 +6,6 @@
 # Based on the structure of gentankutil.py
 # -------------------------------------------------------------------------------
 
-import datetime
 import json
 import os
 import signal
@@ -25,7 +24,6 @@ try:
     from genmonlib.myclient import ClientInterface
     from genmonlib.mycommon import MyCommon
     from genmonlib.myconfig import MyConfig
-    from genmonlib.mylog import SetupLogger
     from genmonlib.mysupport import MySupport
     from genmonlib.mythread import MyThread
     from genmonlib.program_defaults import ProgramDefaults
@@ -109,7 +107,7 @@ class GenNeeVo(MySupport):
         try:
             with self.AccessLock:
                 data = self.Generator.ProcessMonitorCommand(Command)
-        except Exception as e1:
+        except Exception:
             self.LogErrorLine("Error calling ProcessMonitorCommand: " + str(Command))
             data = ""
         return data

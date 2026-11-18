@@ -36,9 +36,7 @@ try:
         sys.path.insert(1, parent_root)
 
     from genmonlib.myclient import ClientInterface
-    from genmonlib.mycommon import MyCommon
     from genmonlib.myconfig import MyConfig
-    from genmonlib.mylog import SetupLogger
     from genmonlib.mysupport import MySupport
     from genmonlib.mythread import MyThread
     from genmonlib.mytls import TLSClientContext
@@ -1628,7 +1626,7 @@ class MyHomeAssistant(MySupport):
             # Force weekly if enhanced exercise mode not supported
             if not self.EnhancedExerciseMode:
                 if freq != "Weekly":
-                    self.LogDebug(f"Forcing Weekly mode (enhanced exercise not supported)")
+                    self.LogDebug("Forcing Weekly mode (enhanced exercise not supported)")
                     freq = "Weekly"
                     self.ExerciseSettings["frequency"] = "Weekly"
 

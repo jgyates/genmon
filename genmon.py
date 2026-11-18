@@ -484,7 +484,7 @@ class Monitor(MySupport):
                 try:
                     with open(self.FeedbackLogFile) as infile:
                         self.FeedbackMessages = json.load(infile)
-                except Exception as e1:
+                except Exception:
                     os.remove(self.FeedbackLogFile)
 
             self.UpdateCheck = self.config.ReadValue(
@@ -717,7 +717,7 @@ class Monitor(MySupport):
                 if os.path.isfile(LogFile):
                     LogList.append(LogFile)
             return LogList
-        except Exception as e1:
+        except Exception:
             return None
 
     # ---------- Monitor::SendSupportInfo----------------------------------------
@@ -1181,7 +1181,6 @@ class Monitor(MySupport):
             MonitorData = []
             Monitor["Monitor"] = MonitorData
             GenMonStats = []
-            SerialStats = []
             MonitorData.append({"Generator Monitor Stats": GenMonStats})
             MonitorData.append({"Communication Stats": self.Controller.GetCommStatus()})
 
@@ -1586,7 +1585,7 @@ class Monitor(MySupport):
                     if self.IsStopping:
                         break
                     continue
-                except socket.error as msg:
+                except socket.error:
                     try:
                         self.ConnectionList.remove(conn)
                         conn.close()

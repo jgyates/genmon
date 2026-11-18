@@ -20,7 +20,7 @@ from subprocess import PIPE, Popen
 try:
     import serial
     import serial.tools.list_ports
-except Exception as e1:
+except Exception:
     managedfile = "/usr/lib/python" + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "/EXTERNALLY-MANAGED"
     if os.path.isfile(managedfile):
         print("\n\nYou appear to be running in a managed python environemnt. To run this program see this page: ")
@@ -46,7 +46,7 @@ def UseLegacySerialName():
         if int(PiMajorVersion) >= 5:
             return False
         return True
-    except Exception as e1:
+    except Exception:
         print("Error in UseLegacySerialEnable: " + GetErrorInfo())
         return False
 # ------------ IsPlatformRaspberryPi -------------------------------------------
@@ -56,7 +56,7 @@ def IsPlatformRaspberryPi():
         if model != None and "raspberry" in model.lower():
             return True
         return False
-    except Exception as e1:
+    except Exception:
         print("Error in IsPlatformRaspberryPi: " + GetErrorInfo())
         return False
 # ------------ GetRaspberryPiModel ---------------------------------------------
@@ -66,7 +66,7 @@ def GetRaspberryPiModel():
         output, _error = process.communicate()
         output = output.decode("utf-8")
         return str(output.rstrip("\x00"))
-    except Exception as e1:
+    except Exception:
         return None
 
 # ------------ VersionTuple -----------------------------------------------------

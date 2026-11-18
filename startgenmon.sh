@@ -6,7 +6,6 @@
 PARAMS=""
 genmondir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 pythoncommand="python3"
-pipcommand="pip3"
 config_path=""
 usepython3=true
 found_action=false
@@ -55,11 +54,9 @@ function setuppython3() {
 
   if [ "$usepython3" = true ] ; then
     echo 'Using Python 3.x...'
-    pipcommand="pip3"
     pythoncommand="python3"
   else
     echo 'Using Python 2.x...'
-    pipcommand="pip2"
     pythoncommand="python2"
 fi
 }
@@ -98,7 +95,7 @@ while (( "$#" )); do
      printhelp
      exit 0
     ;;
-    -*|--*=) # unsupported flags
+    -*) # unsupported flags
       echo "Error: Unsupported flag $1" >&2
       exit 1
       ;;

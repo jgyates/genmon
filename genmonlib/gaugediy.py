@@ -15,7 +15,6 @@ from __future__ import print_function
 
 import glob
 import math
-import os
 import sys
 import time
 
@@ -296,7 +295,7 @@ class GaugeDIY2(GaugeDIY):
             # I2C channel, default is 1 which is connected to the GPIO SDA/SCL pins
             try:
                 self.I2Cbus = smbus.SMBus(self.i2c_channel)
-            except Exception as e1:
+            except Exception:
                 self.LogErrorLine(
                     "Unable to open SMBus device for I2C channel "
                     + str(self.i2c_channel)
@@ -386,7 +385,7 @@ class GaugeDIY2(GaugeDIY):
             # Calculate dial pointer angle from sin and cos
             return math.degrees(math.atan2(COS_P, SIN_P))
 
-        except Exception as e1:
+        except Exception:
             return 0.0
 
     # ---------- GaugeDIY2::GetGaugeData----------------------------------------

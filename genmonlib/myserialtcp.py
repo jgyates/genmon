@@ -16,7 +16,6 @@ from __future__ import (  # For python 3.x compatibility with print function
 import datetime
 import os
 import socket
-import sys
 import threading
 
 from genmonlib.mylog import SetupLogger
@@ -58,7 +57,7 @@ class SerialTCPDevice(MySupport):
                 "serial_tcp_keepalive", return_type=bool, default=False, NoLog=True
             )
         else:
-            self.loglocation = default = "./"
+            self.loglocation = "./"
 
         # log errors in this module to a file
         self.console = SetupLogger("myserialtcp_console", log_file="", stream=True)
@@ -203,7 +202,7 @@ class SerialTCPDevice(MySupport):
                 self.Socket = None
                 return None
             return data
-        except socket.timeout as err:
+        except socket.timeout:
             return ""
         except socket.error as err:
             self.LogErrorLine("Error in SerialTCPDevice:Read socket error: " + str(err))

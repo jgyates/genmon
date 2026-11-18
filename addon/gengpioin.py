@@ -26,7 +26,6 @@ try:
 
     from genmonlib.myclient import ClientInterface
     from genmonlib.myconfig import MyConfig
-    from genmonlib.mylog import SetupLogger
     from genmonlib.mysupport import MySupport
     from genmonlib.mythread import MyThread
 except Exception as e1:

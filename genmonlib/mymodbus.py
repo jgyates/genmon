@@ -14,7 +14,6 @@ from __future__ import (  # For python 3.x compatibility with print function
 )
 
 import datetime
-import sys
 import time
 import crcmod
 
@@ -173,7 +172,6 @@ class ModbusProtocol(ModbusBase):
     #  is and error. If True and a non empty packet then it is valid data
     def GetPacketFromSlave(self, min_response_override=None):
 
-        LocalErrorCount = 0
         Packet = []
         EmptyPacket = []  # empty packet
         try:

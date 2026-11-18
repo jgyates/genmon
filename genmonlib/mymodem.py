@@ -620,7 +620,7 @@ from subprocess import PIPE, Popen
 
 try:
     import RPi.GPIO as GPIO
-except Exception as e1:
+except Exception:
     print("Unable to Import Library RPi.GPIO")
     sys.exit(1)
 

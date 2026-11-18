@@ -47,13 +47,11 @@ except Exception as e1:
     sys.exit(2)
 
 try:
-    from enum import Enum
-    from typing import Optional
-    from bleson import get_provider, BDAddress
-    from bleson.core.hci.type_converters import rssi_from_byte
-    from bleson.core.hci.constants import GAP_MFG_DATA, GAP_NAME_COMPLETE
+    from bleson import get_provider, BDAddress  # noqa: F401  (checks the library is installed)
+    from bleson.core.hci.type_converters import rssi_from_byte  # noqa: F401  (checks the library is installed)
+    from bleson.core.hci.constants import GAP_MFG_DATA, GAP_NAME_COMPLETE  # noqa: F401  (checks the library is installed)
 
-except Exception as e1:
+except Exception:
     print("The required library bleson is not installed.")
     sys.exit(2)
 
@@ -122,7 +120,7 @@ class GenMopekaData(MySupport):
         try:
 
             try:
-                from bleson import BDAddress
+                from bleson import BDAddress  # noqa: F401,F811  (checks the library is installed)
             except Exception as e1:
                 self.LogConsole("The required library bleson is not installed.")
                 self.LogErrorLine(
@@ -131,7 +129,7 @@ class GenMopekaData(MySupport):
                 sys.exit(2)
             if self.UseMopekaLib:
                 try:
-                    from mopeka_pro_check.service import (GetServiceInstance,MopekaSensor,MopekaService,)
+                    from mopeka_pro_check.service import (GetServiceInstance,MopekaSensor,MopekaService,)  # noqa: F401  (checks the library is installed)
                 except Exception as e1:
                     self.LogConsole("The required library mopeka_pro_check is not installed.")
                     self.LogErrorLine("The required library mopeka_pro_check is not installed: " + str(e1))
@@ -416,7 +414,7 @@ class GenMopekaData(MySupport):
         try:
             with self.AccessLock:
                 data = self.Generator.ProcessMonitorCommand(Command)
-        except Exception as e1:
+        except Exception:
             self.LogErrorLine("Error calling  ProcessMonitorCommand: " + str(Command))
             data = ""
 
@@ -482,12 +480,10 @@ class GenMopekaData(MySupport):
 
             if self.UseMopekaLib:
                 reading_depth = sensor_list[bd_address]._last_packet.TankLevelInMM
-                sensor_temperature = sensor_list[bd_address]._last_packet.TemperatureInCelsius
                 self.LogDebug("Tank Level in mm: " + str(reading_depth))
                 battery = sensor_list[bd_address]._last_packet.BatteryPercent
             else:
                 reading_depth = sensor_list[bd_address].last_reading.TankLevelInMM
-                sensor_temperature = sensor_list[bd_address].last_reading.TemperatureInCelsius
                 self.LogDebug("Tank Level in mm: " + str(reading_depth))
                 battery = sensor_list[bd_address].last_reading.BatteryPercent
 

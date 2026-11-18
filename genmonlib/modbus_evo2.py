@@ -14,7 +14,6 @@ from __future__ import (  # For python 3.x compatibility with print function
 )
 
 import datetime
-import sys
 
 from genmonlib.mycrypto import MyCrypto
 from genmonlib.mymodbus import ModbusProtocol

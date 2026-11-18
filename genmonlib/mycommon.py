@@ -58,7 +58,7 @@ class MyCommon(object):
     def StringIsInt(self, value):
 
         try:
-            temp = int(value)
+            int(value)
             return True
         except:
             return False
@@ -67,7 +67,7 @@ class MyCommon(object):
     def StringIsFloat(self, value):
 
         try:
-            temp = float(value)
+            float(value)
             return True
         except:
             return False

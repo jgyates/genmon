@@ -14,7 +14,6 @@ import datetime
 import json
 import os
 import re
-import sys
 import threading
 import time
 import copy
@@ -1206,7 +1205,7 @@ class CustomController(GeneratorController):
         Logs["Logs"] = LogDict
         try:
             if not "logs" in self.controllerimport.keys() and not self.UseAuxAlarmLog:
-                self.LogDebug(f"Logs disabled")
+                self.LogDebug("Logs disabled")
                 # no log support
                 if not DictOut:
                     return self.printToString(self.ProcessDispatch(Logs, ""))
@@ -1391,13 +1390,9 @@ class CustomController(GeneratorController):
             settime_copy = copy.deepcopy(settime)
             for command in settime_copy["command_sequence"]:
                 hour = minute = day = month = year = 0
-                length = 2
                 if "length" in command.keys():
                     if(int(command["length"]) % 2 != 0):
                         self.LogDebug("Error in SetGeneratorTimeDate: Length is not a multiple of 2: " + str(settime))
-                        length = 2
-                    else:
-                        length = int(command["length"])
                 if not "reg" in command.keys() or not isinstance(command["reg"], str):
                     self.LogError("Error in SetGeneratorTimeDate: invalid command string defined validateing reg: "+ str(settime))
                     CommandError = True
@@ -1443,10 +1438,6 @@ class CustomController(GeneratorController):
             if dict_results == None:
                 return ReturnValue
 
-            if ReturnInt or ReturnFloat:
-                no_units = True
-            else:
-                no_units = False
             out_string = self.GetExtendedDisplayString(self.controllerimport, dict_name)
 
             if not len(out_string):
@@ -2018,7 +2009,7 @@ class CustomController(GeneratorController):
 
         try:
             if not "iteration" in entry.keys():
-                self.LogError(f"WARNING: iteration not in object in ProcessIterationCount")
+                self.LogError("WARNING: iteration not in object in ProcessIterationCount")
                 return 0
             iteration = entry["iteration"]
             if isinstance(iteration, int):
@@ -2502,11 +2493,6 @@ class CustomController(GeneratorController):
                 IsRunning = True
             else:
                 IsRunning = False
-            if "stopped" in GeneratorStatus:
-                IsStopped = True
-            else:
-                IsStopped = False
-
             ExerciseList = ["exercising", "exercise", "quiettest", "test"]
             if (
                 any(x in EngineStatus for x in ExerciseList)

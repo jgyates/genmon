@@ -24,7 +24,7 @@ try:
     from bleson.core.hci.type_converters import rssi_from_byte
     from bleson.core.hci.constants import GAP_MFG_DATA, GAP_NAME_COMPLETE
 
-except Exception as e1:
+except Exception:
     print("The required library bleson is not installed.")
     sys.exit(2)
 

@@ -156,11 +156,12 @@ class ClientInterface(MyCommon):
         import datetime
         Start = datetime.datetime.now()
         
-        init_ok = False
-        genmon_data = None
         while (datetime.datetime.now() - Start).total_seconds() < timeout:
             if self.AcceptingCommands():
                 return True
+            # wait before asking again (it asked in a tight loop, logging an
+            # error each time, while genmon was starting)
+            time.sleep(1)
         return False
 
     # ----------  ClientInterface::AcceptingCommands ---------------------------
@@ -170,7 +171,7 @@ class ClientInterface(MyCommon):
             import json
             data = self.ProcessMonitorCommand(command_override)
             if command_override.endswith("_json"):
-                start_info = json.loads(data)
+                json.loads(data)
             elif "retry" in data.lower():
                 raise ValueError("Retry detected")
             return True

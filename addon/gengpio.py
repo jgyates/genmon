@@ -300,7 +300,7 @@ class GenGPIO(MySupport):
         try:
             with self.AccessLock:
                 data = self.Generator.ProcessMonitorCommand(Command)
-        except Exception as e1:
+        except Exception:
             self.LogErrorLine("Error calling ProcessMonitorCommand: " + str(Command))
             data = ""
 
@@ -325,7 +325,7 @@ class GenGPIO(MySupport):
             if not self.IsTimeFormat(input_str):
                 return None
             return datetime.datetime.strptime(input_str, "%H:%M")
-        except Exception as e1:
+        except Exception:
             self.LogErrorLine(
                 "Error converting time to time object: " + str(input_str)
             )

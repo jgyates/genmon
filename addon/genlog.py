@@ -154,7 +154,7 @@ class GenLog(MySupport):
         try:
             with self.AccessLock:
                 data = self.Generator.ProcessMonitorCommand(Command)
-        except Exception as e1:
+        except Exception:
             self.LogErrorLine("Error calling ProcessMonitorCommand: " + str(Command))
             data = ""
 

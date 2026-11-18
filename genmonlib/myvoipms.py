@@ -12,7 +12,7 @@
 #
 #-------------------------------------------------------------------------------
 
-import os, sys
+import sys
 
 from genmonlib.mysupport import MySupport
 

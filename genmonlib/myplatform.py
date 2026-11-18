@@ -92,7 +92,7 @@ class MyPlatform(MyCommon):
                 WindowsInfo.append({"Processor": platform.processor()})
                 WindowsInfo.append({"Architecture": self.PlatformBitDepth()})
                 return WindowsInfo
-            except Exception as e1:
+            except Exception:
                 self.LogErrorLine("Error in GetOSInfo: Error getting windows info.")
                 return None
         else:
@@ -104,7 +104,7 @@ class MyPlatform(MyCommon):
         try:
             import platform
             return platform.system()
-        except Exception as e1:
+        except Exception:
                 return "Unknown"
 
     # ------------ MyPlatform::PlatformBitDepth----------------------------------
@@ -216,7 +216,7 @@ class MyPlatform(MyCommon):
                     output[output.index("=") + 1 : output.rindex("'")]
                 )
 
-            except Exception as e1:
+            except Exception:
                 # for non rasbpian based systems
                 tempfilepath = self.GetHwMonParamPath("temp1_input")
                 if tempfilepath == None:
@@ -265,7 +265,7 @@ class MyPlatform(MyCommon):
                     output = f.read()
                 return str(output.rstrip("\x00")).strip()
             return None
-        except Exception as e1:
+        except Exception:
             return None
     # ------------ MyPlatform::GetRaspberryPiInfo -------------------------------
     def GetRaspberryPiInfo(self, JSONNum=False):
@@ -287,7 +287,7 @@ class MyPlatform(MyCommon):
                 ThrottledStatus = self.GetThrottledStatus()
                 if len(ThrottledStatus):
                     PiInfo.extend(ThrottledStatus)
-            except Exception as e1:
+            except Exception:
                 pass
 
         except Exception as e1:
@@ -351,7 +351,7 @@ class MyPlatform(MyCommon):
             get_throttled = int(hex_val, 16)
             return self.ParseThrottleStatus(get_throttled)
 
-        except Exception as e1:
+        except Exception:
             try:
                 # if we get here then vcgencmd is not found, try an alternate approach
                 # /sys/class/hwmon/hwmonX/in0_lcrit_alarm
@@ -364,7 +364,7 @@ class MyPlatform(MyCommon):
                     file = open("/sys/devices/platform/soc/soc:firmware/get_throttled")
                 status = file.read()
                 return self.ParseThrottleStatus(int(status))
-            except Exception as e1:
+            except Exception:
                 return []
 
     # ------------ MyPlatform::GetHwMonParamPath --------------------------------
@@ -453,7 +453,7 @@ class MyPlatform(MyCommon):
                     LinuxInfo.append(
                         {"System Uptime": uptime_string.split(".")[0]}
                     )  # remove microseconds
-            except Exception as e1:
+            except Exception:
                 pass
 
             try:
@@ -466,10 +466,10 @@ class MyPlatform(MyCommon):
                 try:
                     if adapter.startswith("wl"):
                         LinuxInfo.extend(self.GetWiFiInfo(adapter))
-                except Exception as e1:
+                except Exception:
                     pass
 
-            except Exception as e1:
+            except Exception:
                 pass
         except Exception as e1:
             self.LogErrorLine("Error in GetLinuxInfo: " + str(e1))
@@ -511,7 +511,7 @@ class MyPlatform(MyCommon):
             result = result.decode("utf-8")
             match = re.search("signal: -(\\d+) dBm", result)
             return match.group(1)
-        except Exception as e1:
+        except Exception:
             # This allow the wifi gauge to return correctly if the above iw method does not work
             result = self.GetWiFiSignalStrenthFromProc(adapter)
             return result
@@ -523,7 +523,7 @@ class MyPlatform(MyCommon):
             result = result.decode("utf-8")
             match = re.search("Link Quality=([\\s\\S]*?) ", result)
             return match.group(1)
-        except Exception as e1:
+        except Exception:
             return ""
 
     # ------------ MyPlatform::GetWiFiSSID --------------------------------------
@@ -534,7 +534,7 @@ class MyPlatform(MyCommon):
             result = result.decode("utf-8")
             match = re.search('ESSID:"([\\s\\S]*?)"', result)
             return match.group(1)
-        except Exception as e1:
+        except Exception:
             return ""
 
     # ------------ MyPlatform::GetWiFiSignalStrenthFromProc --------------------
@@ -551,7 +551,7 @@ class MyPlatform(MyCommon):
                         # the caller makes it negative
                         return abs(int(ListItems[3].replace(".", "")))
                 return ReturnValue
-        except Exception as e1:
+        except Exception:
             return 0
     # ------------ MyPlatform::GetWiFiInfo --------------------------------------
     def GetWiFiInfo(self, adapter, JSONNum=False):
@@ -596,7 +596,7 @@ class MyPlatform(MyCommon):
             essid = self.GetWiFiSSID(adapter)
             if essid != None and essid != "":
                 WiFiInfo.append({"WLAN ESSID": essid})
-        except Exception as e1:
+        except Exception:
             pass
         return WiFiInfo
 

@@ -21,7 +21,7 @@ import time
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.utils import COMMASPACE, formatdate
+from email.utils import formatdate
 from os.path import basename
 from shutil import copyfile
 import ssl
@@ -215,7 +215,7 @@ class MyMail(MySupport):
             recipienttemp = ">,<"
             recipienttemp = recipienttemp.join(recipientList)
             recipient = "<" + recipienttemp + ">"
-        except Exception as e1:
+        except Exception:
             pass
         try:
             parent["To"] = recipient
@@ -514,12 +514,12 @@ class MyMail(MySupport):
             # categories gets every type
             for type in ["outage", "error", "warn", "info", "fuel", "software_update"]:
                 tempList = []
-                for email in self.EmailRecipient.split(","):
-                    if self.config.HasOption(email):
-                        if type in self.config.ReadValue(email).split(","):
-                            tempList.append(email)
+                for address in self.EmailRecipient.split(","):
+                    if self.config.HasOption(address):
+                        if type in self.config.ReadValue(address).split(","):
+                            tempList.append(address)
                     else:
-                        tempList.append(email)
+                        tempList.append(address)
 
                 self.EmailRecipientByType[type] = ",".join(tempList)
             # SMTP Server
@@ -634,7 +634,7 @@ class MyMail(MySupport):
                         try:
                             decode_val = email.header.decode_header(msg["Subject"])[0]
                             subject = decode_val[0]
-                        except Exception as e1:
+                        except Exception:
                             subject = ""
                         self.IncomingCallback(subject)
 
@@ -764,8 +764,6 @@ class MyMail(MySupport):
 
         # if the files are not found then we skip them but still send the email
         try:
-            from email import encoders
-            from email.mime.base import MIMEBase
             for f in files or []:
 
                 with open(f, "rb") as fil:

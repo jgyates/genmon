@@ -29,7 +29,6 @@ try:
     from genmonlib.myclient import ClientInterface
     from genmonlib.mycommon import MyCommon
     from genmonlib.myconfig import MyConfig
-    from genmonlib.mylog import SetupLogger
     from genmonlib.mysupport import MySupport
     from genmonlib.mythread import MyThread
     from genmonlib.program_defaults import ProgramDefaults
@@ -47,7 +46,6 @@ except Exception as e1:
 try:
     import glob
     import os
-    import time
 except Exception as e1:
     print("Error importing modules! :" + str(e1))
     sys.exit(2)
@@ -287,7 +285,7 @@ class GenTemp(MySupport):
         try:
             with self.AccessLock:
                 data = self.Generator.ProcessMonitorCommand(Command)
-        except Exception as e1:
+        except Exception:
             self.LogErrorLine("Error calling  ProcessMonitorCommand: " + str(Command))
             data = ""
 

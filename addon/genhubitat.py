@@ -39,9 +39,7 @@ try:
         sys.path.insert(1, parent_root)
 
     from genmonlib.myclient import ClientInterface
-    from genmonlib.mycommon import MyCommon
     from genmonlib.myconfig import MyConfig
-    from genmonlib.mylog import SetupLogger
     from genmonlib.myplatform import MyPlatform
     from genmonlib.mysupport import MySupport
     from genmonlib.mythread import MyThread

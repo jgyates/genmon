@@ -28,7 +28,6 @@ try:
     from genmonlib.myclient import ClientInterface
     from genmonlib.mycommon import MyCommon
     from genmonlib.myconfig import MyConfig
-    from genmonlib.mylog import SetupLogger
     from genmonlib.mysupport import MySupport
     from genmonlib.mythread import MyThread
     from genmonlib.program_defaults import ProgramDefaults
@@ -46,14 +45,12 @@ except Exception as e1:
 try:
 
     import bisect
-    import time
 
     from pysnmp.carrier.asyncio.dispatch import AsyncioDispatcher
     from pysnmp.carrier.asyncio.dgram import udp, udp6
     from pyasn1.codec.ber import encoder, decoder
     from pysnmp.proto import api
-    from pysnmp.proto.rfc1902 import ObjectIdentifier, TimeTicks
-    from pysnmp.proto.rfc1902 import *
+    from pysnmp.proto.rfc1902 import ObjectIdentifier, OctetString, TimeTicks
     
 except Exception as e1:
     print("Error loading pysnmp! :" + str(e1))
@@ -685,7 +682,7 @@ class GenSNMP(MySupport):
         try:
             with self.AccessLock:
                 data = self.Generator.ProcessMonitorCommand(Command)
-        except Exception as e1:
+        except Exception:
             self.LogErrorLine("Error calling  ProcessMonitorCommand: " + str(Command))
             data = ""
 

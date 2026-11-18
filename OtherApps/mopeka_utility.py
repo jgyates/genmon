@@ -18,7 +18,7 @@ from subprocess import PIPE, Popen
 sys.path.append(os.path.dirname(sys.path[0]))  
 
 try:
-    import bleson
+    import bleson  # noqa: F401  (checks the library is installed)
     from genmonlib.mymopeka import MopekaBT, ScanningMode
 except Exception as e1:
     print("\n\nThis program is used to support using the Mopeka BT sensor with genmon.")
@@ -66,7 +66,6 @@ def ServiceIsEnabled(servicename):
     try:
         process = Popen(["systemctl", "status", servicename], stdout=PIPE)
         output, _error = process.communicate()
-        rc = process.returncode
         return not CheckServiceOutput(output)
 
     except Exception as e1:

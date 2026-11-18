@@ -30,7 +30,6 @@ try:
     from genmonlib.myclient import ClientInterface
     from genmonlib.mycommon import MyCommon
     from genmonlib.myconfig import MyConfig
-    from genmonlib.mylog import SetupLogger
     from genmonlib.mysupport import MySupport
     from genmonlib.mycentriconnect import centriconnect
     from genmonlib.mythread import MyThread
@@ -167,7 +166,7 @@ class GenTankData(MySupport):
         try:
             with self.AccessLock:
                 data = self.Generator.ProcessMonitorCommand(Command)
-        except Exception as e1:
+        except Exception:
             self.LogErrorLine("Error calling  ProcessMonitorCommand: " + str(Command))
             data = ""
 
@@ -197,7 +196,7 @@ class GenTankData(MySupport):
                     except Exception as e1:
                         self.LogErrorLine("Error reading tank 1 reading time: " + str(e1))
                     
-                    retVal = self.SendCommand("generator: set_tank_data=" + json.dumps(dataforgenmon))
+                    self.SendCommand("generator: set_tank_data=" + json.dumps(dataforgenmon))
                     #self.LogDebug(retVal)
                 else:
                     self.LogDebug("Invalid data returned from GetData, check network or input parameters.")

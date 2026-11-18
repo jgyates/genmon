@@ -223,7 +223,7 @@ class ModbusFile(ModbusBase):
                 else:
                     self.Inputs = {}
             return True
-        except Exception as e1:
+        except Exception:
             # self.LogErrorLine("Error in ReadJSONFile: " + str(e1))
             return False
 
@@ -267,8 +267,8 @@ class ModbusFile(ModbusBase):
                                 if len(RegEntry[0]) and len(RegEntry[1]):
                                     try:
                                         if Section == REGISTERS:
-                                            HexVal = int(RegEntry[0], 16)
-                                            HexVal = int(RegEntry[1], 16)
+                                            int(RegEntry[0], 16)  # both must be hex
+                                            int(RegEntry[1], 16)
                                             # self.LogError("REGISTER: <" + RegEntry[0] + ": " + RegEntry[1] + ">")
                                             self.Registers[RegEntry[0]] = RegEntry[1]
 

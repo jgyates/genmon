@@ -10,7 +10,6 @@
 # MODIFICATIONS:
 # -------------------------------------------------------------------------------
 
-import json
 import os
 import signal
 import sys
@@ -29,7 +28,6 @@ try:
 
     from genmonlib.mycommon import MyCommon
     from genmonlib.myconfig import MyConfig
-    from genmonlib.mylog import SetupLogger
     from genmonlib.myclient import ClientInterface
     from genmonlib.mymsgqueue import MyMsgQueue
     from genmonlib.mynotify import GenNotify
@@ -81,7 +79,7 @@ class GenCallMeBot(MySupport):
             self.minimum_wait_between_messages = 0
             try:
                 self.notification_type = self.notification_type.lower()
-            except Exception as e1:
+            except Exception:
                 self.LogErrorLine("Error reading gencallmebot.conf: notifcation type is not a valid string")
                 sys.exit(1)
                 

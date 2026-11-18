@@ -10,7 +10,6 @@
 # -------------------------------------------------------------------------------
 
 
-import datetime
 import json
 import os
 import signal
@@ -30,7 +29,6 @@ try:
     from genmonlib.mycommon import MyCommon
     from genmonlib.myconfig import MyConfig
     from genmonlib.myfileutil import AtomicWrite
-    from genmonlib.mylog import SetupLogger
     from genmonlib.mysupport import MySupport
     from genmonlib.mythread import MyThread
     from genmonlib.program_defaults import ProgramDefaults

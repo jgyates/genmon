@@ -1774,7 +1774,7 @@ class HPanel(GeneratorController):
                     FormattedDate = DateInfo.strftime("%d-%m-%Y")
                 else:
                     FormattedDate = DateInfo.strftime("%m-%d-%Y")
-            except Exception as e1:
+            except Exception:
                 FormattedDate = EntryDate
                 return ""
             # remove from the end
@@ -1895,7 +1895,7 @@ class HPanel(GeneratorController):
                 return []
             return ""
         except Exception as e1:
-            self.LogErrorLine(f"Error in GetAlarmState: " + str(e1))
+            self.LogErrorLine("Error in GetAlarmState: " + str(e1))
             return ""
     # ------------ HPanel:RegisterIsFileRecord ------------------------------
     def RegisterIsFileRecord(self, Register):
@@ -2161,7 +2161,6 @@ class HPanel(GeneratorController):
             if len(input_string) < 16:
                 return "Unknown"
 
-            OutString = ""
             Date = "%02d/%02d/%02d" % (
                 self.GetIntFromString(input_string, 6, 1, decimal=True),
                 self.GetIntFromString(input_string, 5, 1, decimal=True),
@@ -2308,7 +2307,6 @@ class HPanel(GeneratorController):
         RetValue = collections.OrderedDict()
         LogList = []
         RetValue["Logs"] = LogList
-        UnknownFound = False
         try:
             # if DictOut is True, return a dictionary with a list of Dictionaries (one for each log)
             # Each dict in the list is a log (alarm, start/stop). For Example:
@@ -2402,7 +2400,6 @@ class HPanel(GeneratorController):
 
             if not self.SmartSwitch:
                 pass
-                Exercise = []
                 # Maintenance["Maintenance"].append({"Exercise" : Exercise
                 # Exercise["Exercise Time" : self.GetExerciseTime()
                 # Exercise["Exercise Duration" : self.GetExerciseDuration()
@@ -3723,20 +3720,12 @@ class HPanel(GeneratorController):
     def GetBaseStatus(self):
         try:
             EngineStatus = self.GetEngineState().lower()
-            GeneratorStatus = self.GetParameterStringValue(
-                RegisterStringEnum.GENERATOR_STATUS[REGISTER],
-                RegisterStringEnum.GENERATOR_STATUS[RET_STRING],
-            ).lower()
             SwitchState = self.GetSwitchState().lower()
 
             if "running" in EngineStatus or "run" in EngineStatus:
                 IsRunning = True
             else:
                 IsRunning = False
-            if "stopped" in GeneratorStatus:
-                IsStopped = True
-            else:
-                IsStopped = False
             if (
                 "exercising" in EngineStatus
                 or "exercise" in EngineStatus

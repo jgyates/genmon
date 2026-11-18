@@ -20,7 +20,6 @@ import os
 import sys
 import threading
 import time
-import itertools
 import struct
 import copy
 import re
@@ -1224,7 +1223,7 @@ class GeneratorController(MySupport):
 
                             OutputStream = subprocess.DEVNULL
                             executelist = [sys.executable, ScriptFileName]
-                            pid = subprocess.Popen(
+                            subprocess.Popen(
                                 executelist,
                                 stdout=OutputStream,
                                 stderr=OutputStream,
@@ -2250,7 +2249,7 @@ class GeneratorController(MySupport):
                 try:
                     # is the power value a float?
                     Power = float(Items[1])
-                except Exception as e1:
+                except Exception:
                     Power = 0.0
                     continue
                 try:
@@ -2307,7 +2306,7 @@ class GeneratorController(MySupport):
         try:
             struct_time = time.strptime(TimeStamp, "%x %X")
             return time.mktime(struct_time)
-        except Exception as e1:
+        except Exception:
             return 0
 
     # ----------  GeneratorController::LogToSensorLog-------------------------------
@@ -3946,7 +3945,7 @@ class GeneratorController(MySupport):
                 return False
 
             try:
-                EntryDate = datetime.datetime.strptime(Entry["date"], "%m/%d/%Y %H:%M")
+                datetime.datetime.strptime(Entry["date"], "%m/%d/%Y %H:%M")
             except Exception as e1:
                 self.LogErrorLine(
                     "Error in ValidateMaintLogEntry: expecting MM/DD/YYYY : " + str(e1)

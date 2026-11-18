@@ -10,10 +10,8 @@
 # MODIFICATIONS:
 # ------------------------------------------------------------
 import getopt
-import math
 import os
 import sys
-import time
 
 # This program assumes the directory genmonlib is one level higher
 sys.path.append(

@@ -28,7 +28,8 @@ REQUIREMENTS="$GENMON/tests/requirements.txt"
 if [ -n "$GENMON_CAPTURES" ]; then
   REQUIREMENTS="$GENMON/tests/requirements-sim.txt"
   # the tests run genmon in other folders
-  export GENMON_CAPTURES="$(cd "$GENMON_CAPTURES" && pwd)"
+  GENMON_CAPTURES="$(cd "$GENMON_CAPTURES" && pwd)"
+  export GENMON_CAPTURES
 fi
 
 cd "$GENMON" || exit 2

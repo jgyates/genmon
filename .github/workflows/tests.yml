@@ -53,3 +53,21 @@ jobs:
         run: |
           python --version
           python -m unittest discover -s tests -v
+
+  # checks the code for mistakes (unused or undefined names, shell script
+  # errors), the same as tests/run_lint.sh
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.13.9"
+          python-version: "3.13"
+
+      - name: Lint
+        run: bash tests/run_lint.sh

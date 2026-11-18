@@ -14,7 +14,6 @@ import time
 
 from genmonlib.myclient import ClientInterface
 from genmonlib.mycommon import MyCommon
-from genmonlib.mylog import SetupLogger
 from genmonlib.mythread import MyThread
 from genmonlib.program_defaults import ProgramDefaults
 
@@ -148,7 +147,7 @@ class GenNotify(MyCommon):
         while True:
             try:
 
-                OutageState = self.GetOutageState()
+                self.GetOutageState()
                 self.GetMonitorState()
                 self.GetMaintState()
                 data = self.SendCommand("generator: getbase")
@@ -346,7 +345,7 @@ class GenNotify(MyCommon):
         try:
             with self.AccessLock:
                 data = self.Generator.ProcessMonitorCommand(Command)
-        except Exception as e1:
+        except Exception:
             self.LogErrorLine("Error calling  ProcessMonitorCommand: " + str(Command))
             data = ""
 
@@ -357,6 +356,6 @@ class GenNotify(MyCommon):
         try:
             self.KillThread("PollingThread")
             self.Generator.Close()
-        except Exception as e1:
+        except Exception:
             pass
         return False

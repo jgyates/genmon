@@ -15,7 +15,6 @@ in the configuration directory will not be overwritten.  \
 Continue? (y/n)  "
 
 usepython3=true
-pipcommand="pip3"
 pipoptions="--prefer-binary"
 pythoncommand="python3"
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
@@ -36,7 +35,6 @@ managedpackages=false
 configfilescopied=false
 useserial=true
 operating_system="Unknown"
-version_id="Unknown"
 is_raspbian=true
 
 #-------------------------------------------------------------------------------
@@ -44,10 +42,8 @@ check_os(){
 
   source /etc/os-release
   operating_system=$NAME
-  version_id=$VERSION_ID
   echo "The operating system is: $NAME"
   echo "OS version is: $VERSION_ID"
-  string='My long string'
   if [[ $operating_system == *"Ubuntu"* ]]; then
      is_raspbian=false
   fi
@@ -137,12 +133,10 @@ function setuppython3() {
 
   if [ "$usepython3" = true ] ; then
     echo 'Setting up for Python 3.x...'
-    pipcommand="pip3"
     pythoncommand="python3"
     linetoadd="$linetoadd -p 3 "
   else
     echo 'Setting up for Python 2.7...'
-    pipcommand="pip"
     pythoncommand="python"
 fi
 }
@@ -205,27 +199,27 @@ function installgpio() {
 #-------------------------------------------------------------------------------
 # This function will setup the serial port
 function setupserial() {
-  pushd $genmondir
-  cd OtherApps
+  pushd $genmondir || return 1
+  cd OtherApps || return 1
   # we will leave bluetooth on. Pi4 and earlier devices the serial port 
   # has a conflict unless you use the -b option
   sudo $pythoncommand serialconfig.py -e -b
   echo "Finished setting up the serial port."
-  popd
+  popd || return 1
 }
 
 #-------------------------------------------------------------------------------
 # This function will install rpirtscts program needed for the LTE modem
 function installrpirtscts() {
     echo "Installing rpirtscts..."
-    pushd $genmondir
-    cd ~
+    pushd $genmondir || return 1
+    cd ~ || return 1
     git clone https://github.com/mholling/rpirtscts.git
-    cd rpirtscts
+    cd rpirtscts || return 1
     make
     sudo cp ./rpirtscts /usr/local/bin/rpirtscts
     echo "Finished installing rpirtscts."
-    popd
+    popd || return 1
 }
 #-------------------------------------------------------------------------------
 # This function will install the required libraries for genmon
@@ -258,11 +252,11 @@ function installgenmon() {
     if [ -z "$2" ] && [ $1 != "noprompt" ]; then    # Is parameter #1 zero length?
         read -p "Copy configuration files to $config_path? (y/n)?" choice
         case "$choice" in
-          y|Y ) echo "Copying *.conf files to "$config_path""
+          y|Y ) echo "Copying *.conf files to $config_path"
             copyconffiles
             configfilescopied=true
             ;; # yes choice
-          n|N ) echo "Not copying *.conf to "$config_path""
+          n|N ) echo "Not copying *.conf to $config_path"
             ;; # no choice
           *)
             echo "Invalid choice, not copying conf files"
@@ -320,8 +314,9 @@ function installgenmon() {
 #-------------------------------------------------------------------------------
 function updatecrontab() {
 
+    # shellcheck disable=SC2024  # root's crontab, saved to a temp file
     sudo crontab -l > $tempfile
-    result=$(grep -i "startgenmon.sh" /tmp/gmtemp)
+    result=$(grep -i "startgenmon.sh" $tempfile)
     if [ "$result" == "" ]
         then
             echo "Updating crontab..."
@@ -347,7 +342,7 @@ function updatecrontab() {
 function archivelogs() {
 
     echo "Archive log files from $log_path ..."
-    cd $genmondir
+    cd $genmondir || return 1
     sudo rm -r genmon_logs
     sudo rm genmon_logs.tar.gz
     mkdir genmon_logs
@@ -398,7 +393,7 @@ function restoregenmon() {
     echo "Restore genmon..."
     echo "Restore source: $restore_file"
     echo "Restore destination: $config_path"
-    cd $genmondir
+    cd $genmondir || return 1
 
     current_time=$(date '+%Y-%m-%d:%H:%M:%S')
     
@@ -424,7 +419,7 @@ function restoregenmon() {
 
     mkdir temp_restore 
     sudo mv $restore_file ./temp_restore
-    cd temp_restore
+    cd temp_restore || return 1
     sudo tar -xzf $base_filename
     sudo cp -r ./genmon_backup/* $config_path
     cd ..
@@ -435,7 +430,7 @@ function restoregenmon() {
 function backupgenmon() {
 
     echo "Backup genmon..."
-    cd $genmondir
+    cd $genmondir || return 1
     sudo rm -r genmon_backup
     sudo rm genmon_backup.tar.gz
     mkdir genmon_backup
@@ -449,7 +444,7 @@ function backupgenmon() {
 }
 #-------------------------------------------------------------------------------
 function githubhash(){
-  cd $genmondir
+  cd $genmondir || return 1
   git rev-parse --short HEAD
 }
 #-------------------------------------------------------------------------------
@@ -458,7 +453,7 @@ function githubhash(){
 function updategenmon() {
 
     echo "Updating genmon..."
-    cd $genmondir
+    cd $genmondir || return 1
     current_time=$(date '+%Y-%m-%d:%H:%M:%S')
     
     UPDATE_HISTORY="$config_path"update.txt
@@ -472,8 +467,8 @@ function updategenmon() {
     git reset --hard origin/master
     sudo chmod 775 "$genmondir/startgenmon.sh"
     sudo chmod 775 "$genmondir/genmonmaint.sh"
-    sudo chown -R `stat -c "%U" $genmondir` $genmondir
-    sudo chgrp -R `stat -c "%G" $genmondir` $genmondir
+    sudo chown -R "$(stat -c "%U" "$genmondir")" "$genmondir"
+    sudo chgrp -R "$(stat -c "%G" "$genmondir")" "$genmondir"
 
     sudo sh -c "printf '%s\n' $current_time >> $UPDATE_HISTORY"
     echo "Done."

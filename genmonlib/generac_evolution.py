@@ -367,7 +367,7 @@ class Evolution(GeneratorController):
                 "data",
                 "ALARMS.txt",
             )
-            with open(self.AlarmFile, "r") as AlarmFile:  #
+            with open(self.AlarmFile, "r"):  # check the file can be read
                 pass
         except Exception as e1:
             self.LogErrorLine("Unable to open alarm file: " + str(e1))
@@ -1881,7 +1881,6 @@ class Evolution(GeneratorController):
 
         # extract time of day and day of week from command string
         # format is day:hour:min  Monday:15:00
-        msgsubject = "Generator Command Notice at " + self.SiteName
         msgbody = "Invalid command syntax for command setexercise"
         try:
 
@@ -3405,7 +3404,7 @@ class Evolution(GeneratorController):
                 # This is the normal return path for an empty log entry
                 return ""
 
-            DisplayCode = int(Value[0:2], 16)
+            # Value[0:2] is the display code (not shown)
             ActionCode = int(Value[2:4], 16)
             if ActionCode == 0x80:
                 ActionStr = "Alarm Activated"
@@ -3414,7 +3413,6 @@ class Evolution(GeneratorController):
             else:
                 ActionStr = f"Unknown {ActionCode:#02x}"
 
-            DisplayStr = f"{DisplayCode:#02x}"
 
             Min = int(Value[4:6], 16)
             if Min > 59:  # validate minute
@@ -3833,7 +3831,6 @@ class Evolution(GeneratorController):
 
         # This is a numeric value that increments for each new log entry
         TempVal = Value[2:4]
-        EntryNumber = int(TempVal, 16)
 
         # this will attempt to find a description for the log entry based on the info in ALARMS.txt
         if (
@@ -4309,7 +4306,6 @@ class Evolution(GeneratorController):
     def GetDigitalValues(self, RegVal, LookUp):
 
         outvalue = ""
-        counter = 0x01
 
         for BitMask, Items in LookUp.items():
             if len(Items[1]):
@@ -4428,13 +4424,13 @@ class Evolution(GeneratorController):
             0x40: [True, "Bosch Governor On"],
             0x80: [True, "Air/Fuel Relay On"],
         }
-        # Air cooled
-        DigitalOutputs_AC = {  # 0x10: [True, "Transfer Switch Activated"],  # Bit Position in Display 0x01
-            0x01: [True, "Ignition On"],  # Bit Position in Display 0x02
-            0x02: [True, "Starter On"],  # Bit Position in Display 0x04
-            0x04: [True, "Fuel Relay On"],  # Bit Position in Display 0x08
-            # 0x08: [True, "Battery Charger On"]         # Bit Position in Display 0x10
-        }
+        # Air cooled (not used: air cooled returns above)
+        # DigitalOutputs_AC = {  # 0x10: [True, "Transfer Switch Activated"],  # Bit Position in Display 0x01
+        #     0x01: [True, "Ignition On"],  # Bit Position in Display 0x02
+        #     0x02: [True, "Starter On"],  # Bit Position in Display 0x04
+        #     0x04: [True, "Fuel Relay On"],  # Bit Position in Display 0x08
+        #     # 0x08: [True, "Battery Charger On"]         # Bit Position in Display 0x10
+        # }
 
         Register = "0053"
 
@@ -4540,7 +4536,7 @@ class Evolution(GeneratorController):
                 return "Unknown"
             
             ValueInt = int(Value, 16)
-            bValueIsNew = (ValueInt & 0x0100) != 0  # If high byte is 1 it is a new value
+            # high byte 1: a new value (0x0100), not used
             ValueInt = ValueInt & 0x00ff            # low byte is status
             if chr(ValueInt) == 'G':
                 return "Ready to Run"
@@ -4701,7 +4697,6 @@ class Evolution(GeneratorController):
     # ------------ Evolution:GetExerciseTime ------------------------------------
     def GetExerciseTime(self):
 
-        ExerciseFreq = ""  # Weekly
         FreqVal = 0
         DayOfMonth = 0
 
