@@ -1111,38 +1111,19 @@ class GenServ(MySupport):
             except Exception as e1:
                 self.LogErrorLine("generate_adhoc_ssl_context: " + str(e1))
 
-            # Fallback: try pyOpenSSL-based generation
+            # Fallback: a certificate made here (cryptography)
             import atexit
             import tempfile
-            from random import random
 
-            from OpenSSL import crypto
-
-            cert = crypto.X509()
-            cert.set_serial_number(int(random() * sys.maxsize))
-            cert.gmtime_adj_notBefore(0)
-            cert.gmtime_adj_notAfter(60 * 60 * 24 * 365)
-
-            subject = cert.get_subject()
-            subject.CN = "*"
-            subject.O = "Dummy Certificate"
-
-            issuer = cert.get_issuer()
-            issuer.CN = "Untrusted Authority"
-            issuer.O = "Self-Signed"
-
-            pkey = crypto.PKey()
-            pkey.generate_key(crypto.TYPE_RSA, 2048)
-            cert.set_pubkey(pkey)
-            cert.sign(pkey, "sha256")
+            key_pem, cert_pem = self._make_selfsigned_cert("Dummy Certificate", days=365)
 
             cert_handle, cert_file = tempfile.mkstemp()
             pkey_handle, pkey_file = tempfile.mkstemp()
             atexit.register(os.remove, pkey_file)
             atexit.register(os.remove, cert_file)
 
-            os.write(cert_handle, crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
-            os.write(pkey_handle, crypto.dump_privatekey(crypto.FILETYPE_PEM, pkey))
+            os.write(cert_handle, cert_pem)
+            os.write(pkey_handle, key_pem)
             os.close(cert_handle)
             os.close(pkey_handle)
             ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
@@ -1155,6 +1136,40 @@ class GenServ(MySupport):
             return None
 
     # -------------------------------------------------------------------------------
+    @staticmethod
+    def _make_selfsigned_cert(organization, days):
+        """A self-signed certificate (common name "*") and its new RSA key:
+        (key PEM, certificate PEM) as bytes."""
+        from cryptography import x509
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from cryptography.x509.oid import NameOID
+
+        key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        name = x509.Name([
+            x509.NameAttribute(NameOID.COMMON_NAME, "*"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, organization),
+        ])
+        # naive UTC: cryptography < 42 requires it (later versions accept it)
+        now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+        cert = (
+            x509.CertificateBuilder()
+            .subject_name(name)
+            .issuer_name(name)
+            .public_key(key.public_key())
+            .serial_number(int.from_bytes(os.urandom(16), "big") >> 1)
+            .not_valid_before(now)
+            .not_valid_after(now + datetime.timedelta(days=days))
+            .sign(key, hashes.SHA256())
+        )
+        key_pem = key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+        return key_pem, cert.public_bytes(serialization.Encoding.PEM)
+
+    # -------------------------------------------------------------------------------
     def generate_persistent_selfsigned(self, config_path):
         """Generate (or load existing) a persistent self-signed certificate.
 
@@ -1163,7 +1178,7 @@ class GenServ(MySupport):
         """
         import ssl
 
-        from OpenSSL import crypto
+        from cryptography import x509
 
         key_path = os.path.join(config_path, "selfsigned.key")
         crt_path = os.path.join(config_path, "selfsigned.crt")
@@ -1172,8 +1187,12 @@ class GenServ(MySupport):
         if os.path.isfile(key_path) and os.path.isfile(crt_path):
             try:
                 with open(crt_path, "rb") as f:
-                    cert = crypto.load_certificate(crypto.FILETYPE_PEM, f.read())
-                if cert.has_expired():
+                    cert = x509.load_pem_x509_certificate(f.read())
+                try:
+                    not_after = cert.not_valid_after_utc
+                except AttributeError:  # cryptography < 42: naive UTC
+                    not_after = cert.not_valid_after.replace(tzinfo=datetime.timezone.utc)
+                if not_after <= datetime.datetime.now(datetime.timezone.utc):
                     self.LogError("Self-signed certificate expired, regenerating.")
                     need_generate = True
                 else:
@@ -1186,27 +1205,10 @@ class GenServ(MySupport):
 
         if need_generate:
             try:
-                pkey = crypto.PKey()
-                pkey.generate_key(crypto.TYPE_RSA, 2048)
-
-                cert = crypto.X509()
-                cert.set_serial_number(int.from_bytes(os.urandom(16), "big"))
-                cert.gmtime_adj_notBefore(0)
-                cert.gmtime_adj_notAfter(60 * 60 * 24 * 365)  # 1 year
-
-                subject = cert.get_subject()
-                subject.CN = "*"
-                subject.O = "Genmon Self-Signed"
-
-                cert.set_issuer(subject)
-                cert.set_pubkey(pkey)
-                cert.sign(pkey, "sha256")
-
-                with open(key_path, "wb") as f:
-                    f.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, pkey))
-                os.chmod(key_path, 0o600)
-                with open(crt_path, "wb") as f:
-                    f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
+                key_pem, cert_pem = self._make_selfsigned_cert("Genmon Self-Signed", days=365)
+                # the key is never readable by others, even while written
+                AtomicWrite(key_path, key_pem, mode=0o600)
+                AtomicWrite(crt_path, cert_pem)
 
                 self.LogDebug("Persistent self-signed cert created: " + crt_path)
             except Exception as e1:
@@ -2652,17 +2654,24 @@ class GenServ(MySupport):
             return jsonify({"status": "error", "message": "Server error during upload."}), 500
 
     # -------------------------------------------------------------------------------
+    @staticmethod
+    def _ca_cert_der(ca_path):
+        """The certificate in the PEM file ca_path, in DER format (bytes)."""
+        from cryptography import x509
+        from cryptography.hazmat.primitives import serialization
+
+        with open(ca_path, "rb") as f:
+            ca_cert = x509.load_pem_x509_certificate(f.read())
+        return ca_cert.public_bytes(serialization.Encoding.DER)
+
+    # -------------------------------------------------------------------------------
     def download_ca_der(self):
         """Serve the Local CA certificate in DER format for browser import."""
         try:
             ca_path = os.path.join(self.ConfigFilePath, "ca.crt")
             if not os.path.isfile(ca_path):
                 return "CA certificate not found", 404
-            from OpenSSL import crypto
-
-            with open(ca_path, "rb") as f:
-                ca_cert = crypto.load_certificate(crypto.FILETYPE_PEM, f.read())
-            der = crypto.dump_certificate(crypto.FILETYPE_ASN1, ca_cert)
+            der = self._ca_cert_der(ca_path)
             return Response(
                 der,
                 mimetype="application/x-x509-ca-cert",
@@ -2680,11 +2689,7 @@ class GenServ(MySupport):
             ca_path = os.path.join(self.ConfigFilePath, "ca.crt")
             if not os.path.isfile(ca_path):
                 return "CA certificate not found", 404
-            from OpenSSL import crypto
-
-            with open(ca_path, "rb") as f:
-                ca_cert = crypto.load_certificate(crypto.FILETYPE_PEM, f.read())
-            der = crypto.dump_certificate(crypto.FILETYPE_ASN1, ca_cert)
+            der = self._ca_cert_der(ca_path)
             return Response(der, mimetype="application/x-x509-ca-cert")
         except Exception as e1:
             self.LogErrorLine("Error in import_ca_inline: " + str(e1))

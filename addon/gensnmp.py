@@ -778,12 +778,12 @@ class GenSNMP(MySupport):
                     else:
                         for listitem in item:
                             if isinstance(listitem, dict):
-                                if not self.DictIsNumeric(item):
+                                if not self.DictIsNumeric(listitem):
                                     self.CheckDictForChanges(listitem, CurrentPath)
                                 else:
                                     CurrentPath = PathPrefix + "/" + str(key)
                                     self.CheckForChanges(
-                                        CurrentPath, str(item["value"])
+                                        CurrentPath, str(listitem["value"])
                                     )
                             else:
                                 self.LogError(

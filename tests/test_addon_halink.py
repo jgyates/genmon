@@ -158,6 +158,15 @@ class LinkTests(object):
                           section=self.MODULE)
         self.assertEqual(config.ReadValue("api_key"), self.addon.ApiKey)
 
+    def test_monitor_address(self):
+        # genmon on another system; empty: the address given when started
+        # (the add-on connects to genmon at MonitorAddress)
+        for setting, expected in [("192.0.2.7", "192.0.2.7"), ("", "127.0.0.1"),
+                                  (" ", "127.0.0.1")]:
+            with self.subTest(monitor_address=setting):
+                self.start(monitor_address=setting)
+                self.assertEqual(self.addon.MonitorAddress, expected)
+
     def test_controller_types(self):
         self.start()
         cls = type(self.addon)

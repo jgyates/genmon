@@ -29,6 +29,7 @@ try:
     from genmonlib.myclient import ClientInterface
     from genmonlib.mycommon import MyCommon
     from genmonlib.myconfig import MyConfig
+    from genmonlib.myfileutil import AtomicWrite
     from genmonlib.mylog import SetupLogger
     from genmonlib.mysupport import MySupport
     from genmonlib.mythread import MyThread
@@ -224,9 +225,11 @@ class GenCustomGPIO(MySupport):
 
         try:
             if len(state):
-                with open(os.path.join(self.OutputPath, "userdefined.json"), 'w') as outfile:
-                    self.LogDebug(str(state))
-                    json.dump(state, outfile, ensure_ascii = False, indent = 4)
+                self.LogDebug(str(state))
+                # genmon reads this file: it sees the old or the new file,
+                # never a partly written one
+                AtomicWrite(os.path.join(self.OutputPath, "userdefined.json"),
+                    json.dumps(state, ensure_ascii = False, indent = 4))
         except Exception as e1:
             self.LogErrorLine("Error in UpdateFile: " + str(e1))
 
@@ -238,8 +241,19 @@ class GenCustomGPIO(MySupport):
 
     # ----------GenCustomGPIO::Close--------------------------------------------
     def Close(self):
-        self.KillThread("PollingThread")
-        self.Generator.Close()
+        try:
+            self.KillThread("PollingThread")
+        except Exception as e1:
+            self.LogErrorLine("Error stopping polling thread: " + str(e1))
+        try:
+            # inputs back to their default state
+            GPIO.cleanup()
+        except Exception as e1:
+            self.LogErrorLine("Error in GPIO cleanup: " + str(e1))
+        try:
+            self.Generator.Close()
+        except Exception as e1:
+            self.LogErrorLine("Error closing generator client: " + str(e1))
 
 
 # -------------------------------------------------------------------------------

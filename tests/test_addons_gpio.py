@@ -365,6 +365,21 @@ class GenCustomGPIOTests(unittest.TestCase):
         self.fixture.run_thread("PollingThread", waits=[False, True])
         self.assertEqual(self.shown()["Switches"][1], {"GPIO Pin 11": "On"})  # conf: On / Off
 
+    def test_file_replaced_whole(self):
+        # written to a new file that then replaces userdefined.json, so genmon
+        # never reads a partly written file
+        fixture = self.start({})
+        with mock.patch.object(fixture.module, "AtomicWrite",
+                               wraps=fixture.module.AtomicWrite) as write:
+            fixture.run_thread("PollingThread", waits=[True])
+        self.assertEqual(write.call_args[0][0], os.path.join(self.output, "userdefined.json"))
+        self.assertEqual(os.listdir(self.output), ["userdefined.json"])
+
+    def test_close(self):
+        self.start({})
+        self.addon.Close()
+        self.assertIn("cleanup", self.gpio.calls)
+
     def test_invalid_section(self):
         self.start({"door": {"title": "Door"}})
         self.assertEqual(sorted(p.pin for p in self.addon.GPIO_pins), [11, 13])

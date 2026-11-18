@@ -144,6 +144,10 @@ class GenHALink(MySupport):
             )
             self.ServerPort = config.ReadValue("port", return_type=int, default=9083)
             self.ApiKey = config.ReadValue("api_key", return_type=str, default="")
+            # genmon on another system; empty: the address given when started
+            address = config.ReadValue("monitor_address", return_type=str, default="")
+            if address and address.strip():
+                self.MonitorAddress = address.strip()
             self.PollTime = config.ReadValue(
                 "poll_interval", return_type=float, default=3.0
             )

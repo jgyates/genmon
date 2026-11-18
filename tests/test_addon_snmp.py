@@ -179,6 +179,14 @@ class SNMPTests(unittest.TestCase):
         varbinds, status = self.request([oid])
         self.assertEqual(int(varbinds[0][1]), 12)
 
+    def test_numeric_value_in_a_list(self):
+        # use_numeric: a value of genmon's *_num_json data that is directly in
+        # a list is one value (not its type / value / unit parts)
+        self.start(use_numeric="True")
+        self.addon.CheckDictForChanges(
+            {"Status": [{"type": "float", "value": 13.2, "unit": "V"}]}, "home")
+        self.assertEqual(self.addon.LastValues, {"home/Status": "13.2"})
+
     def test_unknown_oid(self):
         self.start()
         varbinds, status = self.request([BASE + (9, 9, 9)])

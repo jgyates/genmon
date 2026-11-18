@@ -1082,7 +1082,8 @@ ADDONS = (
                     ""),
               Param("device_labels", "string", "Sensor Names",
                     "Comma separated list of sensor names. These names will be displayed for "
-                    "each sensor. DS18B20 sensors are first, then type K thermocouples. "
+                    "each sensor. DS18B20 sensors are first, then type K thermocouples, each "
+                    "in order of their device ID. "
                     "Blacklisted devices are skipped.",
                     ""),
               Param("device_nominal_values", "string", "Sensor Nominal Values",

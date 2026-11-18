@@ -196,15 +196,16 @@ class GenTemp(MySupport):
 
         DeviceList = []
         try:
-            # enum DS18B20 temp sensors
-            for sensor in glob.glob("/sys/bus/w1/devices/28-*/w1_slave"):
+            # enum DS18B20 temp sensors. Sorted by device ID: the labels are
+            # given in this order, and the folder order is not fixed
+            for sensor in sorted(glob.glob("/sys/bus/w1/devices/28-*/w1_slave")):
                 if not self.CheckBlackList(sensor) and self.DeviceValid(sensor):
                     self.LogDebug("Found DS18B20 : " + sensor)
                     DeviceList.append(sensor)
 
             # enum type K thermocouples
             # for sensor in glob.glob("/sys/bus/w1/devices/w1_bus_master*/3b-*/w1_slave"):
-            for sensor in glob.glob("/sys/bus/w1/devices/3b-*/w1_slave"):
+            for sensor in sorted(glob.glob("/sys/bus/w1/devices/3b-*/w1_slave")):
                 if not self.CheckBlackList(sensor) and self.DeviceValid(sensor):
                     self.LogDebug("Found type K thermocouple : " + sensor)
                     DeviceList.append(sensor)
@@ -341,7 +342,7 @@ class GenTemp(MySupport):
 
             except Exception as e1:
                 self.LogErrorLine("Error in GenTempThread: " + str(e1))
-                if self.WaitForExit("GenTempThread", float(self.PollTime * 60)):
+                if self.WaitForExit("GenTempThread", float(self.PollTime)):
                     return
 
     # ----------GenTemp::SignalClose--------------------------------------------

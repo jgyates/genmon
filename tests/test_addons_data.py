@@ -23,6 +23,7 @@ import os
 import sys
 import types
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -259,6 +260,27 @@ class TempTests(unittest.TestCase):
         fixture.run_thread("GenTempThread")
         self.assertEqual(fixture.commands("generator: set_sensor_data=")[-1],
                          [{"3b-000002": "211.00 C"}])
+
+    def test_labels_in_device_id_order(self):
+        # the folders can be listed in any order: the labels follow the IDs
+        self.SENSORS = dict(reversed(list(self.SENSORS.items())))
+        self.SENSORS["/sys/bus/w1/devices/28-000000/w1_slave"] = (
+            "50 01 : crc=57 YES\n50 01 t=21000\n")
+        fixture = self.start(use_metric="True", device_labels="First, Second, Third", blacklist="")
+        fixture.run_thread("GenTempThread")
+        self.assertEqual(fixture.commands("generator: set_sensor_data="), [[
+            {"First": "21.00 C"}, {"Second": "25.00 C"}, {"Third": "210.50 C"}]])
+
+    def test_wait_after_an_error(self):
+        # the normal poll time (it was 60 times the poll time)
+        fixture = self.start(poll_frequency="30", blacklist="")
+        waits = []
+        with mock.patch.object(fixture.addon, "ParseData", side_effect=ValueError("bad")), \
+                mock.patch.object(fixture.addon, "WaitForExit",
+                                  side_effect=lambda name, t: waits.append(t) or True), \
+                mock.patch.object(fixture.module.time, "sleep"):
+            fixture.addon.GenTempThread()
+        self.assertEqual(waits, [30.0])
 
     def test_blacklist(self):
         fixture = self.start(use_metric="True", device_labels="", blacklist="3b-000002")
