@@ -33,6 +33,7 @@ import os
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 from unittest import mock
 
@@ -294,6 +295,45 @@ class EntryTests(ControllerTestCase):
         entry = {"type": "int", "mask": "ffff", "bounds_regex": "^[0-9]$"}
         self.assertEqual(self.value(entry, "0005"), 5)
         self.assertIsNone(self.value(entry, "0010"))
+
+    def test_service_due_dates(self):
+        # days since 1/1/1970: the same date in every time zone (it was a day
+        # late east of the US: converted with fromtimestamp, plus one day)
+        entries = []
+        for name in ["Power_Zone_410.json", "Evolution_Liquid_Cooled.json"]:
+            with open(os.path.join(CONTROLLER_DIR, name)) as f:
+                entries += self.find_entries(json.load(f), "%m/%d/%Y")
+        self.assertEqual(len(entries), 5)
+        saved = os.environ.get("TZ")
+        self.addCleanup(self.restore_timezone, saved)
+        for zone in ["America/New_York", "UTC", "Australia/Sydney", "America/Los_Angeles"]:
+            os.environ["TZ"] = zone
+            time.tzset()
+            for entry in entries:
+                with self.subTest(zone=zone, title=entry["title"]):
+                    entry = {k: v for k, v in entry.items() if k != "reg"}
+                    # 20000 days: 10/04/2024
+                    self.assertEqual(self.value(entry, "4e20"), "10/04/2024 ")
+
+    @classmethod
+    def find_entries(cls, item, exec_text):
+        """The entries of a controller file whose exec contains exec_text."""
+        if isinstance(item, dict):
+            found = [item] if exec_text in str(item.get("exec", "")) else []
+            for value in item.values():
+                found += cls.find_entries(value, exec_text)
+            return found
+        if isinstance(item, list):
+            return [e for value in item for e in cls.find_entries(value, exec_text)]
+        return []
+
+    @staticmethod
+    def restore_timezone(saved):
+        if saved is None:
+            os.environ.pop("TZ", None)
+        else:
+            os.environ["TZ"] = saved
+        time.tzset()
 
     def test_list(self):
         self.c.controllerimport["holding_registers"].update({"0f01": 2, "0f02": 2})

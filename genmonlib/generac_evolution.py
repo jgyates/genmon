@@ -5570,10 +5570,14 @@ class Evolution(GeneratorController):
             return ""
 
         try:
-            time = int(Value, 16) * 86400
-            if not self.Evolution2:  # add one day
-                time += 86400
-            Date = datetime.datetime.fromtimestamp(time)
+            # days since 1/1/1970, a date on the controller's clock (no time
+            # zone). Evolution 2 counts one more day. (It was converted with
+            # fromtimestamp, which moved it to this computer's time zone: one
+            # day late east of the US.)
+            days = int(Value, 16)
+            if self.Evolution2:
+                days -= 1
+            Date = datetime.date(1970, 1, 1) + datetime.timedelta(days=days)
             if self.bAlternateDateFormat:
                 return Date.strftime("%d/%m/%Y ")
             else:

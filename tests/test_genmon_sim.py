@@ -229,8 +229,8 @@ class SimulatedGenerator(object):
     def run(self, command, console_file):
         console = open(os.path.join(self.folder, console_file), "w")
         self.consoles.append(console)
-        # a fixed time zone: some dates genmon shows depend on it (e.g. the
-        # service due dates), and the snapshots were made in this one
+        # a fixed time zone, so the answers do not depend on this computer's
+        # (the snapshots were made in this one)
         env = dict(os.environ, TZ=SIM_TIMEZONE)
         return subprocess.Popen(command, cwd=self.folder, stdout=console, stderr=subprocess.STDOUT,
                                 stdin=subprocess.DEVNULL, env=env)

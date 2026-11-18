@@ -781,7 +781,7 @@
             "comment2":  "The exec string will be formatted (e.g. {}) with the modbus register value.",
             "title": "Service A Due Date",
             "type":"int",
-            "exec": "exec_out = datetime.datetime.fromtimestamp((({} + 1) * 86400)).strftime('%m/%d/%Y ')",
+            "exec": "exec_out = (datetime.date(1970, 1, 1) + datetime.timedelta(days={})).strftime('%m/%d/%Y ')",
             "default": "Unknown Service Date"
           },
           {
@@ -799,7 +799,7 @@
             "comment2":  "The exec string will be formatted (e.g. {}) with the modbus register value.",
             "title": "Service B Due Date",
             "type":"int",
-            "exec": "exec_out = datetime.datetime.fromtimestamp((({} + 1) * 86400)).strftime('%m/%d/%Y ')",
+            "exec": "exec_out = (datetime.date(1970, 1, 1) + datetime.timedelta(days={})).strftime('%m/%d/%Y ')",
             "default": "Unknown Service Date"
           }
         ]

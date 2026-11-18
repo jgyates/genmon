@@ -102,6 +102,8 @@ All notable changes to this project will be documented in this file.
 - Fixed imported buttons (import_buttons) not appearing on the Maintenance page for controllers without built-in buttons (thanks @mattgraham)
 - Allow script-type imported command buttons to execute without a register value
 - Added example generator start / stop / transfer imported command buttons
+- Fixed service due dates showing one day late outside US time zones (Evolution, Nexus, Power Zone 410, Evolution Liquid Cooled custom controller)
+
 
 ## 2.0.01 -2026-05-18
 - Various bug fixes and typo corrections
