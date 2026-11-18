@@ -195,6 +195,10 @@ class GaugeDIY1(GaugeDIY):
             # convert display results
             reading = val[0] << 8 | val[1]
 
+            # the ADC sends a signed 16 bit value: just below 0 V (noise) is a
+            # small negative number, not 65535
+            if reading >= 0x8000:
+                reading -= 0x10000
             if reading < 0:
                 reading = 0
 
@@ -206,7 +210,8 @@ class GaugeDIY1(GaugeDIY):
 
         except Exception as e1:
             self.LogErrorLine("Error calling  GetGaugeData: " + str(e1))
-            return 0.0
+            # no reading: 0.0 would be sent to genmon as an empty tank
+            return None
 
     # ---------- GaugeDIY::Close------------------------------------------------
     def Close(self):
@@ -388,8 +393,10 @@ class GaugeDIY2(GaugeDIY):
     def GetGaugeData(self, tanknum=0):
         try:
             return self.convert_angle_to_percent(self.read_gauge_angle())
-        except:
-            return 0.0
+        except Exception as e1:
+            self.LogErrorLine("Error calling  GetGaugeData: " + str(e1))
+            # no reading: 0.0 would be sent to genmon as an empty tank
+            return None
 
     # ---------- GaugeDIY2::convert_angle_to_percent----------------------------
     def convert_angle_to_percent(self, ain):

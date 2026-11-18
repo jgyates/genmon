@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -------------------------------------------------------------------------------
 #    FILE: addon_fixture.py
-# PURPOSE: Runs a notification add-on (genslack.py, gensms.py, ...) in a test,
-#          without genmon, threads or network:
+# PURPOSE: Runs an add-on (genslack.py, gentankutil.py, ...) in a test, without
+#          genmon, threads or network:
 #
 #          - genmon is a FakeGenmon: the test sets the generator state (READY,
 #            RUNNING, ...), utility outage, software update, system health, fuel
@@ -13,7 +13,7 @@
 #          - the libraries an add-on sends with (requests, chump, twilio, ...) are
 #            fakes from the test, which record what would be sent.
 #
-#          Used by test_addons_notify.py.
+#          Used by test_addons_notify.py and test_addons_data.py.
 # -------------------------------------------------------------------------------
 
 import glob
@@ -112,14 +112,17 @@ class FakeThread(object):
 class AddOnFixture(object):
 
     def __init__(self, module_name, class_name, settings, modules=None, patches=None,
-                 loop_in_init=False):
+                 loop_in_init=False, reimport=None):
         """module_name: e.g. "genslack"; class_name: e.g. "GenSlack".
         settings: values for its config file (the rest come from conf/).
         modules: fake third party modules, e.g. {"chump": fake_chump}.
         patches: (target, value) pairs for mock.patch, e.g. requests.post.
         loop_in_init: the add-on's __init__ ends in a "while True: time.sleep()"
-        loop (gencallmebot.py); the first sleep raises an error to end it."""
+        loop (gencallmebot.py); the first sleep raises an error to end it.
+        reimport: modules to import again with the fake modules in place, e.g.
+        ["genmonlib.gaugediy"] (which imports smbus)."""
         self.loop_in_init = loop_in_init
+        self.reimport = reimport or []
         self.module_name, self.class_name = module_name, class_name
         self.settings, self.fake_modules = settings, modules or {}
         self.extra_patches = patches or []
@@ -145,7 +148,10 @@ class AddOnFixture(object):
         for patch in patches:
             patch.start()
             self.patches.append(patch)
-        # import (or import again) with the fake modules in place
+        # import (or import again) with the fake modules in place; the
+        # sys.modules patch above puts the old modules back afterwards
+        for name in self.reimport:
+            sys.modules.pop(name, None)
         sys.modules.pop(self.module_name, None)
         self.module = importlib.import_module(self.module_name)
         for target, value in [("ClientInterface", self.genmon), ("MyThread", FakeThread)]:
@@ -168,8 +174,8 @@ class AddOnFixture(object):
                 self.addon = cls(**args)
         else:
             self.addon = cls(**args)
-        # the add-on's GenNotify (genmonlib/mynotify.py)
-        self.notify = getattr(self.addon, "Notify", None) or getattr(self.addon, "GenNotify")
+        # the add-on's GenNotify (genmonlib/mynotify.py), if it has one
+        self.notify = getattr(self.addon, "Notify", None) or getattr(self.addon, "GenNotify", None)
         return self
 
     def write_config(self):
@@ -191,6 +197,28 @@ class AddOnFixture(object):
                 self.notify.MainPollingThread()
             except StopPolling:
                 pass
+
+    def run_thread(self, name):
+        """One pass of one of the add-on's threads (e.g. "TankCheckThread"):
+        the thread's waits return "exit" and sleeps return at once."""
+        function = self.addon.Threads[name].function
+        with mock.patch.object(self.addon, "WaitForExit", return_value=True), \
+                mock.patch.object(self.module.time, "sleep"):
+            function()
+
+    def commands(self, prefix):
+        """The genmon commands the add-on sent that start with prefix, e.g.
+        "generator: set_tank_data=": the rest of each, as JSON if it is JSON."""
+        result = []
+        for command in self.genmon.commands:
+            if command.startswith(prefix):
+                value = command[len(prefix):]
+                try:
+                    value = json.loads(value)
+                except ValueError:
+                    pass
+                result.append(value)
+        return result
 
     def send_queued(self):
         """Send what the add-on queued, as its queue thread would. (Some add-ons

@@ -254,6 +254,10 @@ class GenTankData(MySupport):
                     if len(self.TankID_2) != 0:
                         tankdata = self.tank.GetData(self.TankID_2)
                         self.LogDebug("Tank2 = " + json.dumps(tankdata))
+                    if len(self.TankID_2) != 0 and tankdata == None:
+                        # the values read below would still be tank 1's
+                        self.LogError("Unable to read tank 2 (" + self.tank_name_2 + ")")
+                    elif len(self.TankID_2) != 0:
                         dataforgenmon["Percentage2"] = self.tank.GetPercentage()
                         try:
                             epoch_time = self.tank.GetReadingEpochTime()
