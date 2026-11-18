@@ -384,7 +384,9 @@ class GenExercise(MySupport):
             NowString = datetime.datetime.now().strftime("%A %B %d, %Y %H:%M:%S")
             if self.ExerciseFrequency.lower() == "biweekly":
                 self.config.WriteValue("last_exercise", NowString)
-                self.config.LastExerciseTime = NowString
+                # TimeForExercise uses this (it was set on self.config, so a
+                # biweekly exercise ran again a week later until a restart)
+                self.LastExerciseTime = NowString
             self.LogDebug("Last Exercise Cycle: " + NowString)
         except Exception as e1:
             self.LogErrorLine("Error in WriteLastExerciseTime: " + str(e1))
@@ -431,7 +433,8 @@ class GenExercise(MySupport):
                 self.ExerciseFrequency.lower() == "biweekly"
                 and self.ExerciseDayOfWeek.lower() == WeekDayString.lower()
             ):
-                if self.LastExerciseTime == None:
+                # no exercise yet (no or an empty last_exercise entry)
+                if self.LastExerciseTime == None or not len(self.LastExerciseTime.strip()):
                     return True
                 LastExerciseTime = datetime.datetime.strptime(
                     self.LastExerciseTime, "%A %B %d, %Y %H:%M:%S"

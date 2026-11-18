@@ -57,6 +57,9 @@ class FakeGenmon(object):
         self.commands.append(command)
         s = self.state
         name = command.replace("generator: ", "")
+        # answers a test sets, e.g. state["answers"]["start_info_json"]
+        if name in s.get("answers", {}):
+            return s["answers"][name]
         if name == "getsitename":
             return s["sitename"]
         if name == "getbase":
