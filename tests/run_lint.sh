@@ -16,7 +16,8 @@
 # -------------------------------------------------------------------------------
 
 FLAKE8_VERSION="7.3.0"
-SHELLCHECK_VERSION="0.10.0.1"   # shellcheck-py (shellcheck 0.10.0)
+# the shellcheck-py package version (it installs shellcheck 0.10.0)
+SHELLCHECK_VERSION="0.10.0.1"
 
 GENMON="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$GENMON" || exit 2
