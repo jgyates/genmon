@@ -10,7 +10,7 @@ aiohttp
 cryptography
 # gensnmp.py, the versions of ../requirements.txt
 pysnmp==7.1.21
-pyasn1==0.6.1
+pyasn1==0.6.5
 # genmon.py and the controller code
 crcmod
 pyserial

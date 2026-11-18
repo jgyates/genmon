@@ -36,6 +36,7 @@ All notable changes to this project will be documented in this file.
 - added CI scripts to repo
 - added test scripts for add on programs
 - Added support for TLS 1.3 in upcoming python 3.14 for MQTT based addon programs
+- updated pyasn1 to 0.6.5
 
 ## 2.0.02 -2026-08-04
 - New add on for Hubitat Elevation hub, Thanks @bdwilson

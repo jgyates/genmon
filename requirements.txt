@@ -12,8 +12,9 @@ smbus
 # pysnmp is fixed at this version to support python 3.9. pysnmp 7.1.22 is the last version to support  python 3.9 
 pysnmp==7.1.21
 ldap3
-# pysan1 is fixed at 0.6.1 due to pysnmp 7.1.21 requiring pyasn1 < 0.6.1
-pyasn1==0.6.1
+# pyasn1 is fixed at 0.6.5 (security fixes in 0.6.4 and 0.6.5; gensnmp decodes SNMP
+# requests from the network with it). pysnmp 7.1.21 works with this version.
+pyasn1==0.6.5
 pyotp
 webauthn==2.7.0
 smbus

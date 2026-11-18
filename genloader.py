@@ -46,6 +46,11 @@ except Exception as e1:
 
 # ------------ Loader class -----------------------------------------------------
 class Loader(MySupport):
+
+    # pyasn1 for pysnmp (gensnmp) and ldap3: the version of requirements.txt
+    # (0.6.4 and 0.6.5 are security fixes)
+    PYASN1_VERSION = "0.6.5"
+
     def __init__(
         self,
         start=False,
@@ -305,7 +310,7 @@ class Loader(MySupport):
                     "modules": ["gensnmp"],
                     "dependencies": [
                         self.LibraryDependency("pysnmp", Version="7.1.21"),
-                        self.LibraryDependency("pyasn1", Version="0.6.1")
+                        self.LibraryDependency("pyasn1", Version=self.PYASN1_VERSION)
                     ],
                 },
                 {
@@ -549,7 +554,7 @@ class Loader(MySupport):
                         ErrorOccured = True
                     if Module["import"] == "ldap3":
                         # This will correct and issue with the ldap3 modbule not being recogonized in LibrayIsInstalled
-                        self.InstallLibrary("pyasn1", version="0.6.1", update=True)
+                        self.InstallLibrary("pyasn1", version=self.PYASN1_VERSION, update=True)
 
             return not ErrorOccured
         except Exception as e1:
