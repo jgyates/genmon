@@ -89,6 +89,7 @@ if CAPTURES_DIR:
     # gensim and genmon run in other folders
     CAPTURES_DIR = os.path.abspath(CAPTURES_DIR)
 GENSIM = os.path.join(REPO_DIR, "tests", "sim", "gensim.py")
+RUN_GENMON = os.path.join(REPO_DIR, "tests", "sim", "run_genmon.py")
 REPO_CAPTURES = os.path.join(REPO_DIR, "tests", "sim", "captures")
 START_TIMEOUT = 90  # seconds for genmon to connect and read the controller
 
@@ -217,9 +218,10 @@ class SimulatedGenerator(object):
 
         self.processes.append(self.run([sys.executable, GENSIM, self.sim], "gensim_console.txt"))
         self.wait_for_port(sim_port, 15, "gensim")
+        # run_genmon.py: genmon.py without its root check (genmon needs root
+        # on Linux; the tests run as a normal user, e.g. on GitHub)
         self.processes.append(self.run(
-            [sys.executable, os.path.join(REPO_DIR, "genmon.py"), "-c", self.conf],
-            "genmon_console.txt"))
+            [sys.executable, RUN_GENMON, "-c", self.conf], "genmon_console.txt"))
         self.wait_for_genmon()
         return self
 

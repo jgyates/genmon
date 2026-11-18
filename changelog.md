@@ -32,7 +32,7 @@ All notable changes to this project will be documented in this file.
 - Maintenance updates for genserv.py to convert to a class architecture
 - Maintenande updates for genloader.py, bug fixes
 - added conf file for genlog.py add on as an option instead of command line only
-- fixed bug related to runing multiple instances of genmon on one system
+- fixed bug related to running multiple instances of genmon on one system
 - added CI scripts to repo
 - added test scripts for add on programs
 - Added support for TLS 1.3 in upcoming python 3.14 for MQTT based addon programs
@@ -92,7 +92,7 @@ All notable changes to this project will be documented in this file.
 - Updates to correct web UI cache issue (thanks @MichaelB2018)
 - Updates to improve compatibility with screen readers (thanks @skipfire)
 - Corrected serial number look up (thanks @MichaelB2018)
-- Update to add new gague type for Wifi and adjusted the signal strength dBm to percent conversion (thanks @MichaelB2018)
+- Update to add new gauge type for Wifi and adjusted the signal strength dBm to percent conversion (thanks @MichaelB2018)
 - Added Nee-vo tank monitor add on (thanks @@momoz)
 - Update for better alarm handing on Power Zone 200
 - Minor update to feedback email so they are always sent as plain text
@@ -105,7 +105,7 @@ All notable changes to this project will be documented in this file.
 
 ## 2.0.01 -2026-05-18
 - Various bug fixes and typo corrections
-- Added per module dependancy checking that should help with quicker updates when new modules are added. Thanks @klinquist
+- Added per module dependency checking that should help with quicker updates when new modules are added. Thanks @klinquist
 - Bug fixes to genhalink add on. Thanks @MichaelB2018 and @jmActifio
 - Added temperature graphs to Dashboard. Thanks @zachliu
 - Minor bug fix for temperature graphs
