@@ -69,7 +69,7 @@ is_pifive() {
 function env_activate() {
 
   if [ "$managedpackages" = true ] ; then
-    source $genmondir/genenv/bin/activate
+    source "$genmondir/genenv/bin/activate"
   fi
 }
 #-------------------------------------------------------------------------------
@@ -86,14 +86,14 @@ function checkmanagedpackages() {
   pythonminor=$($pythoncommand -c 'import sys; print(sys.version_info.minor)')
   managedfile="/usr/lib/python$pythonmajor.$pythonminor/EXTERNALLY-MANAGED"
 
-  if [ -f $managedfile ]; then
+  if [ -f "$managedfile" ]; then
       managedpackages=true
       echo "Managed system packages found"
       sudo apt-get -yqq install python3-venv
-      if [ ! -d $genmondir/genenv ]; then
+      if [ ! -d "$genmondir/genenv" ]; then
         # create the virtual environment 
         echo "Setting up virtual python environment for genmon"
-        $pythoncommand -m venv $genmondir/genenv
+        "$pythoncommand" -m venv "$genmondir/genenv"
       else
         echo "Python virtual environment found"
       fi
@@ -105,7 +105,7 @@ function checkmanagedpackages() {
 function cleanpython() {
 
   echo "Removing *.pyc files..."
-  sudo rm $genmondir/genmonlib/*.pyc
+  sudo rm "$genmondir"/genmonlib/*.pyc
   echo "Done."
 }
 #-------------------------------------------------------------------------------
@@ -123,9 +123,9 @@ function setuppython3() {
 
   if [ $# -eq 0 ]; then
     usepython3=false
-  elif [ $1 == "3" ]; then
+  elif [ "$1" == "3" ]; then
     usepython3=true
-  elif [ $1 == "2" ]; then
+  elif [ "$1" == "2" ]; then
     usepython3=false
   else
     usepython3=false
@@ -144,14 +144,14 @@ fi
 # This function copy all config files to the target install directory
 function copyconffiles() {
     sudo mkdir "$config_path"
-    sudo cp $genmondir/conf/*.conf "$config_path"
+    sudo cp "$genmondir"/conf/*.conf "$config_path"
 }
 #-------------------------------------------------------------------------------
 # This function will update the pip libraries used
 function updatelibraries() {
 
   echo "Updating libraries...."
-  sudo $pythoncommand -m pip install --upgrade -r $genmondir/requirements.txt -U $pipoptions
+  sudo "$pythoncommand" -m pip install --upgrade -r "$genmondir/requirements.txt" -U "$pipoptions"
   installgpio
   echo "Done."
 }
@@ -167,9 +167,9 @@ function installgpio() {
   sudo apt-get -yqq install liblgpio-dev || echo "liblgpio-dev not available on this OS"
 
   # RPi.GPIO and rpi-lgpio install the same module files, so they can not coexist
-  if sudo $pythoncommand -m pip show RPi.GPIO >/dev/null 2>&1; then
+  if sudo "$pythoncommand" -m pip show RPi.GPIO >/dev/null 2>&1; then
     echo "Removing RPi.GPIO (replacing with rpi-lgpio)"
-    if ! sudo $pythoncommand -m pip uninstall -y RPi.GPIO >/dev/null 2>&1; then
+    if ! sudo "$pythoncommand" -m pip uninstall -y RPi.GPIO >/dev/null 2>&1; then
       # pip can not remove RPi.GPIO installed by the OS package manager (e.g.
       # python3-rpi.gpio on Bullseye and older, where no managed python
       # environment is used). RPi.GPIO works on these systems, so keep it.
@@ -177,11 +177,11 @@ function installgpio() {
       echo "RPi.GPIO was installed by the OS and can not be removed by pip, keeping it"
       return 0
     fi
-    sudo $pythoncommand -m pip uninstall -y rpi-lgpio >/dev/null 2>&1
+    sudo "$pythoncommand" -m pip uninstall -y rpi-lgpio >/dev/null 2>&1
   fi
 
-  if sudo $pythoncommand -m pip install --upgrade rpi-lgpio $pipoptions && \
-     sudo $pythoncommand -c "import lgpio, RPi.GPIO" >/dev/null 2>&1; then
+  if sudo "$pythoncommand" -m pip install --upgrade rpi-lgpio "$pipoptions" && \
+     sudo "$pythoncommand" -c "import lgpio, RPi.GPIO" >/dev/null 2>&1; then
     echo "Installed rpi-lgpio"
     return 0
   fi
@@ -192,18 +192,18 @@ function installgpio() {
   fi
 
   echo "rpi-lgpio not available on this system, falling back to RPi.GPIO"
-  sudo $pythoncommand -m pip uninstall -y rpi-lgpio >/dev/null 2>&1
-  sudo $pythoncommand -m pip install --upgrade RPi.GPIO $pipoptions
+  sudo "$pythoncommand" -m pip uninstall -y rpi-lgpio >/dev/null 2>&1
+  sudo "$pythoncommand" -m pip install --upgrade RPi.GPIO "$pipoptions"
 }
 
 #-------------------------------------------------------------------------------
 # This function will setup the serial port
 function setupserial() {
-  pushd $genmondir || return 1
+  pushd "$genmondir" || return 1
   cd OtherApps || return 1
   # we will leave bluetooth on. Pi4 and earlier devices the serial port 
   # has a conflict unless you use the -b option
-  sudo $pythoncommand serialconfig.py -e -b
+  sudo "$pythoncommand" serialconfig.py -e -b
   echo "Finished setting up the serial port."
   popd || return 1
 }
@@ -212,7 +212,7 @@ function setupserial() {
 # This function will install rpirtscts program needed for the LTE modem
 function installrpirtscts() {
     echo "Installing rpirtscts..."
-    pushd $genmondir || return 1
+    pushd "$genmondir" || return 1
     cd ~ || return 1
     git clone https://github.com/mholling/rpirtscts.git
     cd rpirtscts || return 1
@@ -240,17 +240,17 @@ function installgenmon() {
     fi
     sudo apt-get -yqq install cmake
     # upgrade setuptools for the environment
-    sudo $pythoncommand  -m pip install --upgrade setuptools
+    sudo "$pythoncommand" -m pip install --upgrade setuptools
 
-    sudo $pythoncommand -m pip install -r $genmondir/requirements.txt $pipoptions
+    sudo "$pythoncommand" -m pip install -r "$genmondir/requirements.txt" "$pipoptions"
     installgpio
 
     sudo chmod 775 "$genmondir/startgenmon.sh"
     sudo chmod 775 "$genmondir/genmonmaint.sh"
     installrpirtscts
 
-    if [ -z "$2" ] && [ $1 != "noprompt" ]; then    # Is parameter #1 zero length?
-        read -p "Copy configuration files to $config_path? (y/n)?" choice
+    if [ -z "$2" ] && [ "$1" != "noprompt" ]; then    # Is parameter #1 zero length?
+        read -r -p "Copy configuration files to $config_path? (y/n)?" choice
         case "$choice" in
           y|Y ) echo "Copying *.conf files to $config_path"
             copyconffiles
@@ -267,8 +267,8 @@ function installgenmon() {
         configfilescopied=true
     fi
 
-    if [ "$configfilescopied" = true ] && [ -z "$2" ] && [ $1 != "noprompt" ]; then    # Is parameter #1 zero length?
-      read -p "What type of connection from genmon to the controller? S=Onboard Serial, T=Network, Serial over TCP/IP Bridge, U=USB Serial (s/t/u)?" choice
+    if [ "$configfilescopied" = true ] && [ -z "$2" ] && [ "$1" != "noprompt" ]; then    # Is parameter #1 zero length?
+      read -r -p "What type of connection from genmon to the controller? S=Onboard Serial, T=Network, Serial over TCP/IP Bridge, U=USB Serial (s/t/u)?" choice
       case "$choice" in
         s|S ) echo "Setting up serial onboard port..."
           if is_pifive || [ "$is_raspbian" = false ]; then
@@ -292,8 +292,8 @@ function installgenmon() {
     fi
 
     if [ "$useserial" = true ]; then
-      if [ -z "$2" ] && [ $1 != "noprompt" ]; then    # Is parameter #1 zero length?
-        read -p "Setup the raspberry pi onboard serial port? (y/n)?" choice
+      if [ -z "$2" ] && [ "$1" != "noprompt" ]; then    # Is parameter #1 zero length?
+        read -r -p "Setup the raspberry pi onboard serial port? (y/n)?" choice
         case "$choice" in
           y|Y ) echo "Setting up serial port..."
             setupserial
@@ -342,7 +342,7 @@ function updatecrontab() {
 function archivelogs() {
 
     echo "Archive log files from $log_path ..."
-    cd $genmondir || return 1
+    cd "$genmondir" || return 1
     sudo rm -r genmon_logs
     sudo rm genmon_logs.tar.gz
     mkdir genmon_logs
@@ -393,18 +393,16 @@ function restoregenmon() {
     echo "Restore genmon..."
     echo "Restore source: $restore_file"
     echo "Restore destination: $config_path"
-    cd $genmondir || return 1
+    cd "$genmondir" || return 1
 
     current_time=$(date '+%Y-%m-%d:%H:%M:%S')
     
     RESTORE_HISTORY="$config_path"restore.txt
     if [ ! -f "$RESTORE_HISTORY" ]; then
       echo "$RESTORE_HISTORY does not exist. Creating.."
-      sudo touch $RESTORE_HISTORY
+      sudo touch "$RESTORE_HISTORY"
     fi
-    sudo sh -c "printf '%s\n' $config_path >> $RESTORE_HISTORY"
-    sudo sh -c "printf '%s\n' $restore_file >> $RESTORE_HISTORY"
-    sudo sh -c "printf '%s\n' $current_time >> $RESTORE_HISTORY"
+    printf '%s\n' "$config_path" "$restore_file" "$current_time" | sudo tee -a "$RESTORE_HISTORY" > /dev/null
 
     base_filename="${restore_file##*/}"
 
@@ -418,10 +416,10 @@ function restoregenmon() {
     fi
 
     mkdir temp_restore 
-    sudo mv $restore_file ./temp_restore
+    sudo mv "$restore_file" ./temp_restore
     cd temp_restore || return 1
-    sudo tar -xzf $base_filename
-    sudo cp -r ./genmon_backup/* $config_path
+    sudo tar -xzf "$base_filename"
+    sudo cp -r ./genmon_backup/* "$config_path"
     cd ..
     sudo rm -r temp_restore
 }
@@ -430,7 +428,7 @@ function restoregenmon() {
 function backupgenmon() {
 
     echo "Backup genmon..."
-    cd $genmondir || return 1
+    cd "$genmondir" || return 1
     sudo rm -r genmon_backup
     sudo rm genmon_backup.tar.gz
     mkdir genmon_backup
@@ -444,7 +442,7 @@ function backupgenmon() {
 }
 #-------------------------------------------------------------------------------
 function githubhash(){
-  cd $genmondir || return 1
+  cd "$genmondir" || return 1
   git rev-parse --short HEAD
 }
 #-------------------------------------------------------------------------------
@@ -453,13 +451,13 @@ function githubhash(){
 function updategenmon() {
 
     echo "Updating genmon..."
-    cd $genmondir || return 1
+    cd "$genmondir" || return 1
     current_time=$(date '+%Y-%m-%d:%H:%M:%S')
     
     UPDATE_HISTORY="$config_path"update.txt
     if [ ! -f "$UPDATE_HISTORY" ]; then
       echo "$UPDATE_HISTORY does not exist. Creating.."
-      sudo touch $UPDATE_HISTORY
+      sudo touch "$UPDATE_HISTORY"
     fi
 
     git config --global --add safe.directory '*'
@@ -470,7 +468,7 @@ function updategenmon() {
     sudo chown -R "$(stat -c "%U" "$genmondir")" "$genmondir"
     sudo chgrp -R "$(stat -c "%G" "$genmondir")" "$genmondir"
 
-    sudo sh -c "printf '%s\n' $current_time >> $UPDATE_HISTORY"
+    printf '%s\n' "$current_time" | sudo tee -a "$UPDATE_HISTORY" > /dev/null
     echo "Done."
 }
 
@@ -515,7 +513,7 @@ while getopts ":hfp:bt:iruvnc:Csl:" opt; do
       update_os=true
       ;;
     p )
-      setuppython3 $OPTARG
+      setuppython3 "$OPTARG"
       ;;
     c )
       config_path=$OPTARG
@@ -587,7 +585,7 @@ if [ "$install_opt" = true ] ; then
     installgenmon  "prompt"
     env_deactivate
     # update crontab
-    read -p "Start genmon on boot? (y/n)?" choice
+    read -r -p "Start genmon on boot? (y/n)?" choice
     case "$choice" in
       y|Y ) echo "Updating crontab...."
         updatecrontab
@@ -629,7 +627,7 @@ if [ "$update_opt" = true ] ; then
   if [ "$noprompt_opt" = true ] ; then
     updategenmon
   else
-    read -p "$updatenotice" choice
+    read -r -p "$updatenotice" choice
     case "$choice" in
       y|Y ) updategenmon
         ;; # yes choice
