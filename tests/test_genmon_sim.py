@@ -91,6 +91,7 @@ if CAPTURES_DIR:
 GENSIM = os.path.join(REPO_DIR, "tests", "sim", "gensim.py")
 RUN_GENMON = os.path.join(REPO_DIR, "tests", "sim", "run_genmon.py")
 REPO_CAPTURES = os.path.join(REPO_DIR, "tests", "sim", "captures")
+SIM_TIMEZONE = "America/New_York"  # gensim and genmon run in this time zone
 START_TIMEOUT = 90  # seconds for genmon to connect and read the controller
 
 # read commands a client (genserv, add-ons) uses, and whether the answer is JSON
@@ -228,8 +229,11 @@ class SimulatedGenerator(object):
     def run(self, command, console_file):
         console = open(os.path.join(self.folder, console_file), "w")
         self.consoles.append(console)
+        # a fixed time zone: some dates genmon shows depend on it (e.g. the
+        # service due dates), and the snapshots were made in this one
+        env = dict(os.environ, TZ=SIM_TIMEZONE)
         return subprocess.Popen(command, cwd=self.folder, stdout=console, stderr=subprocess.STDOUT,
-                                stdin=subprocess.DEVNULL)
+                                stdin=subprocess.DEVNULL, env=env)
 
     def check_running(self):
         for process in self.processes:
