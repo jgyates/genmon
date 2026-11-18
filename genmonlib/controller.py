@@ -3244,7 +3244,7 @@ class GeneratorController(MySupport):
                 )
                 title = "Warning: Fuel Level Low (10%) at " + self.SiteName
                 self.MessagePipe.SendMessage(
-                    title, msgbody, msgtype="warn", onlyonce=True
+                    title, msgbody, msgtype="fuel", onlyonce=True
                 )
                 self.FuelLevelOK = False
                 return False
@@ -3256,7 +3256,7 @@ class GeneratorController(MySupport):
                 )
                 title = "Warning: Fuel Level Low (20%) at " + self.SiteName
                 self.MessagePipe.SendMessage(
-                    title, msgbody, msgtype="warn", onlyonce=True
+                    title, msgbody, msgtype="fuel", onlyonce=True
                 )
                 self.FuelLevelOK = False
                 return False

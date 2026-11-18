@@ -1497,7 +1497,7 @@ class Monitor(MySupport):
                                         )
                                     msgbody += "\n\nChange Log: https://raw.githubusercontent.com/jgyates/genmon/master/changelog.md"
                                     self.MessagePipe.SendMessage(
-                                        title, msgbody, msgtype="info", onlyonce=True
+                                        title, msgbody, msgtype="software_update", onlyonce=True
                                     )
                                     self.UpdateAvailable = True
                                     self.UpdateVersion = value

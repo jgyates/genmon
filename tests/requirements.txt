@@ -5,3 +5,6 @@ flask
 pyotp
 pyopenssl
 requests
+# genmon.py and the controller code
+crcmod
+pyserial

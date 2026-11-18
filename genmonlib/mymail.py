@@ -510,7 +510,9 @@ class MyMail(MySupport):
             # SMTP Recipients
             self.EmailRecipient = self.config.ReadValue("email_recipient")
             self.EmailRecipientByType = {}
-            for type in ["outage", "error", "warn", "info"]:
+            # the categories on the Notifications page; an address with no
+            # categories gets every type
+            for type in ["outage", "error", "warn", "info", "fuel", "software_update"]:
                 tempList = []
                 for email in self.EmailRecipient.split(","):
                     if self.config.HasOption(email):
@@ -612,13 +614,16 @@ class MyMail(MySupport):
                         if self.WaitForExit("EmailCommandThread", 15):
                             return
                         continue
-                    rv, data = self.Mailbox.search(None, "ALL")
+                    # not the messages already done (deleted but not yet expunged,
+                    # e.g. after an error part way through)
+                    rv, data = self.Mailbox.search(None, "UNDELETED")
                     if rv != "OK":
                         self.LogError("No messages found! (search)")
                         if self.WaitForExit("EmailCommandThread", 15):
                             return
                         continue
-                    for num in data[0].split():
+                    MessageNumbers = data[0].split()
+                    for num in MessageNumbers:
                         rv, data = self.Mailbox.fetch(num, "(RFC822)")
                         if rv != "OK":
                             self.LogError("ERROR getting message (fetch): " + str(num))
@@ -638,6 +643,10 @@ class MyMail(MySupport):
                         self.Mailbox.store(
                             num, "+FLAGS", "\\Deleted"
                         )  # this is needed to remove the original label
+                    # remove the deleted messages once all are read: expunge
+                    # renumbers the messages left, so the numbers from the
+                    # search would then point to the wrong messages
+                    if len(MessageNumbers):
                         self.Mailbox.expunge()
                     if self.WaitForExit("EmailCommandThread", 15):
                         return
@@ -879,7 +888,8 @@ class MyMail(MySupport):
                 return
 
     # ------------MyMail::sendEmail----------------------------------------------
-    # msg type must be one of "outage", "error", "warn", "info"
+    # msg type must be one of "outage", "error", "warn", "info", "fuel",
+    # "software_update"
     def sendEmail(
         self,
         subjectstr,
