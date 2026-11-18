@@ -2,12 +2,14 @@
 # -------------------------------------------------------------------------------
 #    FILE: test_addons_notify.py
 # PURPOSE: Tests for the notification add-ons (addon/genslack.py, gensms.py,
-#          genpushover.py, gencallmebot.py) and the code they share:
+#          genpushover.py, gencallmebot.py, genemail2sms.py, gensms_modem.py,
+#          gensms_voip.py, gensyslog.py) and the code they share:
 #          genmonlib/mynotify.py (which generator events cause a message, and the
 #          notify_* settings) and genmonlib/mymsgqueue.py (sending and retrying).
 #
 #          Nothing is sent: genmon, threads and the services (Slack, Twilio,
-#          Pushover, CallMeBot) are fakes, see addon_fixture.py.
+#          Pushover, CallMeBot, email, the LTE modem, voip.ms, syslog) are
+#          fakes, see addon_fixture.py.
 #
 #   USAGE: from the root of the repository:
 #              python3 -m unittest discover -s tests
@@ -394,6 +396,152 @@ class CallMeBotTests(unittest.TestCase):
         fixture.poll()
         fixture.send_queued()
         self.assertTrue(self.post.calls[0][0].startswith("http://api.callmebot.com/text.php?user=@me&text="))
+
+
+
+# -------------------------------------------------------------------------------
+def first_poll_messages(fixture):
+    fixture.poll()
+    fixture.send_queued()
+
+
+class Email2SMSTests(unittest.TestCase):
+    """genemail2sms.py: an email to the phone company's email to SMS address"""
+
+    def test_email_sent(self):
+        sent = []
+
+        class FakeMail(object):
+            def __init__(self, **kwargs):
+                pass
+
+            def sendEmail(self, subject, message, recipient=None, **kwargs):
+                sent.append((subject, message, recipient))
+
+            def Close(self):
+                pass
+
+        fixture = AddOnFixture("genemail2sms", "GenEmail2SMS",
+                               {"destination": "5551111111@sms.example.com"},
+                               patches=[("MyMail", FakeMail)])
+        self.addCleanup(fixture.stop)
+        fixture.start()
+        first_poll_messages(fixture)
+        sent.clear()
+        fixture.state["outage"] = "Yes"
+        fixture.poll()
+        # the site name is genmon.conf's sitename, the copy from conf/ is "SiteName"
+        self.assertEqual(sent, [("Generator Notice at SiteName", "Utility Service is Down",
+                                 "5551111111@sms.example.com")])
+
+
+class SMSModemTests(unittest.TestCase):
+    """gensms_modem.py: SMS from an LTE modem (genmonlib/mymodem.py)"""
+
+    def test_message_sent(self):
+        sent = []
+        folder = {}
+
+        class FakeModem(object):
+            InitComplete = True
+
+            def __init__(self, log=None, loglocation=None, ConfigFilePath=None):
+                folder["path"] = ConfigFilePath
+
+            def GetConfig(self):
+                from genmonlib.myconfig import MyConfig
+                return MyConfig(filename=os.path.join(folder["path"], "mymodem.conf"),
+                                section="MyModem")
+
+            def GetInfo(self, ReturnString=False):
+                return "fake modem"
+
+            def SendMessage(self, message=None, recipient=None, msgtype="error"):
+                sent.append(message)
+
+            def Close(self):
+                pass
+
+        # mymodem.py imports the Raspberry Pi GPIO library
+        gpio = types.ModuleType("RPi.GPIO")
+        rpi = types.ModuleType("RPi")
+        rpi.GPIO = gpio
+        fixture = AddOnFixture("gensms_modem", "GenSMSModem", {"notify_info": "False"},
+                               modules={"RPi": rpi, "RPi.GPIO": gpio},
+                               patches=[("LTEPiHat", FakeModem)])
+        self.addCleanup(fixture.stop)
+        fixture.start()
+        first_poll_messages(fixture)
+        # notify_info in mymodem.conf is off: no generator state messages
+        self.assertNotIn("Generator Ready", " ".join(sent))
+        sent.clear()
+        fixture.state["outage"] = "Yes"
+        fixture.poll()
+        self.assertEqual(sent, ["Utility Service is Down"])
+
+
+class VoipTests(unittest.TestCase):
+    """gensms_voip.py: SMS from voip.ms (genmonlib/myvoipms.py)"""
+
+    def setUp(self):
+        self.sent = []
+        self.fail_once = set()
+        sent, fail_once = self.sent, self.fail_once
+
+        class FakeVoip(object):
+            def __init__(self, **kwargs):
+                pass
+
+            def SendSMS(self, destination, message):
+                if destination in fail_once:
+                    fail_once.discard(destination)
+                    return False
+                sent.append((destination, message))
+                return True
+
+        self.fixture = AddOnFixture("gensms_voip", "GenSMSVoip", {
+            "username": "me@example.com", "password": "pw", "did": "555-000-0000",
+            "destination": "+1-555-111-1111, 5552222222"}, patches=[("MyVoipMs", FakeVoip)])
+        self.addCleanup(self.fixture.stop)
+        self.fixture.start()
+
+    def test_sent_to_each_number(self):
+        first_poll_messages(self.fixture)
+        up = [s[0] for s in self.sent if s[1] == "Test Site: Utility Service is Up"]
+        self.assertEqual(up, [15551111111, 5552222222])
+
+    def test_retry_only_to_numbers_that_failed(self):
+        first_poll_messages(self.fixture)
+        self.sent.clear()
+        self.fail_once.add(5552222222)
+        self.fixture.state["outage"] = "Yes"
+        self.fixture.poll()
+        self.fixture.send_queued()
+        self.fixture.send_queued()
+        down = [s[0] for s in self.sent if s[1] == "Test Site: Utility Service is Down"]
+        self.assertEqual(down, [15551111111, 5552222222])
+        self.assertEqual(self.fixture.addon.Queue.MessageQueue, [])
+
+
+class SyslogTests(unittest.TestCase):
+    """gensyslog.py: messages to the system log"""
+
+    def test_logged(self):
+        logged = []
+        fake_syslog = types.SimpleNamespace(
+            openlog=lambda ident: logged.append(("open", ident)),
+            syslog=lambda message: logged.append(("log", message)),
+            closelog=lambda: logged.append(("close",)))
+        fixture = AddOnFixture("gensyslog", "GenSyslog", {}, patches=[("syslog", fake_syslog)])
+        self.addCleanup(fixture.stop)
+        fixture.start()
+        first_poll_messages(fixture)
+        logged.clear()
+        fixture.state["base"] = "RUNNING"
+        fixture.poll()
+        self.assertIn(("open", "genmon"), logged)
+        self.assertIn(("log", "Generator Running"), logged)
+        self.assertEqual(logged[-1], ("close",))
 
 
 if __name__ == "__main__":

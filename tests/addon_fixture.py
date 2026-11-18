@@ -177,10 +177,10 @@ class AddOnFixture(object):
 
         for path in glob.glob(os.path.join(REPO_DIR, "conf", "*.conf")):
             shutil.copy(path, self.folder)
-        name = self.module_name + ".conf"
-        if name == "gensms_modem.conf":
-            name = "mymodem.conf"
-        config = MyConfig(filename=os.path.join(self.folder, name), section=self.module_name)
+        # the config file and section of the add-on's settings
+        name, section = {"gensms_modem": ("mymodem.conf", "MyModem")}.get(
+            self.module_name, (self.module_name + ".conf", self.module_name))
+        config = MyConfig(filename=os.path.join(self.folder, name), section=section)
         for key, value in self.settings.items():
             config.WriteValue(key, str(value))
 
@@ -193,8 +193,11 @@ class AddOnFixture(object):
                 pass
 
     def send_queued(self):
-        """Send what the add-on queued, as its queue thread would."""
-        queue = self.addon.Queue
+        """Send what the add-on queued, as its queue thread would. (Some add-ons
+        have no queue and send when the event happens.)"""
+        queue = getattr(self.addon, "Queue", None)
+        if queue is None:
+            return
         with mock.patch.object(queue, "WaitForExit", return_value=True), \
                 mock.patch.object(mymsgqueue.time, "sleep"):
             queue.QueueWorker()

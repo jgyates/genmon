@@ -187,27 +187,31 @@ class GenSMSVoip(MySupport):
 
     # ----------  GenSMSVoip::SendNotice ----------------------------------------
     # called by the message queue, return False to have the queue retry
-    def SendNotice(self, Message):
+    # pending: the numbers this message has not been sent to yet. The queue
+    # passes the same list to each retry, so a retry is only sent to the
+    # numbers that did not get it.
+    def SendNotice(self, Message, pending=None):
 
-        try:
-            if self.SiteName != None and len(self.SiteName):
-                Message = self.SiteName + ": " + Message
+        if pending is None:
+            pending = list(self.DestinationList)
+        if self.SiteName != None and len(self.SiteName):
+            Message = self.SiteName + ": " + Message
 
-            # send to multiple recipient(s)
-            for recipient in self.DestinationList:
-                if not self.Voip.SendSMS(destination=recipient, message=Message):
-                    return False
-            return True
-        except Exception as e1:
-            self.LogErrorLine("Error in SendNotice: " + str(e1))
-            self.LogConsole("Error in SendNotice: " + str(e1))
-            return False
+        # send to multiple recipient(s)
+        for recipient in list(pending):
+            try:
+                if self.Voip.SendSMS(destination=recipient, message=Message):
+                    pending.remove(recipient)
+            except Exception as e1:
+                self.LogErrorLine("Error in SendNotice sending to " + str(recipient) + ": " + str(e1))
+                self.LogConsole("Error in SendNotice sending to " + str(recipient) + ": " + str(e1))
+        return not len(pending)
 
     # ----------  GenSMSVoip::QueueNotice ---------------------------------------
     def QueueNotice(self, Message):
 
         self.LogConsole(Message)
-        self.Queue.SendMessage(Message)
+        self.Queue.SendMessage(Message, pending=list(self.DestinationList))
 
     # ----------  GenSMSVoip::NotifyState ---------------------------------------
     # common handler for simple on / off state callbacks
