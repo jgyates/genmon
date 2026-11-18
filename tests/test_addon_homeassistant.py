@@ -8,6 +8,7 @@
 #          (sensors, binary sensors, sensors found in the data), the commands
 #          from Home Assistant (buttons, quiet mode, exercise time), Home
 #          Assistant restarts and TLS.
+#          Buttons follow the controller's capabilities (start_info_json).
 #
 #          genmon, threads and the MQTT library (paho) are fakes, see
 #          addon_fixture.py and test_addon_mqtt.py; no broker is needed.
@@ -68,7 +69,8 @@ class HomeAssistantTestCase(unittest.TestCase):
         conf.update(settings)
         fixture = AddOnFixture("genhomeassistant", "MyHomeAssistant", conf, modules=self.modules)
         info = {"Controller": controller, "Model": "Test 22kW", "RemoteCommands": True,
-                "WriteQuietMode": True, "ExerciseControls": True}
+                "RemoteTransfer": True, "SetGenTime": True, "WriteQuietMode": True,
+                "ExerciseControls": True}
         info.update(start_info or {})
         fixture.state["answers"] = {
             "start_info_json": json.dumps(info),
@@ -286,6 +288,25 @@ class CommandTests(HomeAssistantTestCase):
         self.assertEqual(self.message(fixture, "genmon/button/set_generator_time/command", "PRESS"),
                          ["generator: settime"])
         self.assertEqual(self.message(fixture, "genmon/button/nothing/command", "PRESS"), [])
+
+    def test_buttons_by_capability(self):
+        # e.g. an Evolution with a SmartSwitch: no remote start, stop or
+        # transfer; and a controller whose clock cannot be set
+        fixture = self.start(start_info={"RemoteCommands": False, "RemoteTransfer": False,
+                                         "SetGenTime": False})
+        self.connect(fixture)
+        for button in ["start", "stop", "start_transfer", "set_generator_time"]:
+            with self.subTest(button=button):
+                self.assertEqual(self.discovery(fixture, "button", button), "")
+                self.assertEqual(self.message(fixture, "genmon/button/%s/command" % button, "PRESS"), [])
+        self.assertIsInstance(self.discovery(fixture, "button", "start_exercise"), dict)
+
+    def test_transfer_without_remote_transfer(self):
+        # H-100 without an HTS transfer switch: start and stop, but no transfer
+        fixture = self.start(controller="H-100 Controller", start_info={"RemoteTransfer": False})
+        self.connect(fixture)
+        self.assertIsInstance(self.discovery(fixture, "button", "start"), dict)
+        self.assertEqual(self.discovery(fixture, "button", "start_transfer"), "")
 
     def test_quiet_mode(self):
         fixture = self.start()

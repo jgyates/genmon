@@ -7,7 +7,7 @@
 #          temperature, sensors found in the data), the API key, the entity
 #          list (by controller and capabilities, only entities with data),
 #          commands, the WebSocket (authentication, full state, updates,
-#          commands), waiting for genmon to finish starting (genhalink) and
+#          commands), waiting for genmon to finish starting and
 #          the self-signed TLS certificate.
 #
 #          genmon and threads are fakes, see addon_fixture.py. The API runs
@@ -173,6 +173,80 @@ class LinkTests(object):
         self.assertTrue(cls._matches_controller({"controllers": ["custom"]}, "ComAp"))
         self.assertFalse(cls._matches_controller({"controllers": ["custom"]}, "nexus"))
 
+    def test_cpu_temperature_from_the_tile(self):
+        # not a Raspberry Pi: no PlatformStats, the CPU Temp tile has the value
+        fixture = self.start()
+        fixture.state["answers"]["gui_status_json"] = json.dumps(
+            {"tiles": [{"title": "CPU Temp", "text": "82.04 F"}]})
+        self.addon._poll_genmon()
+        self.assertEqual(self.addon.LastValues["Tiles/CPU Temp/value"], "82.04 °F")
+
+    async def test_entities_wait_for_genmon(self):
+        # while genmon is starting: 503, so Home Assistant keeps its entities
+        fixture = self.start(health="System Initializing")
+        self.addon._poll_genmon()
+        client = await self.client()
+        with mock.patch.object(type(self.addon), "ENTITIES_WAIT_SECONDS", 0):
+            response = await client.get("/api/entities", headers=self.auth())
+            self.assertEqual(response.status, 503)
+            fixture.state["answers"]["monitor_num_json"] = json.dumps(monitor("OK"))
+            self.addon._poll_genmon()
+            response = await client.get("/api/entities", headers=self.auth())
+            self.assertEqual(response.status, 200)
+
+    async def test_entities_after_the_timeout(self):
+        # genmon still initializing a minute after the first data (e.g. no
+        # communication with the controller): the entities are sent anyway
+        self.start(health="System Initializing")
+        self.addon._poll_genmon()
+        self.assertFalse(self.addon._data_ready.is_set())
+        self.addon._first_data_time = time.time() - self.addon.DATA_READY_TIMEOUT
+        self.addon._poll_genmon()
+        self.assertTrue(self.addon._data_ready.is_set())
+
+    async def test_entity_with_data_later(self):
+        # a value genmon does not report at first (e.g. while starting) is
+        # still sent as its own entity once it is there
+        fixture = self.start()
+        self.addon._poll_genmon()
+        client = await self.client()
+        entities, result = await self.entities(client)
+        self.assertNotIn("power_leg1", entities["sensors"])
+        status = json.loads(json.dumps(STATUS))
+        status["Status"][0]["Engine"].append({"Power Leg 1": num(1.5, "kW")})
+        fixture.state["answers"]["status_num_json"] = json.dumps(status)
+        self.addon._poll_genmon()
+        entities, result = await self.entities(client)
+        self.assertEqual(entities["sensors"]["power_leg1"]["path"], "Status/Engine/Power Leg 1")
+        self.assertNotIn("status_engine_power_leg_1", entities["sensors"])
+
+    def test_userdefined_entities(self):
+        # data/homeassistant/userdefined.json (as genhomeassistant.py), not
+        # genmon's userdefined.json for the web page
+        self.start()
+        repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        user_file = os.path.join(repo, "data", "homeassistant", "userdefined.json")
+        user_data = json.dumps({"sensors": [{"entity_id": "my_sensor", "name": "My Sensor",
+                                             "path": "Status/Engine/My Sensor"}]})
+        real_isfile, real_open = os.path.isfile, open
+        checked = []
+
+        def isfile(path):
+            checked.append(os.path.abspath(path))
+            return path == user_file or real_isfile(path)
+
+        def fake_open(path, *args, **kwargs):
+            if path == user_file:
+                return mock.mock_open(read_data=user_data)()
+            return real_open(path, *args, **kwargs)
+
+        with mock.patch.object(self.fixture.module.os.path, "isfile", side_effect=isfile), \
+                mock.patch("builtins.open", side_effect=fake_open):
+            self.addon._load_entity_definitions()
+        self.assertIn(user_file, checked)
+        self.assertNotIn(os.path.join(repo, "userdefined.json"), checked)
+        self.assertIn("my_sensor", [e["entity_id"] for e in self.addon.EntityDefinitions["sensors"]])
+
     # ---------- REST API -------------------------------------------------------
     async def test_authorization(self):
         self.start()
@@ -309,38 +383,6 @@ class LinkTests(object):
 @unittest.skipIf(web is None, "aiohttp is not installed")
 class HALinkTests(LinkTests, unittest.IsolatedAsyncioTestCase):
     MODULE, CLASS, POLL_THREAD = "genhalink", "GenHALink", "PollingThread"
-
-    def test_cpu_temperature_from_the_tile(self):
-        # not a Raspberry Pi: no PlatformStats, the CPU Temp tile has the value
-        fixture = self.start()
-        fixture.state["answers"]["gui_status_json"] = json.dumps(
-            {"tiles": [{"title": "CPU Temp", "text": "82.04 F"}]})
-        self.addon._poll_genmon()
-        self.assertEqual(self.addon.LastValues["Tiles/CPU Temp/value"], "82.04 °F")
-
-    async def test_entities_wait_for_genmon(self):
-        # while genmon is starting: 503, so Home Assistant keeps its entities
-        fixture = self.start(health="System Initializing")
-        self.addon._poll_genmon()
-        client = await self.client()
-        with mock.patch.object(type(self.addon), "ENTITIES_WAIT_SECONDS", 0):
-            response = await client.get("/api/entities", headers=self.auth())
-            self.assertEqual(response.status, 503)
-            fixture.state["answers"]["monitor_num_json"] = json.dumps(monitor("OK"))
-            self.addon._poll_genmon()
-            response = await client.get("/api/entities", headers=self.auth())
-            self.assertEqual(response.status, 200)
-
-    async def test_entities_after_the_timeout(self):
-        # genmon still initializing a minute after the first data (e.g. no
-        # communication with the controller): the entities are sent anyway
-        self.start(health="System Initializing")
-        self.addon._poll_genmon()
-        self.assertFalse(self.addon._data_ready.is_set())
-        self.addon._first_data_time = time.time() - self.addon.DATA_READY_TIMEOUT
-        self.addon._poll_genmon()
-        self.assertTrue(self.addon._data_ready.is_set())
-
 
 @unittest.skipIf(web is None, "aiohttp is not installed")
 class HubitatTests(LinkTests, unittest.IsolatedAsyncioTestCase):

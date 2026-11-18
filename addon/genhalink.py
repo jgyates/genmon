@@ -234,13 +234,10 @@ class GenHALink(MySupport):
                         overlay = json.load(f)
                     self._merge_definitions(overlay)
 
-            # Load user-defined overrides
-            user_path = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                os.pardir,
-                "userdefined.json",
-            )
-            user_path = os.path.abspath(user_path)
+            # Load user-defined overrides (data/homeassistant/userdefined.json,
+            # as genhomeassistant.py; not genmon's userdefined.json for the
+            # web page, which has another format)
+            user_path = os.path.join(data_dir, "userdefined.json")
             if os.path.isfile(user_path):
                 with open(user_path, "r") as f:
                     user_defs = json.load(f)

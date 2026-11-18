@@ -779,6 +779,8 @@ class MyHomeAssistant(MySupport):
         self.RemoteButtons = False  # True if remote start/stop supported
         self.ExerciseControls = True  # True if exercise controls supported
         self.RemoteCommands = False  # True if remote commands supported
+        self.RemoteTransfer = False  # True if start and transfer supported
+        self.SetGenTime = False  # True if setting the generator's clock supported
         self.DeviceInfo = {}
         self.EntitiesPublished = False
         self.LastDiscoveryTime = 0
@@ -968,10 +970,14 @@ class MyHomeAssistant(MySupport):
             self.RemoteButtons = self.StartInfo.get("RemoteButtons", False)
             self.ExerciseControls = self.StartInfo.get("ExerciseControls", True)
             self.RemoteCommands = self.StartInfo.get("RemoteCommands", False)
+            self.RemoteTransfer = self.StartInfo.get("RemoteTransfer", False)
+            self.SetGenTime = self.StartInfo.get("SetGenTime", False)
             self.LogDebug(f"Capabilities - WriteQuietMode: {self.WriteQuietMode}, "
                          f"RemoteButtons: {self.RemoteButtons}, "
                          f"ExerciseControls: {self.ExerciseControls}, "
-                         f"RemoteCommands: {self.RemoteCommands}")
+                         f"RemoteCommands: {self.RemoteCommands}, "
+                         f"RemoteTransfer: {self.RemoteTransfer}, "
+                         f"SetGenTime: {self.SetGenTime}")
 
             # Extract controller buttons from StartInfo (custom controllers)
             self.ControllerButtons = self.StartInfo.get("buttons", [])
@@ -1470,6 +1476,11 @@ class MyHomeAssistant(MySupport):
                 return
 
             button_def = self.ButtonDefinitions[entity_id]
+
+            capability = self._button_capability_missing(entity_id, button_def)
+            if capability:
+                self.LogError(f"Button {entity_id} ignored: {capability} not supported on this controller")
+                return
 
             # Controller-sourced buttons use set_button_command API
             if button_def.get("from_controller"):
@@ -2091,25 +2102,37 @@ class MyHomeAssistant(MySupport):
             self.LogErrorLine(f"Error publishing binary sensor discovery {entity_id}: {str(e1)}")
 
     # --------------------------------------------------------------------------
+    def _button_capability_missing(self, entity_id, entity_def):
+        """The capability (start_info_json) a standard button needs that this
+        controller does not have, e.g. "RemoteTransfer"; None if supported."""
+
+        # Controller-sourced buttons (from StartInfo) skip capability checks
+        # since their presence in StartInfo IS the capability declaration
+        if entity_def.get("from_controller"):
+            return None
+        required = {
+            "start": ("RemoteCommands", self.RemoteCommands),
+            "stop": ("RemoteCommands", self.RemoteCommands),
+            "start_transfer": ("RemoteTransfer", self.RemoteTransfer),
+            "start_exercise": ("ExerciseControls", self.ExerciseControls),
+            "set_generator_time": ("SetGenTime", self.SetGenTime),
+        }
+        if entity_id in required and not required[entity_id][1]:
+            return required[entity_id][0]
+        return None
+
+    # --------------------------------------------------------------------------
     def _publish_button_discovery(self, entity_id, entity_def):
         """Publish discovery message for a button entity"""
 
         try:
-            # Controller-sourced buttons (from StartInfo) skip capability checks
-            # since their presence in StartInfo IS the capability declaration
-            if not entity_def.get("from_controller"):
-                # Check if button is supported by this controller
-                if entity_id in ["start", "stop"] and not self.RemoteCommands:
-                    # Publish empty payload to remove entity from Home Assistant
-                    discovery_topic = f"{self.DiscoveryPrefix}/button/{self.DeviceId}/{entity_id}/config"
-                    self.MQTTclient.publish(discovery_topic, "", retain=True)
-                    self.LogDebug(f"Removed {entity_id}: RemoteCommands not supported on this controller")
-                    return
-            if entity_id == "start_exercise" and not self.ExerciseControls:
+            # Check if button is supported by this controller
+            capability = self._button_capability_missing(entity_id, entity_def)
+            if capability:
                 # Publish empty payload to remove entity from Home Assistant
                 discovery_topic = f"{self.DiscoveryPrefix}/button/{self.DeviceId}/{entity_id}/config"
                 self.MQTTclient.publish(discovery_topic, "", retain=True)
-                self.LogDebug(f"Removed {entity_id}: ExerciseControls not supported on this controller")
+                self.LogDebug(f"Removed {entity_id}: {capability} not supported on this controller")
                 return
 
             unique_id = f"genmon_{self.DeviceId}_{entity_id}"
