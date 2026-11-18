@@ -103,7 +103,8 @@ class ModbusFile(ModbusBase):
             time.sleep(5)
 
     # -------------ModbusBase::ProcessWriteTransaction---------------------------
-    def ProcessWriteTransaction(self, Register, Length, Data, IsCoil = False):
+    def ProcessWriteTransaction(self, Register, Length, Data, IsCoil = False, IsSingle = False):
+        # IsSingle as mymodbus.py (the button commands pass it)
         return
 
     # -------------ModbusBase::ProcessTransaction--------------------------------

@@ -19,6 +19,8 @@
 #              python3 tests/coverage_report.py
 #          also write an HTML report (one page per file, missed lines marked):
 #              python3 tests/coverage_report.py --html <folder>
+#          or a JSON report (the missed lines of each file, for scripts):
+#              python3 tests/coverage_report.py --json <file>
 #
 # -------------------------------------------------------------------------------
 
@@ -71,6 +73,8 @@ def SubprocessSettings():
 def main():
     parser = argparse.ArgumentParser(description="Test coverage report for genmon")
     parser.add_argument("--html", metavar="FOLDER", help="also write an HTML report here")
+    parser.add_argument("--json", metavar="FILE",
+                        help="also write a JSON report here (the missed lines of each file)")
     args = parser.parse_args()
 
     if importlib.util.find_spec("coverage") is None:
@@ -99,6 +103,11 @@ def main():
             subprocess.run(run + ["html", "--rcfile", rc_file, "-i", "-q", "-d", html],
                            cwd=REPO_DIR, check=True)
             print("HTML report: " + os.path.join(html, "index.html"))
+        if args.json:
+            report = os.path.abspath(args.json)
+            subprocess.run(run + ["json", "--rcfile", rc_file, "-i", "-q", "-o", report],
+                           cwd=REPO_DIR, check=True)
+            print("JSON report: " + report)
         if tests.returncode != 0:
             print("\nNote: some tests failed, see above.")
         return tests.returncode

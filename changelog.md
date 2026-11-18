@@ -94,6 +94,10 @@ All notable changes to this project will be documented in this file.
 - Simulator tests now run on a system where genmon is installed and running
 - genloader and genmonmaint.sh remove the "tests" package the bleson library installs by mistake
 - Tests can be run by name (python -m unittest tests.<name>) when another "tests" package is installed
+- Fixed writing more than one coil at a time (Modbus function 0x0F): only the first coil of each byte was set
+- Fixed custom controller buttons in simulation mode, and IEEE 754 half / double values in the base controller
+- Added tests for the shared controller code (buttons, maintenance log, add-on data, power log) and the Modbus protocol
+- Maintenance log entries with an invalid date, type or comment are now rejected (they were saved)
 
 
 ## 2.0.02 -2026-08-04

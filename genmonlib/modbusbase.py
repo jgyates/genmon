@@ -268,7 +268,8 @@ class ModbusBase(MySupport):
             self.LogError("Using Modbus function 4 instead of 3")
 
     # -------------ModbusBase::ProcessWriteTransaction---------------------------
-    def ProcessWriteTransaction(self, Register, Length, Data, IsCoil = False):
+    def ProcessWriteTransaction(self, Register, Length, Data, IsCoil = False, IsSingle = False):
+        # IsSingle as mymodbus.py (the button commands pass it)
         return
 
     # -------------ModbusBase::ProcessTransaction--------------------------------

@@ -750,18 +750,13 @@ class ModbusProtocol(ModbusBase):
                 # as a result we have to skip bytes in data[] as only the low bit contains the coil data
                 # our goal here is to take every other byte in the data[] array and take the last bit of that byte
                 # then line the bits up as the modbus data sent
-                ByteValue = 0
-                bitindex = 0
-                for byteindex in range(0, ByteCount):
-                    odd_data = data[1::2]   # extract every other odd value from list to another list
-                    even_data = data[::2]   # every other even value from list
-                    BitValue = 1
-                    if even_data[byteindex] == 0 and odd_data[byteindex] == 0:
-                        BitValue = 0
-                    ByteValue |= (BitValue << bitindex)
-                    bitindex += 1
-                    if bitindex < 7:
-                        bitindex = 0
+                # (so coil n is bit n % 8 of byte n // 8; it used one coil per
+                # byte, so only the first coil of each byte was set)
+                CoilBytes = [0] * ByteCount
+                for coil in range(0, length):
+                    if data[coil * 2] != 0 or data[coil * 2 + 1] != 0:
+                        CoilBytes[coil // 8] |= 1 << (coil % 8)
+                for ByteValue in CoilBytes:
                     Packet.append(ByteValue)  # data
                 CRCValue = self.GetCRC(Packet)
                 if CRCValue != None:
@@ -1036,9 +1031,9 @@ class ModbusProtocol(ModbusBase):
                 ):
                     self.LogError(
                         "Validation Error: Slave Length : "
-                        + length
+                        + str(length)
                         + ":"
-                        + len(SlavePacket)
+                        + str(len(SlavePacket))
                     )
                     return "Error"
 

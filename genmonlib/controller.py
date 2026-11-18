@@ -1330,12 +1330,14 @@ class GeneratorController(MySupport):
                 value = value << int(entry["shiftleft"])
             if "ieee754" in entry.keys() and ReturnFloat:
                 # Use this for testing: https://www.h-schmidt.net/FloatConverter/IEEE754.html
+                # the register bits as a float (half / double did not work:
+                # half packed the number as a float, double unpacked 4 bytes)
                 if entry["ieee754"].lower() == "half":  # 16 bits
-                    value = float(struct.unpack('f', struct.pack('e', int(value)))[0])
+                    value = float(struct.unpack('e', struct.pack('H', int(value)))[0])
                 elif entry["ieee754"].lower() == "single":  # 32 bits
                     value = float(struct.unpack('f', struct.pack('I', int(value)))[0])
                 elif entry["ieee754"].lower() == "double":  # 64 bits
-                    value = float(struct.unpack('f', struct.pack('d', int(value)))[0])
+                    value = float(struct.unpack('d', struct.pack('Q', int(value)))[0])
                 else:
                     self.LogError("Error converting IEEE754 floating point: invalid ieee754 type: " + str(entry))
                 if math.isnan(value):
@@ -3935,9 +3937,7 @@ class GeneratorController(MySupport):
                 self.LogError("Error in ValidateMaintLogEntry: Entry is not a dict")
                 return False
 
-            if not isinstance(Entry["date"], str) and not isinstance(
-                Entry["date"], unicode
-            ):
+            if not isinstance(Entry["date"], str):
                 self.LogError(
                     "Error in ValidateMaintLogEntry: Entry date is not a string: "
                     + str(type(Entry["date"]))
@@ -3950,13 +3950,12 @@ class GeneratorController(MySupport):
                 self.LogErrorLine(
                     "Error in ValidateMaintLogEntry: expecting MM/DD/YYYY : " + str(e1)
                 )
+                return False
 
-            if not isinstance(Entry["type"], str) and not isinstance(
-                Entry["type"], unicode
-            ):
+            if not isinstance(Entry["type"], str):
                 self.LogError(
                     "Error in ValidateMaintLogEntry: Entry type is not a string: "
-                    + str(type(Entry["hours"]))
+                    + str(type(Entry["type"]))
                 )
                 return False
             if not Entry["type"].lower() in [
@@ -3970,6 +3969,7 @@ class GeneratorController(MySupport):
                     "Error in ValidateMaintLogEntry: Invalid type: "
                     + str(Entry["type"])
                 )
+                return False
 
             Entry["type"] = Entry["type"].title()
 
@@ -3981,13 +3981,12 @@ class GeneratorController(MySupport):
                     + str(type(Entry["hours"]))
                 )
                 return False
-            if not isinstance(Entry["comment"], str) and not isinstance(
-                Entry["comment"], unicode
-            ):
+            if not isinstance(Entry["comment"], str):
                 self.LogError(
                     "Error in ValidateMaintLogEntry: Entry comment is not a string: "
                     + str(type(Entry["comment"]))
                 )
+                return False
 
         except Exception as e1:
             self.LogErrorLine("Error in ValidateMaintLogEntry: " + str(e1))
