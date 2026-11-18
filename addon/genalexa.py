@@ -1,8 +1,6 @@
 #!/usr/bin/env python
-
-#!/usr/bin/env python
 # -------------------------------------------------------------------------------
-#    FILE: gengpioin.py
+#    FILE: genalexa.py
 # PURPOSE: genmon.py support program to allow amazon alexa voice commands
 #
 #  AUTHOR: @MichaelB2018
@@ -537,7 +535,10 @@ class upnp_broadcast_responder(MyCommon):
     # ---------------- upnp_broadcast_responder.do_read ------------------------
     def do_read(self, fileno):
         data, sender = self.recvfrom(1024)
-        data = data.decode("utf-8")
+        if not data:
+            # nothing received, or an error (logged in recvfrom)
+            return
+        data = data.decode("utf-8", errors="replace")
         if data:
             if data.find("M-SEARCH") >= 0 and (
                 "urn:Belkin:device:**" in data
@@ -596,9 +597,12 @@ class FauxmoCallback(MyCommon):
     DEBOUNCE_SECONDS = 0.3
     STATUS_INTERVAL = 10
     # ---------------- FauxmoCallback.init -------------------------------------
-    def __init__(self, cmd, log=None, debug=False):
+    # transfer: start with transfer to the generator (start_info_json
+    # RemoteTransfer); False: start only
+    def __init__(self, cmd, log=None, debug=False, transfer=True):
         super(FauxmoCallback, self).__init__()
         self.cmd = cmd
+        self.transfer = transfer
         self.log = log
         self.debug = debug
         self.lastEcho = time.time()
@@ -609,9 +613,10 @@ class FauxmoCallback(MyCommon):
         if self.debounce():
             return True
         try:
-            returnValue = self.cmd("generator: setremote=starttransfer")
-            ## FOR TESTING ## returnValue = self.cmd("generator: setremote=start")
-            ## FOR TESTING ## returnValue = self.cmd("generator: setremote=stop")
+            if self.transfer:
+                returnValue = self.cmd("generator: setremote=starttransfer")
+            else:
+                returnValue = self.cmd("generator: setremote=start")
             self.LogDebug("Sent Remote Start Command. Return Value: " + returnValue)
             if returnValue != "Remote command sent successfully":
                 self.LogError("Command Failed")
@@ -735,8 +740,14 @@ if __name__ == "__main__":
             )
             sys.exit(1)
 
+        # without a transfer switch the controller can only start the generator
+        remoteTransfer = StartInfo.get("RemoteTransfer", True)
+        if not remoteTransfer:
+            log.error("Generator does not support remote start and transfer, 'on' starts the generator only")
+
         FauxmoAction = FauxmoCallback(
-            MyClientInterface.ProcessMonitorCommand, log=log, debug=Debug
+            MyClientInterface.ProcessMonitorCommand, log=log, debug=Debug,
+            transfer=remoteTransfer
         )
 
         # Set up our singleton for polling the sockets for data ready

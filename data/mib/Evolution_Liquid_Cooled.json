@@ -104,7 +104,7 @@
             "keywords" : ["Maintenance", "Rated kW"]
         },
         {
-            "oid": "0, 0, 5",
+            "oid": "0, 1, 5",
             "return_type": "str",
             "integer": true,
             "description": "ratedFreq",

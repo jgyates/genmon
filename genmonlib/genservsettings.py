@@ -407,8 +407,10 @@ ADDONS = (
           icon="rpi", url=WIKI + "#gengpioledblinkpy-optional", conf="gengpioledblink.conf",
           params=(
               Param("ledpin", "int", "GPIO LED pin",
-                    "GPIO pin number that an LED is connected (valid numbers are 0 - 27)",
-                    12, "required digits range:0:27"),
+                    "Raspberry Pi header pin number (1 - 40) that the LED is connected to. "
+                    "This is the board pin number, not the GPIO number (the default, 12, "
+                    "is GPIO 18).",
+                    12, "required digits range:1:40"),
           )),
     AddOn("genlog", "Notifications to CSV Log",
           "Log Genmon and utility state changes to a file. Log file is in text CSV format.",

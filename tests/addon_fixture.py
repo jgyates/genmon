@@ -116,7 +116,7 @@ class FakeThread(object):
 class AddOnFixture(object):
 
     def __init__(self, module_name, class_name, settings, modules=None, patches=None,
-                 loop_in_init=False, reimport=None):
+                 loop_in_init=False, reimport=None, extra_config=None):
         """module_name: e.g. "genslack"; class_name: e.g. "GenSlack".
         settings: values for its config file (the rest come from conf/).
         modules: fake third party modules, e.g. {"chump": fake_chump}.
@@ -124,7 +124,11 @@ class AddOnFixture(object):
         loop_in_init: the add-on's __init__ ends in a "while True: time.sleep()"
         loop (gencallmebot.py); the first sleep raises an error to end it.
         reimport: modules to import again with the fake modules in place, e.g.
-        ["genmonlib.gaugediy"] (which imports smbus)."""
+        ["genmonlib.gaugediy"] (which imports smbus).
+        extra_config: other config values, {file: {section: {key: value}}},
+        e.g. {"genmon.conf": {"GenMon": {"controllertype": "custom"}}}; a
+        section that is not in the file is added."""
+        self.extra_config = extra_config or {}
         self.loop_in_init = loop_in_init
         self.reimport = reimport or []
         self.module_name, self.class_name = module_name, class_name
@@ -197,6 +201,16 @@ class AddOnFixture(object):
         config = MyConfig(filename=os.path.join(self.folder, name), section=section)
         for key, value in self.settings.items():
             config.WriteValue(key, str(value))
+        for filename, sections in self.extra_config.items():
+            path = os.path.join(self.folder, filename)
+            for section, values in sections.items():
+                config = MyConfig(filename=path, section=section)
+                if section not in config.GetSections():
+                    with open(path, "a") as f:
+                        f.write("\n[%s]\n" % section)
+                    config = MyConfig(filename=path, section=section)
+                for key, value in values.items():
+                    config.WriteValue(key, str(value))
 
     def poll(self):
         """One pass of the add-on's polling of genmon (mynotify)."""

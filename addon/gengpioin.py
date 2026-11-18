@@ -220,6 +220,7 @@ if __name__ == "__main__":
         DefaultTrigger = GPIO.FALLING
         DefaultPullup = GPIO.PUD_UP
         DefaultBounce = 0
+        UseGPIOLibraryCallbacks = True
 
         if os.path.isfile(os.path.join(ConfigFilePath, "gengpioin.conf")):
             config = MyConfig(

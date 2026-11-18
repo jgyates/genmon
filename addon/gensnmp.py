@@ -287,14 +287,16 @@ class GenSNMP(MySupport):
             return False
 
     # ----------  GenSNMP::UpdateSNMPData ----------------------------------------
+    # returns False if the value could not be stored yet (SNMP not set up), so
+    # it is sent again on the next poll
     def UpdateSNMPData(self, Path, Value):
 
         try:
             if self.transportDispatcher == None:
-                return
+                return False
             oid = self.GetOID(Path)
             if oid == None:
-                return
+                return True
             self.LogDebug(Path + " : " + str(Value) + ", type= " + str(self.mibDataIdx[oid].return_type))
             if self.mibDataIdx[oid].return_type == str:
                 self.mibDataIdx[oid].value = str(Value)
@@ -314,6 +316,7 @@ class GenSNMP(MySupport):
                     + str(self.mibDataIdx[oid].return_type)
                 )
                 self.mibDataIdx[oid].value = Value
+            return True
         except Exception as e1:
             self.LogError("Error: " + Path + " : " + str(Value) + ", type= " + str(self.mibDataIdx[oid].return_type))
             self.LogErrorLine("Error in UpdateSNMPData: " + str(e1))
@@ -495,8 +498,14 @@ class GenSNMP(MySupport):
                     self.LogError("Error parsing user defined SNMP data, exiting")
                     return
 
+            # GETNEXT (snmpwalk) finds the next OID with bisect: the list must
+            # be in OID order, whatever the order of the entries in the files
+            self.mibData.sort(key=lambda mibVar: mibVar.name)
             self.mibDataIdx = {}
             for mibVar in self.mibData:
+                if mibVar.name in self.mibDataIdx:
+                    self.LogError("Error: duplicate SNMP OID " + str(mibVar.name) + ": "
+                        + str(self.mibDataIdx[mibVar.name].keywords) + ", " + str(mibVar.keywords))
                 self.mibDataIdx[mibVar.name] = mibVar
 
             self.transportDispatcher = AsyncioDispatcher()
@@ -519,12 +528,12 @@ class GenSNMP(MySupport):
             #    unix.domainName, unix.UnixSocketTransport().openServerMode('/tmp/snmp-agent')
             # )
 
-            self.transportDispatcher.jobStarted(1)
+            self.transportDispatcher.job_started(1)
 
             try:
                 # Dispatcher will never finish as job#1 never reaches zero
                 if self.transportDispatcher != None:
-                    self.transportDispatcher.runDispatcher()
+                    self.transportDispatcher.run_dispatcher()
             except Exception as e1:
                 self.SnmpClose()
                 if self.transportDispatcher != None:
@@ -571,11 +580,11 @@ class GenSNMP(MySupport):
 
         try:
             if self.transportDispatcher != None:
-                self.transportDispatcher.jobFinished(1)
+                self.transportDispatcher.job_finished(1)
                 self.transportDispatcher.unregister_recv_callback(recvId=None)
-                self.transportDispatcher.unregister_transport(udp.domainName)
+                self.transportDispatcher.unregister_transport(udp.DOMAIN_NAME)
                 if self.IPv6:
-                    self.transportDispatcher.unregister_transport(udp6.domainName)
+                    self.transportDispatcher.unregister_transport(udp6.DOMAIN_NAME)
                 self.transportDispatcher.close_dispatcher()
                 self.LogDebug("Dispatcher Closed")
                 self.transportDispatcher = None
@@ -711,12 +720,13 @@ class GenSNMP(MySupport):
                     TempDict = json.loads(monitordata)
                     GenmonDict["Monitor"] = TempDict["Monitor"]
                     self.CheckDictForChanges(GenmonDict, "home")
-
-                    if self.WaitForExit("SNMPThread", float(self.PollTime)):
-                        self.SnmpClose()
-                        return
                 except Exception as e1:
+                    # e.g. no data while genmon restarts
                     self.LogErrorLine("Error in SNMPThread: (parse) : " + str(e1))
+
+                if self.WaitForExit("SNMPThread", float(self.PollTime)):
+                    self.SnmpClose()
+                    return
             except Exception as e1:
                 self.LogErrorLine("Error in SNMPThread: " + str(e1))
                 if self.WaitForExit("SNMPThread", float(self.PollTime * 60)):
@@ -813,8 +823,8 @@ class GenSNMP(MySupport):
             LastValue = self.LastValues.get(str(Path), None)
 
             if LastValue == None or LastValue != Value:
-                self.LastValues[str(Path)] = Value
-                self.UpdateSNMPData(Path, Value)
+                if self.UpdateSNMPData(Path, Value) != False:
+                    self.LastValues[str(Path)] = Value
 
         except Exception as e1:
             self.LogErrorLine("Error in mygenpush:CheckForChanges: " + str(e1))

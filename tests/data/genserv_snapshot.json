@@ -414,8 +414,8 @@
     "icon": "rpi",
     "parameters": {
      "ledpin": {
-      "bounds": "required digits range:0:27",
-      "description": "GPIO pin number that an LED is connected (valid numbers are 0 - 27)",
+      "bounds": "required digits range:1:40",
+      "description": "Raspberry Pi header pin number (1 - 40) that the LED is connected to. This is the board pin number, not the GPIO number (the default, 12, is GPIO 18).",
       "display_name": "GPIO LED pin",
       "type": "int",
       "value": 12

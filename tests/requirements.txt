@@ -8,6 +8,9 @@ requests
 # genhalink.py and genhubitat.py (the API server and its certificate)
 aiohttp
 cryptography
+# gensnmp.py, the versions of ../requirements.txt
+pysnmp==7.1.21
+pyasn1==0.6.1
 # genmon.py and the controller code
 crcmod
 pyserial
