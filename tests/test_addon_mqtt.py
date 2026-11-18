@@ -166,6 +166,18 @@ class PublishTests(MQTTTestCase):
         published = self.poll(fixture)
         self.assertEqual(json.loads(published["generator/Status/Engine/Battery Voltage"]), value)
 
+    def test_numeric_object_in_a_list(self):
+        # a value directly in a list is published as one object (it used to
+        # be split into type / value / unit topics)
+        fixture = self.start(numeric_json_object="True")
+        value = {"type": "int", "value": 5, "unit": ""}
+        for name in ["status", "maint", "outage", "monitor"]:
+            fixture.state["answers"][name + "_num_json"] = fixture.state["answers"][name + "_json"]
+        fixture.state["answers"]["status_num_json"] = json.dumps({"Status": [{"Readings": [value]}]})
+        published = self.poll(fixture)
+        self.assertEqual(json.loads(published["generator/Status/Readings"]), value)
+        self.assertNotIn("generator/Status/Readings/value", published)
+
     def test_retain(self):
         fixture = self.start(retain="True")
         self.poll(fixture)

@@ -276,8 +276,8 @@ class MyGenPush(MySupport):
                     else:
                         for listitem in item:
                             if isinstance(listitem, dict):
-                                if self.UseNumericObject and self.DictIsTopicJSON(item):
-                                    self.CheckForChanges(CurrentPath, json.dumps(item, sort_keys=False))
+                                if self.UseNumericObject and self.DictIsTopicJSON(listitem):
+                                    self.CheckForChanges(CurrentPath, json.dumps(listitem, sort_keys=False))
                                 else:
                                     self.CheckDictForChanges(listitem, CurrentPath)
                             else:
