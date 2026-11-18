@@ -189,7 +189,7 @@ class MyMQTT(MyCommon):
             if "ctpower1" in self.types and "ctpower2" in self.types:
                 self.LogDebug("Using ctpower1 and ctpower2")
                 self.UseP1P2 = True
-            if "voltageleg1" in self.types and "voltagelegs2" in self.types:
+            if "voltageleg1" in self.types and "voltageleg2" in self.types:
                 self.LogDebug("Using voltageleg1 and voltagelegs2")
                 self.UseVoltageLegs = True
 
@@ -220,7 +220,7 @@ class MyMQTT(MyCommon):
                     GaugeDict['type'] = 'current'
                 elif GaugeDict['type'] in ['ctpower1','ctpower2']:
                     GaugeDict['type'] = 'power'
-                elif GaugeDict['type'] in ['voltageleg1','voltageleg1']:
+                elif GaugeDict['type'] in ['voltageleg1','voltageleg2']:
                     GaugeDict['type'] = 'voltage'
                 self.GaugeData.append(GaugeDict)
                 index += 1
@@ -439,6 +439,7 @@ class MyMQTT(MyCommon):
             
             if value > 100 or value < 0:
                 self.LogDebug("WARNING in SendTankData: tank percentage is out of range: " + str(value))
+                return
             data = {}
             data["Tank Name"] = topic_data["title"]
             data["Percentage"] = value
@@ -481,11 +482,11 @@ class MyMQTT(MyCommon):
                 if CTPOWER2 != None:
                     if self.LastValues[cttopic]['topic_data']['units'].lower() ==  "w":
                         CTPOWER2 = round(float(CTPOWER2) / 1000,3)
-                if CTPOWER2 != None and CTPOWER2 != None:
+                if CTPOWER1 != None and CTPOWER2 != None:
                     data['ctpower'] = []
                     data['ctpower'].append(round(float(CTPOWER1),3))
                     data['ctpower'].append(round(float(CTPOWER2),3))
-                    data['power'] = round(float(CTPOWER1 + CTPOWER1),3)
+                    data['power'] = round(float(CTPOWER1 + CTPOWER2),3)
 
             if topic_data['type'] == 'power' and not 'power' in data.keys():
                 if topic_data['units'].lower() == 'w':
@@ -499,10 +500,12 @@ class MyMQTT(MyCommon):
             if self.UseVoltageLegs:
                 VL1 = self.GetLastValueFromTopic(self.GetLastMatchingTopic("voltageleg1"))
                 VL2 = self.GetLastValueFromTopic(self.GetLastMatchingTopic("voltageleg2"))
-                data['voltagelegs'] = []
-                data['voltagelegs'].append(int(VL1))
-                data['voltagelegs'].append(int(VL2))
-                data['voltage'] = int(VL1 + VL2)
+                # both legs are needed for the total
+                if VL1 != None and VL2 != None:
+                    data['voltagelegs'] = []
+                    data['voltagelegs'].append(int(VL1))
+                    data['voltagelegs'].append(int(VL2))
+                    data['voltage'] = int(VL1 + VL2)
 
             if topic_data['type'] == 'voltage' and 'voltage' not in data.keys():
                 data['voltage'] = value

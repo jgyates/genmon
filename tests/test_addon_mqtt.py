@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 # -------------------------------------------------------------------------------
 #    FILE: test_addon_mqtt.py
-# PURPOSE: Tests for addon/genmqtt.py, which publishes genmon's data to an MQTT
-#          broker and takes genmon commands from it: the topics and values
-#          published (and the root topic, numeric, string list, blacklist and
-#          remove spaces settings), only publishing changes, the online /
-#          offline status, commands, and the TLS settings.
+# PURPOSE: Tests for the MQTT add-ons:
+#          addon/genmqtt.py publishes genmon's data to an MQTT broker and takes
+#          genmon commands from it: the topics and values published (and the
+#          root topic, numeric, string list, blacklist and remove spaces
+#          settings), only publishing changes, the online / offline status,
+#          commands, and the TLS settings.
+#          addon/genmqttin.py reads sensor values from MQTT topics into genmon:
+#          gauges, sensor data, fuel (tank) data and power data (current
+#          transformers, power, voltage legs).
 #
 #          genmon, threads and the MQTT library (paho) are fakes, see
 #          addon_fixture.py; no broker is needed.
@@ -249,6 +253,115 @@ class TLSTests(MQTTTestCase):
         self.start()
         self.assertNotIn("tls_set_context", self.client.calls)
         self.assertEqual(self.client.calls["connect"][0][1], 1883)
+
+
+# -------------------------------------------------------------------------------
+class MQTTInTests(unittest.TestCase):
+    """genmqttin.py"""
+
+    def start(self, sensors, **settings):
+        """sensors: (topic, type, label, units, nominal, max) for each topic"""
+        modules = fake_paho()
+        columns = list(zip(*sensors))
+        conf = {"mqtt_address": "broker.example", "mqtt_port": "1883", "root_topic": "",
+                "username": "", "password": "", "cert_authority_path": "",
+                "topics": ",".join(columns[0]), "types": ",".join(columns[1]),
+                "labels": ",".join(columns[2]), "units": ",".join(columns[3]),
+                "nominal_values": ",".join(columns[4]), "maximum_values": ",".join(columns[5]),
+                "exclude_gauge": "", "strict": "False", "use_for_power_fuel": "False",
+                "powerfactor": "1.0"}
+        conf.update(settings)
+        fixture = AddOnFixture("genmqttin", "MyMQTT", conf, modules=modules)
+        fixture.state["answers"] = {
+            "start_info_json": json.dumps({"Controller": "Evolution 2.0, Air Cooled"})}
+        self.addCleanup(fixture.stop)
+        fixture.start()
+        self.client = modules["paho.mqtt.client"].Client.instances[-1]
+        return fixture
+
+    def receive(self, fixture, topic, payload):
+        fixture.addon.on_message(self.client, None,
+                                 types.SimpleNamespace(topic=topic, payload=payload.encode()))
+
+    def test_gauges_and_subscriptions(self):
+        fixture = self.start([("home/temp", "temperature", "Engine Temp", "F", "100", "250"),
+                              ("home/fuel", "fuel", "Tank", "%", "50", "100")],
+                             exclude_gauge="Tank")
+        self.assertEqual(fixture.commands("generator: set_external_gauge_data="), [[
+            {"title": "Engine Temp", "type": "temperature", "units": "F", "nominal": 100,
+             "max": 250, "exclude_gauge": False, "from": "genmqttin", "strict": False},
+            {"title": "Tank", "type": "fuel", "units": "%", "nominal": 50, "max": 100,
+             "exclude_gauge": True, "from": "genmqttin", "strict": False}]])
+        fixture.addon.on_connect(self.client, None, {}, 0)
+        self.assertEqual(self.client.subscribed, ["home/temp", "home/fuel"])
+
+    def test_sensor_value(self):
+        fixture = self.start([("home/temp", "temperature", "Engine Temp", "F", "100", "250")])
+        self.receive(fixture, "home/temp", "77.5")
+        self.receive(fixture, "home/other", "1")  # not a configured topic
+        self.assertEqual(fixture.commands("generator: set_sensor_data="),
+                         [[{"Engine Temp": "77.5 F"}]])
+        # power and fuel data only with use_for_power_fuel
+        self.assertEqual(fixture.commands("generator: set_power_data="), [])
+
+    def test_fuel(self):
+        fixture = self.start([("home/fuel", "fuel", "Propane", "%", "50", "100")],
+                             use_for_power_fuel="True")
+        self.receive(fixture, "home/fuel", "55")
+        self.receive(fixture, "home/fuel", "140")  # not a percentage
+        self.assertEqual(fixture.commands("generator: set_tank_data="),
+                         [{"Tank Name": "Propane", "Percentage": 55}])
+
+    def test_power_in_watts(self):
+        fixture = self.start([("home/power", "power", "Load", "W", "5000", "22000")],
+                             use_for_power_fuel="True", strict="True")
+        self.receive(fixture, "home/power", "4500")
+        self.assertEqual(fixture.commands("generator: set_power_data="), [
+            {"strict": True, "from": "genmqttin", "powerfactor": 1.0, "power": 4.5}])
+
+    def test_current_transformers(self):
+        fixture = self.start([("home/ct1", "ct1", "CT 1", "A", "20", "90"),
+                              ("home/ct2", "ct2", "CT 2", "A", "20", "90")],
+                             use_for_power_fuel="True")
+        self.receive(fixture, "home/ct1", "12")
+        self.receive(fixture, "home/ct2", "8")
+        # the two are sent together, once both are known
+        self.assertEqual(fixture.commands("generator: set_sensor_data=")[-1],
+                         [{"CT 2": "8 A"}, {"CT 1": "12 A"}])
+        power = fixture.commands("generator: set_power_data=")[-1]
+        self.assertEqual((power["ctdata"], power["current"]), ([12, 8], 20))
+
+    def test_power_transformers(self):
+        fixture = self.start([("home/p1", "ctpower1", "Leg 1", "W", "5000", "22000"),
+                              ("home/p2", "ctpower2", "Leg 2", "W", "5000", "22000")],
+                             use_for_power_fuel="True")
+        self.receive(fixture, "home/p2", "1500")  # leg 2 first: no total yet, no error
+        self.receive(fixture, "home/p1", "2500")
+        power = fixture.commands("generator: set_power_data=")[-1]
+        self.assertEqual(power["ctpower"], [2.5, 1.5])
+        self.assertEqual(power["power"], 4.0)
+
+    def test_voltage_legs(self):
+        fixture = self.start([("home/v1", "voltageleg1", "Leg 1 V", "V", "120", "140"),
+                              ("home/v2", "voltageleg2", "Leg 2 V", "V", "120", "140")],
+                             use_for_power_fuel="True")
+        # gauges show both legs as voltage
+        gauges = fixture.commands("generator: set_external_gauge_data=")[0]
+        self.assertEqual([g["type"] for g in gauges], ["voltage", "voltage"])
+        self.receive(fixture, "home/v1", "121")
+        self.receive(fixture, "home/v2", "119")
+        power = fixture.commands("generator: set_power_data=")[-1]
+        self.assertEqual((power["voltagelegs"], power["voltage"]), ([121, 119], 240))
+
+    def test_invalid_settings(self):
+        for sensors, settings in [
+                ([("t", "humidity", "H", "%", "1", "2")], {}),            # unknown type
+                ([("t", "temperature", "T", "F", "1", "2")], {"labels": "A,B"}),  # counts differ
+                ([("t", "temperature", "T", "F", "1", "2")], {"topics": ""})]:   # no topics
+            with self.subTest(sensors=sensors, settings=settings):
+                with self.assertRaises(SystemExit):
+                    self.start(sensors, **settings)
+
 
 if __name__ == "__main__":
     unittest.main()

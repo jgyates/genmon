@@ -16,6 +16,7 @@ import os
 import ssl
 import sys
 import unittest
+import warnings
 from unittest import mock
 
 REPO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -51,7 +52,8 @@ class TLSContextTests(unittest.TestCase):
             if version == ssl.TLSVersion.TLSv1_3 and not ssl.HAS_TLSv1_3:
                 continue  # e.g. macOS's LibreSSL 2.8, see test_version_not_supported
             with self.subTest(tls_version=setting):
-                with mock.patch("warnings.warn"):  # 1.0 and 1.1 are deprecated
+                with warnings.catch_warnings():  # 1.0 and 1.1 are deprecated
+                    warnings.simplefilter("ignore", DeprecationWarning)
                     context = self.context(tls_version=setting)
                 if version is None:
                     self.assertEqual(context.minimum_version, ssl.TLSVersion.TLSv1_2)
@@ -95,7 +97,8 @@ class TLSContextTests(unittest.TestCase):
                 continue
             with self.subTest(choice=choice):
                 log = mock.Mock()
-                with mock.patch("warnings.warn"):
+                with warnings.catch_warnings():  # 1.0 and 1.1 are deprecated
+                    warnings.simplefilter("ignore", DeprecationWarning)
                     self.context(tls_version=choice, log=log)
                 log.error.assert_not_called()
 
