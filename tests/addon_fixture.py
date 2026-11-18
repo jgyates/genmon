@@ -198,11 +198,15 @@ class AddOnFixture(object):
             except StopPolling:
                 pass
 
-    def run_thread(self, name):
+    def run_thread(self, name, waits=None):
         """One pass of one of the add-on's threads (e.g. "TankCheckThread"):
-        the thread's waits return "exit" and sleeps return at once."""
+        sleeps return at once, and the thread's waits (WaitForExit) return
+        "exit". waits: what the first waits return, e.g. [False] to go on
+        after a wait at the start of the thread; the waits after them exit."""
         function = self.addon.Threads[name].function
-        with mock.patch.object(self.addon, "WaitForExit", return_value=True), \
+        answers = iter(waits or [])
+        with mock.patch.object(self.addon, "WaitForExit",
+                               side_effect=lambda *a, **k: next(answers, True)), \
                 mock.patch.object(self.module.time, "sleep"):
             function()
 

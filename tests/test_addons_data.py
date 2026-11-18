@@ -400,5 +400,146 @@ class CTHatTests(unittest.TestCase):
         self.assertEqual(fixture.commands("generator: set_power_data=")[0]["ctdata"], [0, 0])
 
 
+
+# -------------------------------------------------------------------------------
+class OtodataTests(unittest.TestCase):
+    """genotodata.py: an Otodata TM6030 sensor, read from its Bluetooth name"""
+
+    def start(self, devices, **settings):
+        """devices: (address, name) of the Bluetooth devices the scan finds"""
+
+        class BleakScanner(object):
+            def __init__(self, detection_callback):
+                self.callback = detection_callback
+
+            async def start(self):
+                for address, name in devices:
+                    self.callback(types.SimpleNamespace(address=address, name=name), None)
+
+            async def stop(self):
+                pass
+
+        bleak = types.ModuleType("bleak")
+        bleak.BleakScanner = BleakScanner
+        conf = {"tank_name": "Propane", "capacity": "120", "scan_time": "0", "mac_address": ""}
+        conf.update(settings)
+        shell = types.SimpleNamespace(run=lambda *a, **k: None)
+        fixture = AddOnFixture("genotodata", "GenOtodataData", conf, modules={"bleak": bleak},
+                               patches=[("subprocess", shell)])
+        self.addCleanup(fixture.stop)
+        return fixture.start()
+
+    def test_level_from_name(self):
+        fixture = self.start([("AA:BB:CC:00:00:01", "Phone"),
+                              ("AA:BB:CC:00:00:02", "Level: 42.5 %")])
+        # the thread waits 5 seconds before its first scan
+        fixture.run_thread("TankCheckThread", waits=[False])
+        self.assertEqual(fixture.commands(TANK_DATA),
+                         [{"Tank Name": "Propane", "Percentage": 42.5, "Capacity": 120}])
+
+    def test_only_the_configured_sensor(self):
+        fixture = self.start([("AA:BB:CC:00:00:02", "Level: 42 %"),
+                              ("AA:BB:CC:00:00:03", "level: 77%")],
+                             mac_address="aa:bb:cc:00:00:03")
+        fixture.run_thread("TankCheckThread", waits=[False])
+        self.assertEqual(fixture.commands(TANK_DATA)[0]["Percentage"], 77.0)
+
+    def test_no_sensor_found(self):
+        fixture = self.start([("AA:BB:CC:00:00:01", "Phone")])
+        fixture.run_thread("TankCheckThread", waits=[False])
+        self.assertEqual(fixture.commands(TANK_DATA), [])
+
+
+# -------------------------------------------------------------------------------
+class MopekaTests(unittest.TestCase):
+    """genmopeka.py: Mopeka Pro sensors (Bluetooth), a custom tank (min / max mm)"""
+
+    def start(self, addresses, **settings):
+        sensors = {}
+
+        class Sensor(object):
+            def __init__(self, address, **kwargs):
+                self.address, self.last_reading = address, None
+
+        class Scanner(object):
+            def __init__(self, **kwargs):
+                self.sensors = sensors
+
+            def AddSensor(self, sensor):
+                sensors[sensor.address.upper()] = sensor
+
+            def Start(self):
+                pass
+
+            def Stop(self):
+                pass
+
+            def LogStats(self):
+                pass
+
+        fakes = {}
+        for name in ["bleson", "bleson.core", "bleson.core.hci", "bleson.core.hci.type_converters",
+                     "bleson.core.hci.constants", "fluids", "fluids.geometry"]:
+            fakes[name] = types.ModuleType(name)
+        fakes["bleson"].get_provider = lambda: None
+        fakes["bleson"].BDAddress = str.upper
+        fakes["bleson.core.hci.type_converters"].rssi_from_byte = lambda value: value
+        fakes["bleson.core.hci.constants"].GAP_MFG_DATA = 0xFF
+        fakes["bleson.core.hci.constants"].GAP_NAME_COMPLETE = 0x09
+        fakes["fluids.geometry"].TANK = object
+        conf = {"tank_address": ", ".join(addresses), "tank_type": "Custom", "min_mm": "100",
+                "max_mm": "1100", "scan_time": "0", "use_old_lib": "False", "send_notices": "False"}
+        conf.update(settings)
+        fixture = AddOnFixture("genmopeka", "GenMopekaData", conf, modules=fakes,
+                               patches=[("MopekaBT", Scanner), ("MopekaBTSensor", Sensor)],
+                               reimport=["genmonlib.mymopeka"])
+        self.addCleanup(fixture.stop)
+        fixture.start()
+        return fixture, sensors
+
+    def reading(self, mm, battery=80):
+        return types.SimpleNamespace(TankLevelInMM=mm, TemperatureInCelsius=20,
+                                     BatteryPercent=battery)
+
+    def test_custom_tank(self):
+        fixture, sensors = self.start(["aa:bb:cc:dd:ee:01"])
+        sensors["AA:BB:CC:DD:EE:01"].last_reading = self.reading(600)
+        # the thread scans (a wait), then sends
+        fixture.run_thread("TankCheckThread", waits=[False])
+        self.assertEqual(fixture.commands(TANK_DATA),
+                         [{"Percentage": 50.0, "Tank Name": "Mopeka Sensor Tank"}])
+
+    def test_two_tanks_and_limits(self):
+        fixture, sensors = self.start(["aa:bb:cc:dd:ee:01", "aa:bb:cc:dd:ee:02"])
+        sensors["AA:BB:CC:DD:EE:01"].last_reading = self.reading(1500)  # above max: full
+        sensors["AA:BB:CC:DD:EE:02"].last_reading = self.reading(50)    # below min: empty
+        fixture.run_thread("TankCheckThread", waits=[False])
+        data = fixture.commands(TANK_DATA)[0]
+        self.assertEqual((data["Percentage"], data["Percentage2"]), (100.0, 0.0))
+
+    def test_no_reading_yet_is_not_an_empty_tank(self):
+        # a sensor not heard from yet (e.g. the first scan after a restart) must
+        # not be sent as 0% (a false low fuel warning)
+        fixture, sensors = self.start(["aa:bb:cc:dd:ee:01", "aa:bb:cc:dd:ee:02"])
+        sensors["AA:BB:CC:DD:EE:01"].last_reading = self.reading(600)
+        fixture.run_thread("TankCheckThread", waits=[False])
+        data = fixture.commands(TANK_DATA)[0]
+        self.assertEqual(data["Percentage"], 50.0)
+        self.assertNotIn("Percentage2", data)
+
+    def test_last_good_reading_kept(self):
+        fixture, sensors = self.start(["aa:bb:cc:dd:ee:01"])
+        # what the sensor sends in each scan: nothing in the second
+        self.scans = [self.reading(600), None]
+
+        def start_scan():
+            sensors["AA:BB:CC:DD:EE:01"].last_reading = self.scans.pop(0)
+
+        fixture.addon.mopeka.Start = start_scan
+        # two passes of the loop: scan, poll wait, scan, then exit
+        fixture.run_thread("TankCheckThread", waits=[False, False, False])
+        self.assertEqual([d["Percentage"] for d in fixture.commands(TANK_DATA)], [50.0, 50.0])
+
+
 if __name__ == "__main__":
     unittest.main()
