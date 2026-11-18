@@ -200,8 +200,16 @@ class ConnectionTests(MQTTTestCase):
     def test_on_connect(self):
         fixture = self.start(root_topic="home")
         fixture.addon.on_connect(self.client, None, {}, 0)
-        self.assertEqual(self.client.subscribed, ["home/generator/#"])
+        # only commands (it subscribed to everything, receiving each value
+        # it published)
+        self.assertEqual(self.client.subscribed, ["home/generator/command"])
         self.assertIn(("home/generator/client_status", "Online", True), self.client.published)
+
+    def test_on_connect_debug(self):
+        # debug: everything under the root, to see what the broker received
+        fixture = self.start(root_topic="home", debug="True")
+        fixture.addon.on_connect(self.client, None, {}, 0)
+        self.assertEqual(self.client.subscribed, ["home/generator/#"])
 
     def test_command(self):
         fixture = self.start(root_topic="home")

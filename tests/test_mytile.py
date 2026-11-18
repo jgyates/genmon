@@ -78,7 +78,7 @@ class GaugeTests(TileTestCase):
         self.assertEqual(tile.Maximum, 32)
         tile = self.tile("power", nominal=22)
         self.assertEqual(tile.Maximum, 26)
-        self.assertEqual(tile.Labels, [0, 5, 10, 15, 20, 25])
+        self.assertEqual(tile.Labels, [0, 5, 10, 15, 20, 26])
         tile = self.tile("frequency", nominal=50)
         self.assertEqual(tile.Maximum, 60)
 
@@ -137,11 +137,29 @@ class GaugeTests(TileTestCase):
         self.assertIn("invalid value", self.errors[0])
         self.assertEqual(tile.Maximum, tile.Minimum)
 
+    def test_labels_end_at_the_maximum(self):
+        # (they stopped one step short: 0..90 on a 0-100 fuel gauge)
+        for gauge, kwargs, last in [("fuel", {}, 100), ("level", {}, 100), ("position", {}, 100),
+                                    ("wifipercent", {}, 100), ("loadbalance", {}, 100),
+                                    ("temperature", {}, 100), ("temperature", {"subtype": "coolant"}, 100),
+                                    ("wifi", {}, -30), ("linevolts", {"nominal": 12}, 12),
+                                    ("current", {"nominal": 20}, 24), ("frequency", {}, 70),
+                                    ("pressure", {}, 150), ("batteryvolts", {}, 16)]:
+            with self.subTest(type=gauge, **kwargs):
+                tile = self.tile(gauge, **kwargs)
+                self.assertEqual(tile.Labels[-1], last)
+                self.assertEqual(tile.Labels[-1], tile.Maximum)
+        # a small scale (steps of at least 1)
+        self.assertEqual(self.tile("fuel", nominal=5).Labels, [0, 1, 2, 3, 4, 5])
+        # a maximum between steps: added, or in place of a label too close to it
+        self.assertEqual(MyTile.LabelRange(0, 24, 5), [0, 5, 10, 15, 20, 24])
+        self.assertEqual(MyTile.LabelRange(0, 21, 5), [0, 5, 10, 15, 21])
+
     def test_labels(self):
         tile = MyTile(self.log, title="T", type="current", nominal=100)
         self.assertEqual(tile.Labels, [0, 20, 40, 60, 80, 100, 120])
         # from the values given (it used the tile's own minimum and maximum)
-        self.assertEqual(tile.CreateLabels(0, 10, 12), [0, 2, 4, 6, 8, 10])
+        self.assertEqual(tile.CreateLabels(0, 10, 12), [0, 2, 4, 6, 8, 10, 12])
 
 
 if __name__ == "__main__":

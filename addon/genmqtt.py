@@ -644,7 +644,13 @@ class MyMQTT(MyCommon):
                 FullPath = self.TopicRoot + "/generator"
             else:
                 FullPath = "generator"
-            self.MQTTclient.subscribe(FullPath + "/#")
+            if self.debug:
+                # everything under the root: the debug log shows what the
+                # broker received (on_message logs each message)
+                self.MQTTclient.subscribe(FullPath + "/#")
+            else:
+                # only commands (not every value this add-on publishes)
+                self.MQTTclient.subscribe(FullPath + "/command")
 
             # Setup Last Will value
             result = self.MQTTclient.publish(self.LastWillTopic, payload="Online", retain=True)

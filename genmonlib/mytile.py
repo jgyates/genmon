@@ -264,9 +264,7 @@ class MyTile(MyCommon):
                 self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
                 self.Labels = self.SetDefault(
                     self.Labels,
-                    list(
-                        range(int(self.Minimum), int(self.Maximum), int(self.Divisions))
-                    ),
+                    self.LabelRange(self.Minimum, self.Maximum, self.Divisions),
                 )
                 if self.Type.lower() == "wifipercent":
                     values = [
@@ -297,9 +295,7 @@ class MyTile(MyCommon):
                 self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
                 self.Labels = self.SetDefault(
                     self.Labels,
-                    list(
-                        range(int(self.Minimum), int(self.Maximum), int(self.Divisions))
-                    ),
+                    self.LabelRange(self.Minimum, self.Maximum, self.Divisions),
                 )
                 values = [
                         self.Minimum,
@@ -323,13 +319,7 @@ class MyTile(MyCommon):
                 if self.SubType != None and (self.SubType.lower() == "coolant" or self.SubType.lower() == "external"):
                     self.Labels = self.SetDefault(
                         self.Labels,
-                        list(
-                            range(
-                                int(self.Minimum),
-                                int(self.Maximum),
-                                int(self.Divisions),
-                            )
-                        ),
+                        self.LabelRange(self.Minimum, self.Maximum, self.Divisions),
                     )
                     values = [
                         self.Minimum,
@@ -340,13 +330,7 @@ class MyTile(MyCommon):
                 else:
                     self.Labels = self.SetDefault(
                         self.Labels,
-                        list(
-                            range(
-                                int(self.Minimum),
-                                int(self.Maximum),
-                                int(self.Divisions),
-                            )
-                        ),
+                        self.LabelRange(self.Minimum, self.Maximum, self.Divisions),
                     )
                     values = [
                         self.Minimum,
@@ -370,9 +354,7 @@ class MyTile(MyCommon):
                 # up to and including the maximum
                 self.Labels = self.SetDefault(
                     self.Labels,
-                    list(
-                        range(int(self.Minimum), int(self.Maximum) + 1, int(self.Divisions))
-                    ),
+                    self.LabelRange(self.Minimum, self.Maximum, self.Divisions),
                 )
                 # a percentage of nominal (any units): red when low (the
                 # danger for oil pressure), green 75% to 125%, yellow above,
@@ -417,9 +399,7 @@ class MyTile(MyCommon):
                 self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
                 self.Labels = self.SetDefault(
                     self.Labels,
-                    list(
-                        range(int(self.Minimum), int(self.Maximum), int(self.Divisions))
-                    ),
+                    self.LabelRange(self.Minimum, self.Maximum, self.Divisions),
                 )
                 values = [
                     self.Minimum,
@@ -451,15 +431,31 @@ class MyTile(MyCommon):
     def myround(self, x, base=5):
         return int(base * round(float(x) / base))
 
+    # -------------MyTile:LabelRange----------------------------------------
+    # labels from Minimum up to and including Maximum. If Maximum is not on a
+    # step it is added, or replaces the last label when closer than half a
+    # step (so the labels do not overlap)
+    @staticmethod
+    def LabelRange(Minimum, Maximum, Step):
+
+        Step = max(1, int(Step))
+        Labels = list(range(int(Minimum), int(Maximum) + 1, Step))
+        if Labels and Labels[-1] < int(Maximum):
+            if int(Maximum) - Labels[-1] < Step / 2 and len(Labels) > 1:
+                Labels[-1] = int(Maximum)
+            else:
+                Labels.append(int(Maximum))
+        return Labels
+
     # -------------MyTile:CreateLabels--------------------------------------
     def CreateLabels(self, Minimum, Nominal, Maximum):
 
         if Maximum - Minimum < 15:
-            return list(range(int(Minimum), int(Maximum), 2))
+            return self.LabelRange(Minimum, Maximum, 2)
         elif Maximum - Minimum < 30:
-            return list(range(int(Minimum), int(Maximum), 5))
+            return self.LabelRange(Minimum, Maximum, 5)
         elif Maximum - Minimum < 45:
-            return list(range(int(Minimum), int(Maximum), 10))
+            return self.LabelRange(Minimum, Maximum, 10)
         else:
             RoundTo = 5
         ReturnList = []

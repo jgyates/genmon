@@ -69,10 +69,12 @@ All notable changes to this project will be documented in this file.
 - Fixed weather wind direction and speed
 - Fixed WiFi signal strength showing a positive dBm value when iw is not available
 - Pressure gauge color zones now scale with the nominal value and stay within the gauge
+- Gauge labels now go up to the gauge maximum
+- genmqtt now only subscribes to the command topic (all topics if debug is True)
 - Fixed line voltage gauges with no nominal value and gauges with text values
 - Fixed copying over a longer file leaving old data at the end of the file
 - Fixed getdebug command error when a thread has stopped
-- macOS is no longer detected as Windows
+- macOS is no longer detected as Windows (in testing modes)
 - Added tests for custom controllers and shared library modules
 
 ## 2.0.02 -2026-08-04
