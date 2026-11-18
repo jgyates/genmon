@@ -62,6 +62,18 @@ All notable changes to this project will be documented in this file.
 - gentemp sensors are now ordered by device ID, sensor names may need to be reordered
 - gencustomgpio now writes userdefined.json atomically
 - Removed deprecated pyOpenSSL calls for self signed certificates
+- Fixed custom controller gauges: one gauge with an error no longer hides the gauges after it
+- Fixed custom controller IEEE 754 half and double values, float config values and list entries with exec
+- Custom controllers now default to 100 kW if rated kW is not set, and 480V if a float rated voltage reads 0
+- Fixed custom controller simulation files with coil or input registers
+- Fixed weather wind direction and speed
+- Fixed WiFi signal strength showing a positive dBm value when iw is not available
+- Pressure gauge color zones now scale with the nominal value and stay within the gauge
+- Fixed line voltage gauges with no nominal value and gauges with text values
+- Fixed copying over a longer file leaving old data at the end of the file
+- Fixed getdebug command error when a thread has stopped
+- macOS is no longer detected as Windows
+- Added tests for custom controllers and shared library modules
 
 ## 2.0.02 -2026-08-04
 - New add on for Hubitat Elevation hub, Thanks @bdwilson
