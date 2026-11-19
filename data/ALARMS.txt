@@ -60,8 +60,7 @@
 ######## Gas Only##############################
 2600!ALARM!Ignition!Default Ignition Error! No further description
 2602!ALARM!Ignition Fault!Ignition Fault! No further description
-2601!ALARM!Ignition (Missing Cam)!Missing Cam - Cam pulses missing for 5 seconds! No further description
-2601!ALARM!Ignition (Crank Circuit)!Crank Circuit (External Module)! No further description
+2601!ALARM!Ignition Missing Cam!Missing Cam - Cam pulses missing for 5 seconds! No further description
 
 2611!ALARM!Over Current Cylinder 1!Coil current too high for one second!No further description
 2612!ALARM!Over Current Cylinder 2!Coil current too high for one second!No further description
@@ -153,12 +152,12 @@
 4911!ALARM!Engine Fuel Valve Alarm!Engine Fuel Valve Alarm Position!The generator has experienced an engine fuel valve alarm or warning
 4912!ALARM!Engine Fuel Valve Alarm!Engine Fuel Valve Alarm Position!The generator has experienced an engine fuel valve alarm or warning
 4913!ALARM!Engine Fuel Valve Alarm!Engine Fuel Valve Alarm Position!The generator has experienced an engine fuel valve alarm or warning
-4913!ALARM!Engine Fuel Valve Alarm!Engine Fuel Valve Alarm Position!The generator has experienced an engine fuel valve alarm or warning
+4914!ALARM!Engine Fuel Valve Alarm!Engine Fuel Valve Alarm Position!The generator has experienced an engine fuel valve alarm or warning
 4915!ALARM!Engine Fuel Valve Alarm!Engine Fuel Valve Alarm Position!The generator has experienced an engine fuel valve alarm or warning
 4916!ALARM!Engine Fuel Valve Alarm!Engine Fuel Valve Alarm Position!The generator has experienced an engine fuel valve alarm or warning
 4917!ALARM!Engine Fuel Valve Alarm!Engine Fuel Valve Alarm Position!The generator has experienced an engine fuel valve alarm or warning
-4101!ALARM!Engine Position Sensor!Engine Position Sensor!Engine Position Sensor!The generator has experienced an engine primary sync loss
-4102!ALARM!Engine Timing Sensor!Engine Timing Sensor!Engine Timing Sensor!The generator has experienced an engine secondary sync loss
+4101!ALARM!Engine Position Sensor!Engine Position Sensor!The generator has experienced an engine primary sync loss
+4102!ALARM!Engine Timing Sensor!Engine Timing Sensor!The generator has experienced an engine secondary sync loss
 
 4300!ALARM/WARNING!O2 Sensor!O2 Sensor!The generator has experienced an O2 sensor alarm or warning
 4301!ALARM/WARNING!O2 Sensor!O2 Sensor!The generator has experienced an O2 sensor alarm or warning
@@ -205,7 +204,6 @@
 5112!ALARM!Engine Speed Alarm!Engine Speed Alarm!The generator has experienced an engine speed alarm or warning
 5113!ALARM!Engine Speed Alarm!Engine Speed Alarm!The generator has experienced an engine speed alarm or warning
 5114!ALARM!Engine Speed Alarm!Engine Speed Alarm!The generator has experienced an engine speed alarm or warning
-5115!ALARM!Engine Speed Alarm!Engine Speed Alarm!The generator has experienced an engine speed alarm or warning
 5115!ALARM!Engine Speed Alarm!Engine Speed Alarm!The generator has experienced an engine speed alarm or warning
 5116!ALARM!Engine Speed Alarm!Engine Speed Alarm!The generator has experienced an engine speed alarm or warning
 5117!ALARM!Engine Speed Alarm!Engine Speed Alarm!The generator has experienced an engine speed alarm or warning

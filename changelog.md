@@ -1,30 +1,7 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## 2.0.03 -2026-10-07
-- Added support for an auxiliary alam log (see Advanced Settings to enable) and the Known Issues wiki for more info
-- Added 'Note' category to the service journal
-- Updated service journal to preserve line breaks (thanks @MichaelB2018)
-- remove pytz from requirements as it is no longer needed
-- Performance improvements to genhubitat. thanks @bdwilson
-- added remote alarm reset for Power Zone 200. thanks @karl-pizzolatto for the data and testing
-- Added alarm log for PZ200. Only 10 log events are stored in the controller.
-- Add the ability to extend the outage log past the default of 100 entries
-- Added remote exercise button for supported controllers (Evo/Nexus)
-- Fixed issue with Evo Liquid Cooled controllers with older firmware that cause a timeout when reading three specific registers 
-- Corrected one issue with genhomeassistant.py (thanks @ahrens26)
-- Improvement to web connectivity (thanks @skipfire)
-- Update to improve loading on systems with long delays before the serial port is ready
-- Updated alarm E-Codes for Power Zone 200
-- Improved alarm handling for Evo 2.0 and Evo LC 4.5L
-- Fixed bug with Modbus TCP support
-- Fixed bug with custom controller handling some types of ieee754 values
-- misc security improvements
-- Added code hash value to About page
-- Local LAN socket access to genmon is now disabled by default if authentication is enabled in the web interface. If you want enable this then look at the advanced setting named "Allow LAN access to genmon" 
-- remove numerous python 2.x references in the code that are no longer used
-- Update to make config and JSON file writes atomic to reduce file corruption if power is lost
-- made iteration object in custom_controller be an int or an object
+## 2.0.4 -2026-11-19
 - Added initial support for Kohler APM402
 - Web UI security updates (thanks @MichaelB2018 and @skipfire)
 - Added Ambient Temp gauge for Evo 2.0
@@ -100,8 +77,32 @@ All notable changes to this project will be documented in this file.
 - Maintenance log entries with an invalid date, type or comment are now rejected (they were saved)
 - Fixed spelling in messages, tooltips, alarm descriptions, comments and docs; added a spell check (codespell) to the lint checks
 
+## 2.0.3 -2026-10-07
+- Added support for an auxiliary alam log (see Advanced Settings to enable) and the Known Issues wiki for more info
+- Added 'Note' category to the service journal
+- Updated service journal to preserve line breaks (thanks @MichaelB2018)
+- remove pytz from requirements as it is no longer needed
+- Performance improvements to genhubitat. thanks @bdwilson
+- added remote alarm reset for Power Zone 200. thanks @karl-pizzolatto for the data and testing
+- Added alarm log for PZ200. Only 10 log events are stored in the controller.
+- Add the ability to extend the outage log past the default of 100 entries
+- Added remote exercise button for supported controllers (Evo/Nexus)
+- Fixed issue with Evo Liquid Cooled controllers with older firmware that cause a timeout when reading three specific registers 
+- Corrected one issue with genhomeassistant.py (thanks @ahrens26)
+- Improvement to web connectivity (thanks @skipfire)
+- Update to improve loading on systems with long delays before the serial port is ready
+- Updated alarm E-Codes for Power Zone 200
+- Improved alarm handling for Evo 2.0 and Evo LC 4.5L
+- Fixed bug with Modbus TCP support
+- Fixed bug with custom controller handling some types of ieee754 values
+- misc security improvements
+- Added code hash value to About page
+- Local LAN socket access to genmon is now disabled by default if authentication is enabled in the web interface. If you want enable this then look at the advanced setting named "Allow LAN access to genmon" 
+- remove numerous python 2.x references in the code that are no longer used
+- Update to make config and JSON file writes atomic to reduce file corruption if power is lost
+- made iteration object in custom_controller be an int or an object
 
-## 2.0.02 -2026-08-04
+## 2.0.2 -2026-08-04
 - New add on for Hubitat Elevation hub, Thanks @bdwilson
 - Support for PowerZone 200. Note: a special cable is required. (Thanks @LSGONE, @BillyEll, @skipfire and @gm58)
 - Support for Basler DGC-2020HD Controller
@@ -122,7 +123,7 @@ All notable changes to this project will be documented in this file.
 - Fixed service due dates showing one day late outside US time zones (Evolution, Nexus, Power Zone 410, Evolution Liquid Cooled custom controller)
 
 
-## 2.0.01 -2026-05-18
+## 2.0.1 -2026-05-18
 - Various bug fixes and typo corrections
 - Added per module dependency checking that should help with quicker updates when new modules are added. Thanks @klinquist
 - Bug fixes to genhalink add on. Thanks @MichaelB2018 and @jmActifio
@@ -135,7 +136,7 @@ All notable changes to this project will be documented in this file.
 - New add on for Otodata Bluetooth propane tank sensor, Thanks @bdwilson
 - Update to change the web app cache priority that may fix some networks with slow loading web pages
 
-## 2.0.00 -2026-04-05
+## 2.0.0 -2026-04-05
 - Major update to UI Thanks @MichaelB2018
 - Dark / Light Mode
 - New ability to resize and select gauge types
