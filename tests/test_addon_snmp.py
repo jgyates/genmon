@@ -189,6 +189,22 @@ class SNMPTests(unittest.TestCase):
             {"Status": [{"type": "float", "value": 13.2, "unit": "V"}]}, "home")
         self.assertEqual(self.addon.LastValues, {"home/Status": "13.2"})
 
+    def test_keywords_match_in_file_order(self):
+        # the OIDs are sorted for snmpwalk, but keywords still match in file
+        # order: "Fuel Level Sensor Tank 2" is not taken by "Fuel Level Sensor"
+        # (issue 1580: tanks 2-4 were empty, tank 1 showed the last tank)
+        fixture = self.start()
+        maint = {"Maintenance": [{"Fuel Level Sensor": "66.66"},
+                                 {"Fuel Level Sensor Tank 2": "50.00"},
+                                 {"Fuel Level Sensor Tank 3": "40.00"},
+                                 {"Fuel Level Sensor Tank 4": "30.00"}]}
+        fixture.state["answers"]["maint_json"] = json.dumps(maint)
+        self.poll()
+        self.assertEqual(self.get(BASE + (1, 1, 0, 8)), "66.66")
+        self.assertEqual(self.get(BASE + (1, 1, 0, 8, 1)), "50.00")
+        self.assertEqual(self.get(BASE + (1, 1, 0, 8, 2)), "40.00")
+        self.assertEqual(self.get(BASE + (1, 1, 0, 8, 3)), "30.00")
+
     def test_unknown_oid(self):
         self.start()
         varbinds, status = self.request([BASE + (9, 9, 9)])

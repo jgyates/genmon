@@ -147,6 +147,7 @@ class GenSNMP(MySupport):
 
         self.IPv6 = True
         self.mibData = []
+        self.mibKeywordOrder = []
         self.LastValues = {}
         self.transportDispatcher = None
 
@@ -324,7 +325,7 @@ class GenSNMP(MySupport):
             if not len(path):
                 return None
 
-            for mib in self.mibData:
+            for mib in self.mibKeywordOrder:
                 if len(mib.keywords):
                     if all(x in path for x in mib.keywords):
                         self.LogDebug(str(mib.name))
@@ -497,6 +498,10 @@ class GenSNMP(MySupport):
 
             # GETNEXT (snmpwalk) finds the next OID with bisect: the list must
             # be in OID order, whatever the order of the entries in the files
+            # GetOID matches keywords in file order (the first match wins, e.g.
+            # "Fuel Level Sensor Tank 2" is listed before "Fuel Level Sensor"),
+            # so keep that order for it before sorting
+            self.mibKeywordOrder = list(self.mibData)
             self.mibData.sort(key=lambda mibVar: mibVar.name)
             self.mibDataIdx = {}
             for mibVar in self.mibData:
