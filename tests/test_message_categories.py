@@ -98,6 +98,9 @@ class SoftwareUpdateTests(unittest.TestCase):
         self.assertEqual(title, "Generator Monitor Software Update 99.0.0 is available for site Test Site")
         self.assertIn("The current version installed is " + ProgramDefaults.GENMON_VERSION, body)
         self.assertEqual(calls[0][1], {"msgtype": "software_update", "onlyonce": True})
+        # a link to the change log (the page on github, not the raw file)
+        self.assertTrue(body.endswith(
+            "\n\nChange Log: https://github.com/jgyates/genmon/blob/master/changelog.md"), body)
 
     def test_up_to_date(self):
         monitor, calls = self.check(ProgramDefaults.GENMON_VERSION)

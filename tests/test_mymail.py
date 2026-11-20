@@ -416,12 +416,27 @@ class ConvertTextToHTMLTests(unittest.TestCase):
         self.assertIn('<th scope="row"', html)
         self.assertIn(">Engine State</th>", html)
         self.assertIn(">Running &lt;test&gt;</td>", html)
-        self.assertIn(">https://example.com/x</p>", html)
+        self.assertIn('><a href="https://example.com/x">https://example.com/x</a></p>', html)
         self.assertIn(">plain line</p>", html)
         self.assertTrue(html.startswith("<!DOCTYPE html>"))
 
     def test_empty(self):
         self.assertIn("<p></p>", MyMail.ConvertTextToHTML(None))
+
+    def test_links(self):
+        # a value that is an http(s) address is a link (e.g. the change log in
+        # the software update email); other text and other schemes are not
+        html = MyMail.ConvertTextToHTML(
+            "Change Log: https://github.com/jgyates/genmon/blob/master/changelog.md\n"
+            "Web Interface URL : http://192.0.2.1:8000/?a=1&b=\"2\"\n"
+            "Script : javascript:alert(1)\n"
+            "Note : see https://example.com for more")
+        self.assertIn('<a href="https://github.com/jgyates/genmon/blob/master/changelog.md">'
+                      'https://github.com/jgyates/genmon/blob/master/changelog.md</a></td>', html)
+        self.assertIn('<a href="http://192.0.2.1:8000/?a=1&amp;b=&quot;2&quot;">', html)
+        self.assertNotIn("javascript:alert(1)</a>", html)
+        self.assertIn(">see https://example.com for more</td>", html)
+        self.assertEqual(html.count("<a "), 2)
 
 
 # -------------------------------------------------------------------------------

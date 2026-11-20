@@ -402,11 +402,20 @@ class MyMail(MySupport):
                     )
                     table_open[0] = True
 
+            link_re = re.compile(r"^https?://\S+$", re.I)
+
+            def html_text(s):
+                # a value that is a web address (http or https only) is a link
+                if link_re.match(s):
+                    return ('<a href="' + html_escape(s, quote=True) + '">'
+                            + html_escape(s) + "</a>")
+                return html_escape(s)
+
             def add_paragraph(s):
                 parts.append(
                     '<p style="margin:10px 0;' + font +
                     ';font-size:14px;line-height:1.5">'
-                    + html_escape(s)
+                    + html_text(s)
                     + "</p>"
                 )
 
@@ -450,7 +459,7 @@ class MyMail(MySupport):
                             + "</th>"
                             '<td style="text-align:left;vertical-align:top;padding:5px 0;'
                             'color:#111">'
-                            + html_escape(val)
+                            + html_text(val)
                             + "</td></tr>"
                         )
                 else:

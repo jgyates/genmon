@@ -1494,7 +1494,7 @@ class Monitor(MySupport):
                                         msgbody += (
                                             "\n\nWeb Interface URL: " + self.UserURL
                                         )
-                                    msgbody += "\n\nChange Log: https://raw.githubusercontent.com/jgyates/genmon/master/changelog.md"
+                                    msgbody += "\n\nChange Log: https://github.com/jgyates/genmon/blob/master/changelog.md"
                                     self.MessagePipe.SendMessage(
                                         title, msgbody, msgtype="software_update", onlyonce=True
                                     )
