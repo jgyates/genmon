@@ -1069,7 +1069,10 @@ class Evolution(GeneratorController):
             # 3 distinct models 220, 230, 240
             14: ["13KVA","50","220,230,240","1","992 cc","240",],   #
         }
-        if self.Phase == 3:
+        # model ID 11 is also the 20 kW 50 Hz 3 phase export model (the EcoGen
+        # is 60 Hz single phase): use it if the phase or frequency setting says so.
+        # Phase is a number from genmon.conf, then the text from GetModelInfo
+        if str(self.Phase) == "3" or str(self.NominalFreq) == "50":
             # 3 phase export
             ModelLookUp_EvoAC2[11] = ["20KW","50","208 3 Phase","3","999 cc","208",]
 

@@ -433,6 +433,21 @@ class EvolutionModelTests(GeneracTestCase):
                 c.CheckForOutage()
                 self.assertEqual(self.code_errors(), [])
 
+    def test_evolution_2_model_11(self):
+        # model ID 11 (register 0019) is the 60 Hz single phase EcoGen or the
+        # 20 kW 50 Hz 3 phase export model, picked by the phase or frequency
+        # setting; Phase is a number from genmon.conf, then text (issue 1581)
+        for phase, freq, expected in [(1, "60", "1"), (3, "60", "3"), ("3", "60", "3"),
+                                      (1, "50", "3"), ("1", "50", "3")]:
+            with self.subTest(phase=phase, frequency=freq):
+                c = self.controller("evo_ac", registers={"0019": "000b"})
+                c.Evolution2 = True
+                c.Phase, c.NominalFreq = phase, freq
+                self.assertEqual(c.GetModelInfo("phase"), expected)
+                c.Phase = c.GetModelInfo("phase")   # as InitDevice does
+                self.assertEqual(c.GetModelInfo("phase"), expected)
+                self.assertEqual(c.GetModelInfo("kw"), "20" if expected == "3" else "15")
+
     def test_power_zone_200_alarms(self):
         # alarm flags 0637 / 0638, then a register for each alarm / warning
         c = self.controller("evo_ac")
