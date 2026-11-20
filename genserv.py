@@ -2019,6 +2019,8 @@ class GenServ(MySupport):
             tls_disable = parameters["tls_disable"] in (True, "true", "True", "1", 1)
             smtpauth_disable = parameters["smtpauth_disable"] in (True, "true", "True", "1", 1)
             use_html = parameters.get("use_html", False) in (True, "true", "True", "1", 1)
+            # checked unless turned off (an older web page does not send it)
+            verify_cert = parameters.get("ssl_verify_cert", True) in (True, "true", "True", "1", 1)
 
         except Exception as e1:
             self.LogErrorLine("Error parsing parameters in SendTestEmail: " + str(e1))
@@ -2038,6 +2040,7 @@ class GenServ(MySupport):
                 tls_disable=tls_disable,
                 smtpauth_disable=smtpauth_disable,
                 use_html=use_html,
+                verify_cert=verify_cert,
             )
             return jsonify({"message": ReturnMessage})
         except Exception as e1:

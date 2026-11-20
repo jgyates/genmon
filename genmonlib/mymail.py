@@ -68,6 +68,7 @@ class MyMail(MySupport):
         self.DisableSmtpAuth = False
         self.SSLEnabled = False
         self.TLSDisable = False
+        self.VerifyCert = True
         self.UseBCC = False
         self.UseHTML = False
         self.ExtendWait = 0
@@ -137,6 +138,27 @@ class MyMail(MySupport):
                     )
 
     # ---------- MyMail.TestSendSettings ----------------------------------------
+    # ---------- MyMail.SSLContext ---------------------------------------------
+    # the SSL / TLS settings for the mail servers: the server's certificate is
+    # checked unless verify_cert is False (e.g. a local server with a self
+    # signed certificate)
+    @staticmethod
+    def SSLContext(verify_cert=True):
+        context = ssl.create_default_context()
+        if not verify_cert:
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+        return context
+
+    # ---------- MyMail.ErrorText -----------------------------------------------
+    # the error, with a hint if the server's certificate was not accepted
+    @staticmethod
+    def ErrorText(e1):
+        if isinstance(e1, ssl.SSLCertVerificationError):
+            return (str(e1) + ". If the mail server uses a self signed certificate, "
+                    "turn off Verify Server Certificate in the email settings.")
+        return str(e1)
+
     @staticmethod
     def TestSendSettings(
         smtp_server=None,
@@ -149,7 +171,8 @@ class MyMail(MySupport):
         use_ssl=False,
         tls_disable=False,
         smtpauth_disable=False,
-        use_html = False
+        use_html = False,
+        verify_cert=True
     ):
 
         try:
@@ -178,6 +201,9 @@ class MyMail(MySupport):
 
             if tls_disable == None or not isinstance(tls_disable, bool):
                 return "Error: Invalid TLS Disable value"
+
+            if not isinstance(verify_cert, bool):
+                return "Error: Invalid Verify Server Certificate value"
 
             # update date
             dtstamp = datetime.datetime.now().strftime("%a %d-%b-%Y")
@@ -248,7 +274,7 @@ class MyMail(MySupport):
             return "Error formatting email: " + str(e1)
 
         try:
-            context = ssl.create_default_context()
+            context = MyMail.SSLContext(verify_cert)
             if use_ssl:
                 session = smtplib.SMTP_SSL(smtp_server, smtp_port, context=context)
                 session.ehlo()
@@ -260,7 +286,7 @@ class MyMail(MySupport):
                 # this allows support for simple TLS
         except Exception as e1:
             # self.LogErrorLine("Error Test SMTP : SSL:<" + str(use_ssl)  + ">: " + str(e1))
-            return "Error Initializing SMTP library: " + str(e1)
+            return "Error Initializing SMTP library: " + MyMail.ErrorText(e1)
 
         try:
             if password != "" and not smtpauth_disable:
@@ -544,6 +570,9 @@ class MyMail(MySupport):
             self.TLSDisable = self.config.ReadValue(
                 "tls_disable", return_type=bool, default=False
             )
+            self.VerifyCert = self.config.ReadValue(
+                "ssl_verify_cert", return_type=bool, default=True
+            )
 
         except Exception as e1:
             self.LogErrorLine("ERROR: Unable to read config file : " + str(e1))
@@ -586,13 +615,18 @@ class MyMail(MySupport):
     # ---------- MyMail.EmailCommandThread --------------------------------------
     def EmailCommandThread(self):
 
-        context = ssl.create_default_context()
+        context = MyMail.SSLContext(self.VerifyCert)
         while True:
             # start email command thread
             try:
                 self.Mailbox = imaplib.IMAP4_SSL(self.IMAPServer, context = context)
                 if self.debug:
                     self.Mailbox.Debug = 4
+            except ssl.SSLCertVerificationError as e1:
+                self.LogError("Error connecting to IMAP server: " + MyMail.ErrorText(e1))
+                if self.WaitForExit("EmailCommandThread", 120):
+                    return  # exit thread
+                continue
             except Exception:
                 self.LogError("No Internet Connection! ")
                 if self.WaitForExit("EmailCommandThread", 120):
@@ -783,7 +817,7 @@ class MyMail(MySupport):
         # self.LogError("Logging in: SMTP Server <"+self.SMTPServer+">:Port <"+str(self.SMTPPort) + ">")
 
         try:
-            context = ssl.create_default_context()
+            context = MyMail.SSLContext(self.VerifyCert)
             if self.SSLEnabled:
                 session = smtplib.SMTP_SSL(self.SMTPServer, self.SMTPPort, context = context)
                 session.ehlo()
@@ -801,7 +835,7 @@ class MyMail(MySupport):
                 # this allows support for simple TLS
         except Exception as e1:
             self.LogErrorLine(
-                "Error SMTP Init : SSL:<" + str(self.SSLEnabled) + ">: " + str(e1)
+                "Error SMTP Init : SSL:<" + str(self.SSLEnabled) + ">: " + MyMail.ErrorText(e1)
             )
             return False
 

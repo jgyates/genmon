@@ -22,6 +22,7 @@ import os
 import shutil
 import sys
 import tempfile
+import ssl
 import unittest
 from email import policy
 from unittest import mock
@@ -42,12 +43,16 @@ class FakeSMTP(object):
     """Records what genmon does with smtplib.SMTP / SMTP_SSL."""
 
     sessions = []
-    fail_on = None  # "connect", "login" or "sendmail"
+    fail_on = None  # "connect", "cert", "login" or "sendmail"
 
     def __init__(self, server, port, context=None):
         if FakeSMTP.fail_on == "connect":
             raise OSError("connection refused")
+        if FakeSMTP.fail_on == "cert":
+            raise ssl.SSLCertVerificationError(
+                "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate")
         self.server, self.port, self.calls, self.sent = server, port, [], []
+        self.context = context
         self.ssl = context is not None and type(self).__name__ == "FakeSMTP_SSL"
         FakeSMTP.sessions.append(self)
 
@@ -56,6 +61,7 @@ class FakeSMTP(object):
 
     def starttls(self, context=None):
         self.calls.append("starttls")
+        self.context = context
 
     def login(self, user, password):
         self.calls.append(("login", user, password))
@@ -278,6 +284,18 @@ class SendTests(MailTestCase):
         mail.sendEmailDirectMIME("info", "subject", "body")
         self.assertNotIn("starttls", FakeSMTP.sessions[-1].calls)
 
+    def test_server_certificate(self):
+        # checked by default; ssl_verify_cert = False accepts a self signed
+        # certificate (SSL and STARTTLS)
+        for settings, verify in [({}, True), ({"ssl_verify_cert": "False"}, False),
+                                 ({"ssl_enabled": "True", "ssl_verify_cert": "False"}, False)]:
+            with self.subTest(settings=settings):
+                mail = self.make_mail(**settings)
+                mail.sendEmailDirectMIME("info", "subject", "body")
+                context = FakeSMTP.sessions[-1].context
+                self.assertEqual(context.verify_mode, ssl.CERT_REQUIRED if verify else ssl.CERT_NONE)
+                self.assertEqual(context.check_hostname, verify)
+
     def test_no_login(self):
         for settings in [{"smtpauth_disable": "True"}, {"email_pw": ""}]:
             with self.subTest(settings=settings):
@@ -367,6 +385,21 @@ class TestEmailTests(MailTestCase):
                 settings = dict(self.SETTINGS, **change)
                 self.assertIn(error, MyMail.TestSendSettings(**settings))
         self.assertEqual(FakeSMTP.sessions, [])
+
+    def test_server_certificate(self):
+        MyMail.TestSendSettings(**self.SETTINGS)
+        self.assertEqual(FakeSMTP.sessions[-1].context.verify_mode, ssl.CERT_REQUIRED)
+        MyMail.TestSendSettings(verify_cert=False, **self.SETTINGS)
+        self.assertEqual(FakeSMTP.sessions[-1].context.verify_mode, ssl.CERT_NONE)
+        self.assertIn("Invalid Verify Server Certificate value",
+                      MyMail.TestSendSettings(verify_cert="no", **self.SETTINGS))
+
+    def test_certificate_error_hint(self):
+        # a self signed certificate: the error says which setting to change
+        FakeSMTP.fail_on = "cert"
+        message = MyMail.TestSendSettings(**self.SETTINGS)
+        self.assertIn("CERTIFICATE_VERIFY_FAILED", message)
+        self.assertIn("turn off Verify Server Certificate", message)
 
     def test_server_error_is_reported(self):
         FakeSMTP.fail_on = "login"

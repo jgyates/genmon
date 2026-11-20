@@ -50,7 +50,7 @@
    "@@ -19 +19 @@",
    "-email_recipient = myrecipent@gmail.com",
    "+email_recipient = a@example.com,b@example.com",
-   "@@ -57,0 +58,2 @@",
+   "@@ -61,0 +62,2 @@",
    "+a@example.com = outage,info",
    "+b@example.com = error"
   ]
@@ -2484,7 +2484,7 @@
    "disableimap": [
     "boolean",
     "Disable Receiving Email",
-    64,
+    65,
     true,
     "Enable incoming email. See the project wiki Tips and Trick page for info on setting up inbound email.",
     "",
@@ -2539,7 +2539,7 @@
    "disableweather": [
     "boolean",
     "Disable Weather Functionality",
-    69,
+    70,
     true,
     "Enable the weather feature. Requires an OpenWeatherMap API key and location to be configured.",
     "",
@@ -2682,7 +2682,7 @@
    "imap_server": [
     "string",
     "IMAP Server",
-    65,
+    66,
     "imap.gmail.com",
     "Server address used for receiving email, leave empty to disable IMAP. See the project wiki Tips and Trick page for info on setting up inbound email.",
     "InternetAddress",
@@ -2693,7 +2693,7 @@
    "incoming_mail_folder": [
     "string",
     "Incoming Mail Folder",
-    67,
+    68,
     "Generator",
     "The name of the folder in the mailbox for searching for incoming email commands",
     "minmax:1:1500",
@@ -2781,7 +2781,7 @@
    "minimumweatherinfo": [
     "boolean",
     "Display Minimum Weather Info",
-    72,
+    73,
     true,
     "If enabled the minimum information regarding the weather will be displayed, otherwise the maximum info will be displayed",
     "",
@@ -2858,7 +2858,7 @@
    "processed_mail_folder": [
     "string",
     "Mail Processed Folder",
-    68,
+    69,
     "Generator/Processed",
     "Once an email command has been processed by the software the email is moved to this mailbox folder",
     "minmax:1:255",
@@ -2869,7 +2869,7 @@
    "readonlyemailcommands": [
     "boolean",
     "Disable Email Write Commands",
-    66,
+    67,
     false,
     "If enabled, email commands that write to the controller will be disabled (settime, setexercise, setremote, etc.)",
     "",
@@ -3001,7 +3001,7 @@
    "smtpauth_disable": [
     "boolean",
     "Disable SMTP Auth",
-    62,
+    63,
     false,
     "If enabled, ignore SMTP authentication. Typically only used for locally administered SMTP servers",
     "",
@@ -3019,6 +3019,17 @@
     "<CONF>/mymail.conf",
     "MyMail",
     "ssl_enabled"
+   ],
+   "ssl_verify_cert": [
+    "boolean",
+    "Verify Server Certificate",
+    62,
+    true,
+    "Check the mail server's certificate when using SSL or TLS (sending and receiving email). Disable this only if your mail server uses a self signed certificate.",
+    "",
+    "<CONF>/mymail.conf",
+    "MyMail",
+    "ssl_verify_cert"
    ],
    "syncdst": [
     "boolean",
@@ -3089,7 +3100,7 @@
    "use_html": [
     "boolean",
     "Use HTML Email Format",
-    63,
+    64,
     false,
     "Send a structured HTML alternative (in addition to plain text) so screen readers get clear pauses between status lines.",
     "",
@@ -3133,7 +3144,7 @@
    "weatherkey": [
     "string",
     "Openweathermap.org API key",
-    70,
+    71,
     "",
     "Openweathermap.org API Key. This is required to enable weather reporting. See https://openweathermap.org/appid. Requires openweathermap library. If you installed the Generator Monitor Software before V1.9.6 and are upgrading you must run this command: \"sudo pip install pyowm\" from the console before the weather features will be functional",
     "required minmax:4:50",
@@ -3144,7 +3155,7 @@
    "weatherlocation": [
     "string",
     "Location to report weather",
-    71,
+    72,
     "",
     "The location to report weather. Either enter City,State,Country or a openweathermap.org city ID. Automatic lookup of location requires location services to be enabled in your browser, a https connection, and a valid API key.",
     "required minmax:4:50",

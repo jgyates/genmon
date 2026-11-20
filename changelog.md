@@ -78,6 +78,7 @@ All notable changes to this project will be documented in this file.
 - Fixed spelling in messages, tooltips, alarm descriptions, comments and docs; added a spell check (codespell) to the lint checks
 - Fixed SNMP tank 2-4 fuel level OIDs being empty and tank 1 showing the last tank's level (regression in 2.0.3)
 - Fixed Evolution 2.0 model ID 11 (20 kW 50 Hz 3 phase) detected as single phase (regression in 2.0.3)
+- Email now checks the mail server's certificate when SSL or TLS is used (added in 2.0.3); added a Verify Server Certificate setting for mail servers with a self signed certificate
 
 ## 2.0.3 -2026-10-07
 - Added support for an auxiliary alam log (see Advanced Settings to enable) and the Known Issues wiki for more info

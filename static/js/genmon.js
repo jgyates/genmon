@@ -4562,7 +4562,7 @@ var Pages = {
         usemfa:          { disables:['mfa_url','mfa_trust_extend','mfa_trust_days'], when:false },
         mfa_trust_extend:{ disables:['mfa_trust_days'], when:false },
         use_serial_tcp:  { disables:['serial_tcp_address','serial_tcp_port','modbus_tcp','serial_tcp_keepalive'], when:false },
-        disablesmtp:     { disables:['email_account','email_pw','sender_account','sender_name','smtp_server','smtp_port','ssl_enabled','tls_disable','use_html','smtpauth_disable'], when:false },
+        disablesmtp:     { disables:['email_account','email_pw','sender_account','sender_name','smtp_server','smtp_port','ssl_enabled','tls_disable','ssl_verify_cert','use_html','smtpauth_disable'], when:false },
         disableimap:     { disables:['imap_server','readonlyemailcommands','incoming_mail_folder','processed_mail_folder'], when:false },
         disableoutagecheck: { disables:[], when:false },
         disablepowerlog:    { disables:[], when:false }
@@ -4573,7 +4573,7 @@ var Pages = {
         { id:'email-smtp', toggle:'disablesmtp', label:'Outbound Email (SMTP)',
           icon:'upload',
           desc:'Configure an SMTP server to send email alerts and notifications.',
-          fields:['email_account','email_pw','sender_account','sender_name','smtp_server','smtp_port','ssl_enabled','smtpauth_disable','tls_disable','use_html'] },
+          fields:['email_account','email_pw','sender_account','sender_name','smtp_server','smtp_port','ssl_enabled','smtpauth_disable','tls_disable','ssl_verify_cert','use_html'] },
         { id:'email-imap', toggle:'disableimap', label:'Inbound Email Commands (IMAP)',
           icon:'download',
           desc:'Allow genmon to receive and process commands via email.',
@@ -5688,6 +5688,7 @@ var Pages = {
             password:        $w.find('#f_email_pw').val(),
             use_ssl:        ($w.find('#f_ssl_enabled').is(':checked')),
             tls_disable:    ($w.find('#f_tls_disable').is(':checked')),
+            ssl_verify_cert:($w.find('#f_ssl_verify_cert').is(':checked')),
             smtpauth_disable:($w.find('#f_smtpauth_disable').is(':checked')),
             use_html:       ($w.find('#f_use_html').is(':checked'))
           });

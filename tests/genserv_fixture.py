@@ -246,6 +246,7 @@ class GenServFixture(object):
             @staticmethod
             def TestSendSettings(**kwargs):
                 fixture.calls.append("TestSendSettings " + str(kwargs.get("smtp_server")))
+                fixture.test_email_settings = kwargs
                 return "Success"
 
         def fake_check_output(cmd, *args, **kwargs):

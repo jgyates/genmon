@@ -179,6 +179,7 @@ MAIN_SETTINGS = (
     Setting("smtp_port", "int", "SMTP Server Port", 587, "digits", file="mail"),
     Setting("ssl_enabled", "boolean", "Use SSL Encryption", False, "", file="mail"),
     Setting("tls_disable", "boolean", "Disable TLS Encryption", False, "", file="mail"),
+    Setting("ssl_verify_cert", "boolean", "Verify Server Certificate", True, "", file="mail"),
     Setting("smtpauth_disable", "boolean", "Disable SMTP Auth", False, "", file="mail"),
     Setting("use_html", "boolean", "Use HTML Email Format", False, "", file="mail"),
     Setting("disableimap", "boolean", "Disable Receiving Email", False, "", file="mail"),

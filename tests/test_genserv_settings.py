@@ -206,6 +206,16 @@ class SaveTests(SettingsTestCase):
             "use_ssl": "false", "tls_disable": "false", "smtpauth_disable": "true"}))
         self.assertEqual(json.loads(r.get_data(as_text=True)), {"message": "Success"})
         self.assertIn("TestSendSettings smtp.example.com", self.fixture.calls)
+        # the server certificate is checked unless the page turns it off
+        self.assertIs(self.fixture.test_email_settings["verify_cert"], True)
+
+    def test_test_email_without_certificate_check(self):
+        self.save("test_email", json.dumps({
+            "smtp_server": "smtp.example.com", "smtp_port": "25", "email_account": "a@example.com",
+            "sender_account": "", "sender_name": "", "recipient": "b@example.com", "password": "x",
+            "use_ssl": "false", "tls_disable": "false", "smtpauth_disable": "true",
+            "ssl_verify_cert": False}))
+        self.assertIs(self.fixture.test_email_settings["verify_cert"], False)
 
 
 # -------------------------------------------------------------------------------
