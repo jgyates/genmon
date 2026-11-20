@@ -113,6 +113,31 @@ stop_gensim() {
   fi
 }
 
+# the test copy's processes: genmon, genserv and add-ons started with CONF_DIR,
+# and gensim with SIM_DIR (a genmon installed elsewhere on the Pi is not matched)
+test_copy_pids() {
+  ps -eo pid=,args= | awk -v dir="$GENMON_DIR/" -v conf="-c $CONF_DIR" -v sim="gensim.py $SIM_DIR/" -v me="$$" '
+    $1 != me && index($0, dir) && (index($0, conf) || index($0, sim)) { print $1 }'
+}
+
+# stop the test genmon and gensim, and anything of the test copy still running
+# (e.g. left by a run whose process id files were overwritten by another run)
+stop_test_copy() {
+  sudo -n bash "$GENMON_DIR/startgenmon.sh" stop -c "$CONF_DIR" > /dev/null 2>&1
+  stop_gensim
+  local pids
+  pids="$(test_copy_pids)"
+  if [ -n "$pids" ]; then
+    echo "stopping leftover test processes:" $pids
+    # shellcheck disable=SC2086
+    sudo -n kill $pids 2>/dev/null
+    sleep 2
+    pids="$(test_copy_pids)"
+    # shellcheck disable=SC2086
+    [ -n "$pids" ] && sudo -n kill -9 $pids 2>/dev/null
+  fi
+}
+
 wait_for_port() {  # port seconds
   for _ in $(seq 1 "$2"); do
     ss -ltn | grep -q ":$1 " && return 0
@@ -234,8 +259,16 @@ if has_step live; then
     CONTROLLER="$(echo "$SETTINGS" | sed -n 's/^CONTROLLER=//p')"
     EXTRA="$(echo "$SETTINGS" | sed -n 's/^EXTRA=//p')"
 
-    sudo -n bash "$GENMON_DIR/startgenmon.sh" stop -c "$CONF_DIR" > /dev/null 2>&1
-    stop_gensim
+    stop_test_copy
+    # the ports must be free, so the programs started below are the ones tested
+    BUSY=""
+    for PORT in "$GENMON_PORT" "$WEB_PORT" "$SIM_PORT"; do
+      ss -ltn | grep -q ":$PORT " && BUSY="$BUSY $PORT"
+    done
+    if [ -n "$BUSY" ]; then
+      fail "$CAPTURE: port(s)$BUSY in use by another program (sudo ss -ltnp)"
+      continue
+    fi
     printf "[gensim]\naddress = %s\nregister_file = %s\nserver_socket = %s\nbind_address = 127.0.0.1\nlog_location = %s/\n" \
       "$ADDRESS" "$GENMON_DIR/tests/sim/captures/$FILE" "$SIM_PORT" "$SIM_DIR" > "$SIM_DIR/gensim.conf"
     nohup "$PYTHON" "$GENMON_DIR/tests/sim/gensim.py" "$SIM_DIR/" > "$SIM_DIR/console.txt" 2>&1 &
@@ -277,8 +310,7 @@ if has_step live; then
     fi
   done
   if [ "$KEEP" != "1" ]; then
-    sudo -n bash "$GENMON_DIR/startgenmon.sh" stop -c "$CONF_DIR" > /dev/null 2>&1
-    stop_gensim
+    stop_test_copy
   fi
 fi
 
