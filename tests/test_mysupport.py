@@ -20,6 +20,7 @@ import io
 import logging
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import threading
@@ -207,6 +208,68 @@ class ThreadTests(SupportTestCase):
 
 
 # -------------------------------------------------------------------------------
+class CodeHashTests(SupportTestCase):
+    """GetCodeHash: the commit of a git checkout, read from its .git folder
+    (as "git rev-parse --short HEAD", without running git)."""
+
+    def git(self, *args, cwd=None):
+        env = dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@example.com",
+                   GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@example.com",
+                   GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
+        return subprocess.check_output(["git"] + list(args), cwd=cwd or self.repo, env=env,
+                                       stderr=subprocess.DEVNULL).decode().strip()
+
+    def make_repo(self):
+        self.repo = os.path.join(self.folder, "repo")
+        os.makedirs(self.repo)
+        self.git("init", "-q", "-b", "master")
+        for n in range(2):
+            with open(os.path.join(self.repo, "f.txt"), "w") as f:
+                f.write(str(n))
+            self.git("add", "f.txt")
+            self.git("commit", "-q", "--no-gpg-sign", "-m", str(n))
+
+    @unittest.skipUnless(shutil.which("git"), "git is not installed")
+    def test_same_as_git(self):
+        self.make_repo()
+        short = self.git("rev-parse", "--short=7", "HEAD")
+        with self.subTest("branch"):
+            self.assertEqual(MySupport.GetCodeHash(self.repo), short)
+        with self.subTest("packed refs (after git gc)"):
+            self.git("pack-refs", "--all")
+            self.assertFalse(os.path.exists(os.path.join(self.repo, ".git", "refs", "heads", "master")))
+            self.assertEqual(MySupport.GetCodeHash(self.repo), short)
+        with self.subTest("detached HEAD"):
+            self.git("checkout", "-q", "HEAD~1")
+            self.assertEqual(MySupport.GetCodeHash(self.repo), self.git("rev-parse", "--short=7", "HEAD"))
+            self.git("checkout", "-q", "master")
+        with self.subTest("worktree (.git is a file)"):
+            tree = os.path.join(self.folder, "tree")
+            self.git("worktree", "add", "-q", "-b", "other", tree, "HEAD~1")
+            self.assertTrue(os.path.isfile(os.path.join(tree, ".git")))
+            self.assertEqual(MySupport.GetCodeHash(tree), self.git("rev-parse", "--short=7", "HEAD", cwd=tree))
+
+    def test_not_a_checkout(self):
+        # e.g. genmon downloaded as a zip file
+        self.assertEqual(MySupport.GetCodeHash(self.folder), "Unknown")
+        git_dir = os.path.join(self.folder, ".git")
+        os.makedirs(git_dir)
+        with open(os.path.join(git_dir, "HEAD"), "w") as f:
+            f.write("ref: refs/heads/missing\n")
+        self.assertEqual(MySupport.GetCodeHash(self.folder), "Unknown")
+        with open(os.path.join(git_dir, "HEAD"), "w") as f:
+            f.write("not a commit\n")
+        self.assertEqual(MySupport.GetCodeHash(self.folder), "Unknown")
+
+    def test_this_checkout(self):
+        # genmon's own folder (no argument)
+        code_hash = MySupport.GetCodeHash()
+        if os.path.exists(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".git")):
+            self.assertRegex(code_hash, r"^[0-9a-f]{7}$")
+        else:
+            self.assertEqual(code_hash, "Unknown")
+
+
 class AddOnStartTests(SupportTestCase):
 
     def conf(self, **values):

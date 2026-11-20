@@ -153,6 +153,14 @@ class GenServOpenTests(unittest.TestCase):
         r = self.fixture.post_cmd("add_maint_log", {})
         self.assertEqual(json.loads(r.get_data(as_text=True)), "Retry")
 
+    def test_start_info_code_hash(self):
+        # the code hash comes from genmon's start info; genserv no longer runs
+        # genmonmaint.sh (git) for every page load
+        before = len(self.fixture.calls)
+        info = self.fixture.get_json("/cmd/start_info_json")
+        self.assertEqual(info["code_hash"], "abc1234")
+        self.assertEqual([c for c in self.new_calls(before) if "genmonmaint" in c], [])
+
     def test_submit_result_passed_to_page(self):
         # sendregisters / sendlogfiles: genmon's "OK: ..." or "Error: ..." reaches
         # the About page unchanged (it shows the error, e.g. email not set up)

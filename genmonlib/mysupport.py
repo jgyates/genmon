@@ -573,6 +573,57 @@ class MySupport(MyCommon):
         except:
             return "Unknown"
 
+    # ------------ MySupport::GetCodeHash----------------------------------------
+    # the git commit of the source tree (short form, as "git rev-parse --short
+    # HEAD"), read from the .git folder: no git program needed, no subprocess.
+    # Returns "Unknown" if folder is not a git checkout (e.g. a zip download)
+    @staticmethod
+    def GetCodeHash(folder=None):
+        try:
+            if folder is None:
+                folder = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+            git_dir = os.path.join(folder, ".git")
+            if os.path.isfile(git_dir):
+                # a worktree or submodule: ".git" is a file "gitdir: <path>"
+                with open(git_dir, "r") as f:
+                    line = f.read().strip()
+                if not line.startswith("gitdir:"):
+                    return "Unknown"
+                git_dir = os.path.join(folder, line[len("gitdir:"):].strip())
+            with open(os.path.join(git_dir, "HEAD"), "r") as f:
+                head = f.read().strip()
+            if not head.startswith("ref:"):
+                commit = head  # detached HEAD: the commit itself
+            else:
+                ref = head[len("ref:"):].strip()
+                commit = None
+                # a worktree keeps its branch refs in the main repository
+                common_dir = git_dir
+                if os.path.isfile(os.path.join(git_dir, "commondir")):
+                    with open(os.path.join(git_dir, "commondir"), "r") as f:
+                        common_dir = os.path.join(git_dir, f.read().strip())
+                for base in [git_dir, common_dir]:
+                    path = os.path.join(base, *ref.split("/"))
+                    if os.path.isfile(path):
+                        with open(path, "r") as f:
+                            commit = f.read().strip()
+                        break
+                if commit is None:
+                    # refs packed by git gc: "<commit> <ref>" lines
+                    path = os.path.join(common_dir, "packed-refs")
+                    if os.path.isfile(path):
+                        with open(path, "r") as f:
+                            for line in f:
+                                parts = line.strip().split(" ")
+                                if len(parts) == 2 and parts[1] == ref:
+                                    commit = parts[0]
+                                    break
+            if commit and re.match(r"^[0-9a-f]{40}([0-9a-f]{24})?$", commit):
+                return commit[:7]
+        except Exception:
+            pass
+        return "Unknown"
+
     # ------------ MySupport::IsRunning------------------------------------------
     @staticmethod
     def IsRunning(prog_name, log=None, multi_instance=False):

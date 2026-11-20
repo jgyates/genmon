@@ -56,6 +56,8 @@ class Monitor(MySupport):
 
         self.ProgramName = "Generator Monitor"
         self.Version = "Unknown"
+        # the git commit of the running code (an update restarts genmon)
+        self.CodeHash = self.GetCodeHash()
         self.log = None
         self.IsStopping = False
         self.ProgramComplete = False
@@ -1236,6 +1238,7 @@ class Monitor(MySupport):
 
         StartInfo = collections.OrderedDict()
         StartInfo["version"] = ProgramDefaults.GENMON_VERSION
+        StartInfo["code_hash"] = getattr(self, "CodeHash", "Unknown")
         StartInfo["sitename"] = self.SiteName
         StartInfo["install"] = self.InstallTime
         StartInfo["python"] = (

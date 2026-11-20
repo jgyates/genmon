@@ -145,6 +145,19 @@ class SupportInfoTests(unittest.TestCase):
         self.assertEqual(title, "Generator Monitor Log File Submission")
         self.assertEqual(kwargs["files"], ["/logs/genmon.log"])
 
+    def test_code_hash_in_email(self):
+        # the git commit of the running code is in the start info, so in the
+        # support email (and the feedback email)
+        monitor = self.monitor()
+        monitor.CodeHash = "abc1234"
+        monitor.SiteName, monitor.InstallTime, monitor.is_dst, monitor.debug = "Test Site", "x", False, False
+        monitor.Controller.GetStartInfo.return_value = {}
+        del monitor.GetStartInfo   # the real one
+        self.assertEqual(monitor.GetStartInfo(NoTile=True)["code_hash"], "abc1234")
+        monitor.SendSupportInfo(SendLogs=False)
+        (_title, body), _kwargs = monitor.MessagePipe.SendMessage.call_args
+        self.assertRegex(body, r"code_hash\s*:\s*abc1234")
+
     def test_email_not_set_up(self):
         for send_logs in [False, True]:
             with self.subTest(send_logs=send_logs):

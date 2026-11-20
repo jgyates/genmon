@@ -61,6 +61,7 @@ BASE_URL = "https://localhost"  # the session cookie is Secure, so use https
 
 # what the fake genmon returns for "generator: start_info_json"
 START_INFO = {
+    "code_hash": "abc1234",
     "fueltype": "Natural Gas",
     "model": "Test",
     "nominalKW": "22",

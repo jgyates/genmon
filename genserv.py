@@ -2343,18 +2343,6 @@ class GenServ(MySupport):
             self.LogErrorLine("Error in Update: " + str(e1))
 
     # -------------------------------------------------------------------------------
-    def GitHubCodeHash(self):
-        try:
-            output, bSuccess = self.RunBashScript("genmonmaint.sh -v", log = False, return_output=True)
-            if not bSuccess:
-                self.LogError("Error in Update")
-                return "Unknown"
-            return output.strip()
-        except Exception as e1:
-            self.LogErrorLine("Error in Update: " + str(e1))
-            return "Unknown"
-
-    # -------------------------------------------------------------------------------
     def GetLogs(self):
         # update
         if not self.RunBashScript("genmonmaint.sh -l " + shlex.quote(self.loglocation)):  # archive logs
@@ -2818,7 +2806,7 @@ class GenServ(MySupport):
                 StartInfo["pages"]["notifications"] = False
                 StartInfo["pages"]["addons"] = False
             StartInfo["LoginActive"] = self.LoginActive()
-            StartInfo["code_hash"] = self.GitHubCodeHash()
+            # code_hash (the git commit) is in genmon's start info
             data = json.dumps(StartInfo, sort_keys=False)
         except Exception as e1:
             self.LogErrorLine("Error in JSON parse / decode: " + str(e1))
