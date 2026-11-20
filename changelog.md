@@ -80,6 +80,7 @@ All notable changes to this project will be documented in this file.
 - Fixed Evolution 2.0 model ID 11 (20 kW 50 Hz 3 phase) detected as single phase (regression in 2.0.3)
 - Email now checks the mail server's certificate when SSL or TLS is used (added in 2.0.3); added a Verify Server Certificate setting for mail servers with a self signed certificate
 - Fixed dialogs not getting focus for screen readers (regression in 2.0.2); Escape closes dialogs and Tab stays in the open dialog
+- Simulator test waits again for genmon to finish reading the logs before reporting a snapshot difference (occasional CI failure on slow runners)
 
 ## 2.0.3 -2026-10-07
 - Added support for an auxiliary alam log (see Advanced Settings to enable) and the Known Issues wiki for more info

@@ -42,7 +42,8 @@
 #           tests/run_pi_tests.sh -c all
 #           tests/run_pi_tests.sh -s live -c h100,powerzone -k
 #
-#          Exit code 0 if every step passed.
+#          Exit code 0 if every step passed, 3 if another test run was in
+#          progress on the Pi (only one runs at a time).
 # -------------------------------------------------------------------------------
 
 HOST="${GENMON_PI:-genmon-pi}"
@@ -56,7 +57,7 @@ while getopts "H:c:s:kh" opt; do
     c) CAPTURES="$OPTARG" ;;
     s) STEPS="$OPTARG" ;;
     k) KEEP=1 ;;
-    *) sed -n '2,46p' "$0"; exit 2 ;;
+    *) sed -n '2,47p' "$0"; exit 2 ;;
   esac
 done
 

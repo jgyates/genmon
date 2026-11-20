@@ -376,9 +376,10 @@ class GenmonSimulatorTests(unittest.TestCase):
         self.assertEqual(errors, [], "errors in genmon.log")
 
         if os.path.isdir(snapshots):
-            self.check_snapshot(capture["name"], sim.wait_until_steady(SNAPSHOT_COMMANDS), snapshots)
+            self.check_snapshot(capture["name"], sim, snapshots)
 
-    def check_snapshot(self, name, current, snapshots):
+    def check_snapshot(self, name, sim, snapshots):
+        current = sim.wait_until_steady(SNAPSHOT_COMMANDS)
         path = os.path.join(snapshots, name + ".json")
         if os.environ.get("GENMON_SIM_UPDATE") or not os.path.isfile(path):
             with open(path, "w") as f:
@@ -386,13 +387,20 @@ class GenmonSimulatorTests(unittest.TestCase):
             return
         with open(path) as f:
             saved = json.load(f)
+        # masked again: snapshots made before a mask was added still match
+        expected_all = {c: (json.loads(mask(json.dumps(saved[c]))) if saved.get(c) is not None else None)
+                        for c in SNAPSHOT_COMMANDS}
+        # on a slow computer genmon can pause for more than one check while it
+        # reads the logs, so answers that seem steady may not be complete yet:
+        # if they differ, wait for them to settle again before comparing
+        for _ in range(2):
+            if all(current[c] == expected_all[c] for c in SNAPSHOT_COMMANDS):
+                break
+            time.sleep(5)
+            current = sim.wait_until_steady(SNAPSHOT_COMMANDS)
         for command in SNAPSHOT_COMMANDS:
             with self.subTest(snapshot=name, command=command):
-                # masked again: snapshots made before a mask was added still match
-                expected = saved.get(command)
-                if expected is not None:
-                    expected = json.loads(mask(json.dumps(expected)))
-                self.assertEqual(current[command], expected)
+                self.assertEqual(current[command], expected_all[command])
 
 
 # -------------------------------------------------------------------------------

@@ -60,6 +60,27 @@ if [ ! -x "$PYTHON" ]; then
 fi
 cd "$GENMON_DIR" || exit 2
 
+# one test run at a time: runs share the test genmon, gensim and their config.
+# A folder is the lock (mkdir is atomic); it holds the run's process id, so the
+# lock of a run that did not end normally (e.g. the ssh connection was lost) is
+# taken over. Not flock: gensim and genmon would inherit its file descriptor
+LOCK_DIR="$HOME/.genmon_pi_tests.lock"
+if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+  OTHER="$(cat "$LOCK_DIR/pid" 2>/dev/null)"
+  if [ -n "$OTHER" ] && kill -0 "$OTHER" 2>/dev/null; then
+    echo "Another genmon test run is in progress on this Pi (process $OTHER, started" \
+      "$(ps -o lstart= -p "$OTHER" 2>/dev/null | xargs)); try again when it has finished"
+    exit 3
+  fi
+  rm -rf "$LOCK_DIR"
+  if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+    echo "Another genmon test run is starting on this Pi; try again when it has finished"
+    exit 3
+  fi
+fi
+echo $$ > "$LOCK_DIR/pid"
+trap 'rm -rf "$LOCK_DIR"' EXIT
+
 # -------------------------------------------------------------------------------
 if has_step update; then
   echo "=== update $GENMON_DIR"
