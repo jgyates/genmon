@@ -114,10 +114,11 @@ stop_gensim() {
 }
 
 # the test copy's processes: genmon, genserv and add-ons started with CONF_DIR,
-# and gensim with SIM_DIR (a genmon installed elsewhere on the Pi is not matched)
+# and gensim with SIM_DIR (a genmon installed elsewhere on the Pi is not matched).
+# Python programs only: this awk's own command line has the same text
 test_copy_pids() {
   ps -eo pid=,args= | awk -v dir="$GENMON_DIR/" -v conf="-c $CONF_DIR" -v sim="gensim.py $SIM_DIR/" -v me="$$" '
-    $1 != me && index($0, dir) && (index($0, conf) || index($0, sim)) { print $1 }'
+    $1 != me && $2 ~ /python/ && index($0, dir) && (index($0, conf) || index($0, sim)) { print $1 }'
 }
 
 # stop the test genmon and gensim, and anything of the test copy still running
@@ -128,7 +129,9 @@ stop_test_copy() {
   local pids
   pids="$(test_copy_pids)"
   if [ -n "$pids" ]; then
-    echo "stopping leftover test processes:" $pids
+    echo "stopping leftover test processes:"
+    # shellcheck disable=SC2086
+    ps -o pid=,args= -p "$(echo $pids | tr ' ' ',')" | sed 's/^/    /'
     # shellcheck disable=SC2086
     sudo -n kill $pids 2>/dev/null
     sleep 2
