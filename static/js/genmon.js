@@ -399,9 +399,41 @@ var API = {
 var Modal = {
   _$ov: null,
   _cb: null,
+  _prevFocus: null,   /* element to give focus back to when the dialog closes */
+  _canClose: true,    /* Escape closes the dialog (not the restart dialog) */
   /** Mark a string as pre-escaped HTML so Modal.show() won't double-escape it */
   html: function(s) { return {_trusted: true, _html: s}; },
-  init: function() { this._$ov = $('#modal-overlay'); },
+  init: function() {
+    var self = this;
+    this._$ov = $('#modal-overlay');
+    /* keyboard: Escape closes, Tab stays inside the dialog */
+    this._$ov.on('keydown', function(e) {
+      if (e.key === 'Escape' && self._canClose) { e.preventDefault(); self.close(); return; }
+      if (e.key !== 'Tab') return;
+      var $f = self._$ov.find('button, input, select, textarea, a[href], [tabindex]:not([tabindex="-1"])')
+        .filter(':visible:not(:disabled)');
+      if (!$f.length) { e.preventDefault(); return; }
+      var first = $f[0], last = $f[$f.length - 1];
+      if (e.shiftKey && (document.activeElement === first || !$.contains(self._$ov[0], document.activeElement))) {
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault(); first.focus();
+      }
+    });
+  },
+  /* Remember what had focus (the first dialog only, if one replaces another),
+     then move focus into the dialog so screen readers announce it */
+  _focusIn: function(sel) {
+    if (!this._prevFocus || !document.contains(this._prevFocus)) {
+      var el = document.activeElement;
+      this._prevFocus = (el && !$.contains(this._$ov[0], el)) ? el : null;
+    }
+    var $ov = this._$ov;
+    setTimeout(function() {
+      var $t = $ov.find(sel || '.modal-body').first();
+      if ($t.length) $t[0].focus();
+    }, 0);
+  },
   show: function(title, body, buttons) {
     var bh = '';
     if (buttons) buttons.forEach(function(b) {
@@ -413,10 +445,12 @@ var Modal = {
       '<div class="modal-header"><span id="modal-title">' + esc(title) + '</span>' +
       '<button type="button" class="modal-close" data-action="close" aria-label="Close ' +
       esc(title) + '">&times;</button></div>' +
-      '<div class="modal-body">' + (body._trusted ? body._html : esc(body)) + '</div>' +
+      '<div class="modal-body" tabindex="-1">' + (body._trusted ? body._html : esc(body)) + '</div>' +
       (bh ? '<div class="modal-footer">' + bh + '</div>' : '') +
       '</div>'
     ).removeClass('hidden');
+    this._canClose = true;
+    this._focusIn();
     var self = this;
     this._$ov.find('[data-action]').off('click').on('click', function() {
       var a = $(this).data('action');
@@ -426,7 +460,17 @@ var Modal = {
     return this;
   },
   onAction: function(fn) { this._cb = fn; return this; },
-  close: function() { this._$ov.addClass('hidden').html(''); this._cb = null; },
+  close: function() {
+    this._$ov.addClass('hidden').html('');
+    this._cb = null;
+    this._canClose = true;
+    /* give focus back to the control that opened the dialog */
+    var el = this._prevFocus;
+    this._prevFocus = null;
+    if (el && typeof el.focus === 'function' && document.contains(el)) {
+      try { el.focus(); } catch (e) { /* ignore */ }
+    }
+  },
   alert: function(t, m) {
     this.show(t, Modal.html('<p>' + (m && m._trusted ? m._html : esc(m)) + '</p>'), [{text:'OK',cls:'btn-primary',action:'close'}]);
   },
@@ -437,11 +481,16 @@ var Modal = {
   },
   prompt: function(t, label, def, fn) {
     this.show(t, Modal.html(
-      '<div class="form-group"><label class="form-label">' + esc(label) + '</label>' +
+      '<div class="form-group"><label class="form-label" for="modal-input">' + esc(label) + '</label>' +
       '<input class="form-input" id="modal-input" value="' + esc(def||'') + '"></div>'),
       [{text:'Cancel',action:'close'}, {text:'OK',cls:'btn-primary',action:'ok'}]
     ).onAction(function(a, $m) {
       if (a==='ok') { var v=$m.find('#modal-input').val(); Modal.close(); if (fn) fn(v); }
+    });
+    /* the text box gets focus; Enter is OK */
+    this._focusIn('#modal-input');
+    this._$ov.find('#modal-input').on('keydown', function(e) {
+      if (e.key === 'Enter') { e.preventDefault(); Modal._$ov.find('[data-action="ok"]').trigger('click'); }
     });
   },
   /* Restart modal: shows spinner + countdown, polls backend, auto-dismiss */
@@ -463,14 +512,16 @@ var Modal = {
       '<div class="restart-bar-track"><div class="restart-bar-fill" id="restart-bar"></div></div>' +
       '</div>';
     this._$ov.html(
-      '<div class="modal restart-modal-wrap">' +
-      '<div class="modal-header">Restarting' +
+      '<div class="modal restart-modal-wrap" role="dialog" aria-modal="true" aria-labelledby="modal-title">' +
+      '<div class="modal-header"><span id="modal-title">Restarting</span>' +
       '</div>' +
-      '<div class="modal-body">' + body + '</div></div>'
+      '<div class="modal-body" tabindex="-1">' + body + '</div></div>'
     ).removeClass('hidden');
     /* disable normal close */
     this._$ov.find('[data-action]').off('click');
     this._cb = null;
+    this._canClose = false;
+    this._focusIn();
     var total = secs, elapsed = 0, showedFallback = false;
     function tick() {
       elapsed++;
