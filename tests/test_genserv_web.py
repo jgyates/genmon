@@ -20,6 +20,7 @@ import sys
 import shutil
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -151,6 +152,20 @@ class GenServOpenTests(unittest.TestCase):
     def test_missing_required_parameter(self):
         r = self.fixture.post_cmd("add_maint_log", {})
         self.assertEqual(json.loads(r.get_data(as_text=True)), "Retry")
+
+    def test_submit_result_passed_to_page(self):
+        # sendregisters / sendlogfiles: genmon's "OK: ..." or "Error: ..." reaches
+        # the About page unchanged (it shows the error, e.g. email not set up)
+        client = self.fixture.instance.MyClientInterface
+        for command in ["sendregisters", "sendlogfiles"]:
+            for answer in ["OK: Register data queued for sending to the developer.",
+                           "Error: Outbound email is not set up."]:
+                with self.subTest(command=command, answer=answer), \
+                        mock.patch.object(client, "ProcessMonitorCommand", return_value=answer) as pmc:
+                    r = self.fixture.post_cmd(command)
+                    self.assertEqual(r.status_code, 200)
+                    self.assertEqual(json.loads(r.get_data(as_text=True)), answer)
+                    pmc.assert_called_with("generator: " + command)
 
     def test_post_command_passed_to_genmon(self):
         r = self.fixture.post_cmd("setquiet", {"setquiet": "off"})

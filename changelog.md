@@ -82,6 +82,7 @@ All notable changes to this project will be documented in this file.
 - Fixed dialogs not getting focus for screen readers (regression in 2.0.2); Escape closes dialogs and Tab stays in the open dialog
 - Simulator test waits again for genmon to finish reading the logs before reporting a snapshot difference (occasional CI failure on slow runners)
 - Software update notice links to the change log page on GitHub; web addresses in HTML email are now links
+- Submit Registers / Submit Logs on the About page now show an error when outbound email is not set up
 
 ## 2.0.3 -2026-10-07
 - Added support for an auxiliary alam log (see Advanced Settings to enable) and the Known Issues wiki for more info

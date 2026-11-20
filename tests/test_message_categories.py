@@ -108,5 +108,57 @@ class SoftwareUpdateTests(unittest.TestCase):
         self.assertEqual(calls, [])
 
 
+class SupportInfoTests(unittest.TestCase):
+    """sendregisters / sendlogfiles: the reply says if the email was queued
+    ("OK: ...") or why not ("Error: ..."); the About page shows it."""
+
+    def monitor(self, email_enabled=True):
+        # a Monitor without its __init__ (which starts genmon)
+        monitor = genmon.Monitor.__new__(genmon.Monitor)
+        monitor.Threads = {"SendMailThread": object()} if email_enabled else {}
+        monitor.MessagePipe = mock.Mock()
+        monitor.MaintainerAddress = "developer@example.com"
+        monitor.bDisablePlatformStats = True
+        monitor.Controller = mock.Mock()
+        monitor.Controller.GetCommStatus.return_value = {}
+        monitor.GetStartInfo = mock.Mock(return_value={})
+        monitor.GetSupportData = mock.Mock(return_value="{}")
+        monitor.GetLogFileNames = mock.Mock(return_value=["/logs/genmon.log"])
+        monitor.log = None
+        monitor.console = None
+        return monitor
+
+    def test_registers(self):
+        monitor = self.monitor()
+        reply = monitor.SendSupportInfo(SendLogs=False)
+        self.assertTrue(reply.startswith("OK: Register data queued for sending"), reply)
+        (title, _body), kwargs = monitor.MessagePipe.SendMessage.call_args
+        self.assertEqual(title, "Generator Monitor Register Submission")
+        self.assertIsNone(kwargs["files"])
+        self.assertEqual(kwargs["recipient"], "developer@example.com")
+
+    def test_logs(self):
+        monitor = self.monitor()
+        reply = monitor.SendSupportInfo(SendLogs=True)
+        self.assertTrue(reply.startswith("OK: Log files queued for sending"), reply)
+        (title, _body), kwargs = monitor.MessagePipe.SendMessage.call_args
+        self.assertEqual(title, "Generator Monitor Log File Submission")
+        self.assertEqual(kwargs["files"], ["/logs/genmon.log"])
+
+    def test_email_not_set_up(self):
+        for send_logs in [False, True]:
+            with self.subTest(send_logs=send_logs):
+                monitor = self.monitor(email_enabled=False)
+                reply = monitor.SendSupportInfo(SendLogs=send_logs)
+                self.assertTrue(reply.startswith("Error: Outbound email is not set up"), reply)
+                monitor.MessagePipe.SendMessage.assert_not_called()
+
+    def test_error(self):
+        monitor = self.monitor()
+        monitor.MessagePipe.SendMessage.side_effect = OSError("disk full")
+        self.assertEqual(monitor.SendSupportInfo(SendLogs=True),
+                         "Error: Log files could not be sent: disk full")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -721,12 +721,16 @@ class Monitor(MySupport):
             return None
 
     # ---------- Monitor::SendSupportInfo----------------------------------------
+    # returns "OK: ..." if the email was queued for sending, else "Error: ..."
+    # (the web interface shows the text, and treats "Error" as a failure)
     def SendSupportInfo(self, SendLogs=True):
 
+        what = "Log files" if SendLogs else "Register data"
         try:
             if not self.EmailSendIsEnabled():
                 self.LogError("Error in SendSupportInfo: send email is not enabled")
-                return "Send Email is not enabled."
+                return ("Error: Outbound email is not set up. Set up outbound email "
+                        "on the Settings page (Email section), then try again.")
 
             msgbody = ""
             msgbody += self.printToString(
@@ -762,9 +766,11 @@ class Monitor(MySupport):
                 msgtype="error",
                 force_text=True
             )
-            return "Log files submitted"
+            return ("OK: " + what + " queued for sending to the developer. If the email "
+                    "is not sent, the reason is in the mail log files.")
         except Exception as e1:
             self.LogErrorLine("Error in SendSupportInfo: " + str(e1))
+            return "Error: " + what + " could not be sent: " + str(e1)
 
     # ---------- Send message ---------------------------------------------------
     def SendMessage(self, CmdString):

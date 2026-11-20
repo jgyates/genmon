@@ -6406,18 +6406,33 @@ var Pages = {
       $('#a-changelog').on('click', function(){
         Pages.about._showChangelog();
       });
+      /* genmon answers "OK: ..." (queued for sending) or "Error: ..." (e.g.
+         outbound email is not set up); "Retry" or nothing if genmon is not running */
+      function submitResult(what) {
+        return function(resp) {
+          var msg = String(resp == null ? '' : resp).trim();
+          try { var j = JSON.parse(msg); msg = (j == null) ? '' : String(j).trim(); } catch (e) { /* plain text */ }
+          if (/^OK\b/i.test(msg)) {
+            Modal.alert('Submitted', msg.replace(/^OK:?\s*/i, ''));
+          } else if (!msg || msg === 'Retry') {
+            Modal.alert('Error', 'Failed to submit ' + what + ': genmon did not answer. Check that genmon is running.');
+          } else {
+            Modal.alert('Error', msg.replace(/^Error:?\s*/i, ''));
+          }
+        };
+      }
       $('#a-submit-regs').on('click', function(){
         Modal.confirm('Submit Registers', 'Send your generator register data to the developer via email?', function(){
           API.set('sendregisters', '', 15000)
-            .done(function(){ Modal.alert('Sent', 'Register data submitted successfully.'); })
-            .fail(function(){ Modal.alert('Error', 'Failed to submit register data. Check email configuration.'); });
+            .done(submitResult('register data'))
+            .fail(function(){ Modal.alert('Error', 'Failed to submit register data: no answer from the web server.'); });
         });
       });
       $('#a-submit-logs').on('click', function(){
         Modal.confirm('Submit Logs', 'Send your log files to the developer via email? This may take a moment.', function(){
           API.set('sendlogfiles', '', 30000)
-            .done(function(){ Modal.alert('Sent', 'Log files submitted successfully.'); })
-            .fail(function(){ Modal.alert('Error', 'Failed to submit log files. Check email configuration.'); });
+            .done(submitResult('log files'))
+            .fail(function(){ Modal.alert('Error', 'Failed to submit log files: no answer from the web server.'); });
         });
       });
       $('#a-backup').on('click', function(){ Pages.about._download('backup', 'Export Configuration'); });
