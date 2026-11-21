@@ -107,6 +107,23 @@ class GenServOpenTests(unittest.TestCase):
                 self.assertEqual(r.status_code, 405)
                 self.assertEqual(self.new_calls(before), [])
 
+    def test_get_with_csrf_token_in_url(self):
+        # for tools that can only call a URL; the token is not passed to genmon
+        token = self.fixture.get_json("/cmd/csrf_token")["csrf_token"]
+        before = len(self.fixture.calls)
+        r = self.fixture.get("/cmd/setremote?setremote=start&csrf_token=" + token)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(self.new_calls(before), ["generator: setremote=start"])
+
+    def test_get_with_wrong_csrf_token_in_url_is_refused(self):
+        for token in ["not-the-token", ""]:
+            with self.subTest(token=token):
+                before = len(self.fixture.calls)
+                r = self.fixture.get("/cmd/setremote?setremote=start&csrf_token=" + token)
+                self.assertEqual(r.status_code, 405)
+                self.assertIn("csrf_token", r.get_json()["error"])
+                self.assertEqual(self.new_calls(before), [])
+
     def test_post_without_csrf_token_is_refused(self):
         before = len(self.fixture.calls)
         r = self.fixture.post_cmd("setquiet", {"setquiet": "off"}, csrf=False)

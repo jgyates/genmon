@@ -156,6 +156,22 @@ class LoginTests(unittest.TestCase):
         self.assertEqual(self.conf_files(), conf_before)
         self.assertFalse(self.fixture.instance.Closing)
 
+    def test_csrf_token_in_url_needs_login(self):
+        token = self.fixture.instance.CSRFToken()
+        url = "/cmd/setremote?setremote=start&csrf_token=" + token
+        before = len(self.fixture.calls)
+        # not logged in: the login page
+        self.assertIn("Genmon &mdash; Login", self.fixture.get(url).get_data(as_text=True))
+        # read only: refused
+        self.fixture.login(RO_USER, RO_PASS)
+        self.assertIn(reply_text(self.fixture.get(url)), DENIED_REPLIES)
+        self.assertEqual(self.fixture.calls[before:], [])
+        # admin: runs
+        self.fixture.new_session()
+        self.fixture.login(ADMIN_USER, ADMIN_PASS)
+        self.fixture.get(url)
+        self.assertEqual(self.fixture.calls[before:], ["generator: setremote=start"])
+
     def test_read_only_user_refused_every_write_command(self):
         # every command marked write in the command table, so a new one is covered too
         self.fixture.login(RO_USER, RO_PASS)

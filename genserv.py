@@ -131,7 +131,8 @@ app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 300
 #   handler  None: the command is passed to genmon as "generator: <name>".
 #            Otherwise the name of the GenServ method that answers it.
 #   write    needs write access; the dispatcher refuses read only users
-#   post     POST only, with the X-CSRFToken header; a GET returns 405
+#   post     POST with the X-CSRFToken header, or a GET with the token in the
+#            URL (?csrf_token=...); any other request returns 405
 #   param    request value added to the genmon command as "=<value>"
 #   maxlen   if set, the value is required, null bytes and newlines are
 #            removed and it is cut to this length
@@ -221,8 +222,8 @@ class GenServ(MySupport):
         "reboot": Cmd("CmdReboot", write=True, post=True),
     }
 
-    # /cmd/ commands only accepted as POST (with the X-CSRFToken header, see
-    # csrf_check); a GET returns 405.
+    # /cmd/ commands accepted only as a POST with the X-CSRFToken header (see
+    # csrf_check), or as a GET with the token in the URL (?csrf_token=...).
     POST_ONLY_COMMANDS = frozenset(name for name, cmd in COMMANDS.items() if cmd.post)
 
     # Extensions treated as long-lived static assets that browsers may cache.
@@ -2415,9 +2416,7 @@ class GenServ(MySupport):
         # Login endpoints are protected by credentials, not session — exempt from CSRF
         if request.endpoint in ("do_admin_login", "passkey_login_begin", "passkey_login_complete", "mfa_auth"):
             return
-        expected = self.CSRFToken()
-        supplied = request.headers.get("X-CSRFToken", "")
-        if not expected or not hmac.compare_digest(supplied.encode("utf-8"), expected.encode("utf-8")):
+        if not self.ValidCSRFToken(request.headers.get("X-CSRFToken", "")):
             self.LogError("CSRF blocked: missing or invalid X-CSRFToken header: " + request.path)
             return jsonify({"error": "CSRF validation failed"}), 403
         origin = request.headers.get("Origin")
@@ -2526,6 +2525,15 @@ class GenServ(MySupport):
         if isinstance(key, str):
             key = key.encode("utf-8")
         return hmac.new(key, b"genmon-csrf-v1", hashlib.sha256).hexdigest()
+
+    # -------------------------------------------------------------------------------
+    def ValidCSRFToken(self, supplied):
+        """True if supplied (from the X-CSRFToken header or the csrf_token URL
+        parameter) is this install's CSRF token."""
+        expected = self.CSRFToken()
+        if not expected or not isinstance(supplied, str):
+            return False
+        return hmac.compare_digest(supplied.encode("utf-8"), expected.encode("utf-8"))
 
     # -------------------------------------------------------------------------------
     def HasWriteAccess(self):
@@ -2710,9 +2718,14 @@ class GenServ(MySupport):
     # -------------------------------------------------------------------------------
     def command(self, command):
 
-        if command in self.POST_ONLY_COMMANDS and request.method != "POST":
-            self.LogError("Rejected GET for state-changing command: " + command)
-            response = jsonify({"error": "Use POST with the X-CSRFToken header for this command"})
+        # A GET may change something only with the token in the URL, for tools
+        # that can only call a URL (e.g. /cmd/setremote?setremote=start&csrf_token=...).
+        # Another site can not read the token, so this is as safe as the header.
+        if (command in self.POST_ONLY_COMMANDS and request.method != "POST"
+                and not self.ValidCSRFToken(request.args.get("csrf_token", ""))):
+            self.LogError("Rejected GET without a valid csrf_token for state-changing command: " + command)
+            response = jsonify({"error": "Use POST with the X-CSRFToken header, or add csrf_token=<token> to the URL "
+                                         "(the token is at /cmd/csrf_token)"})
             response.status_code = 405
             response.headers["Allow"] = "POST"
             return response

@@ -310,6 +310,10 @@ class MyTest(MyCommon):
                     r = self.WebPost("/cmd/" + command, headers=headers)
                     ok, detail, _ = self.CheckWebReply(command, r)
                     self.Result(ok, "genserv POST " + command, detail, r.text)
+                # a GET with the token in the URL (tools that can only call a URL)
+                r = self.WebGet("/cmd/settime?csrf_token=" + (self.CSRFToken or ""))
+                ok, detail, _ = self.CheckWebReply("settime", r)
+                self.Result(ok, "genserv GET settime with csrf_token", detail, r.text)
 
         except Exception as e1:
             self.Result(False, "genserv", "error: " + str(e1))
