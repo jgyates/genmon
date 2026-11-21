@@ -1,4 +1,4 @@
-#KW,Fuel,25%,Rate 25%,50%,Rate 50%,75%,Rate 75%,100%,Rate 100%,Units
+kW,Fuel,25%,Rate 25%,50%,Rate 50%,75%,Rate 75%,100%,Rate 100%,Units
 48,Propane,0.25,2.88,0.5,4.16,0.75,5.28,1,6.61,gal
 48,Natural Gas,0.25,201,0.5,336,0.75,442,1,604,cubic feet
 60,Propane,0.25,2.1,0.5,4.4,0.75,6.8,1,8.4,gal

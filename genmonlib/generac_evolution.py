@@ -118,6 +118,7 @@ class Evolution(GeneratorController):
         self.Evo45L = False
         self.LiquidCooled = None
         self.LiquidCooledParams = None
+        self.AlarmNames = None  # {alarm code: name} from data/ALARMS.csv, read when first needed
         self.SavedFirmwareVersion = None
         self.StartupDelayActiveTime = None
         # State Info
@@ -365,7 +366,7 @@ class Evolution(GeneratorController):
             self.AlarmFile = os.path.join(
                 os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
                 "data",
-                "ALARMS.txt",
+                "ALARMS.csv",
             )
             with open(self.AlarmFile, "r"):  # check the file can be read
                 pass
@@ -806,47 +807,44 @@ class Evolution(GeneratorController):
             self.LogErrorLine("Error in GetFuelConsumptionDataPoints: " + str(e1))
         return None
 
+    # ------------ Evolution:GetDataFileName------------------------------------
+    def GetDataFileName(self, Folder, FileName):
+        # path of a file in the data folder of the repository
+        return os.path.join(
+            os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+            "data",
+            Folder,
+            FileName,
+        )
+
     # ------------ Evolution:GetFuelParamsFromFile-------------------------------
     def GetFuelParamsFromFile(self):
 
+        # returns [50% load, 50% rate, 100% load, 100% rate, units] from the
+        # matching row of the fuel file (see data/fuel/README.md), or []
         try:
-            ReturnPoints = []
             if not self.EvolutionController:
                 return []
             if self.LiquidCooled:
                 if self.Evo45L:
-                    FileName = "EvoLC45_Fuel.txt"
+                    FileName = "EvoLC45_Fuel.csv"
                 else:
-                    FileName = "EvoLC_Fuel.txt"
+                    FileName = "EvoLC_Fuel.csv"
             else:
                 if self.Evolution2:
-                    FileName = "EvoAC2_Fuel.txt"
+                    FileName = "EvoAC2_Fuel.csv"
                 else:
-                    FileName = "EvoAC_Fuel.txt"
+                    FileName = "EvoAC_Fuel.csv"
 
-            FullFileName = os.path.join(
-                os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
-                "data",
-                FileName,
-            )
-            ReturnList = self.ReadCSVFile(FullFileName)
+            ReturnList = self.ReadCSVFile(self.GetDataFileName("fuel", FileName))
 
             for Item in ReturnList:
-                if len(Item) < 9:
-                    continue
                 if self.LiquidCooled:
                     try:
-                        if float(Item[0]) != float(self.NominalKW):
+                        if float(Item["kW"]) != float(self.NominalKW):
                             continue
-                        if Item[1] != self.FuelType:
+                        if Item["Fuel"] != self.FuelType:
                             continue
-                        ReturnPoints.append(float(Item[4]))  # 50%
-                        ReturnPoints.append(float(Item[5]))  # 50% Rate
-                        ReturnPoints.append(float(Item[8]))  # 100%
-                        ReturnPoints.append(float(Item[9]))  # 100% Rate
-                        ReturnPoints.append(Item[10])  # Units
-                        self.LogDebug("Fuel Data Points: " + str(ReturnPoints))
-                        return ReturnPoints
                     except Exception as e1:
                         self.LogErrorLine(
                             "Error in GetFuelParamsFromFile (LC): " + str(e1)
@@ -859,24 +857,32 @@ class Evolution(GeneratorController):
                         if not len(Value):
                             return []
 
-                        if int(Item[0]) != int(Value, 16):  # model ID match
+                        if int(Item["Reg0019"]) != int(Value, 16):  # model ID match
                             continue
 
-                        if str(Item[2].strip()) != str(self.FuelType.strip()):
+                        if Item["Fuel"] != str(self.FuelType.strip()):
                             continue
-
-                        ReturnPoints.append(float(Item[4]))  # 50%
-                        ReturnPoints.append(float(Item[5]))  # 50% Rate
-                        ReturnPoints.append(float(Item[6]))  # 100%
-                        ReturnPoints.append(float(Item[7]))  # 100% Rate
-                        ReturnPoints.append(Item[8])  # Units
-                        self.LogDebug("Fuel Data Points: " + str(ReturnPoints))
-                        return ReturnPoints
                     except Exception as e1:
                         self.LogErrorLine(
                             "Error in GetFuelParamsFromFile (AC): " + str(e1)
                         )
                         continue
+
+                try:
+                    ReturnPoints = [
+                        float(Item["50%"]),
+                        float(Item["Rate 50%"]),
+                        float(Item["100%"]),
+                        float(Item["Rate 100%"]),
+                        Item["Units"],
+                    ]
+                    self.LogDebug("Fuel Data Points: " + str(ReturnPoints))
+                    return ReturnPoints
+                except Exception as e1:
+                    self.LogErrorLine(
+                        "Error in GetFuelParamsFromFile (" + FileName + "): " + str(e1)
+                    )
+                    continue
 
         except Exception as e1:
             self.LogErrorLine("Error in GetFuelParamsFromFile: " + str(e1))
@@ -896,30 +902,25 @@ class Evolution(GeneratorController):
         # RD01523,RD02023,RD03024,RD04834,RD05034
 
         # Liquid Cooled Units must be matched by the Param Group and Voltage Code settings
-        # in the dealer menu
+        # in the dealer menu. Returns the matching row of the param file as a dict
+        # keyed by column name (see data/param/README.md), or None
 
         try:
             if not self.LiquidCooled:
                 return None
 
             if self.EvolutionController:
-                FileName = "EvoLCParam.txt"
+                FileName = "EvoLCParam.csv"
             else:
-                FileName = "NexusLCParam.txt"
+                FileName = "NexusLCParam.csv"
 
-            FullFileName = os.path.join(
-                os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
-                "data",
-                FileName,
-            )
-            ReturnList = self.ReadCSVFile(FullFileName)
+            ReturnList = self.ReadCSVFile(self.GetDataFileName("param", FileName))
 
             for Item in ReturnList:
-                if len(Item) < 9:
-                    continue
-
                 # Lookup Param Group and # Voltage Code to find kw, phase, etc
-                if ParamGroup == int(Item[4]) and VoltageCode == int(Item[5]):
+                if ParamGroup == int(Item["Parameter Group"]) and VoltageCode == int(
+                    Item["Voltage Code"]
+                ):
                     return Item
 
             self.LogDebug(
@@ -945,23 +946,21 @@ class Evolution(GeneratorController):
         if self.LiquidCooledParams == None:
             return "Unknown"
 
-        if len(self.LiquidCooledParams) < 9:
-            return "Unknown"
-
+        Params = self.LiquidCooledParams
         if Request.lower() == "frequency":
-            if self.LiquidCooledParams[2] == "60" or self.LiquidCooledParams[2] == "50":
-                return self.LiquidCooledParams[2]
+            if Params.get("Frequency") in ["60", "50"]:
+                return Params["Frequency"]
             else:
                 return "Unknown"
 
         elif Request.lower() == "kw":
-            return self.LiquidCooledParams[0]
+            return Params.get("kW", "Unknown")
         elif Request.lower() == "phase":
-            return self.LiquidCooledParams[3]
+            return Params.get("Phase", "Unknown")
         elif Request.lower() == "enginedisplacement":
-            return self.LiquidCooledParams[8]
+            return Params.get("Engine", "Unknown")
         elif Request.lower() == "nominalvolts":
-            return self.LiquidCooledParams[1]
+            return Params.get("Volts", "Unknown")
         elif Request.lower() == "fuel":
 
             Value = self.GetParameter("020c", ReturnInt=True)
@@ -972,11 +971,11 @@ class Evolution(GeneratorController):
                 return "Natural Gas"
             if Value == 2:
                 return "Diesel"
-            if len(self.LiquidCooledParams) >= 9:
-                if self.LiquidCooledParams[9] == "NG/LPV":
-                    return "Propane"
-                if self.LiquidCooledParams[9] == "Diesel":
-                    return "Diesel"
+            # only the Evolution file has a Fuel column
+            if Params.get("Fuel") == "NG/LPV":
+                return "Propane"
+            if Params.get("Fuel") == "Diesel":
+                return "Diesel"
         return "Unknown"
 
     # ------------ Evolution:GetModelInfo----------------------------------------
@@ -3439,12 +3438,12 @@ class Evolution(GeneratorController):
                 return ""
 
             Year = int(Value[12:14], 16)  # year
-            # this will attempt to find a description for the log entry based on the info in ALARMS.txt
+            # this will attempt to find a description for the log entry based on the info in ALARMS.csv
             # get alarm code
             AlarmCode = int(Value[16:20], 16)
 
             # TODO Handle DisplayStr?
-            AlarmStr = self.GetAlarmInfo(Value[16:20], ReturnNameOnly=True, FromLog=True)
+            AlarmStr = self.GetAlarmInfo(Value[16:20])
             if "unknown" in AlarmStr.lower():
                 AlarmStr = f"UNKNOWN ALARM: {AlarmCode}"
             
@@ -3835,7 +3834,7 @@ class Evolution(GeneratorController):
         # This is a numeric value that increments for each new log entry
         TempVal = Value[2:4]
 
-        # this will attempt to find a description for the log entry based on the info in ALARMS.txt
+        # this will attempt to find a description for the log entry based on the info in ALARMS.csv
         if (
             LogBase == ALARM_LOG_STARTING_REG
             and "unknown" in LogStr.lower()
@@ -3843,7 +3842,7 @@ class Evolution(GeneratorController):
             and len(Value) > 16
         ):
             TempVal = Value[16:20]  # get alarm code
-            AlarmStr = self.GetAlarmInfo(TempVal, ReturnNameOnly=True, FromLog=True)
+            AlarmStr = self.GetAlarmInfo(TempVal)
             if not "unknown" in AlarmStr.lower():
                 LogStr = AlarmStr
 
@@ -3875,9 +3874,9 @@ class Evolution(GeneratorController):
         return RetStr
 
     # ------------------- Evolution:GetAlarmInfo --------------------------------
-    # Read file alarm file and get more info on alarm if we have it
+    # Return the name of an alarm code from the alarm file (data/ALARMS.csv)
     # passes ErrorCode as string of hex values
-    def GetAlarmInfo(self, ErrorCode, ReturnNameOnly=False, FromLog=False):
+    def GetAlarmInfo(self, ErrorCode):
 
         if not self.EvolutionController:
             return ""
@@ -3885,44 +3884,19 @@ class Evolution(GeneratorController):
             # Evolution Air Cooled will give a code of 0000 for warnings
             # Note: last error code can be zero if controller was power cycled
             if ErrorCode == "0000":
-                if ReturnNameOnly:
-                    # We should not see a zero in the alarm log, this would indicate a true UNKNOWN
-                    # returning unknown here is OK since ParseLogEntry will look up a code also
-                    return "Warning Code Unknown: %d" % int(ErrorCode, 16)
-                else:
-                    # This can occur if the controller was power cycled and no alarms have occurred since power applied
-                    return "Error Code 0000: No alarms occurred since controller has been power cycled.\n"
+                # We should not see a zero in the alarm log, this would indicate a true UNKNOWN
+                # returning unknown here is OK since ParseLogEntry will look up a code also
+                return "Warning Code Unknown: %d" % int(ErrorCode, 16)
 
-            with open(self.AlarmFile, "r") as AlarmFile:  # opens file
-
-                for line in AlarmFile:
-                    line = (
-                        line.strip()
-                    )  # remove newline at beginning / end and trailing whitespace
-                    if not len(line):
-                        continue
-                    if line[0] == "#":  # comment?
-                        continue
-                    Items = line.split("!")
-                    if len(Items) != 5:
-                        continue
-                    if int(Items[0]) == int(ErrorCode, 16):
-                        if ReturnNameOnly:
-                            outstr = Items[2]
-                        else:
-                            outstr = (
-                                Items[2]
-                                + ", Error Code: "
-                                + Items[0]
-                                + "\n"
-                                + "    Description: "
-                                + Items[3]
-                                + "\n"
-                                + "    Additional Info: "
-                                + Items[4]
-                                + "\n"
-                            )
-                        return outstr
+            if self.AlarmNames is None:
+                # read the file once: {code (int): name}
+                self.AlarmNames = {
+                    int(Item["Code"]): Item["Name"]
+                    for Item in self.ReadCSVFile(self.AlarmFile)
+                }
+            Name = self.AlarmNames.get(int(ErrorCode, 16))
+            if Name is not None:
+                return Name
 
         except Exception as e1:
             self.LogErrorLine("Error in  GetAlarmInfo " + str(e1))
@@ -4106,7 +4080,7 @@ class Evolution(GeneratorController):
             # this. Reg 051f is not updated with service due alarms.
             Value = self.GetRegisterValueFromList("05f1")  # get last error code
             if len(Value) == 4:
-                AlarmStr = self.GetAlarmInfo(Value, ReturnNameOnly=True)
+                AlarmStr = self.GetAlarmInfo(Value)
                 if not "unknown" in AlarmStr.lower():
                     outString = AlarmStr
             else:
@@ -4190,7 +4164,7 @@ class Evolution(GeneratorController):
             # check the E-Code first
             Value = self.GetRegisterValueFromList("0001")
             if len(Value) == 8:
-                AlarmStr = self.GetAlarmInfo(Value[-4:], ReturnNameOnly=True)
+                AlarmStr = self.GetAlarmInfo(Value[-4:])
                 if not "unknown" in AlarmStr.lower():
                     alarm_list.append(AlarmStr)
             # now check the flag registers

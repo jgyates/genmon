@@ -1,4 +1,4 @@
-#Reg0019,KW,Fuel,Hz,50%,Rate 50%,100%,Rate 100%,Units
+Reg0019,kW,Fuel,Hz,50%,Rate 50%,100%,Rate 100%,Units
 22,7.5,Propane,60,0.5,0.87,1,1.42,gal
 22,7.5,Natural Gas,60,0.5,73,1,117,cubic feet
 5,8,Propane,60,0.5,0.94,1,1.68,gal

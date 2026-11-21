@@ -1,0 +1,193 @@
+Code,Name
+1006,Internal Fault
+1001,Controller Harness
+1100,Overcrank
+1101,Overcrank
+1200,Overspeed (Prolonged)
+1201,Overspeed (Prolonged-Throttle stuck open.)
+1204,Overspeed
+1205,Overspeed (Instantaneous)
+1206,Overspeed (Instantaneous with Throttle stuck open)
+1207,Overspeed (Alternator)
+1300,Low Oil Pressure (While Running)
+1400,High Temperature
+1500,RPM Sense Loss
+1501,RPM Sensor (Twin Cylinder+Running)
+1505,RPM Sensor (Twin Cylinder+Cranking)
+1511,RPM Sensor (Single Cylinder+Running)
+1515,RPM Sensor (Single Cylinder+Cranking)
+1516,RPM Sensor(Cranking - Low Fuel)
+1517,RPM Sensor (Running - Low Fuel)
+1518,RPM Sensor (No Pulse during Cranking)
+1519,RPM Sensor (No Pulse during Running)
+1520,RPM Sensor (Missing Pulses during Cranking)
+1521,RPM Sensor (Missing Pulses during Running)
+1600,Underspeed
+1601,Underspeed (Low Fuel Pressure)
+1602,Underspeed
+1603,Underspeed
+1800,Overvoltage (Prolonged)
+1801,Overvoltage (Instantaneous)
+1803,Overvoltage (Overspeed)
+1900,Undervoltage (Prolonged)
+1901,Undervoltage (Instantaneous)
+1902,Undervoltage (Both Zero Crosses missing)
+1903,Undervoltage (Little / No Voltage)
+1904,Undervoltage (No Field Current)
+1905,Undervoltage (Low Speed)
+1906,Undervoltage (Single Zero Cross missing)
+2099,Wiring Error
+2098,Wiring Error
+2100,"Overload Remove Load (Default, Output Current Method)"
+2101,Overload (Remove Load)
+2102,Overload (Remove Load)
+2103,Overloaded
+2299,Undervoltage Overload
+2399,Stepper Overcurrent
+2400,Fuse Problem
+2500,Bosch Governor
+2501,Bosch Governor (Stuck Open)
+2502,Bosch Governor (Stuck Closed)
+1062,VSCF Comms Loss
+2600,Ignition
+2602,Ignition Fault
+2601,Ignition Missing Cam
+2611,Over Current Cylinder 1
+2612,Over Current Cylinder 2
+2613,Over Current Cylinder 3
+2614,Over Current Cylinder 4
+2615,Over Current Cylinder 5
+2616,Over Current Cylinder 6
+2617,Over Current Cylinder 7
+2618,Over Current Cylinder 8
+2619,Over Current Cylinder 9
+2620,Over Current Cylinder 10
+2621,Under Current Cylinder 1
+2622,Under Current Cylinder 2
+2623,Under Current Cylinder 3
+2624,Under Current Cylinder 4
+2625,Under Current Cylinder 5
+2626,Under Current Cylinder 6
+2627,Under Current Cylinder 7
+2628,Under Current Cylinder 8
+2629,Under Current Cylinder 9
+2630,Under Current Cylinder 10
+2650,Internal Ignition Missing Cam
+2651,External Ignition Missing Cam
+2660,Internal Ignition Missing Crank Pulses
+2661,External Ignition Missing Crank Pulses
+2670,CAN Bus
+2671,CAN Bus
+2672,CAN Bus
+2700,Fuel Level Low
+2720,Low Coolant Level
+2751,Very Low Battery
+2800,ESTOP Pressed
+2810,Hall Calibration
+2900,Diesel ECU Fault
+134,DTC P0134
+2680,Low Fuel Level
+2690,Low Fuel Pressure
+2710,Ruptured Tank
+2730,Exercise Not Set
+2750,Low Battery
+2760,Battery Problem
+2770,Charger Warning
+2780,Charger Missing AC
+2790,SEEPROM Abuse
+2910,Gaseous Emissions
+3201,Fuel Delivery Pressure
+3217,Fuel Delivery Pressure
+3003,ECU Faulted
+2070,Missing Keypad
+3104,Engine Throttle Valve 1 Position
+3204,Engine Fuel Delivery Pressure
+3404,Engine Intake Manifold #1 Pressure
+4901,Engine Fuel Valve Alarm
+4902,Engine Fuel Valve Alarm
+4903,Engine Fuel Valve Alarm
+4904,Engine Fuel Valve 1 Position
+4905,Engine Fuel Valve Alarm
+4906,Engine Fuel Valve Alarm
+4907,Engine Fuel Valve Alarm
+4908,Engine Fuel Valve Alarm
+4909,Engine Fuel Valve Alarm
+4910,Engine Fuel Valve Alarm
+4911,Engine Fuel Valve Alarm
+4912,Engine Fuel Valve Alarm
+4913,Engine Fuel Valve Alarm
+4914,Engine Fuel Valve Alarm
+4915,Engine Fuel Valve Alarm
+4916,Engine Fuel Valve Alarm
+4917,Engine Fuel Valve Alarm
+4101,Engine Position Sensor
+4102,Engine Timing Sensor
+4300,O2 Sensor
+4301,O2 Sensor
+4302,O2 Sensor
+4303,O2 Sensor
+4304,O2 Sensor
+4305,O2 Sensor
+4306,O2 Sensor
+4307,O2 Sensor
+4308,O2 Sensor
+4309,O2 Sensor
+4310,O2 Sensor
+4311,O2 Sensor
+4312,O2 Sensor
+4313,O2 Sensor
+4314,O2 Sensor
+4315,O2 Sensor
+4316,O2 Sensor
+4317,O2 Sensor
+4503,Engine Ignition Coil #1
+4504,Engine Ignition Coil #1
+4505,Engine Ignition Coil #1
+4506,Engine Ignition Coil #1
+4507,Engine Ignition Coil #1
+4603,Engine Ignition Coil #2
+4604,Engine Ignition Coil #2
+4605,Engine Ignition Coil #2
+4606,Engine Ignition Coil #2
+4607,Engine Ignition Coil #2
+5101,Engine Speed Low
+5102,Engine Speed Alarm
+5103,Engine Speed Alarm
+5104,Engine Speed Alarm
+5105,Engine Speed Alarm
+5106,Engine Speed Alarm
+5107,Engine Speed Alarm
+5108,Engine Speed Alarm
+5109,Engine Speed Alarm
+5110,Engine Speed Alarm
+5111,Engine Speed Alarm
+5112,Engine Speed Alarm
+5113,Engine Speed Alarm
+5114,Engine Speed Alarm
+5115,Engine Speed Alarm
+5116,Engine Speed Alarm
+5117,Engine Speed Alarm
+5415,Oil level high or low
+5416,Oil level high or low
+5417,Oil level high or low
+7000,Overload - cooldown
+5303,Engine Fuel Shutoff Control
+5304,Engine Fuel Shutoff Control
+5200,Cylinder Head Temperature
+5201,Cylinder Head Temperature
+5202,Cylinder Head Temperature
+5203,Cylinder Head Temperature
+5204,Cylinder Head Temperature
+5205,Cylinder Head Temperature
+5206,Cylinder Head Temperature
+5207,Cylinder Head Temperature
+5208,Cylinder Head Temperature
+5209,Cylinder Head Temperature
+5210,Cylinder Head Temperature
+5211,Cylinder Head Temperature
+5212,Cylinder Head Temperature
+5213,Cylinder Head Temperature
+5214,Cylinder Head Temperature
+5215,Cylinder Head Temperature
+5216,Cylinder Head Temperature
+5217,Cylinder Head Temperature

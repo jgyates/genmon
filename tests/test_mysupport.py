@@ -94,10 +94,17 @@ class FileTests(SupportTestCase):
         self.assertFalse(os.path.exists(self.path("log.csv")))
 
     def test_csv(self):
-        with open(self.path("f.csv"), "w") as f:
-            f.write("# comment\n\n1,2,3\n a,b \n")
-        self.assertEqual(self.s.ReadCSVFile(self.path("f.csv")), [["1", "2", "3"], ["a", "b"]])
+        # rows as dicts keyed by the header; spaces removed, blank lines
+        # skipped, a short row gets "", extra values are dropped, CRLF and
+        # quoted values are read as CSV
+        with open(self.path("f.csv"), "w", newline="") as f:
+            f.write('kW, Fuel ,Units\r\n\r\n1,2,3\r\n a,b \r\n4,5,6,7\r\n8,"Gas, natural",gal\r\n')
+        self.assertEqual(self.s.ReadCSVFile(self.path("f.csv")), [
+            {"kW": "1", "Fuel": "2", "Units": "3"}, {"kW": "a", "Fuel": "b", "Units": ""},
+            {"kW": "4", "Fuel": "5", "Units": "6"}, {"kW": "8", "Fuel": "Gas, natural", "Units": "gal"}])
+        self.assertEqual(self.errors, [])
         self.assertEqual(self.s.ReadCSVFile(self.path("none.csv")), [])
+        self.assertEqual(len(self.errors), 1)
 
 
 # -------------------------------------------------------------------------------

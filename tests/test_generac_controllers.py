@@ -462,6 +462,85 @@ class EvolutionModelTests(GeneracTestCase):
         self.assertIn("Alarm - OVERCRANK", alarms)
 
 
+# -------------------------------------------------------------------------------
+class EvolutionDataFileTests(GeneracTestCase):
+    # the model and fuel lookups in data/param and data/fuel (read by column
+    # name, see tests/test_data_files.py for checks of the files)
+
+    def model_info(self, c, group, code, fuel_setting):
+        c.LiquidCooledParams = None
+        values = {"020a": group, "020b": code, "020c": fuel_setting}
+        with mock.patch.object(c, "GetParameter", side_effect=lambda reg, **kwargs: values[reg]):
+            return {r: c.GetLiquidCooledModelInfo(r)
+                    for r in ["kw", "nominalvolts", "frequency", "phase", "enginedisplacement", "fuel"]}
+
+    def test_liquid_cooled_params(self):
+        c = self.controller("evo_lc")
+        # Evolution: 45 kW emissions unit, 120/240 3 phase; register 020c
+        # (fuel) not set, so the fuel comes from the file
+        self.assertEqual(self.model_info(c, 18, 36880, 99), {
+            "kw": "45", "nominalvolts": "240", "frequency": "60", "phase": "3",
+            "enginedisplacement": "2.4 L", "fuel": "Propane"})
+        self.assertEqual(c.LiquidCooledParams["Unit Voltage Code"], "J")
+        self.assertEqual(self.model_info(c, 10, 12312, 99)["frequency"], "50")
+        self.assertEqual(self.model_info(c, 10, 12312, 99)["fuel"], "Diesel")
+        self.assertEqual(self.model_info(c, 10, 12312, 1)["fuel"], "Natural Gas")
+        # 4.5 L rows
+        self.assertEqual(self.model_info(c, 1, 27, 0)["enginedisplacement"], "4.5 L")
+        # no match
+        self.assertEqual(self.model_info(c, 99, 1, 0)["kw"], "Unknown")
+        self.assertIsNone(c.GetLiquidCooledParams(99, 1))
+        # Nexus: the first of the duplicate rows is used; the file has no fuel
+        # column, so with 020c not set the fuel is Unknown (was an IndexError)
+        c.EvolutionController = False
+        info = self.model_info(c, 2, 16, 99)
+        self.assertEqual((info["kw"], info["enginedisplacement"], info["fuel"]), ("48", "4.2 L", "Unknown"))
+        c.LiquidCooled = False
+        self.assertIsNone(c.GetLiquidCooledParams(2, 16))
+        self.assertEqual(self.code_errors(), [])
+
+    def test_fuel_params(self):
+        c = self.controller("evo_lc")
+        for evo45, kw, fuel, expected in [
+                (False, "30", "Diesel", [0.5, 1.45, 1.0, 2.74, "gal"]),
+                (False, "48", "Natural Gas", [0.5, 392.0, 1.0, 756.0, "cubic feet"]),
+                (True, "80", "Natural Gas", [0.5, 534.0, 1.0, 1063.0, "cubic feet"]),
+                (False, "50", "Diesel", []), (True, "30", "Diesel", [])]:
+            with self.subTest(evo45=evo45, kw=kw, fuel=fuel):
+                c.Evo45L, c.NominalKW, c.FuelType = evo45, kw, fuel
+                self.assertEqual(c.GetFuelParamsFromFile(), expected)
+        c.LiquidCooled = False
+        for evo2, model, fuel, expected in [
+                (False, "0016", "Propane", [0.5, 0.87, 1.0, 1.42, "gal"]),
+                (True, "0016", "Propane", [0.5, 1.7, 1.0, 2.99, "gal"]),
+                (True, "0011", "Natural Gas", [0.5, 228.0, 1.0, 327.0, "cubic feet"]),
+                (True, "0063", "Propane", [])]:
+            with self.subTest(evo2=evo2, model=model, fuel=fuel):
+                c.Evolution2, c.FuelType = evo2, fuel
+                with mock.patch.object(c, "GetRegisterValueFromList", return_value=model):
+                    self.assertEqual(c.GetFuelParamsFromFile(), expected)
+        c.EvolutionController = False
+        self.assertEqual(c.GetFuelParamsFromFile(), [])
+        self.assertEqual(self.code_errors(), [])
+
+    def test_alarm_info(self):
+        # alarm names from data/ALARMS.csv; the controller gives the code as
+        # hex, the file has it in decimal (0x044c is 1100)
+        c = self.controller("evo_lc")
+        c.AlarmNames = None
+        with mock.patch.object(c, "ReadCSVFile", wraps=c.ReadCSVFile) as read:
+            self.assertEqual(c.GetAlarmInfo("044c"), "Overcrank")
+            # a name with a comma (quoted in the file)
+            self.assertEqual(c.GetAlarmInfo("0834"), "Overload Remove Load (Default, Output Current Method)")
+            self.assertEqual(c.GetAlarmInfo("05dc"), "RPM Sense Loss")
+            self.assertEqual(c.GetAlarmInfo("0001"), "Error Code Unknown: 0001\n")
+            self.assertEqual(read.call_count, 1)  # the file is read once
+        self.assertEqual(c.GetAlarmInfo("0000"), "Warning Code Unknown: 0")
+        c.EvolutionController = False
+        self.assertEqual(c.GetAlarmInfo("044c"), "")
+        self.assertEqual(self.code_errors(), [])
+
+
 class FixedTime(datetime.datetime):
     """datetime.datetime with now() Wednesday 11/18/2026 14:05:09."""
 

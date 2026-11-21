@@ -88,6 +88,11 @@ All notable changes to this project will be documented in this file.
 - Clear Sensor Log now also clears the sensor charts (they showed the old data until genmon restarted)
 - genmonmaint.sh install (-i) and update (-u) stop with a clear message when Python is older than 3.9, instead of failing part way or leaving a genmon that will not start; removed the Python 2 option (-p); startgenmon.sh still accepts -p from older crontab entries
 - Since 2.0.3, web commands that change something (e.g. /cmd/setremote?setremote=start) need a POST with the X-CSRFToken header, so a plain URL answers an error. A URL works again with the token added (&csrf_token=<token>, the token is at /cmd/csrf_token). See the Web API section of Appendix C in the wiki
+- Data files are now standard CSV files with a header row: fuel tables moved to data/fuel/*.csv, liquid cooled model tables to data/param/*.csv, and data/ALARMS.txt is now data/ALARMS.csv (alarm code and name only). Each data folder has a README.md describing the columns
+- Fixed Nexus Liquid Cooled fuel type lookup error when the fuel type is not set in the controller
+- Corrected Nexus Liquid Cooled model data: 100 kW 277/480 voltage and frequency, phase of 45 kW and 48 kW 5.4 L 3 phase models, removed a duplicate entry
+- The alarm file is now read once instead of for every alarm lookup
+- Added tests that check the data files
 
 ## 2.0.3 -2026-10-07
 - Added support for an auxiliary alam log (see Advanced Settings to enable) and the Known Issues wiki for more info

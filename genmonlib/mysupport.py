@@ -10,6 +10,7 @@
 # -------------------------------------------------------------------------------
 
 import collections
+import csv
 import getopt
 import os
 import socket
@@ -497,24 +498,21 @@ class MySupport(MyCommon):
             return delta_hours * 60.0 + delta_minutes
 
     # ---------------------MySupport::ReadCSVFile--------------------------------
-    # read a CSV file, return a list of lists
-    # lines starting with # will be ignored as they will treated as comments
+    # read a CSV file whose first line is a header, return a list of dicts keyed
+    # by the header names. Spaces around names and values are removed, a value
+    # missing at the end of a row is "", values past the header are dropped and
+    # blank lines are skipped.
     def ReadCSVFile(self, FileName):
         try:
-            ReturnedList = []
-            with open(FileName, "r") as CSVFile:
-                for line in CSVFile:
-                    line = (
-                        line.strip()
-                    )  # remove newline at beginning / end and trailing whitespace
-                    if not len(line):
-                        continue
-                    if line[0] == "#":  # comment?
-                        continue
-                    Items = line.split(",")
-                    ReturnedList.append(Items)
-
-            return ReturnedList
+            with open(FileName, "r", newline="") as CSVFile:
+                return [
+                    {
+                        Key.strip(): (Value or "").strip()
+                        for Key, Value in Row.items()
+                        if Key is not None
+                    }
+                    for Row in csv.DictReader(CSVFile)
+                ]
         except Exception as e1:
             self.LogErrorLine("Error in ReadCSVFile: " + FileName + " : " + str(e1))
             return []
