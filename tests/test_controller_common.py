@@ -4,7 +4,8 @@
 # PURPOSE: Tests for genmonlib/controller.py, the code every controller type
 #          shares (GeneratorController): command buttons and command
 #          sequences, the maintenance log, data sent in by add-ons (tank, CT,
-#          sensors, gauges), value modifiers, the power and outage logs.
+#          sensors, gauges), value modifiers, the power and outage logs, the
+#          sensor logs.
 #
 #          The controllers are built in simulation mode from the controller
 #          files in data/controller and the captures in tests/sim/captures (the
@@ -22,7 +23,10 @@
 import datetime
 import json
 import os
+import shutil
 import sys
+import tempfile
+import threading
 import unittest
 from unittest import mock
 
@@ -325,3 +329,124 @@ class OutageHistoryTests(GeneracTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# -------------------------------------------------------------------------------
+class SensorLogTests(unittest.TestCase):
+    """The sensor logs (data/sensordata/sensor_<name>.txt): read at startup
+    for the charts, kept within the entries and size settings."""
+
+    def setUp(self):
+        self.folder = tempfile.mkdtemp(prefix="sensorlog_")
+        self.addCleanup(shutil.rmtree, self.folder)
+        c = genmonlib.controller.GeneratorController.__new__(genmonlib.controller.GeneratorController)
+        c.log, c.console, c.Simulation = None, None, False
+        c.SensorLogPath = self.folder
+        c.SensorLogMaxSize = 5.0
+        c.MaxSensorLogEntries = 100
+        c.SensorLogLock = threading.RLock()
+        c.SensorLogLists, c.SensorLogLineCount = {}, {}
+        self.c = c
+        self.start = datetime.datetime(2026, 1, 1)
+
+    def stamp(self, n):
+        return (self.start + datetime.timedelta(minutes=n)).strftime("%x %X")
+
+    def write_file(self, name, count, extra=()):
+        with open(self.c.GetSensorLogFile(name), "w") as f:
+            for n in range(count):
+                f.write("%s,%d.5 F\n" % (self.stamp(n), n))
+            for line in extra:
+                f.write(line + "\n")
+
+    def file_lines(self, name):
+        with open(self.c.GetSensorLogFile(name)) as f:
+            return f.read().splitlines()
+
+    def reference_parse(self, path, max_entries):
+        # the parse before the speed up (every entry, newest first), decimated
+        result = []
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if not line or line[0] == "#":
+                    continue
+                items = self.c.removeNonPrintable(line).split(",")
+                if len(items) != 2:
+                    continue
+                items[1] = self.c.removeAlpha(items[1])
+                result.insert(0, [items[0], items[1], self.c.ParseSensorTimestamp(items[0])])
+        return self.c.DecimateList(result, max_entries)
+
+    def test_parse_same_as_before(self):
+        # newest first, at most the entries setting, spread over the whole log;
+        # comments, blank and bad lines skipped, units removed
+        self.write_file("Oil Temp", 1000, extra=["# comment", "", "bad line", "a,b,c",
+                                                 self.stamp(2000) + ",\x0799.5 F"])
+        path = self.c.GetSensorLogFile("Oil Temp")
+        for max_entries in [100, 999, 5000]:
+            with self.subTest(max_entries=max_entries):
+                parsed = self.c._ParseSensorLogFile(path, MaxEntries=max_entries)
+                self.assertEqual(parsed, self.reference_parse(path, max_entries))
+        parsed = self.c._ParseSensorLogFile(path, MaxEntries=100)
+        self.assertEqual(len(parsed), 100)
+        self.assertEqual(parsed[0][:2], [self.stamp(2000), "99.5"])     # newest
+        self.assertEqual(parsed[-1][:2], [self.stamp(0), "0.5"])        # oldest
+        self.assertGreater(parsed[0][2], parsed[-1][2])
+
+    def test_chart_data(self):
+        self.write_file("Oil Temp", 1000)
+        self.assertEqual(len(self.c.ReadSensorLogFromFile("Oil Temp")), 100)
+        self.assertEqual(self.c.ReadSensorLogFromFile("Missing"), [])
+
+    def test_trimmed_to_the_entries_setting(self):
+        # at twice the setting the file is trimmed to it: the newest half as
+        # they are, the older entries thinned out (the first one is kept)
+        for n in range(200):
+            self.c.LogToSensorLog("CPU Temp", self.stamp(n), "%d.5" % n)
+        self.assertEqual(len(self.file_lines("CPU Temp")), 200)
+        self.c.LogToSensorLog("CPU Temp", self.stamp(200), "200.5")
+        lines = self.file_lines("CPU Temp")
+        self.assertEqual(len(lines), 100)
+        self.assertEqual(lines[-50:], ["%s,%d.5" % (self.stamp(n), n) for n in range(151, 201)])
+        self.assertEqual(lines[0], "%s,0.5" % self.stamp(0))
+        self.assertEqual(lines, sorted(lines, key=lambda l: self.c.ParseSensorTimestamp(l.split(",")[0])))
+        # counted from the file after a trim: the next trim at 200 entries again
+        for n in range(201, 301):
+            self.c.LogToSensorLog("CPU Temp", self.stamp(n), "%d.5" % n)
+        self.assertEqual(len(self.file_lines("CPU Temp")), 200)
+
+    def test_large_file_from_before(self):
+        # a file larger than the setting (e.g. from an older version) is
+        # trimmed with the first new entry
+        self.write_file("Oil Temp", 5000)
+        self.c.LogToSensorLog("Oil Temp", self.stamp(5000), "1.5")
+        lines = self.file_lines("Oil Temp")
+        self.assertEqual(len(lines), 100)
+        self.assertEqual(lines[-1], "%s,1.5" % self.stamp(5000))
+
+    def test_size_setting(self):
+        # a file at 85% of the size setting: the oldest entries are removed
+        # (it was deleted when it was over the size)
+        self.c.MaxSensorLogEntries = 100000
+        self.c.SensorLogMaxSize = 0.01          # about 10 kB
+        for n in range(500):
+            self.c.LogToSensorLog("Oil Temp", self.stamp(n), "%d.5 F" % n)
+        lines = self.file_lines("Oil Temp")
+        self.assertTrue(lines)
+        self.assertLess(os.path.getsize(self.c.GetSensorLogFile("Oil Temp")), 0.85 * 0.01 * 1024 * 1024)
+        self.assertEqual(lines[-1], "%s,499.5 F" % self.stamp(499))
+        first = int(lines[0].split(",")[1].split(".")[0])
+        self.assertEqual(lines, ["%s,%d.5 F" % (self.stamp(n), n) for n in range(first, 500)])
+
+    def test_cache_after_trim_and_clear(self):
+        self.write_file("Oil Temp", 150)
+        self.assertEqual(len(self.c.ReadSensorLogFromFile("Oil Temp")), 100)
+        for n in range(150, 201):
+            self.c.LogToSensorLog("Oil Temp", self.stamp(n), "%d.5" % n)
+        cached = self.c.ReadSensorLogFromFile("Oil Temp")
+        self.assertEqual(cached[0][:2], [self.stamp(200), "200.5"])
+        self.assertLessEqual(len(cached), 100)
+        with mock.patch.object(self.c, "GetSensorNames", return_value=["Oil Temp"]):
+            self.assertEqual(self.c.ClearSensorLog(), "Sensor Log cleared")
+        self.assertEqual(self.c.ReadSensorLogFromFile("Oil Temp"), [])

@@ -105,8 +105,8 @@ modbus_between_frame_delay=This value will add a delay between modbus requests. 
 watchdog_addition=Additional delay before a communication timeout notification
 disablepowerlog=Enable to disable the power log and current reading. Not supported on Nexus.
 disablesensorlog = If enabled, the logging of sensor data will be disabled. This also disables the graphs of sensors in the web interface.
-sensorlogmax = Override the maximum size of each sensor log. The default is 5MB.
-max_sensorlog_entries = The maximum number of entries in each sensor log. Note the log file will not be truncated until the maximum file size is reached. In most cases the default is the preferred value.
+sensorlogmax = The maximum size of each sensor log file in MB (the default is 5). When a file reaches 85% of this size its oldest entries are removed.
+max_sensorlog_entries = The number of entries kept for each sensor: the points shown in the sensor charts. When a sensor log file has twice this many entries it is trimmed to this many: the newest half are kept as they are, the older entries are thinned out so the full time span is kept. Larger values take longer to load when genmon starts, especially on slower Raspberry Pi models. In most cases the default is the preferred value.
 estimated_load=The percent load (expresses a a decimal value i.e. .5 = 50 percent) used when estimating the run hours left until the tank is empty.
 subtractfuel=The amount of fuel (gal or L, depending on 'Use Metric' setting) to subtract from the fuel in tank estimate
 half_rate=The unit of fuel for Half and Full Rate parameters. Use this fuel consumption stats for non Evolution units or to override the fuel consumption defaults for Evolution controllers.

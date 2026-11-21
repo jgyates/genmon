@@ -103,6 +103,7 @@ class GeneratorController(MySupport):
         self.MaxSensorLogEntries = 2000
         self.SensorLogLock = threading.RLock()
         self.SensorLogLists = {}  # per-sensor cached lists: {sensor_name: [[ts, val], ...]}
+        self.SensorLogLineCount = {}  # per-sensor number of entries in the log file
         self.bAlternateDateFormat = False
         self.HoursFuelRemainingAtLoad = None
         self.HoursFuelRemainingCurrentLoad = None
@@ -2326,37 +2327,66 @@ class GeneratorController(MySupport):
             with self.SensorLogLock:
                 if cache_key in self.SensorLogLists and len(self.SensorLogLists[cache_key]):
                     self.SensorLogLists[cache_key].insert(0, [TimeStamp, Value, epoch])
-            self.LogToFile(LogFile, TimeStamp, Value)
-            # Prune if file exceeds size limit
-            if os.path.isfile(LogFile):
-                LogSize = os.path.getsize(LogFile)
-                if float(LogSize) / (1024 * 1024) >= self.SensorLogMaxSize * 0.85:
-                    self.PruneSensorLog(sensor_name, 60 * 24 * 30 * 36)
+                self.LogToFile(LogFile, TimeStamp, Value)
+                if not os.path.isfile(LogFile):
+                    return
+                if cache_key not in self.SensorLogLineCount:
+                    self.SensorLogLineCount[cache_key] = len(self._ReadSensorLogLines(LogFile))
+                else:
+                    self.SensorLogLineCount[cache_key] += 1
+                # keep the file within the entries and size settings
+                if (self.SensorLogLineCount[cache_key] > 2 * self.SensorLogEntriesLimit()
+                        or os.path.getsize(LogFile) >= self.SensorLogMaxSize * 0.85 * 1024 * 1024):
+                    self.TrimSensorLog(sensor_name)
         except Exception as e1:
             self.LogErrorLine("Error in LogToSensorLog: " + str(e1))
+
+    # ----------  GeneratorController::SensorLogEntriesLimit---------------------
+    def SensorLogEntriesLimit(self):
+        try:
+            return max(100, int(self.MaxSensorLogEntries))
+        except Exception:
+            return 2000
 
     # ----------  GeneratorController::GetSensorCacheKey-------------------------
     def GetSensorCacheKey(self, sensor_name):
         return re.sub(r'[^\w\-]', '_', sensor_name)
 
-    # ----------  GeneratorController::_ParseTempLogFile- -----------------------
-    def _ParseSensorLogFile(self, LogFile):
-        TempList = []
+    # ----------  GeneratorController::_ReadSensorLogLines-----------------------
+    # the entries of a sensor log file ("timestamp,value" lines), oldest first
+    def _ReadSensorLogLines(self, LogFile):
+        Lines = []
         try:
             with open(LogFile, "r") as f:
                 for line in f:
                     line = line.strip()
-                    if not len(line):
+                    if not len(line) or line[0] == "#":
                         continue
-                    if line[0] == "#":
+                    if line.count(",") != 1:
                         continue
-                    line = self.removeNonPrintable(line)
-                    Items = line.split(",")
-                    if len(Items) != 2:
-                        continue
-                    Items[1] = self.removeAlpha(Items[1])
-                    epoch = self.ParseSensorTimestamp(Items[0])
-                    TempList.insert(0, [Items[0], Items[1], epoch])
+                    Lines.append(line)
+        except Exception as e1:
+            self.LogErrorLine("Error in _ReadSensorLogLines: " + str(e1))
+        return Lines
+
+    # ----------  GeneratorController::_ParseSensorLogFile-----------------------
+    # the entries of a sensor log as [timestamp, value, epoch], newest first,
+    # at most MaxEntries (spread over the whole log). Only the entries kept
+    # are parsed: the files can be large and this runs at startup (on a slow
+    # Pi a full parse took minutes, and genmon did not answer meanwhile)
+    def _ParseSensorLogFile(self, LogFile, MaxEntries=None):
+        TempList = []
+        try:
+            Lines = self._ReadSensorLogLines(LogFile)
+            Lines.reverse()
+            if MaxEntries is not None and len(Lines) > MaxEntries:
+                Lines = self.DecimateList(Lines, MaxEntries)
+            for line in Lines:
+                Items = self.removeNonPrintable(line).split(",")
+                if len(Items) != 2:
+                    continue
+                Items[1] = self.removeAlpha(Items[1])
+                TempList.append([Items[0], Items[1], self.ParseSensorTimestamp(Items[0])])
         except Exception as e1:
             self.LogErrorLine("Error in _ParseSensorLogFile: " + str(e1))
         return TempList
@@ -2393,9 +2423,7 @@ class GeneratorController(MySupport):
     def EnsureSensorCache(self, cache_key, LogFile):
         if cache_key in self.SensorLogLists and len(self.SensorLogLists[cache_key]):
             return self.SensorLogLists[cache_key]
-        TempList = self._ParseSensorLogFile(LogFile)
-        if len(TempList) > self.MaxSensorLogEntries:
-            TempList = self.DecimateList(TempList, self.MaxSensorLogEntries)
+        TempList = self._ParseSensorLogFile(LogFile, MaxEntries=self.SensorLogEntriesLimit())
         self.SensorLogLists[cache_key] = TempList
         return TempList
 
@@ -2445,34 +2473,40 @@ class GeneratorController(MySupport):
             self.LogErrorLine("Error in GetSensorHistory: " + str(e1))
             return []
 
-    # ----------  GeneratorController::PruneSensorLog-------------------------------
-    def PruneSensorLog(self, sensor_name, Minutes):
+    # ----------  GeneratorController::TrimSensorLog--------------------------------
+    # Keep a sensor log within the settings: at most "Maximum Entries in Sensor
+    # Log" entries (the newest half in full detail, the older entries thinned
+    # out over the rest of the time span, so older data gets coarser but is
+    # kept) and below "Maximum size Sensor Log" (the oldest entries dropped).
+    # The file is written in one pass and replaced at once.
+    def TrimSensorLog(self, sensor_name):
         try:
             LogFile = self.GetSensorLogFile(sensor_name)
-            if not os.path.isfile(LogFile):
-                return
-            LogSize = os.path.getsize(LogFile)
-            if float(LogSize) / (1024 * 1024) < self.SensorLogMaxSize * 0.85:
-                return
-            if float(LogSize) / (1024 * 1024) >= self.SensorLogMaxSize:
-                # file too large, clear and restart
-                cache_key = self.GetSensorCacheKey(sensor_name)
-                with self.SensorLogLock:
-                    os.remove(LogFile)
-                    self.SensorLogLists.pop(cache_key, None)
-                return
-            # prune old entries
             cache_key = self.GetSensorCacheKey(sensor_name)
-            CmdString = "sensor_log_json=%d&sensor=%s" % (Minutes, sensor_name)
-            TempLog = self.GetSensorHistory(CmdString)
             with self.SensorLogLock:
-                if os.path.isfile(LogFile):
-                    os.remove(LogFile)
+                if not os.path.isfile(LogFile):
+                    return
+                Lines = self._ReadSensorLogLines(LogFile)
+                Limit = self.SensorLogEntriesLimit()
+                if len(Lines) > Limit:
+                    Recent = Limit // 2
+                    Lines = self.DecimateList(Lines[:-Recent], Limit - Recent) + Lines[-Recent:]
+                MaxBytes = self.SensorLogMaxSize * 0.5 * 1024 * 1024
+                Size = sum(len(line) + 1 for line in Lines)
+                Drop = 0
+                while Drop < len(Lines) and Size > MaxBytes:
+                    Size -= len(Lines[Drop]) + 1
+                    Drop += 1
+                Lines = Lines[Drop:]
+                TempFile = LogFile + ".tmp"
+                with open(TempFile, "w") as f:
+                    for line in Lines:
+                        f.write(line + "\n")
+                os.replace(TempFile, LogFile)
+                self.SensorLogLineCount[cache_key] = len(Lines)
                 self.SensorLogLists.pop(cache_key, None)
-            for Items in reversed(TempLog):
-                self.LogToSensorLog(sensor_name, Items[0], Items[1])
         except Exception as e1:
-            self.LogErrorLine("Error in PruneSensorLog: " + str(e1))
+            self.LogErrorLine("Error in TrimSensorLog: " + str(e1))
 
     # ------------ GeneratorController::ClearSensorLog---------------------------
     def ClearSensorLog(self):
@@ -2484,7 +2518,10 @@ class GeneratorController(MySupport):
                 LogFile = self.GetSensorLogFile(sensor_name)
                 with self.SensorLogLock:
                     with open(LogFile, "r+") as f:
-                        f.truncate(0) 
+                        f.truncate(0)
+                    cache_key = self.GetSensorCacheKey(sensor_name)
+                    self.SensorLogLists.pop(cache_key, None)
+                    self.SensorLogLineCount[cache_key] = 0
 
             return "Sensor Log cleared"
         except Exception as e1:

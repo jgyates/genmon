@@ -84,6 +84,8 @@ All notable changes to this project will be documented in this file.
 - Software update notice links to the change log page on GitHub; web addresses in HTML email are now links
 - Submit Registers / Submit Logs on the About page now show an error when outbound email is not set up
 - The code hash (git commit) is now part of genmon's start info, so it is included in Submit Registers / Submit Logs and feedback emails; the web interface no longer runs a script to get it on each page load
+- Faster startup with large sensor logs (a slow Pi could take minutes); sensor log files are now kept within Maximum Entries in Sensor Log, and trimmed instead of deleted at the size limit
+- Clear Sensor Log now also clears the sensor charts (they showed the old data until genmon restarted)
 
 ## 2.0.3 -2026-10-07
 - Added support for an auxiliary alam log (see Advanced Settings to enable) and the Known Issues wiki for more info
