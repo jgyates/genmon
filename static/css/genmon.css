@@ -1422,6 +1422,8 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .toggle input:checked + .toggle-slider { background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
 .toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
+/* the input is 0x0, so show keyboard focus on the visible switch */
+.toggle input:focus-visible + .toggle-slider { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Checkbox */
 .checkbox-label {

@@ -94,6 +94,7 @@ All notable changes to this project will be documented in this file.
 - The alarm file is now read once instead of for every alarm lookup
 - Added tests that check the data files
 - Settings > Security certificate options (Quick, Trusted Local CA, Your Own Certificate) can now be selected with the keyboard (Tab and arrow keys) and are read by screen readers as a group of choices (#1588)
+- More keyboard access in the web interface: add-on tiles (open settings or install with Enter or Space), dashboard Customize "add tile" buttons, Registers page cells (Enter shows the history chart) and the header system health icon can now be reached with Tab and used from the keyboard; on/off switches now show a focus outline when selected with the keyboard
 
 ## 2.0.3 -2026-10-07
 - Added support for an auxiliary alam log (see Advanced Settings to enable) and the Known Issues wiki for more info

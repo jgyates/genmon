@@ -1171,6 +1171,11 @@ var UI = {
     });
   },
 
+  /** Put focus back on an element that was re-rendered (no-op if it is gone) */
+  refocus: function($el) {
+    if ($el && $el.length) $el[0].focus({preventScroll: true});
+  },
+
   /** Collect form values from a container into key=val&key=val string (raw, not encoded) */
   collectForm: function(sel) {
     var parts = [];
@@ -1301,15 +1306,19 @@ var UI = {
     if (ind.health) {
       var hc = ind.health === 'ok' ? 'ind-ok' : 'ind-bad';
       parts.push(
-        '<div class="hdr-ind '+hc+' hdr-ind-health" title="System: '+ind.health+'" style="cursor:pointer">' +
+        '<button type="button" class="hdr-ind '+hc+' hdr-ind-health" title="System: '+ind.health+'"' +
+        ' aria-label="System health: '+ind.health+'. Open Monitor">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
         (ind.health === 'ok'
           ? '<path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>'
           : '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>') +
-        '</svg></div>');
+        '</svg></button>');
     }
 
+    /* The indicators are rebuilt on every poll: keep keyboard focus on the health button */
+    var hadFocus = $(document.activeElement).hasClass('hdr-ind-health');
     $('#indicators').html(parts.join(''));
+    if (hadFocus) UI.refocus($('#indicators .hdr-ind-health'));
     $('#indicators').off('click.health').on('click.health', '.hdr-ind-health', function(){ Router.go('monitor'); });
   },
 
@@ -1962,6 +1971,8 @@ var Pages = {
       $c.on('click', '.drawer-tile', function() {
         var key = $(this).data('tile');
         if (key === undefined || key === null) return;
+        /* the drawer is rebuilt below: remember where focus was */
+        var drawerIdx = this === document.activeElement ? $('#tile-drawer-list .drawer-tile').index(this) : -1;
         Store.setTileHidden(key, false);
         /* Mark weather as seen so it persists after re-add */
         if (key === 'weather') Store.set('weatherSeen', true);
@@ -2016,6 +2027,10 @@ var Pages = {
         if (ord.indexOf(key) === -1) ord.push(key);
         Store.setTileOrder(ord);
         self._buildDrawer();
+        if (drawerIdx >= 0) {
+          var $dt = $('#tile-drawer-list .drawer-tile');
+          UI.refocus($dt.length ? $dt.eq(Math.min(drawerIdx, $dt.length - 1)) : $('#customize-btn'));
+        }
         /* refresh values */
         API.get('gui_status_json').done(function(d){
           if (d && d.tiles) Pages._updateGauges(d.tiles);
@@ -2558,9 +2573,10 @@ var Pages = {
           title = key;
           for (var ii = 0; ii < infoTiles.length; ii++) { if (infoTiles[ii].id === key) { title = infoTiles[ii].title; break; } }
         }
-        h += '<div class="drawer-tile" data-tile="' + esc(key) + '">' +
-          '<span class="drawer-tile-icon">+</span>' +
-          '<span>' + esc(title) + '</span></div>';
+        h += '<button type="button" class="drawer-tile" data-tile="' + esc(key) + '"' +
+          ' aria-label="Add ' + esc(title) + ' tile">' +
+          '<span class="drawer-tile-icon" aria-hidden="true">+</span>' +
+          '<span>' + esc(title) + '</span></button>';
       }
       $('#tile-drawer-list').html(h || '<div class="text-muted">All tiles are visible.</div>');
     },
@@ -6037,7 +6053,8 @@ var Pages = {
       var enabled = cfg.enable === true || cfg.enable === 'true';
       var title = cfg.title || mod;
       var iconKey = (cfg.icon || 'genmon').toLowerCase().replace(/[^a-z0-9]/g, '');
-      var h = '<div class="adn-tile'+(enabled?' adn-active':'')+'" data-mod="'+esc(mod)+'" data-enabled="'+enabled+'" data-title="'+esc(title)+'">';
+      var h = '<div class="adn-tile kb-click'+(enabled?' adn-active':'')+'" data-mod="'+esc(mod)+'" data-enabled="'+enabled+'" data-title="'+esc(title)+'"' +
+        ' role="button" tabindex="0" aria-label="'+esc(title)+'">';
       h += '<div class="adn-tile-icon">' + Pages.addons._addonIcon(iconKey) + '</div>';
       h += '<div class="adn-tile-name">'+esc(title)+'</div>';
       if (cfg.description) h += '<div class="adn-tile-desc">'+safeHtml(cfg.description)+'</div>';
@@ -6821,7 +6838,8 @@ var Pages = {
           var hi = isNaN(dec) ? '?' : String((dec >> 8) & 0xff);
           var lo = isNaN(dec) ? '?' : String(dec & 0xff);
 
-          h += '<div class="reg-cell '+cls+'" data-fk="'+esc(fk)+'">' +
+          h += '<div class="reg-cell kb-click '+cls+'" data-fk="'+esc(fk)+'" role="button" tabindex="0"' +
+            ' aria-label="'+esc((lbl ? lbl + ' ' : '') + fk + ', ' + val + ', show history')+'">' +
             (lbl ? '<div class="reg-label" title="'+esc(lbl)+'">'+esc(lbl)+'</div>' : '<div class="reg-label reg-label-empty">Register</div>') +
             '<div class="reg-sub">('+esc(bank)+':'+esc(addr)+')</div>' +
             '<div class="reg-hex">HEX: '+esc(val)+'</div>' +
@@ -6831,7 +6849,10 @@ var Pages = {
       });
       S.prevRegData = flat;
       this._record(flat);
+      /* rebuilt on every poll: keep keyboard focus on the same register */
+      var focusFk = $(document.activeElement).closest('#reg-grid .reg-cell').data('fk');
       $('#reg-grid').html(h || '<div class="text-muted text-center">No register data.</div>');
+      if (focusFk) UI.refocus($('#reg-grid .reg-cell').filter(function(){ return $(this).data('fk') === focusFk; }));
     }
   },
 
@@ -6854,6 +6875,16 @@ function init() {
 
   /* Flush any pending Store writes when the tab/window closes */
   window.addEventListener('beforeunload', function() { Store._flush(); });
+
+  /* Keyboard activation for non-button elements that act as buttons
+     (role="button" tabindex="0" class="kb-click"), e.g. add-on tiles */
+  $(document).on('keydown', '.kb-click', function(e) {
+    if (e.target !== this) return;   /* e.g. a link inside the tile */
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (!e.originalEvent || !e.originalEvent.repeat) $(this).trigger('click');
+    }
+  });
 
   $('#menu-toggle').on('click', function(){ Nav.toggleMobile(); });
   $('#sidebar-overlay').on('click', function(){ Nav.closeMobile(); });
