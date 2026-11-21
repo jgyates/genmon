@@ -2508,11 +2508,15 @@ input, select, textarea { font: inherit; color: inherit; }
   gap: 10px; margin-bottom: 10px;
 }
 .cert-mode-card {
+  display: block; position: relative;
   background: var(--bg-2); border: 2px solid var(--border);
   border-radius: var(--radius); padding: 14px; cursor: pointer;
   transition: border-color var(--fast), box-shadow var(--fast);
 }
 .cert-mode-card:hover { border-color: var(--accent); }
+.cert-mode-card:has(input:focus-visible) {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
 .cert-mode-card-sel {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent), inset 0 0 0 1px var(--accent);
@@ -2522,7 +2526,7 @@ input, select, textarea { font: inherit; color: inherit; }
   font-weight: 600; font-size: .88rem; color: var(--text-0); margin-bottom: 6px;
 }
 .cert-mode-card-hdr svg { color: var(--accent); flex-shrink: 0; }
-.cert-mode-card-desc { font-size: .8rem; color: var(--text-2); margin-bottom: 8px; line-height: 1.4; }
+.cert-mode-card-desc { display: block; font-size: .8rem; color: var(--text-2); margin-bottom: 8px; line-height: 1.4; }
 .cert-mode-badges { display: flex; flex-wrap: wrap; gap: 4px; }
 .cert-badge {
   font-size: .72rem; padding: 2px 7px; border-radius: 10px;

@@ -93,6 +93,7 @@ All notable changes to this project will be documented in this file.
 - Corrected Nexus Liquid Cooled model data: 100 kW 277/480 voltage and frequency, phase of 45 kW and 48 kW 5.4 L 3 phase models, removed a duplicate entry
 - The alarm file is now read once instead of for every alarm lookup
 - Added tests that check the data files
+- Settings > Security certificate options (Quick, Trusted Local CA, Your Own Certificate) can now be selected with the keyboard (Tab and arrow keys) and are read by screen readers as a group of choices (#1588)
 
 ## 2.0.3 -2026-10-07
 - Added support for an auxiliary alam log (see Advanced Settings to enable) and the Known Issues wiki for more info

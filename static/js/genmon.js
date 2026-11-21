@@ -1176,6 +1176,8 @@ var UI = {
     var parts = [];
     $(sel).find('[name]').each(function() {
       var $e = $(this), n = $e.attr('name');
+      /* Radio groups share a name; only the checked one carries the value */
+      if ($e.is(':radio') && !$e.is(':checked')) return;
       var v = $e.is(':checkbox') ? ($e.is(':checked')?'true':'false') : $e.val();
       /* Invert "disable" keys back: UI shows Enable (checked=on) but config key is disable */
       if ($e.is(':checkbox') && $e.attr('data-invert') === '1') {
@@ -4768,19 +4770,23 @@ var Pages = {
                     desc:'Use a certificate you obtained elsewhere.',
                     pro:'Full control', con:'Manual renewal required' }
                 ];
+                if (!modes.some(function(m){ return m.val === curMode; })) curMode = 'selfsigned';
+                /* Real radio inputs (visually hidden) so the cards are keyboard
+                   accessible: Tab into the group, arrow keys to change. */
                 h += '<div class="form-group setting-field cert-mode-wrap">' +
-                  '<input type="hidden" id="f_cert_mode" name="cert_mode" value="'+esc(curMode)+'">' +
-                  '<div class="cert-mode-cards">';
+                  '<div class="cert-mode-cards" id="f_cert_mode" role="radiogroup" aria-label="Certificate mode">';
                 modes.forEach(function(m) {
-                  var sel = m.val === curMode ? ' cert-mode-card-sel' : '';
-                  h += '<div class="cert-mode-card'+sel+'" data-mode="'+m.val+'">' +
-                    '<div class="cert-mode-card-hdr">' + icon(m.icon) +
-                    '<span>'+esc(m.title)+'</span></div>' +
-                    '<div class="cert-mode-card-desc">'+esc(m.desc)+'</div>' +
-                    '<div class="cert-mode-badges">' +
+                  var isSel = m.val === curMode;
+                  h += '<label class="cert-mode-card'+(isSel ? ' cert-mode-card-sel' : '')+'">' +
+                    '<input type="radio" class="sr-only" name="cert_mode" value="'+m.val+'"' +
+                    (isSel ? ' checked' : '') + '>' +
+                    '<span class="cert-mode-card-hdr">' + icon(m.icon) +
+                    '<span>'+esc(m.title)+'</span></span>' +
+                    '<span class="cert-mode-card-desc">'+esc(m.desc)+'</span>' +
+                    '<span class="cert-mode-badges">' +
                     '<span class="cert-badge cert-badge-pro">'+esc(m.pro)+'</span>' +
                     '<span class="cert-badge cert-badge-con">'+esc(m.con)+'</span>' +
-                    '</div></div>';
+                    '</span></label>';
                 });
                 h += '</div>'; /* .cert-mode-cards */
 
@@ -5297,7 +5303,7 @@ var Pages = {
         _secSlide($w.find('#sec-off-hint'), !httpsOn, dur);
         $w.find('.set-sec-group').each(function(){ _secSlide($(this), httpsOn, dur); });
         /* Self-signed cert → own cert fields */
-        var certMode = $w.find('#f_cert_mode').val() || 'selfsigned';
+        var certMode = $w.find('[name=cert_mode]:checked').val() || 'selfsigned';
         $w.find('#f_certfile, #f_keyfile').closest('.setting-field').each(function(){
           _secSlide($(this), httpsOn && certMode === 'custom', dur);
         });
@@ -5387,7 +5393,7 @@ var Pages = {
         if (show) { dur ? $el.slideDown(dur) : $el.show(); }
         else      { dur ? $el.slideUp(dur)   : $el.hide(); }
       }
-      $w.on('change', '#f_usehttps, #f_cert_mode, #f_usemfa, #f_http_port', applySecVis);
+      $w.on('change', '#f_usehttps, [name=cert_mode], #f_usemfa, #f_http_port', applySecVis);
       $w.on('input', '#f_http_port', applySecVis);
 
       /* --- Auth field coupling --- */
@@ -5407,11 +5413,9 @@ var Pages = {
         }
       });
       /* Cert mode card selection */
-      $w.on('click', '.cert-mode-card', function() {
-        var mode = $(this).data('mode');
+      $w.on('change', '[name=cert_mode]', function() {
         $w.find('.cert-mode-card').removeClass('cert-mode-card-sel');
-        $(this).addClass('cert-mode-card-sel');
-        $w.find('#f_cert_mode').val(mode).trigger('change');
+        $(this).closest('.cert-mode-card').addClass('cert-mode-card-sel');
       });
       /* Cert import wizard tabs */
       $w.on('click', '.cert-tab', function() {
