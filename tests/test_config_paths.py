@@ -5,13 +5,15 @@
 #          trailing slash, and with spaces in the folder names:
 #            - genmonmaint.sh backup, restore and log archive
 #            - startgenmon.sh passing -c to genloader.py
+#          and genmonmaint.sh stops an install or update on Python older
+#          than 3.9 (startgenmon.sh still accepts the old -p option).
 #            - genmon.py: the files sent with "sendlogfiles"
 #            - genloader.py: moving old config files (OneTimeMaint)
 #            - genserv.py: running the scripts (backup / restore from the web
 #              page)
 #
 #          The shell scripts run in a temporary copy of the genmon folder, with
-#          fake sudo, python3 and apt-get first on the PATH: nothing is
+#          fake sudo, python3, apt-get and git first on the PATH: nothing is
 #          installed and nothing runs as root.
 #
 #   USAGE: from the root of the repository:
@@ -39,10 +41,20 @@ FAKE_COMMANDS = {
     # run the command as this user
     "sudo": '#!/bin/bash\nexec "$@"\n',
     # the scripts ask python3 for its version (to find a managed Python
-    # install); 0.0 is never one. A script run with it is recorded.
-    "python3": '#!/bin/bash\nif [ "$1" = "-c" ]; then echo 0; exit 0; fi\n'
+    # install); 0.0 is never one. The version check (sys.exit) passes unless
+    # GENMON_TEST_OLD_PYTHON is set. A script run with it is recorded.
+    "python3": '#!/bin/bash\n'
+               'if [ "$1" = "-V" ]; then\n'
+               '  if [ -n "$GENMON_TEST_OLD_PYTHON" ]; then echo "Python 3.7.3"; else echo "Python 3.11.2"; fi\n'
+               '  exit 0\n'
+               'fi\n'
+               'if [ "$1" = "-c" ]; then\n'
+               '  case "$2" in *sys.exit*) [ -z "$GENMON_TEST_OLD_PYTHON" ]; exit $?;; esac\n'
+               '  echo 0; exit 0\n'
+               'fi\n'
                'printf "%s\\n" "$@" > "$GENMON_TEST_RECORD"\n',
-    "apt-get": "#!/bin/bash\nexit 0\n",
+    "apt-get": '#!/bin/bash\necho "APT-GET $*"\n',
+    "git": '#!/bin/bash\necho "GIT $*"\n',
 }
 
 
@@ -70,10 +82,12 @@ class ShellScriptTests(unittest.TestCase):
     def path(self, *names):
         return os.path.join(self.root, *names)
 
-    def run_script(self, *args):
-        result = subprocess.run(["bash", args[0]] + list(args[1:]), cwd=self.genmon, env=self.env,
+    def run_script(self, *args, env=None, returncode=False):
+        result = subprocess.run(["bash", args[0]] + list(args[1:]), cwd=self.genmon, env=env or self.env,
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                                 timeout=60, stdin=subprocess.DEVNULL)
+        if returncode:
+            return result.returncode, result.stdout
         return result.stdout
 
     def config_folder(self, name):
@@ -123,6 +137,56 @@ class ShellScriptTests(unittest.TestCase):
         self.run_script("startgenmon.sh", "stop")
         with open(self.record) as f:
             self.assertEqual(f.read().splitlines(), [os.path.join(self.genmon, "genloader.py"), "-x"])
+
+    def test_start_ignores_the_old_python_option(self):
+        # older installs have "start -p 3" in the crontab entry
+        config = self.path("etc genmon")
+        self.run_script("startgenmon.sh", "start", "-p", "3", "-c", config)
+        with open(self.record) as f:
+            self.assertEqual(f.read().splitlines(),
+                             [os.path.join(self.genmon, "genloader.py"), "-s", "-c", config])
+
+    def test_old_python_stops_install_and_update(self):
+        old = dict(self.env, GENMON_TEST_OLD_PYTHON="1")
+        config = self.config_folder("etc genmon")
+        for option in ["-i", "-u"]:
+            with self.subTest(option=option):
+                code, output = self.run_script("genmonmaint.sh", option, "-n", "-c", config,
+                                               env=old, returncode=True)
+                self.assertEqual(code, 1)
+                self.assertIn("Genmon requires Python 3.9 or later. This system has Python 3.7.3.", output)
+                self.assertNotIn("APT-GET", output)  # nothing installed
+                self.assertNotIn("GIT", output)      # not updated
+
+    def test_old_python_still_backs_up(self):
+        # a backup is needed before upgrading the operating system
+        old = dict(self.env, GENMON_TEST_OLD_PYTHON="1")
+        config = self.config_folder("etc genmon")
+        code, output = self.run_script("genmonmaint.sh", "-b", "-c", config, env=old, returncode=True)
+        self.assertEqual(code, 0, output)
+        self.assertNotIn("requires Python", output)
+        self.assertTrue(os.path.isfile(os.path.join(self.genmon, "genmon_backup.tar.gz")))
+
+    def test_update_runs_on_a_supported_python(self):
+        config = self.config_folder("etc genmon")
+        code, output = self.run_script("genmonmaint.sh", "-u", "-n", "-c", config, returncode=True)
+        self.assertNotIn("requires Python", output)
+        self.assertIn("GIT reset --hard origin/master", output)
+
+    def test_no_python_2_option(self):
+        code, output = self.run_script("genmonmaint.sh", "-p", "3", returncode=True)
+        self.assertEqual(code, 1)
+        self.assertIn("Invalid Option: -p", output)
+
+    def test_version_check_matches_genloader(self):
+        # the check in genmonmaint.sh runs (on this Python, 3.9 or later) and
+        # uses the same minimum as genloader.py
+        import re
+        from genloader import Loader
+        with open(os.path.join(REPO_DIR, "genmonmaint.sh")) as f:
+            code = re.search(r"\"\$pythoncommand\" -c '([^']*sys\.exit[^']*)'", f.read()).group(1)
+        self.assertIn("sys.version_info >= %r" % (Loader.MIN_PYTHON,), code)
+        self.assertEqual(subprocess.run([sys.executable, "-c", code]).returncode, 0)
 
 
 # -------------------------------------------------------------------------------

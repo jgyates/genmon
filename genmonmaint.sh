@@ -14,7 +14,6 @@ files in the genmon directory, they will be overwritten. Configuration files \
 in the configuration directory will not be overwritten.  \
 Continue? (y/n)  "
 
-usepython3=true
 pipoptions="--prefer-binary"
 pythoncommand="python3"
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
@@ -110,26 +109,16 @@ function checkpython() {
 
 }
 #-------------------------------------------------------------------------------
-function setuppython3() {
+# genmon 2.0 and later need Python 3.9 or later (keep in sync with MIN_PYTHON
+# in genloader.py). Checked before an install or update so neither leaves a
+# genmon that will not start.
+function checkpythonversion() {
 
-  if [ $# -eq 0 ]; then
-    usepython3=false
-  elif [ "$1" == "3" ]; then
-    usepython3=true
-  elif [ "$1" == "2" ]; then
-    usepython3=false
-  else
-    usepython3=false
+  if ! "$pythoncommand" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)' >/dev/null 2>&1; then
+    echo "Genmon requires Python 3.9 or later. This system has $("$pythoncommand" -V 2>&1)." >&2
+    echo "Upgrade the operating system to one with Python 3.9 or later, then install genmon." >&2
+    exit 1
   fi
-
-  if [ "$usepython3" = true ] ; then
-    echo 'Setting up for Python 3.x...'
-    pythoncommand="python3"
-    linetoadd="$linetoadd -p 3 "
-  else
-    echo 'Setting up for Python 2.7...'
-    pythoncommand="python"
-fi
 }
 #-------------------------------------------------------------------------------
 # This function copy all config files to the target install directory
@@ -226,16 +215,8 @@ function installgenmon() {
     echo "Installing genmon package requirements...."
     # possibly use "sudo easy_install3 -U pip"
     sudo apt-get -yqq update
-    if [ "$usepython3" = true ] ; then
-      sudo apt-get -yqq install python3-pip
-    else
-      sudo apt-get -yqq install python-pip
-    fi
-    if [ "$usepython3" = true ] ; then
-      sudo apt-get -yqq install build-essential libssl-dev libffi-dev python3-dev cargo swig
-    else
-      sudo apt-get -yqq install build-essential libssl-dev libffi-dev python-dev cargo swig
-    fi
+    sudo apt-get -yqq install python3-pip
+    sudo apt-get -yqq install build-essential libssl-dev libffi-dev python3-dev cargo swig
     sudo apt-get -yqq install cmake
     # upgrade setuptools for the environment
     sudo "$pythoncommand" -m pip install --upgrade setuptools
@@ -490,7 +471,6 @@ function printhelp() {
   echo "  -C           Remove *.pyc files (clean pre-compiled python files)"
   echo "  -n           Do not prompt for Y/N, assume yes"
   echo "  -c           Specify full path to config file directory (trailing slash optional)"
-  echo "  -p           Specify 2 or 3 for python version. 3 is default"
   echo "  -s           Just copy conf files"
   echo "  -l           Specify the full path of the log directory to archive (trailing slash optional)"
   echo "  -f           Update OS software and apt repository flags if needed"
@@ -501,7 +481,7 @@ function printhelp() {
 #-------------------------------------------------------------------------------
 # main entry
 
-while getopts ":hfp:bt:iruvnc:Csl:" opt; do
+while getopts ":hfbt:iruvnc:Csl:" opt; do
   #echo $OPTARG
   case ${opt} in
     h )
@@ -510,9 +490,6 @@ while getopts ":hfp:bt:iruvnc:Csl:" opt; do
       ;;
     f )
       update_os=true
-      ;;
-    p )
-      setuppython3 "$OPTARG"
       ;;
     c )
       config_path=$OPTARG
@@ -574,6 +551,9 @@ fi
 check_os
 checkpython
 checkmanagedpackages
+if [ "$install_opt" = true ] || [ "$update_opt" = true ] ; then
+  checkpythonversion
+fi
 
 if [ "$install_opt" = true ] ; then
   if [ "$noprompt_opt" = true ] ; then

@@ -86,6 +86,7 @@ All notable changes to this project will be documented in this file.
 - The code hash (git commit) is now part of genmon's start info, so it is included in Submit Registers / Submit Logs and feedback emails; the web interface no longer runs a script to get it on each page load
 - Faster startup with large sensor logs (a slow Pi could take minutes); sensor log files are now kept within Maximum Entries in Sensor Log, and trimmed instead of deleted at the size limit
 - Clear Sensor Log now also clears the sensor charts (they showed the old data until genmon restarted)
+- genmonmaint.sh install (-i) and update (-u) stop with a clear message when Python is older than 3.9, instead of failing part way or leaving a genmon that will not start; removed the Python 2 option (-p); startgenmon.sh still accepts -p from older crontab entries
 
 ## 2.0.3 -2026-10-07
 - Added support for an auxiliary alam log (see Advanced Settings to enable) and the Known Issues wiki for more info

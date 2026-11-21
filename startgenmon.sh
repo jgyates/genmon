@@ -1,13 +1,11 @@
 #!/bin/bash
 # bash script to start, stop or restart genmon. the script calls genloader.py
-# with the needed command line parameters and can use python 2.7 or 3.x to call
-# genloader.py
+# with the needed command line parameters
 #-------------------------------------------------------------------------------
 PARAMS=""
 genmondir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 pythoncommand="python3"
 config_args=()
-usepython3=true
 found_action=false
 managedpackages=false
 
@@ -40,28 +38,6 @@ function checkmanagedpackages() {
   fi
 }
 #-------------------------------------------------------------------------------
-function setuppython3() {
-
-  if [ $# -eq 0 ]; then
-    usepython3=false
-  elif [ $1 == "3" ]; then
-    usepython3=true
-  elif [ $1 == "2" ]; then
-    usepython3=false
-  else
-    usepython3=false
-  fi
-
-  if [ "$usepython3" = true ] ; then
-    echo 'Using Python 3.x...'
-    pythoncommand="python3"
-  else
-    echo 'Using Python 2.x...'
-    pythoncommand="python2"
-fi
-}
-
-#-------------------------------------------------------------------------------
 function printhelp(){
   echo "usage: "
   echo " "
@@ -70,7 +46,6 @@ function printhelp(){
   echo "valid options:"
   echo "   -h      display help"
   echo "   -c      path of config files (trailing slash optional)"
-  echo "   -p      Specify 2 or 3 for python version. 2 is default"
   echo ""
 }
 
@@ -79,8 +54,12 @@ function printhelp(){
 while (( "$#" )); do
   case "$1" in
     -p)
-      setuppython3 $2
-      shift 2
+      # Python 2 is no longer supported. -p is still accepted and ignored,
+      # since older installs added "-p 3" to the crontab entry
+      shift
+      if [ -n "$1" ] && [ "${1:0:1}" != "-" ]; then
+        shift
+      fi
       ;;
     -c)
       if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
