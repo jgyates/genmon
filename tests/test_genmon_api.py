@@ -303,6 +303,10 @@ class MyTest(MyCommon):
             r = self.WebGet("/cmd/sendregisters")
             self.Result(r.status_code == 405, "genserv GET of a POST only command",
                         "HTTP status " + str(r.status_code) + " (expected 405)")
+            # ...and a GET with a wrong token in the URL (nothing is changed)
+            r = self.WebGet("/cmd/setremote?setremote=stop&csrf_token=not-the-token")
+            self.Result(r.status_code == 405, "genserv GET with a wrong csrf_token",
+                        "HTTP status " + str(r.status_code) + " (expected 405)")
 
             if self.Write:
                 headers = {"X-CSRFToken": self.CSRFToken or ""}
