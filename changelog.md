@@ -97,6 +97,8 @@ All notable changes to this project will be documented in this file.
 - More keyboard access in the web interface: add-on tiles (open settings or install with Enter or Space), dashboard Customize "add tile" buttons, Registers page cells (Enter shows the history chart) and the header system health icon can now be reached with Tab and used from the keyboard; on/off switches now show a focus outline when selected with the keyboard
 - genmonmaint.sh update (-u, also used by Update Software in the web interface) now checks the Python version the new version of genmon needs before changing any files, and stops if this system's Python is too old. The minimum Python is now set in one place (MIN_PYTHON in genmonlib/program_defaults.py)
 - Update Software in the web interface now shows why an update was not installed (i.e. the new version needs a newer Python) instead of reporting success and restarting
+- genhomeassistant Active Alarms sensor now clears when the alarm goes away (it kept showing the last alarm), and is always created even if there is no alarm when genmon starts (#1591, thanks @jterrace)
+- genmqtt and genhomeassistant now ignore and clear a retained command message on the broker; the broker sent it again on every reconnect, repeating the command (e.g. a remote start or software update) each time genmon restarted
 
 ## 2.0.3 -2026-10-07
 - Added support for an auxiliary alam log (see Advanced Settings to enable) and the Known Issues wiki for more info
