@@ -1,4 +1,5 @@
 {
   "update": {
+    "2.0.4": "Genmon 2.0.4 and later require Python 3.9 or newer. If your system runs an older version of Python, do not upgrade. The version of python you are current running is displayed on the About page of the web interface."
   }
 }
