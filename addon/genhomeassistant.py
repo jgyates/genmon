@@ -173,6 +173,10 @@ SENSOR_DEFINITIONS = {
         "unit": None,
         "icon": "mdi:alert",
         "state_class": None,
+        # genmon only includes "System In Alarm" while an alarm is active. When
+        # the alarm clears the value disappears, so publish this instead;
+        # otherwise the last alarm text stays retained on the broker forever.
+        "value_when_missing": "None",
     },
     # Line sensors
     "utility_voltage": {
@@ -1888,7 +1892,8 @@ class MyHomeAssistant(MySupport):
             for entity_id, entity_def in self.SensorDefinitions.items():
                 if self._entity_allowed(entity_def, entity_id):
                     # Check if this sensor has actual data from genmon
-                    if "path" in entity_def and genmon_data:
+                    # Exception: value_when_missing sensors are valid even with no data
+                    if "path" in entity_def and genmon_data and "value_when_missing" not in entity_def:
                         value = self._get_value_from_path(genmon_data, entity_def["path"])
                         if value is None:
                             sensors_skipped += 1
@@ -2489,12 +2494,18 @@ class MyHomeAssistant(MySupport):
                 continue
             try:
                 value = self._get_value_from_path(genmon_data, entity_def["path"])
+                processed_value = None
                 if value is not None:
                     processed_value = self._process_sensor_value(value, entity_def)
-                    if processed_value is not None:
-                        stats["predefined_total"] += 1
-                        if self._publish_state("sensor", entity_id, str(processed_value)):
-                            stats["predefined_changed"] += 1
+                if processed_value is None:
+                    # Missing or empty: for sensors whose value disappears when
+                    # it no longer applies (e.g. active alarms), publish the
+                    # "cleared" value so the retained state does not go stale.
+                    processed_value = entity_def.get("value_when_missing")
+                if processed_value is not None:
+                    stats["predefined_total"] += 1
+                    if self._publish_state("sensor", entity_id, str(processed_value)):
+                        stats["predefined_changed"] += 1
             except Exception as e1:
                 if self.debug:
                     self.LogDebug(f"Error processing sensor {entity_id}: {str(e1)}")
