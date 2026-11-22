@@ -161,6 +161,7 @@
       "name": "Active Alarms",
       "path": "Status/Engine/System In Alarm",
       "icon": "mdi:alert",
+      "value_when_missing": "None",
       "enabled_default": true,
       "monitor_stats": false,
       "weather": false
