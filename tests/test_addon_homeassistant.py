@@ -230,6 +230,37 @@ class StateTests(HomeAssistantTestCase):
         self.assertEqual(states["genmon/binary_sensor/alarm_active/state"], "OFF")
         self.assertEqual(states["genmon/switch/quiet_mode/state"], "ON")
 
+    def test_active_alarms_cleared(self):
+        # genmon only sends "System In Alarm" while an alarm is active: when
+        # it goes away the retained alarm text must be replaced, not left stale
+        fixture = self.start()
+        status = json.loads(json.dumps(STATUS))
+        status["Status"][0]["Engine"].append({"System In Alarm": "Check Battery"})
+        fixture.state["answers"]["status_num_json"] = json.dumps(status)
+        states = self.poll(fixture)
+        self.assertEqual(states["genmon/sensor/active_alarms/state"], "Check Battery")
+        self.assertEqual(states["genmon/binary_sensor/alarm_active/state"], "ON")
+
+        fixture.state["answers"]["status_num_json"] = json.dumps(STATUS)
+        states = self.poll(fixture)
+        self.assertEqual(states["genmon/sensor/active_alarms/state"], "None")
+        self.assertEqual(states["genmon/binary_sensor/alarm_active/state"], "OFF")
+
+        # present but empty (GetAlarmState returns "") is cleared too
+        status["Status"][0]["Engine"][-1]["System In Alarm"] = ""
+        fixture.state["answers"]["status_num_json"] = json.dumps(status)
+        self.poll(fixture)
+        self.assertEqual(self.published()["genmon/sensor/active_alarms/state"], "None")
+
+    def test_active_alarms_without_alarm(self):
+        # no alarm at startup: the entity is still discovered, and a stale
+        # retained alarm from before a restart is overwritten
+        fixture = self.start()
+        self.connect(fixture)
+        self.assertIsInstance(self.discovery(fixture, "sensor", "active_alarms"), dict)
+        states = self.poll(fixture)
+        self.assertEqual(states["genmon/sensor/active_alarms/state"], "None")
+
     def test_only_changes_published(self):
         fixture = self.start()
         self.poll(fixture)
