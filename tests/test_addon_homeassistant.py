@@ -112,10 +112,10 @@ class HomeAssistantTestCase(unittest.TestCase):
         fixture.run_thread("PollingThread", waits=[False])
         return self.published(before)
 
-    def message(self, fixture, topic, payload):
+    def message(self, fixture, topic, payload, retain=False):
         before = len(fixture.genmon.commands)
         fixture.addon._on_message(self.client, None, types.SimpleNamespace(
-            topic=topic, payload=payload.encode("utf-8")))
+            topic=topic, payload=payload.encode("utf-8"), retain=retain))
         return fixture.genmon.commands[before:]
 
 
@@ -391,6 +391,23 @@ class CommandTests(HomeAssistantTestCase):
         self.assertEqual(run.call_args[0][0][2:], ["-u", "-n"])
         restart.assert_not_called()
         self.assertFalse(fixture.addon.UpdateInProgress)
+
+    def test_retained_commands(self):
+        # the broker replays a retained command on every reconnect: ignore it
+        # and clear it, so it does not repeat each time genmon restarts
+        fixture = self.start()
+        with mock.patch.object(fixture.module.threading, "Thread") as thread:
+            self.message(fixture, "genmon/update/genmon_software/command", "INSTALL", retain=True)
+        thread.assert_not_called()
+        self.assertFalse(fixture.addon.UpdateInProgress)
+        self.assertEqual(self.message(fixture, "genmon/button/start/command", "PRESS", retain=True), [])
+        self.assertEqual(self.message(fixture, "genmon/switch/quiet_mode/set", "ON", retain=True), [])
+        cleared = [(m[0], m[1]) for m in self.client.published if m[2]]
+        for topic in ["genmon/update/genmon_software/command", "genmon/button/start/command",
+                      "genmon/switch/quiet_mode/set"]:
+            self.assertIn((topic, ""), cleared)
+        # the empty message that clears it comes back: not a button press
+        self.assertEqual(self.message(fixture, "genmon/button/start/command", ""), [])
 
 
 # -------------------------------------------------------------------------------

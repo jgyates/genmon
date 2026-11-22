@@ -1430,6 +1430,21 @@ class MyHomeAssistant(MySupport):
             entity_id = parts[-2]
             action = parts[-1]
 
+            if action in ("set", "command"):
+                # A retained command is replayed by the broker on every
+                # reconnect, so acting on it repeats the command (a software
+                # update or a remote start) each time genmon restarts. Home
+                # Assistant does not retain commands, so one that is retained
+                # was left by something else: ignore it and clear it.
+                if message.retain:
+                    if payload.strip():
+                        self.LogError(f"Ignoring retained command, clearing it: {topic} = {payload}")
+                        self.MQTTclient.publish(topic, payload="", retain=True)
+                    return
+                # clearing a retained command sends an empty one, ignore it
+                if not payload.strip():
+                    return
+
             # Handle update entity install command
             if action == "command" and entity_type == "update":
                 self._handle_update_install(entity_id, payload)

@@ -680,6 +680,16 @@ class MyMQTT(MyCommon):
             if message.topic.lower() != (FullPath.lower()):
                 return
 
+            # A retained command is replayed by the broker on every reconnect,
+            # so acting on it repeats the command (e.g. a remote start) each
+            # time genmon restarts: ignore it and clear it. Clearing sends an
+            # empty command, which is ignored below.
+            if message.retain:
+                if len(command.strip()):
+                    self.LogError("Ignoring retained command, clearing it: " + message.topic + " = " + command)
+                    self.MQTTclient.publish(message.topic, payload="", retain=True)
+                return
+
             # write command
             if command != None and len(command):
                 self.Push.SendCommand("generator: " + command)

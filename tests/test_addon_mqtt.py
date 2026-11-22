@@ -213,16 +213,32 @@ class ConnectionTests(MQTTTestCase):
 
     def test_command(self):
         fixture = self.start(root_topic="home")
-        message = types.SimpleNamespace(topic="home/generator/command", payload=b"setremote=start")
+        message = types.SimpleNamespace(topic="home/generator/command", payload=b"setremote=start",
+                                        retain=False)
         fixture.addon.on_message(self.client, None, message)
         self.assertIn("generator: setremote=start", fixture.genmon.commands)
+
+    def test_retained_command(self):
+        # the broker replays a retained command on every reconnect: ignore it
+        # and clear it, so it does not repeat each time genmon restarts
+        fixture = self.start(root_topic="home")
+        before = list(fixture.genmon.commands)
+        fixture.addon.on_message(self.client, None, types.SimpleNamespace(
+            topic="home/generator/command", payload=b"setremote=start", retain=True))
+        self.assertEqual(fixture.genmon.commands, before)
+        self.assertIn(("home/generator/command", "", True), self.client.published)
+        # the empty message that clears it comes back: not a command
+        fixture.addon.on_message(self.client, None, types.SimpleNamespace(
+            topic="home/generator/command", payload=b"", retain=False))
+        self.assertEqual(fixture.genmon.commands, before)
 
     def test_other_topics_are_not_commands(self):
         fixture = self.start()
         before = list(fixture.genmon.commands)
         for topic in ["generator/Status/Engine/Engine State", "other/command"]:
             fixture.addon.on_message(self.client, None,
-                                     types.SimpleNamespace(topic=topic, payload=b"setremote=stop"))
+                                     types.SimpleNamespace(topic=topic, payload=b"setremote=stop",
+                                                           retain=False))
         self.assertEqual(fixture.genmon.commands, before)
 
 
