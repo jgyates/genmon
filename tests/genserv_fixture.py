@@ -96,6 +96,7 @@ class GenServFixture(object):
         self.extra_settings = settings or {}
         self.extension_file = extension_file
         self.calls = []  # genmon commands, emails and shell commands, in order
+        self.shell_failure = None  # output of a shell script that fails (exit code 1)
         self.patches = []
         self.old_signals = {}
         self.added_path = None
@@ -252,6 +253,8 @@ class GenServFixture(object):
 
         def fake_check_output(cmd, *args, **kwargs):
             fixture.calls.append("SHELL " + fixture._command_text(cmd))
+            if fixture.shell_failure is not None:
+                raise subprocess.CalledProcessError(1, cmd, output=fixture.shell_failure)
             return b"script ok output"
 
         def fake_run(cmd, *args, **kwargs):

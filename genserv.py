@@ -2333,15 +2333,24 @@ class GenServ(MySupport):
             self.LogError("Error in Restart")
 
     # -------------------------------------------------------------------------------
+    # Returns "" when genmon was updated (it then restarts), otherwise why not.
+    # genmonmaint.sh only fails before it changes anything (i.e. the new
+    # version needs a newer Python), so genmon keeps running.
     def Update(self):
-        # update
         try:
-            if not self.RunBashScript("genmonmaint.sh -u -n", log = True):
+            output, success = self.RunBashScript("genmonmaint.sh -u -n", log = True, return_output = True)
+            if not success:
                 self.LogError("Error in Update")
+                # the lines meant for the user start with "ERROR: "
+                errors = [line[len("ERROR: "):].strip() for line in output.splitlines()
+                          if line.startswith("ERROR: ")]
+                return " ".join(errors) or "The update did not run. See genserv.log for details."
             # now restart
             self.Restart()
+            return ""
         except Exception as e1:
             self.LogErrorLine("Error in Update: " + str(e1))
+            return "Error in Update: " + str(e1)
 
     # -------------------------------------------------------------------------------
     def GetLogs(self):
@@ -2916,7 +2925,9 @@ class GenServ(MySupport):
         return send_file(os.path.join(pathtofile, "genmon_logs.tar.gz"), as_attachment=True)
 
     def CmdUpdateSoftware(self):
-        self.Update()
+        error = self.Update()
+        if error:
+            return jsonify({"error": error})
         return jsonify("OK")
 
     def CmdRestart(self):

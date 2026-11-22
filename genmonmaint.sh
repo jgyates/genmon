@@ -109,14 +109,44 @@ function checkpython() {
 
 }
 #-------------------------------------------------------------------------------
-# genmon 2.0 and later need Python 3.9 or later (keep in sync with MIN_PYTHON
-# in genloader.py). Checked before an install or update so neither leaves a
-# genmon that will not start.
+# The oldest Python a version of genmon supports, from the MIN_PYTHON line in
+# genmonlib/program_defaults.py, i.e. "3.9". $1 is the text of that file.
+# Prints 3.9 (genmon 2.0) if the line is not found.
+function minpython() {
+
+  local minimum
+  minimum=$(printf '%s\n' "$1" | sed -n 's/^ *MIN_PYTHON = (\([0-9][0-9]*\), *\([0-9][0-9]*\)).*/\1.\2/p' | head -n 1)
+  echo "${minimum:-3.9}"
+}
+#-------------------------------------------------------------------------------
+# True if this Python is version $1 (i.e. 3.9) or later
+function pythonatleast() {
+
+  "$pythoncommand" -c 'import sys; sys.exit(0 if sys.version_info >= tuple(int(n) for n in sys.argv[1].split(".")) else 1)' "$1" >/dev/null 2>&1
+}
+#-------------------------------------------------------------------------------
+# Checked before an install or update so neither leaves a genmon that will not
+# start. The minimum is MIN_PYTHON in genmonlib/program_defaults.py. Lines starting with
+# "ERROR: " are shown on the web page when an update stops (genserv.py Update).
 function checkpythonversion() {
 
-  if ! "$pythoncommand" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)' >/dev/null 2>&1; then
-    echo "Genmon requires Python 3.9 or later. This system has $("$pythoncommand" -V 2>&1)." >&2
-    echo "Upgrade the operating system to one with Python 3.9 or later, then install genmon." >&2
+  local minimum
+  minimum=$(minpython "$(cat "$genmondir/genmonlib/program_defaults.py" 2>/dev/null)")
+  if ! pythonatleast "$minimum"; then
+    echo "ERROR: Genmon requires Python $minimum or later. This system has $("$pythoncommand" -V 2>&1)." >&2
+    echo "Upgrade the operating system to one with Python $minimum or later, then install genmon." >&2
+    exit 1
+  fi
+}
+#-------------------------------------------------------------------------------
+# The same check for the version an update would install (it may need a newer
+# Python than this one). Run after "git fetch", before the files change.
+function checknewpythonversion() {
+
+  local minimum
+  minimum=$(minpython "$(git show origin/master:genmonlib/program_defaults.py 2>/dev/null)")
+  if ! pythonatleast "$minimum"; then
+    echo "ERROR: The new version of genmon requires Python $minimum or later. This system has $("$pythoncommand" -V 2>&1). Genmon was not updated." >&2
     exit 1
   fi
 }
@@ -442,6 +472,7 @@ function updategenmon() {
 
     git config --global --add safe.directory '*'
     git fetch origin
+    checknewpythonversion
     git reset --hard origin/master
     sudo chmod 775 "$genmondir/startgenmon.sh"
     sudo chmod 775 "$genmondir/genmonmaint.sh"

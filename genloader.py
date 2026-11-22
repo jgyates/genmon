@@ -180,16 +180,14 @@ class Loader(MySupport):
             self.LogErrorLine("Error in init: " + str(e1))
 
     # ---------------------------------------------------------------------------
-    # genmon 2.0 and later need Python 3.9 or later (see README.md)
-    MIN_PYTHON = (3, 9)
-
+    # the minimum is ProgramDefaults.MIN_PYTHON
     def PythonSupported(self):
 
-        if sys.version_info >= self.MIN_PYTHON:
+        if sys.version_info >= ProgramDefaults.MIN_PYTHON:
             return True
         Message = (
             "ERROR: genmon needs Python %d.%d or higher, this is Python %d.%d. "
-            "The genmon modules were not started." % (self.MIN_PYTHON + tuple(sys.version_info[:2]))
+            "The genmon modules were not started." % (ProgramDefaults.MIN_PYTHON + tuple(sys.version_info[:2]))
         )
         self.LogError(Message)
         self.LogConsole(Message)

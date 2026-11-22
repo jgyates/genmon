@@ -6552,6 +6552,10 @@ var Pages = {
                   Modal.close();
                   if (resp === 'OK') {
                     Modal.restart('Update installed. Service is restarting\u2026', null, true);
+                  } else if (resp && resp.error) {
+                    /* the update stopped before changing anything (i.e. the new
+                       version needs a newer Python); genmon keeps running */
+                    Modal.alert('Update Not Installed', resp.error);
                   } else {
                     Modal.alert('Note', 'Genmon may not have updated. Please verify manually or try again.');
                   }

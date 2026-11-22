@@ -241,6 +241,25 @@ class MaintenanceCommandTests(SettingsTestCase):
         self.assertEqual(self.fixture.shell_calls(), [
             "SHELL /bin/bash <RUN>/genmonmaint.sh -u -n", RESTART])
 
+    def test_update_software_stopped(self):
+        # genmonmaint.sh stops before changing anything: no restart, the
+        # reason (its "ERROR: " lines) is shown on the page
+        self.fixture.shell_failure = (b"Python is installed.\n"
+                                      b"ERROR: The new version of genmon requires Python 3.12 or later. "
+                                      b"This system has Python 3.11.2. Genmon was not updated.\n")
+        r = self.run_command("updatesoftware")
+        self.assertEqual(json.loads(r.get_data(as_text=True)), {"error":
+            "The new version of genmon requires Python 3.12 or later. "
+            "This system has Python 3.11.2. Genmon was not updated."})
+        self.assertEqual(self.fixture.shell_calls(), ["SHELL /bin/bash <RUN>/genmonmaint.sh -u -n"])
+
+    def test_update_software_failed_without_reason(self):
+        self.fixture.shell_failure = b"something went wrong\n"
+        r = self.run_command("updatesoftware")
+        self.assertEqual(json.loads(r.get_data(as_text=True)),
+                         {"error": "The update did not run. See genserv.log for details."})
+        self.assertEqual(self.fixture.shell_calls(), ["SHELL /bin/bash <RUN>/genmonmaint.sh -u -n"])
+
     def test_restart(self):
         r = self.run_command("restart")
         self.assertEqual(json.loads(r.get_data(as_text=True)), "OK")
