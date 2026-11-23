@@ -99,6 +99,9 @@ All notable changes to this project will be documented in this file.
 - Update Software in the web interface now shows why an update was not installed (i.e. the new version needs a newer Python) instead of reporting success and restarting
 - genhomeassistant Active Alarms sensor now clears when the alarm goes away (it kept showing the last alarm), and is always created even if there is no alarm when genmon starts (#1591, thanks @jterrace)
 - genmqtt and genhomeassistant now ignore and clear a retained command message on the broker; the broker sent it again on every reconnect, repeating the command (e.g. a remote start or software update) each time genmon restarted
+- Fixed genmon failing to start when serial_parity is set to 1 or 2 in genmon.conf (#1593). serial_parity now accepts None/Odd/Even or 0/1/2
+- Fixed serial_baud_rate being ignored for custom controllers. serial_rate is used if set, otherwise serial_baud_rate
+- Fixed values with no unit (e.g. RPM, Power Factor, Total Run Hours) having a trailing space ("1801 " is now "1801") in the web interface, JSON, MQTT and Home Assistant. Automations that compare these values as exact text may need updating (#1595, thanks @nicktdot)
 
 ## 2.0.3 -2026-10-07
 - Added support for an auxiliary alam log (see Advanced Settings to enable) and the Known Issues wiki for more info

@@ -21,6 +21,24 @@ from genmonlib.mylog import SetupLogger
 from genmonlib.mysupport import MySupport
 from genmonlib.program_defaults import ProgramDefaults
 
+
+# ------------ ParseSerialParity ------------------------------------------------
+def ParseSerialParity(value):
+    """Parse the serial_parity setting. Accepts the words used by the web
+    interface (None, Odd, Even) and the numbers in the documentation
+    (0 none, 1 odd, 2 even). Returns (parity, valid): parity is None, 1 (odd)
+    or 2 (even); valid is False if the value was not recognised (no parity)."""
+    if value is None:
+        return None, True
+    value = str(value).strip().lower()
+    if value in ("", "none", "0"):
+        return None, True
+    if value in ("odd", "1"):
+        return 1, True
+    if value in ("even", "2"):
+        return 2, True
+    return None, False
+
 '''
 Modbus data addresses typically range from 0 to 65,535 per data type, 
 structured into four main tables: Coils (0x), Discrete Inputs (1x), 
@@ -191,6 +209,8 @@ class ModbusBase(MySupport):
         self.UnexpectedData = 0
         self.SlowCPUOptimization = False
         self.UseTCP = False
+        self.Parity = None
+        InvalidParity = None
         self.AdditionalModbusTimeout = 0
         self.ModBusPacketTimoutMS = 0
         self.ResponseAddress = None  # Used if received packets have a different address than sent packets
@@ -215,14 +235,18 @@ class ModbusBase(MySupport):
                 "use_modbus_fc4", return_type=bool, default=False
             )
             parity = self.config.ReadValue("serial_parity", default="None")
-            if parity.lower() == "none":
-                self.Parity = None
-            elif parity.lower() == "even":
-                self.Parity = 2
-            elif parity.lower() == "odd":
-                self.Parity = 1
+            self.Parity, valid = ParseSerialParity(parity)
+            if not valid:
+                InvalidParity = parity  # logged below, once the log is set up
 
-            self.Rate = self.config.ReadValue("serial_rate", return_type = int, default = 9600)
+            # serial_rate is the setting on the Advanced page. Custom controllers
+            # documented serial_baud_rate, so use it if serial_rate is not set.
+            if self.config.HasOption("serial_rate"):
+                self.Rate = self.config.ReadValue("serial_rate", return_type=int, default=9600)
+            elif self.config.HasOption("serial_baud_rate"):
+                self.Rate = self.config.ReadValue("serial_baud_rate", return_type=int, default=9600)
+            else:
+                self.Rate = 9600
 
             try:
                 self.Address = int(
@@ -259,6 +283,12 @@ class ModbusBase(MySupport):
             "mymodbus", os.path.join(self.loglocation, "mymodbus.log")
         )
         self.console = SetupLogger("mymodbus_console", log_file="", stream=True)
+
+        # parity is only used for a local serial port, not serial over TCP
+        if InvalidParity is not None and not self.UseTCP:
+            self.LogError(
+                "Invalid serial_parity setting '%s', using no parity" % str(InvalidParity)
+            )
 
         if self.UseModbusFunction4:
             # This option is no longer needed as both input and holding registers 

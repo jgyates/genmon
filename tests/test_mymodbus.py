@@ -46,6 +46,7 @@ class FakeSlave(object):
     received. reply(packet) may answer each request."""
 
     def __init__(self, *args, **kwargs):
+        self.kwargs = kwargs
         self.Buffer = []
         self.written = []
         self.Threads = {}
@@ -75,13 +76,15 @@ class FakeSlave(object):
 
 class ModbusTestCase(unittest.TestCase):
 
-    def protocol(self, address="01", modbus_tcp=False, updates=None):
+    def protocol(self, address="01", modbus_tcp=False, updates=None, settings=None):
         folder = tempfile.mkdtemp(prefix="mymodbus_")
         self.addCleanup(shutil.rmtree, folder)
         shutil.copy(os.path.join(REPO_DIR, "conf", "genmon.conf"), folder)
         config = MyConfig(filename=os.path.join(folder, "genmon.conf"), section="GenMon")
         for key, value in {"loglocation": folder, "address": address, "use_serial_tcp": "False",
                            "modbus_tcp": str(modbus_tcp)}.items():
+            config.WriteValue(key, value)
+        for key, value in (settings or {}).items():
             config.WriteValue(key, value)
         for patch in [mock.patch.object(mymodbus, "SerialDevice", FakeSlave),
                       mock.patch.object(mymodbus, "SerialTCPDevice", FakeSlave)]:
@@ -271,6 +274,62 @@ class TransactionTests(ModbusTestCase):
         with mock.patch.object(mymodbus.time, "sleep"):
             self.assertEqual(m.ProcessTransaction("0010", 2), "")
         self.assertEqual(m.ComTimoutError, 1)
+
+
+# -------------------------------------------------------------------------------
+class SerialSettingsTests(ModbusTestCase):
+    """serial_parity and serial_rate / serial_baud_rate from genmon.conf
+    (issue #1593)."""
+
+    def test_parity_words_and_numbers(self):
+        for value, parity in [("None", None), ("0", None), ("", None),
+                              ("Odd", 1), ("1", 1), ("even", 2), ("2", 2), (" Even ", 2)]:
+            with self.subTest(value=value):
+                m = self.protocol(settings={"serial_parity": value})
+                self.assertEqual(m.Parity, parity)
+                self.assertEqual(m.Slave.kwargs["Parity"], parity)
+
+    def test_parity_not_set(self):
+        m = self.protocol()
+        self.assertIsNone(m.Parity)
+        self.assertIsNone(m.Slave.kwargs["Parity"])
+
+    def test_parity_invalid_is_logged(self):
+        with mock.patch.object(mymodbus.ModbusProtocol, "LogError") as log_error:
+            m = self.protocol(settings={"serial_parity": "mark"})
+        self.assertIsNone(m.Parity)
+        self.assertTrue(any("serial_parity" in str(c) for c in log_error.call_args_list))
+
+    def test_parity_invalid_not_logged_over_tcp(self):
+        with mock.patch.object(mymodbus.ModbusProtocol, "LogError") as log_error:
+            m = self.protocol(settings={"serial_parity": "mark", "use_serial_tcp": "True"})
+        self.assertTrue(m.UseTCP)
+        self.assertFalse(any("serial_parity" in str(c) for c in log_error.call_args_list))
+
+    def test_rate_zero_uses_9600(self):
+        for key in ("serial_rate", "serial_baud_rate"):
+            with self.subTest(key=key):
+                with mock.patch.object(mymodbus.ModbusProtocol, "LogError") as log_error:
+                    m = self.protocol(settings={key: "0"})
+                self.assertEqual(m.Slave.kwargs["rate"], 9600)
+                self.assertTrue(any("serial rate" in str(c) for c in log_error.call_args_list))
+
+    def test_rate_default(self):
+        m = self.protocol()
+        self.assertEqual(m.Rate, 9600)
+        self.assertEqual(m.Slave.kwargs["rate"], 9600)
+
+    def test_serial_rate(self):
+        m = self.protocol(settings={"serial_rate": "19200"})
+        self.assertEqual(m.Slave.kwargs["rate"], 19200)
+
+    def test_serial_baud_rate_used_if_no_serial_rate(self):
+        m = self.protocol(settings={"serial_baud_rate": "115200"})
+        self.assertEqual(m.Slave.kwargs["rate"], 115200)
+
+    def test_serial_rate_wins_over_serial_baud_rate(self):
+        m = self.protocol(settings={"serial_rate": "19200", "serial_baud_rate": "115200"})
+        self.assertEqual(m.Slave.kwargs["rate"], 19200)
 
 
 if __name__ == "__main__":

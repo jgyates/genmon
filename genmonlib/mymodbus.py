@@ -62,6 +62,10 @@ class ModbusProtocol(ModbusBase):
                 # in this instance we do not use a config file, but config comes from command line
                 self.UseTCP = True
 
+            if self.Rate is None or self.Rate <= 0:
+                self.LogError("Invalid serial rate " + str(self.Rate) + ", using 9600")
+                self.Rate = 9600
+
             # ~3000 for 9600               bit time * 10 bits * 10 char * 2 packets + wait time(3000) (convert to ms * 1000)
             self.ModBusPacketTimoutMS = (
                 (((1 / float(self.Rate)) * 10.0) * 10.0 * 2.0) * 1000.0

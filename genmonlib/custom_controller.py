@@ -22,6 +22,7 @@ import math
 
 from genmonlib.controller import GeneratorController
 from genmonlib.modbus_file import ModbusFile
+from genmonlib.modbusbase import ParseSerialParity
 from genmonlib.mymodbus import ModbusProtocol
 from genmonlib.mytile import MyTile
 
@@ -149,13 +150,9 @@ class CustomController(GeneratorController):
                     "serial_baud_rate", return_type=int, default=9600
                 )
             # None, Even or Odd
-            self.SerialParity = self.config.ReadValue("serial_parity",  default=None)
-            if self.SerialParity == None or self.SerialParity.lower() == "none" or self.SerialParity == "0":
-                self.SerialParity = None
-            elif self.SerialParity.lower() == "odd" or self.SerialParity == "1":
-                self.SerialParity = 1
-            else:
-                self.SerialParity = 2
+            self.SerialParity, _ = ParseSerialParity(
+                self.config.ReadValue("serial_parity", default=None)
+            )
             if self.config.HasOption("serial_one_point_five_stop_bits"):
                 self.SerialOnePointFiveStopBits = self.config.ReadValue(
                     "serial_one_point_five_stop_bits", return_type=bool, default=False
