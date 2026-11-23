@@ -1,12 +1,12 @@
 {
     "controller_name": "Cummins PCC1302",
-    "information": "Cummins PowerCommand PCC1302 (PowerCommand 1.x family) over Modbus RTU on the controller's RS485 port (PCC1302 TB15-3 A+, TB15-4 B-, TB15-1 common). Register map from Cummins document A029X159, section 'PCC 1301/PowerCommand 1.x/PS0500 Modbus Register Map'. Typical comms 9600 baud, even parity (genmon.conf: serial_parity = even), slave address 1. READ-ONLY profile: no buttons, no settime. Tested on a 36 kW natural gas C36N6 genset (controller type code 71).",
+    "information": "Cummins PowerCommand PCC1302 (PowerCommand 1.x family) over Modbus RTU on the controller's RS485 port (PCC1302 TB15-3 A+, TB15-4 B-, TB15-1 common). Register map from Cummins document A029X159, section 'PCC 1301/PowerCommand 1.x/PS0500 Modbus Register Map'. Typical comms 9600 baud, even parity (genmon.conf: serial_parity = even), slave address 1. READ-ONLY profile: no buttons, no settime. The controller has no rated kW, RPM or battery voltage registers: set Nominal RPM, Maximum kW Output, Rated Frequency, Generator Phase and Nominal Battery Voltage in genmon's settings. Tested on a 36 kW natural gas C36N6 genset (controller type code 71).",
     "register_format_info": "Addresses are 0-based Modbus PDU addresses in hex: Cummins 4xxxx = (xxxx - 1), e.g. 40010 -> 0009. The controller accepts reads of 1-16 contiguous registers and rejects a block containing an unimplemented address, so each register is declared on its own.",
     "rated_max_output_power_kw": "Unknown",
     "rated_nominal_voltage": "Unknown",
     "rated_nominal_rpm": "Unknown",
     "rated_nominal_freq": "Unknown",
-    "nominal_battery_voltage": 12,
+    "nominal_battery_voltage": "Unknown",
     "generator_phase": "Unknown",
     "holding_registers": {
         "0008": {
@@ -144,6 +144,26 @@
             "text": "Exercise Scheduler Status",
             "comment": "40587 0=Inactive 1=Active"
         },
+        "0bb7": {
+            "length": 2,
+            "text": "Alternator Nominal Voltage",
+            "comment": "43000 Vac (190-600). Not yet verified on hardware: display only, not used as rated_nominal_voltage"
+        },
+        "0bb8": {
+            "length": 2,
+            "text": "Alternator Frequency Switch",
+            "comment": "43001 0=60 Hz 1=50 Hz"
+        },
+        "0bb9": {
+            "length": 2,
+            "text": "Single/3 Phase Connection",
+            "comment": "43002 0=Single Phase 1=Three Phase"
+        },
+        "0bba": {
+            "length": 2,
+            "text": "Connection Type",
+            "comment": "43003 0=Delta 1=Wye"
+        },
         "0d0f": {
             "length": 2,
             "text": "Clock Date",
@@ -258,9 +278,9 @@
             "default": "Unknown",
             "mask": "ffff",
             "object": {
-                "0": "Stopped",
-                "1": "Cranking",
-                "2": "Starting",
+                "0": "Ready",
+                "1": "Precrank",
+                "2": "Ramp",
                 "3": "Running"
             }
         }
@@ -345,31 +365,6 @@
     ],
     "status": [
         {
-            "reg": "0009",
-            "type": "object_int_index",
-            "title": "Switch Position",
-            "default": "Unknown",
-            "mask": "ffff",
-            "object": {
-                "0": "Off",
-                "1": "Auto",
-                "2": "Manual"
-            }
-        },
-        {
-            "reg": "000a",
-            "type": "object_int_index",
-            "title": "Genset State",
-            "default": "Unknown",
-            "mask": "ffff",
-            "object": {
-                "0": "Ready",
-                "1": "Precrank",
-                "2": "Ramp",
-                "3": "Running"
-            }
-        },
-        {
             "reg": "000b",
             "mask": "ffff",
             "multiplier": 1,
@@ -386,6 +381,56 @@
                 "0": "Normal",
                 "1": "Warning",
                 "4": "Shutdown"
+            }
+        },
+        {
+            "reg": "000f",
+            "type": "object_bit_index",
+            "title": "NFPA 110 Annunciation",
+            "default": "None",
+            "mask": "ffff",
+            "object": {
+                "0": "Low Fuel Level",
+                "1": "Low Coolant Level",
+                "2": "Overspeed",
+                "3": "Low Oil Pressure",
+                "4": "Pre-low Oil Pressure",
+                "5": "High Engine Temperature",
+                "6": "Pre-high Engine Temperature",
+                "7": "Low Coolant Temperature",
+                "8": "Fail to Start",
+                "9": "Charger AC Failure",
+                "10": "Low Battery Voltage",
+                "11": "High Battery Voltage",
+                "12": "Not in Auto",
+                "13": "Genset Running",
+                "14": "Genset Supplying Load",
+                "15": "Common Alarm"
+            }
+        },
+        {
+            "reg": "0010",
+            "type": "object_bit_index",
+            "title": "Extended Annunciation",
+            "default": "None",
+            "mask": "ffff",
+            "object": {
+                "0": "Emergency Stop",
+                "1": "Utility Circuit Breaker Tripped",
+                "2": "Genset Circuit Breaker Tripped",
+                "3": "Load Demand",
+                "4": "Fail to Close",
+                "5": "Fail to Sync",
+                "6": "Reverse kVAR",
+                "7": "Reverse kW",
+                "8": "Short Circuit",
+                "9": "Overcurrent",
+                "10": "Overload",
+                "11": "Under Frequency",
+                "12": "Low AC Voltage",
+                "13": "High AC Voltage",
+                "14": "Ground Fault",
+                "15": "Check Genset"
             }
         },
         {
@@ -461,6 +506,15 @@
             "type": "float",
             "round": 1,
             "title": "Current L3",
+            "units": "A"
+        },
+        {
+            "reg": "001c",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "round": 1,
+            "title": "Average Current",
             "units": "A"
         },
         {
@@ -551,6 +605,47 @@
             "multiplier": 1,
             "type": "int",
             "title": "Controller Type Code"
+        },
+        {
+            "reg": "0bb7",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Alternator Nominal Voltage",
+            "units": "V"
+        },
+        {
+            "reg": "0bb8",
+            "type": "object_int_index",
+            "title": "Alternator Frequency",
+            "default": "Unknown",
+            "mask": "ffff",
+            "object": {
+                "0": "60 Hz",
+                "1": "50 Hz"
+            }
+        },
+        {
+            "reg": "0bb9",
+            "type": "object_int_index",
+            "title": "Output Connection",
+            "default": "Unknown",
+            "mask": "ffff",
+            "object": {
+                "0": "Single Phase",
+                "1": "Three Phase"
+            }
+        },
+        {
+            "reg": "0bba",
+            "type": "object_int_index",
+            "title": "Connection Type",
+            "default": "Unknown",
+            "mask": "ffff",
+            "object": {
+                "0": "Delta",
+                "1": "Wye"
+            }
         }
     ],
     "gauges": [
@@ -562,16 +657,7 @@
             "title": "Battery Voltage",
             "units": "V",
             "sensor": "batteryvolts",
-            "nominal": 12,
-            "values": [
-                0,
-                10,
-                11.5,
-                14.5,
-                15.5,
-                18
-            ],
-            "maximum": 18
+            "nominal": "Unknown"
         },
         {
             "reg": "0018",
@@ -609,6 +695,7 @@
             "multiplier": 0.1,
             "type": "float",
             "title": "Coolant Temperature",
+            "temperature": "celsius",
             "units": "C",
             "sensor": "temperature",
             "nominal": 85,

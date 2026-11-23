@@ -26,16 +26,6 @@
         },
         {
             "oid": "1, 3",
-            "return_type": "str",
-            "description": "gensetState",
-            "default": "Unknown",
-            "keywords": [
-                "Status",
-                "Genset State"
-            ]
-        },
-        {
-            "oid": "1, 4",
             "return_type": "int",
             "description": "activeFaultCode",
             "default": 0,
@@ -45,7 +35,7 @@
             ]
         },
         {
-            "oid": "1, 5",
+            "oid": "1, 4",
             "return_type": "str",
             "description": "activeFaultType",
             "default": "Unknown",
@@ -55,7 +45,27 @@
             ]
         },
         {
+            "oid": "1, 5",
+            "return_type": "str",
+            "description": "nfpa110Annunciation",
+            "default": "None",
+            "keywords": [
+                "Status",
+                "NFPA 110 Annunciation"
+            ]
+        },
+        {
             "oid": "1, 6",
+            "return_type": "str",
+            "description": "extendedAnnunciation",
+            "default": "None",
+            "keywords": [
+                "Status",
+                "Extended Annunciation"
+            ]
+        },
+        {
+            "oid": "1, 7",
             "return_type": "str",
             "description": "voltageL1N",
             "default": "",
@@ -65,7 +75,7 @@
             ]
         },
         {
-            "oid": "1, 7",
+            "oid": "1, 8",
             "return_type": "str",
             "description": "voltageL2N",
             "default": "",
@@ -75,7 +85,7 @@
             ]
         },
         {
-            "oid": "1, 8",
+            "oid": "1, 9",
             "return_type": "str",
             "description": "voltageL3N",
             "default": "",
@@ -85,7 +95,7 @@
             ]
         },
         {
-            "oid": "1, 9",
+            "oid": "1, 10",
             "return_type": "str",
             "description": "voltageL1L2",
             "default": "",
@@ -95,7 +105,7 @@
             ]
         },
         {
-            "oid": "1, 10",
+            "oid": "1, 11",
             "return_type": "str",
             "description": "voltageL2L3",
             "default": "",
@@ -105,7 +115,7 @@
             ]
         },
         {
-            "oid": "1, 11",
+            "oid": "1, 12",
             "return_type": "str",
             "description": "voltageL3L1",
             "default": "",
@@ -115,7 +125,7 @@
             ]
         },
         {
-            "oid": "1, 12",
+            "oid": "1, 13",
             "return_type": "str",
             "description": "currentL1",
             "default": "",
@@ -125,7 +135,7 @@
             ]
         },
         {
-            "oid": "1, 13",
+            "oid": "1, 14",
             "return_type": "str",
             "description": "currentL2",
             "default": "",
@@ -135,7 +145,7 @@
             ]
         },
         {
-            "oid": "1, 14",
+            "oid": "1, 15",
             "return_type": "str",
             "description": "currentL3",
             "default": "",
@@ -145,7 +155,17 @@
             ]
         },
         {
-            "oid": "1, 15",
+            "oid": "1, 16",
+            "return_type": "str",
+            "description": "averageCurrent",
+            "default": "",
+            "keywords": [
+                "Status",
+                "Average Current"
+            ]
+        },
+        {
+            "oid": "1, 17",
             "return_type": "str",
             "description": "outputKVA",
             "default": "",
@@ -155,7 +175,7 @@
             ]
         },
         {
-            "oid": "1, 16",
+            "oid": "1, 18",
             "return_type": "str",
             "description": "frequency",
             "default": "",
@@ -165,7 +185,7 @@
             ]
         },
         {
-            "oid": "1, 17",
+            "oid": "1, 19",
             "return_type": "str",
             "description": "engineSpeed",
             "default": "",
@@ -175,7 +195,7 @@
             ]
         },
         {
-            "oid": "1, 18",
+            "oid": "1, 20",
             "return_type": "str",
             "description": "batteryVoltage",
             "default": "",
@@ -185,7 +205,7 @@
             ]
         },
         {
-            "oid": "1, 19",
+            "oid": "1, 21",
             "return_type": "str",
             "description": "oilPressure",
             "default": "",
@@ -195,7 +215,7 @@
             ]
         },
         {
-            "oid": "1, 20",
+            "oid": "1, 22",
             "return_type": "str",
             "description": "coolantTemperature",
             "default": "",
@@ -232,6 +252,46 @@
             "keywords": [
                 "Maintenance",
                 "Controller Exercise Scheduler"
+            ]
+        },
+        {
+            "oid": "2, 4",
+            "return_type": "str",
+            "description": "alternatorNominalVoltage",
+            "default": "",
+            "keywords": [
+                "Maintenance",
+                "Alternator Nominal Voltage"
+            ]
+        },
+        {
+            "oid": "2, 5",
+            "return_type": "str",
+            "description": "alternatorFrequency",
+            "default": "Unknown",
+            "keywords": [
+                "Maintenance",
+                "Alternator Frequency"
+            ]
+        },
+        {
+            "oid": "2, 6",
+            "return_type": "str",
+            "description": "outputConnection",
+            "default": "Unknown",
+            "keywords": [
+                "Maintenance",
+                "Output Connection"
+            ]
+        },
+        {
+            "oid": "2, 7",
+            "return_type": "str",
+            "description": "connectionType",
+            "default": "Unknown",
+            "keywords": [
+                "Maintenance",
+                "Connection Type"
             ]
         },
         {
