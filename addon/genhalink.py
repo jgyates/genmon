@@ -102,6 +102,8 @@ class GenHALink(MySupport):
         self._last_resource_check_time = 0
         self._cached_resource_info = {}
         self._skipped_paths = set()  # paths suppressed as name-duplicates
+        # BiWeekly / Monthly exercise supported (from gui_status_json)
+        self.EnhancedExerciseMode = False
 
         self._load_config()
         self._ensure_api_key()
@@ -257,6 +259,13 @@ class GenHALink(MySupport):
     def _get_controller_filename(self, controller_str):
         """Map controller description to JSON filename."""
         ctrl = controller_str.lower()
+        # Power Zone 200 runs on genmon's Evolution controller code
+        # (generac_evolution.py); "Power Zone" is the Power Zone Pro.
+        # "Power Zone 410" is a custom controller (below).
+        if ctrl.startswith("power zone 200"):
+            return "generac_evo_nexus.json"
+        if ctrl.strip() in ("power zone", "power zone pro"):
+            return "powerzone.json"
         if "evolution" in ctrl or "nexus" in ctrl:
             return "generac_evo_nexus.json"
         elif "h-100" in ctrl or "g-panel" in ctrl:
@@ -387,6 +396,13 @@ class GenHALink(MySupport):
         entity definitions with a matching ``controllers`` list are kept.
         """
         ctrl = controller_str.lower()
+        # Power Zone 200 runs on genmon's Evolution controller code
+        # (generac_evolution.py); "Power Zone" is the Power Zone Pro.
+        # "Power Zone 410" is a custom controller (below).
+        if ctrl.startswith("power zone 200"):
+            return "evolution"
+        if ctrl.strip() in ("power zone", "power zone pro"):
+            return "powerzone"
         if "evolution" in ctrl:
             return "evolution"
         if "nexus" in ctrl:
@@ -429,10 +445,25 @@ class GenHALink(MySupport):
             return True
         return False
 
+    @staticmethod
+    def _enhanced_exercise_mode(gui_status):
+        """True if the controller supports BiWeekly and Monthly exercise.
+
+        genmon reports this only in the ExerciseInfo of gui_status_json, as
+        "True" / "False" (Evolution) or False (other controllers), not in
+        start_info_json.
+        """
+        info = gui_status.get("ExerciseInfo") if isinstance(gui_status, dict) else None
+        if not isinstance(info, dict):
+            return False
+        value = str(info.get("EnhancedExerciseMode", False)).strip().lower()
+        return value in ("true", "on", "enabled", "yes")
+
     def _filter_entities_for_controller(self, entities_dict, controller_type, capabilities):
         """Return a filtered copy of entities_dict appropriate for the controller."""
         result = {}
         exercise_ok = capabilities.get("ExerciseControls", False)
+        enhanced_exercise_ok = capabilities.get("EnhancedExerciseMode", False)
         quiet_ok = capabilities.get("WriteQuietMode", False)
         remote_ok = capabilities.get("RemoteCommands", False)
         transfer_ok = capabilities.get("RemoteTransfer", False)
@@ -468,12 +499,24 @@ class GenHALink(MySupport):
                 if eid == "start_transfer" and not transfer_ok:
                     self.LogDebug("Filtered out 'start_transfer' (RemoteTransfer=False)")
                     continue
-                if eid == "start_exercise" and not exercise_ok:
-                    self.LogDebug("Filtered out 'start_exercise' (ExerciseControls=False)")
+                # setremote=STARTEXERCISE is a remote command; controllers without
+                # them (Power Zone 200) have their own exercise button
+                if eid == "start_exercise" and not (exercise_ok and remote_ok):
+                    self.LogDebug("Filtered out 'start_exercise' (ExerciseControls or RemoteCommands False)")
                     continue
                 if eid == "set_generator_time" and not settime_ok:
                     self.LogDebug("Filtered out 'set_generator_time' (SetGenTime=False)")
                     continue
+                # Without enhanced exercise only weekly exercise is possible:
+                # no day of the month (monthly only), frequency Weekly only
+                if not enhanced_exercise_ok:
+                    if eid == "exercise_day_of_month":
+                        self.LogDebug("Filtered out 'exercise_day_of_month' (EnhancedExerciseMode=False)")
+                        continue
+                    if eid == "exercise_frequency":
+                        entity = dict(entity)  # leave the definition itself as it is
+                        entity["options"] = [
+                            o for o in entity.get("options", []) if o.lower() == "weekly"]
                 filtered.append(entity)
             result[category] = filtered
         return result
@@ -522,6 +565,8 @@ class GenHALink(MySupport):
             try:
                 raw_gui = json.loads(gui_data)
                 new_state["gui_status"] = self._normalize_genmon_data(raw_gui)
+                # read before the blacklist can remove gui_status
+                self.EnhancedExerciseMode = self._enhanced_exercise_mode(raw_gui)
             except (json.JSONDecodeError, ValueError):
                 pass
 
@@ -1235,7 +1280,8 @@ class GenHALink(MySupport):
             "RemoteButtons": self.StartInfo.get("RemoteButtons", False),
             "RemoteTransfer": self.StartInfo.get("RemoteTransfer", False),
             "SetGenTime": self.StartInfo.get("SetGenTime", False),
-            "EnhancedExerciseMode": self.StartInfo.get("EnhancedExerciseMode", False),
+            # not in StartInfo: genmon reports it in gui_status_json
+            "EnhancedExerciseMode": self.EnhancedExerciseMode,
         }
 
         controller_str = self.StartInfo.get("Controller", "Unknown")

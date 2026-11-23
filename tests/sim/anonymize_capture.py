@@ -142,8 +142,9 @@ def anonymize(capture, controller, import_config=None, comment=None):
 
     replaced = []
     for section, register, kind in places:
-        # the holding registers are "Registers" in some captures
-        sections = [section] + (["Registers"] if section == "Holding" else [])
+        # the holding registers are "Registers" in some captures and
+        # "Holding" in others (newer genmon dumps, e.g. Power Zone 200)
+        sections = [section] + {"Holding": ["Registers"], "Registers": ["Holding"]}.get(section, [])
         for name in sections:
             value = out.get(name, {}).get(register)
             if not value:

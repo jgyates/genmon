@@ -1,5 +1,5 @@
 {
- "Comment": "Evolution, Air Cooled, 11 kW, Natural Gas. Anonymized with tests/sim/anonymize_capture.py",
+ "Comment": "Evolution (1.0), Air Cooled, 11 kW, Natural Gas. Anonymized with tests/sim/anonymize_capture.py",
  "Registers": {
   "01f4": "31323334353637383930",
   "0000": "0009",

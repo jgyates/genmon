@@ -104,6 +104,10 @@ All notable changes to this project will be documented in this file.
 - Fixed values with no unit (e.g. RPM, Power Factor, Total Run Hours) having a trailing space ("1801 " is now "1801") in the web interface, JSON, MQTT and Home Assistant. Automations that compare these values as exact text may need updating (#1595, thanks @nicktdot)
 - Added support for the Cummins PowerCommand PCC1302 (PowerCommand 1.x) controller as a custom controller (Cummins_PCC1302.json), with an SNMP map. Monitoring only, no remote start / stop (#1594, thanks @millerchada)
 - Custom controllers that read their rated values (voltage, frequency, phase, etc.) from registers are now detected even if those registers can not be read; the genmon settings are used until the registers are read (genmon stayed on "Waiting for comms")
+- Home Assistant (native integration, genhalink) and Hubitat: BiWeekly / Monthly exercise and Exercise Day of Month are now only offered on controllers that support them (Enhanced Exercise Mode). Enhanced Exercise Mode was always reported as not supported; it is now read from genmon's exercise information
+- Home Assistant (native integration and MQTT) and Hubitat: the Quiet Mode switch now shows the generator's quiet mode setting (it was always unknown)
+- Home Assistant (native integration and MQTT) and Hubitat: the Power Zone 200 and Power Zone controllers are now recognized (they were treated as custom controllers). The Power Zone 200 now has the exercise controls and Set Generator Time, and only its own Start Exercise Cycle button (the duplicate Start Exercise button was removed); the Power Zone now has Set Generator Time
+- Tests: added Evolution 2.0 and Power Zone 200 register captures for the simulator tests; tests/sim/anonymize_capture.py now also replaces the serial number in captures that store the registers as "Holding"
 
 ## 2.0.3 -2026-10-07
 - Added support for an auxiliary alam log (see Advanced Settings to enable) and the Known Issues wiki for more info

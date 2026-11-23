@@ -444,6 +444,17 @@ class RepositoryCaptureTests(unittest.TestCase):
         self.assertEqual(len(replaced), 1)
         self.assertEqual(anonymize_capture.fake_text("SN-3001 2A"), "XX-1234 5X")
 
+    def test_anonymize_holding(self):
+        # newer genmon dumps call the holding registers "Holding" (e.g. Power
+        # Zone 200): the serial number there is replaced too
+        sys.path.insert(0, os.path.join(REPO_DIR, "tests", "sim"))
+        import anonymize_capture
+
+        capture = {"Holding": {"01f4": "33303138353533323730", "0001": "0000"}}
+        out, replaced = anonymize_capture.anonymize(capture, "generac_evo_nexus")
+        self.assertEqual(out["Holding"]["01f4"], "31323334353637383930")  # 1234567890
+        self.assertEqual(len(replaced), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -398,7 +398,7 @@
       "command_on": "setquiet=on",
       "command_off": "setquiet=off",
       "icon": "mdi:volume-off",
-      "state_path": "Maintenance/Exercise/Quiet Mode",
+      "state_path": "gui_status/ExerciseInfo/QuietMode",
       "payload_on": "On",
       "payload_off": "Off",
       "controllers": [

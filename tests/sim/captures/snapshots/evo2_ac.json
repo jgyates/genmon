@@ -1,0 +1,397 @@
+{
+ "logs_json": {
+  "Logs": {
+   "Alarm Log": [
+    "12/04/20 <TIME> ESTOP Pressed : Alarm Code: 2800",
+    "12/02/20 <TIME> Low Battery : Alarm Code: 0000"
+   ],
+   "Run Log": [
+    "01/09/21 <TIME> Stopped - Auto ",
+    "01/09/21 <TIME> Running - Exercise ",
+    "01/02/21 <TIME> Stopped - Auto ",
+    "01/02/21 <TIME> Running - Exercise ",
+    "01/01/21 <TIME> Stopped - Auto ",
+    "01/01/21 <TIME> Running - Remote Start ",
+    "12/26/20 <TIME> Stopped - Auto ",
+    "12/26/20 <TIME> Running - Exercise ",
+    "12/19/20 <TIME> Stopped - Auto ",
+    "12/19/20 <TIME> Running - Exercise ",
+    "12/16/20 <TIME> Stopped - Auto ",
+    "12/16/20 <TIME> Running - Remote Start ",
+    "12/13/20 <TIME> Stopped - Auto ",
+    "12/13/20 <TIME> Running - Remote Start ",
+    "12/12/20 <TIME> Stopped - Auto ",
+    "12/12/20 <TIME> Running - Exercise ",
+    "12/07/20 <TIME> Stopped - Auto ",
+    "12/07/20 <TIME> Running - Remote Start ",
+    "12/06/20 <TIME> Stopped - Auto ",
+    "12/06/20 <TIME> Running - Remote Start ",
+    "12/06/20 <TIME> Stopped - Auto ",
+    "12/06/20 <TIME> Running - Remote Start ",
+    "12/06/20 <TIME> Stopped - Auto ",
+    "12/06/20 <TIME> Switched Off ",
+    "12/05/20 <TIME> Stopped - Auto ",
+    "12/05/20 <TIME> Running - Exercise ",
+    "12/04/20 <TIME> Stopped - Auto ",
+    "12/04/20 <TIME> Switched Off ",
+    "12/04/20 <TIME> Running - Manual ",
+    "12/04/20 <TIME> Switched Off ",
+    "12/04/20 <TIME> Running - Manual ",
+    "12/04/20 <TIME> Switched Off ",
+    "12/04/20 <TIME> Stopped - Auto ",
+    "12/04/20 <TIME> Switched Off ",
+    "12/04/20 <TIME> Stopped - Auto ",
+    "12/04/20 <TIME> Switched Off ",
+    "12/04/20 <TIME> Running - Manual ",
+    "12/04/20 <TIME> Stopped - Auto ",
+    "12/04/20 <TIME> Switched Off ",
+    "12/02/20 <TIME> Stopped - Auto ",
+    "12/02/20 <TIME> Running - Exercise ",
+    "12/02/20 <TIME> Stopped - Auto ",
+    "12/02/20 <TIME> Switched Off ",
+    "12/02/20 <TIME> Stopped - Auto ",
+    "12/02/20 <TIME> Running - Utility Loss ",
+    "12/02/20 <TIME> Stopped - Auto ",
+    "12/02/20 <TIME> Switched Off ",
+    "12/02/20 <TIME> Stopped - Auto ",
+    "12/02/20 <TIME> Switched Off ",
+    "12/02/20 <TIME> Running - Utility Loss "
+   ],
+   "Service Log": []
+  }
+ },
+ "maint_json": {
+  "Maintenance": [
+   {
+    "Model": "G0072100"
+   },
+   {
+    "Generator Serial Number": "XXXXXXXXXX"
+   },
+   {
+    "Controller Detected": "Evolution 2.0, Air Cooled"
+   },
+   {
+    "Nominal RPM": "3600"
+   },
+   {
+    "Rated kW": "24 kW"
+   },
+   {
+    "Nominal Frequency": "60 Hz"
+   },
+   {
+    "Fuel Type": "Natural Gas"
+   },
+   {
+    "Generator Phase": "1"
+   },
+   {
+    "Engine Displacement": "999 cc"
+   },
+   {
+    "kW Hours in last 30 days": "0.00 kWh"
+   },
+   {
+    "Fuel Consumption in last 30 days": "0.00 cubic feet"
+   },
+   {
+    "Run Hours in last 30 days": "0.00 h"
+   },
+   {
+    "Ambient Temperature Sensor": "50 F"
+   },
+   {
+    "Controller Settings": [
+     {
+      "Calibrate Current 1": "1507"
+     },
+     {
+      "Calibrate Current 2": "1558"
+     },
+     {
+      "Calibrate Volts": "1051"
+     },
+     {
+      "Nominal Line Voltage": "240 V"
+     },
+     {
+      "Rated Max Power": "24 kW"
+     },
+     {
+      "Time Since Activation": "1058 h"
+     }
+    ]
+   },
+   {
+    "Exercise": [
+     {
+      "Exercise Time": "Weekly Saturday 11:00 Quiet Mode Off"
+     }
+    ]
+   },
+   {
+    "Service": [
+     {
+      "Service A Due": "198 hrs or 12/01/2022 "
+     },
+     {
+      "Service B Due": "398 hrs or 11/30/2024 "
+     },
+     {
+      "Battery Check Due": "12/01/2021 "
+     },
+     {
+      "Total Run Hours": "1.00 h"
+     },
+     {
+      "Hardware Version": "V1.00"
+     },
+     {
+      "Firmware Version": "V1.11"
+     }
+    ]
+   }
+  ]
+ },
+ "outage_json": {
+  "Outage": [
+   {
+    "Status": "No outage has occurred since program launched."
+   },
+   {
+    "System In Outage": "No"
+   },
+   {
+    "Utility Voltage": "241 V"
+   },
+   {
+    "Utility Voltage Minimum": "241 V"
+   },
+   {
+    "Utility Voltage Maximum": "241 V"
+   },
+   {
+    "Utility Threshold Voltage": "156 V"
+   },
+   {
+    "Utility Pickup Voltage": "190 V"
+   },
+   {
+    "Startup Delay": "5 s"
+   },
+   {
+    "Outage Log": ""
+   }
+  ]
+ },
+ "registers_json": {
+  "Registers": {
+   "Holding": {
+    "0000": "0015",
+    "0001": "00000000",
+    "0005": "0b00",
+    "0006": "0600",
+    "0007": "0000",
+    "0008": "0000",
+    "0009": "00f1",
+    "000a": "008d",
+    "000b": "00000001",
+    "000d": "0000",
+    "000e": "112e",
+    "000f": "010f",
+    "0010": "0515",
+    "0011": "009c",
+    "0012": "0000",
+    "0018": "0000",
+    "0019": "0015",
+    "001a": "00c6",
+    "001b": "4b80",
+    "001c": "0000",
+    "001d": "0000",
+    "001e": "018e",
+    "001f": "4e5a",
+    "0020": "0000",
+    "0021": "0000",
+    "0022": "4a13",
+    "002a": "646f",
+    "002b": "0005",
+    "002c": "0b00",
+    "002d": "0000",
+    "002e": "0006",
+    "002f": "0000",
+    "0032": "4000",
+    "0033": "012c",
+    "0034": "0001",
+    "0035": "0000",
+    "0036": "0000",
+    "0037": "1cad",
+    "0038": "0003",
+    "0039": "0000",
+    "003a": "00000000",
+    "003c": "0000",
+    "004c": "0000",
+    "0051": "0050",
+    "0052": "0000",
+    "0053": "0000",
+    "0054": "0422",
+    "0055": "0000",
+    "0056": "0000",
+    "0057": "0000",
+    "0058": "0000",
+    "0059": "0000",
+    "005a": "0000",
+    "005c": "0000",
+    "005d": "0000",
+    "005e": "00000000",
+    "0062": "0000",
+    "01f4": "58585858585858585858",
+    "0208": "041b",
+    "0209": "0000",
+    "020a": "0000",
+    "020b": "0000",
+    "020c": "0001",
+    "020d": "0000",
+    "020e": "0000",
+    "020f": "0000",
+    "0212": "0023",
+    "0213": "0000",
+    "0234": "0000",
+    "0235": "0000",
+    "0236": "0000",
+    "0237": "0000",
+    "0238": "0000",
+    "0239": "0005",
+    "023a": "0000",
+    "023b": "00be",
+    "023d": "0000",
+    "023e": "0000",
+    "023f": "0000",
+    "0241": "0000",
+    "0242": "0000",
+    "0243": "0000",
+    "0244": "0000",
+    "0245": "0000",
+    "0246": "0000",
+    "0247": "0000",
+    "0248": "0000",
+    "0249": "0000",
+    "024a": "0000",
+    "0255": "0000",
+    "0256": "0000",
+    "0258": "0000",
+    "025a": "0000",
+    "05ed": "0032",
+    "05ee": "007c",
+    "05f1": "0000",
+    "05f2": "4a13",
+    "05f3": "00c8",
+    "05f4": "0000",
+    "05f5": "0000",
+    "05f6": "05e3",
+    "05f7": "0616",
+    "05fa": "0000",
+    "0614": "0000",
+    "1f72": "0000",
+    "1f73": "0000",
+    "1f74": "0000",
+    "1f75": "0000",
+    "1f76": "0000",
+    "1f77": "0000",
+    "1f7b": "0000",
+    "1f7c": "00000000",
+    "1fa4": "0000",
+    "1fa5": "0000",
+    "1fa6": "0000",
+    "2134": "0000",
+    "2135": "0000",
+    "2136": "0000",
+    "2137": "0000",
+    "2138": "0000",
+    "2166": "0000"
+   }
+  }
+ },
+ "status_json": {
+  "Status": [
+   {
+    "Engine": [
+     {
+      "Switch State": "Auto"
+     },
+     {
+      "Engine State": "Off - Ready"
+     },
+     {
+      "Generator State": "Unknown"
+     },
+     {
+      "Battery Voltage": "14.10 V"
+     },
+     {
+      "Battery Charger Current": "124 mA"
+     },
+     {
+      "RPM": "0"
+     },
+     {
+      "Frequency": "0.00 Hz"
+     },
+     {
+      "Output Voltage": "0 V"
+     },
+     {
+      "Output Current": "0.00 A"
+     },
+     {
+      "Current L1": "0.00 A"
+     },
+     {
+      "Current L2": "0.00 A"
+     },
+     {
+      "Output Power (Single Phase)": "0.00 kW"
+     },
+     {
+      "Active Rotor Poles (Calculated)": "0"
+     }
+    ]
+   },
+   {
+    "Line": [
+     {
+      "Utility Voltage": "241 V"
+     },
+     {
+      "Utility Max Voltage": "241 V"
+     },
+     {
+      "Utility Min Voltage": "241 V"
+     },
+     {
+      "Utility Threshold Voltage": "156 V"
+     }
+    ]
+   },
+   {
+    "Last Log Entries": {
+     "Logs": {
+      "Alarm Log": "12/04/20 <TIME> ESTOP Pressed : Alarm Code: 2800",
+      "Run Log": "01/09/21 <TIME> Stopped - Auto ",
+      "Service Log": ""
+     }
+    }
+   },
+   {
+    "Time": [
+     {
+      "Monitor Time": "<NOW>"
+     },
+     {
+      "Generator Time": "Friday January 15, 2021 17:46"
+     }
+    ]
+   }
+  ]
+ }
+}

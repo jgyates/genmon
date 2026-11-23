@@ -175,6 +175,10 @@ class LinkTests(object):
                 ("Nexus, Air Cooled", "nexus", "generac_evo_nexus.json"),
                 ("H-100 Controller", "h-100", "h_100.json"),
                 ("Briggs & Stratton GC-1032", "Briggs_Stratton_GC-1032", "Briggs_Stratton_GC-1032.json"),
+                # Power Zone 200: genmon's Evolution controller code (generac_evolution.py)
+                ("Power Zone 200, Air Cooled", "evolution", "generac_evo_nexus.json"),
+                ("Power Zone", "powerzone", "powerzone.json"),  # Power Zone Pro
+                ("Power Zone 410 Controller", "Power_Zone_410", "Power_Zone_410.json"),
                 ("Something Else", "custom", "custom.json")]:
             with self.subTest(controller=controller):
                 self.assertEqual(cls._normalize_controller_type(controller), expected_type)
@@ -296,9 +300,74 @@ class LinkTests(object):
         self.addon._poll_genmon()
         client = await self.client()
         entities, result = await self.entities(client)
-        self.assertEqual(set(entities["buttons"]), {"start_exercise"})
+        # start_exercise is a remote command (setremote) too; a controller
+        # without them (Power Zone 200) has its own exercise button
+        self.assertEqual(set(entities["buttons"]), set())
         self.assertNotIn("quiet_mode", entities["switches"])
         self.assertFalse(result["capabilities"]["SetGenTime"])
+
+    async def test_enhanced_exercise_mode(self):
+        # genmon reports it only in gui_status_json ExerciseInfo ("True" /
+        # "False" on Evolution, False on other controllers), not in start_info
+        for reported, enhanced in [(None, False), ("False", False), (False, False),
+                                   ("True", True)]:
+            with self.subTest(reported=reported):
+                fixture = self.start()
+                gui = {"PlatformStats": {"CPU Temperature": "28.70 C"}}
+                if reported is not None:
+                    gui["ExerciseInfo"] = {"Frequency": "Weekly", "Day": "Monday",
+                                           "EnhancedExerciseMode": reported}
+                fixture.state["answers"]["gui_status_json"] = json.dumps(gui)
+                self.addon._poll_genmon()
+                client = await self.client()
+                _entities, result = await self.entities(client)
+                self.assertIs(result["capabilities"]["EnhancedExerciseMode"], enhanced)
+                numbers = {e["entity_id"] for e in result["numbers"]}
+                selects = {e["entity_id"]: e for e in result["selects"]}
+                # BiWeekly and Monthly need enhanced exercise; only monthly
+                # exercise has a day of the month
+                self.assertEqual("exercise_day_of_month" in numbers, enhanced)
+                self.assertIn("exercise_hour", numbers)
+                self.assertEqual(selects["exercise_frequency"]["options"],
+                                 ["Weekly", "BiWeekly", "Monthly"] if enhanced else ["Weekly"])
+        # the definitions themselves are not changed
+        frequency = [e for e in self.addon.EntityDefinitions["selects"]
+                     if e["entity_id"] == "exercise_frequency"][0]
+        self.assertEqual(frequency["options"], ["Weekly", "BiWeekly", "Monthly"])
+
+    def test_quiet_mode_state(self):
+        # the quiet_mode switch's state_path has genmon's quiet mode (it is
+        # in gui_status_json ExerciseInfo, not under Maintenance)
+        fixture = self.start()
+        fixture.state["answers"]["gui_status_json"] = json.dumps(
+            {"ExerciseInfo": {"Frequency": "Weekly", "QuietMode": "On"}})
+        self.addon._poll_genmon()
+        switch = [e for e in self.addon.EntityDefinitions["switches"]
+                  if e["entity_id"] == "quiet_mode"][0]
+        value = self.addon.CurrentState
+        for part in switch["state_path"].split("/"):
+            value = value.get(part) if isinstance(value, dict) else None
+        self.assertEqual(value, switch["payload_on"])
+
+    async def test_power_zone_buttons(self):
+        # Power Zone (Pro): remote start / stop and setting the clock
+        self.start(start_info={"Controller": "Power Zone", "RemoteTransfer": False,
+                               "ExerciseControls": False})
+        self.addon._poll_genmon()
+        client = await self.client()
+        entities, result = await self.entities(client)
+        self.assertEqual(result["controller_type"], "powerzone")
+        self.assertEqual(set(entities["buttons"]), {"start", "stop", "set_generator_time"})
+
+    async def test_power_zone_200_buttons(self):
+        # Power Zone 200: no remote commands; its controller buttons (one of
+        # them starts the exercise cycle) instead of setremote ones
+        self.start(start_info={"Controller": "Power Zone 200, Air Cooled",
+                               "RemoteCommands": False, "RemoteTransfer": False})
+        self.addon._poll_genmon()
+        client = await self.client()
+        entities, _result = await self.entities(client)
+        self.assertEqual(set(entities["buttons"]), {"set_generator_time"})
 
     async def test_sensors_found_in_the_data(self):
         self.start()

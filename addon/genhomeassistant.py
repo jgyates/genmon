@@ -675,7 +675,8 @@ SWITCH_DEFINITIONS = {
         "command_on": "setquiet=on",
         "command_off": "setquiet=off",
         "icon": "mdi:volume-off",
-        "state_path": "Maintenance/Exercise/Quiet Mode",
+        # genmon reports quiet mode in gui_status_json ExerciseInfo
+        "state_path": "gui_status/ExerciseInfo/QuietMode",
         "payload_on": "On",
         "payload_off": "Off",
         "controllers": ["evolution", "nexus"],
@@ -940,7 +941,14 @@ class MyHomeAssistant(MySupport):
 
             # Determine controller type
             controller = self.StartInfo.get("Controller", "").lower()
-            if "evolution" in controller:
+            # Power Zone 200 runs on genmon's Evolution controller code
+            # (generac_evolution.py); "Power Zone" is the Power Zone Pro.
+            # "Power Zone 410" is a custom controller.
+            if controller.startswith("power zone 200"):
+                self.ControllerType = "evolution"
+            elif controller.strip() in ("power zone", "power zone pro"):
+                self.ControllerType = "powerzone"
+            elif "evolution" in controller:
                 self.ControllerType = "evolution"
             elif "nexus" in controller:
                 self.ControllerType = "nexus"
@@ -2428,6 +2436,11 @@ class MyHomeAssistant(MySupport):
                         genmon_data["Monitor"] = temp.get("Monitor", {})
                     if gui_data:
                         temp = json.loads(gui_data)
+                        # Exercise info (quiet mode), at the path genhalink
+                        # uses too: gui_status/ExerciseInfo
+                        exercise_info = temp.get("ExerciseInfo")
+                        if isinstance(exercise_info, dict):
+                            genmon_data["gui_status"] = {"ExerciseInfo": exercise_info}
                         # Extract tiles as a dict keyed by title for easy lookup
                         tiles = temp.get("tiles", [])
                         tiles_dict = {}
@@ -2967,6 +2980,9 @@ class MyHomeAssistant(MySupport):
             ]
             # Skip Tiles - handled by static sensor definitions (cpu_temp)
             if path.startswith("Tiles/"):
+                continue
+            # gui_status is GUI data (exercise info for quiet mode), not sensors
+            if path.startswith("gui_status/"):
                 continue
             if any(skip in path.lower() for skip in skip_patterns):
                 continue

@@ -11,6 +11,16 @@
       "fueltype": "Natural Gas"
     },
     {
+      "name": "evo2_ac",
+      "file": "evo2_ac.json",
+      "controllertype": "generac_evo_nexus",
+      "address": "9d",
+      "model": "G0072100",
+      "nominalkw": "24",
+      "controller": "Evolution 2.0, Air Cooled",
+      "fueltype": "Natural Gas"
+    },
+    {
       "name": "nexus_ac",
       "file": "nexus_ac.json",
       "controllertype": "generac_evo_nexus",
@@ -49,6 +59,16 @@
       "nominalkw": "500",
       "controller": "Power Zone",
       "fueltype": "Natural Gas"
+    },
+    {
+      "name": "pz200",
+      "file": "pz200.json",
+      "controllertype": "generac_evo_nexus",
+      "address": "9d",
+      "model": "G0070432",
+      "nominalkw": "28",
+      "controller": "Power Zone 200, Air Cooled",
+      "fueltype": "Propane"
     },
     {
       "name": "kohler_apm603",

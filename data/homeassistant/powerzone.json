@@ -4,7 +4,14 @@
   "description": "PowerZone controller-specific entity definitions (extends base)",
   "sensors": [],
   "binary_sensors": [],
-  "buttons": [],
+  "buttons": [
+    {
+      "entity_id": "set_generator_time",
+      "name": "Set Generator Time",
+      "command": "settime",
+      "icon": "mdi:clock-edit"
+    }
+  ],
   "switches": [],
   "selects": [],
   "numbers": []

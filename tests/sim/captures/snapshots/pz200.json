@@ -1,0 +1,437 @@
+{
+ "logs_json": {
+  "Logs": {
+   "Alarm Log": [],
+   "Run Log": [
+    "08/07/26 <TIME> Stopped-Auto ",
+    "08/07/26 <TIME> Running-Exercise ",
+    "08/02/26 <TIME> Stopped-Auto ",
+    "08/02/26 <TIME> Ran with Remote Transfer ",
+    "08/02/26 <TIME> Ready to Run ",
+    "07/31/26 <TIME> Internal Exercise Cycle Skipped ",
+    "07/30/26 <TIME> Stopped-Auto ",
+    "07/30/26 <TIME> Ran with Remote Transfer ",
+    "07/30/26 <TIME> Ready to Run ",
+    "07/30/26 <TIME> Stopped-Auto ",
+    "07/30/26 <TIME> Ran with Remote Transfer ",
+    "07/30/26 <TIME> Ready to Run ",
+    "07/30/26 <TIME> Stopped-Auto ",
+    "07/30/26 <TIME> Running-Exercise ",
+    "07/29/26 <TIME> Internal Exercise Cycle Skipped ",
+    "07/29/26 <TIME> Stopped-Auto ",
+    "07/29/26 <TIME> Ran with Remote Transfer ",
+    "07/29/26 <TIME> Ready to Run ",
+    "07/29/26 <TIME> Stopped-Auto ",
+    "07/29/26 <TIME> Ran with Remote Transfer ",
+    "07/29/26 <TIME> Running-Exercise ",
+    "07/25/26 <TIME> Stopped-Auto ",
+    "07/25/26 <TIME> Running-Exercise ",
+    "07/24/26 <TIME> Stopped-Auto ",
+    "07/24/26 <TIME> Ran with Remote Transfer ",
+    "07/24/26 <TIME> Ready to Run ",
+    "07/24/26 <TIME> Stopped-Auto ",
+    "07/24/26 <TIME> Running-Exercise ",
+    "07/24/26 <TIME> Stopped-Auto ",
+    "07/24/26 <TIME> Switched Off ",
+    "07/24/26 <TIME> Running-Manual ",
+    "07/24/26 <TIME> Switched Off ",
+    "07/24/26 <TIME> Stopped-Auto ",
+    "07/24/26 <TIME> Missing Cam Pulse ",
+    "07/24/26 <TIME> Exit Service Mode ",
+    "07/24/26 <TIME> Enter Service Mode ",
+    "07/24/26 <TIME> Exit Service Mode ",
+    "07/24/26 <TIME> Enter Service Mode ",
+    "07/24/26 <TIME> Stopped-Alarm ",
+    "07/24/26 <TIME> Stopped-Auto ",
+    "07/24/26 <TIME> Running-Exercise ",
+    "07/24/26 <TIME> Internal Exercise Cycle Skipped ",
+    "07/24/26 <TIME> Stopped-Auto ",
+    "07/24/26 <TIME> Ran with Remote Transfer ",
+    "07/24/26 <TIME> Ready to Run ",
+    "07/24/26 <TIME> Stopped-Auto ",
+    "07/24/26 <TIME> Running-Exercise ",
+    "07/24/26 <TIME> Stopped-Auto ",
+    "07/24/26 <TIME> Running-Exercise ",
+    "07/24/26 <TIME> Stopped-Auto "
+   ],
+   "Service Log": [
+    "01/01/20 <TIME> Maintenance Reset "
+   ]
+  }
+ },
+ "maint_json": {
+  "Maintenance": [
+   {
+    "Model": "G0070432"
+   },
+   {
+    "Generator Serial Number": "1234567890"
+   },
+   {
+    "Controller Detected": "Power Zone 200, Air Cooled"
+   },
+   {
+    "Nominal RPM": "3600"
+   },
+   {
+    "Rated kW": "28 kW"
+   },
+   {
+    "Nominal Frequency": "60 Hz"
+   },
+   {
+    "Fuel Type": "Propane"
+   },
+   {
+    "Generator Phase": "1"
+   },
+   {
+    "Engine Displacement": "997 cc"
+   },
+   {
+    "kW Hours in last 30 days": "0.00 kWh"
+   },
+   {
+    "Fuel Consumption in last 30 days": "0.00 gal"
+   },
+   {
+    "Run Hours in last 30 days": "0.00 h"
+   },
+   {
+    "Controller Settings": [
+     {
+      "Calibrate Current 1": "0"
+     },
+     {
+      "Calibrate Current 2": "0"
+     },
+     {
+      "Calibrate Volts": "0"
+     },
+     {
+      "Nominal Line Voltage": "240 V"
+     },
+     {
+      "Rated Max Power": "28 kW"
+     },
+     {
+      "Return to Utility Delay": "0 sec"
+     },
+     {
+      "Cool Down Time": "0 sec"
+     }
+    ]
+   },
+   {
+    "Exercise": [
+     {
+      "Exercise Time": "Weekly Friday 12:00 Quiet Mode Off"
+     },
+     {
+      "Exercise Duration": "5 min"
+     }
+    ]
+   },
+   {
+    "Service": [
+     {
+      "Service A Due": "194 hrs or 06/18/2028 "
+     },
+     {
+      "Service B Due": "394 hrs or 06/18/2030 "
+     },
+     {
+      "Battery Check Due": "06/19/2027 "
+     },
+     {
+      "Total Run Hours": "5.40 h"
+     },
+     {
+      "Hardware Version": "V1.02"
+     },
+     {
+      "Firmware Version": "V1.06"
+     }
+    ]
+   }
+  ]
+ },
+ "outage_json": {
+  "Outage": [
+   {
+    "Status": "No outage has occurred since program launched."
+   },
+   {
+    "System In Outage": "No"
+   },
+   {
+    "Utility Voltage": "245 V"
+   },
+   {
+    "Utility Voltage Minimum": "245 V"
+   },
+   {
+    "Utility Voltage Maximum": "245 V"
+   },
+   {
+    "Utility Threshold Voltage": "185 V"
+   },
+   {
+    "Startup Delay": "0 s"
+   },
+   {
+    "Elapsed Run Minutes for Current Run": "4 min"
+   },
+   {
+    "Outage Log": ""
+   }
+  ]
+ },
+ "registers_json": {
+  "Registers": {
+   "Holding": {
+    "0000": "0019",
+    "0001": "00000000",
+    "0005": "0c00",
+    "0006": "0500",
+    "0007": "0000",
+    "0008": "0000",
+    "0009": "00f5",
+    "000a": "007f",
+    "000b": "00000000",
+    "000d": "0000",
+    "000e": "110a",
+    "000f": "0808",
+    "0010": "061a",
+    "0011": "00b9",
+    "0012": "0000",
+    "0018": "0000",
+    "0019": "0009",
+    "001a": "00c2",
+    "001b": "5369",
+    "001c": "0000",
+    "001d": "0000",
+    "001e": "018a",
+    "001f": "5643",
+    "0020": "0013",
+    "0021": "50e9",
+    "0022": "51fc",
+    "002a": "666a",
+    "002b": "0000",
+    "002c": "0c00",
+    "002d": "0000",
+    "002e": "0005",
+    "002f": "0000",
+    "0032": "0000",
+    "0033": "0000",
+    "0034": "0000",
+    "0035": "0000",
+    "0036": "0000",
+    "0037": "0000",
+    "0038": "0000",
+    "0039": "0000",
+    "003a": "00000000",
+    "003c": "0000",
+    "004c": "0000",
+    "0051": "005b",
+    "0052": "0000",
+    "0053": "0000",
+    "0054": "04b0",
+    "0055": "0000",
+    "0056": "0000",
+    "0057": "0000",
+    "0058": "0000",
+    "0059": "00f0",
+    "005a": "003c",
+    "005c": "0076",
+    "005d": "0000",
+    "005e": "00000144",
+    "0062": "0000",
+    "01f4": "31323334353637383930",
+    "0208": "0000",
+    "0209": "0000",
+    "020a": "0000",
+    "020b": "0000",
+    "020c": "0000",
+    "020d": "0000",
+    "020e": "0000",
+    "020f": "0000",
+    "0212": "0000",
+    "0213": "0000",
+    "0234": "0001",
+    "0235": "0000",
+    "0236": "0000",
+    "0237": "00f0",
+    "0238": "0005",
+    "0239": "000a",
+    "023a": "0001",
+    "023b": "00d1",
+    "023d": "0001",
+    "023e": "0005",
+    "023f": "0005",
+    "0241": "0000",
+    "0242": "0000",
+    "0243": "0000",
+    "0244": "0000",
+    "0245": "0000",
+    "0246": "0000",
+    "0247": "0000",
+    "0248": "0000",
+    "0249": "0000",
+    "024a": "0000",
+    "0255": "0000",
+    "0256": "0000",
+    "0258": "0000",
+    "025a": "0000",
+    "05ed": "006f",
+    "05ee": "0000",
+    "05f1": "0000",
+    "05f2": "0000",
+    "05f3": "0000",
+    "05f4": "0000",
+    "05f5": "0000",
+    "05f6": "0000",
+    "05f7": "0000",
+    "05fa": "0000",
+    "0608": "005b",
+    "060c": "0000",
+    "0613": "0067",
+    "0614": "006c",
+    "0637": "0000",
+    "0638": "0000",
+    "0639": "0000",
+    "063a": "0000",
+    "07d0": "0047003200320042004200310035003000310033",
+    "07e6": "0000",
+    "07e7": "05b6",
+    "1f72": "0000",
+    "1f73": "0000",
+    "1f74": "0000",
+    "1f75": "0000",
+    "1f76": "0000",
+    "1f77": "0000",
+    "1f7b": "0000",
+    "1f7c": "0000000d",
+    "1fa4": "007b",
+    "1fa5": "007a",
+    "1fa6": "0000",
+    "2008": "0003",
+    "2134": "0000",
+    "2135": "0000",
+    "2136": "0000",
+    "2137": "0004",
+    "2138": "0000",
+    "2166": "0000"
+   }
+  }
+ },
+ "status_json": {
+  "Status": [
+   {
+    "Engine": [
+     {
+      "Switch State": "Auto"
+     },
+     {
+      "Engine State": "Off - Ready"
+     },
+     {
+      "Battery Voltage": "12.70 V"
+     },
+     {
+      "RPM": "0"
+     },
+     {
+      "Frequency": "0.00 Hz"
+     },
+     {
+      "Output Voltage": "0 V"
+     },
+     {
+      "Output Voltage L1": "0 V"
+     },
+     {
+      "Output Voltage L2": "0 V"
+     },
+     {
+      "Output Current": "0.00 A"
+     },
+     {
+      "Current L1": "0.00 A"
+     },
+     {
+      "Current L2": "0.00 A"
+     },
+     {
+      "Output Power (Single Phase)": "0.00 kW"
+     },
+     {
+      "Power Factor": "0.00"
+     },
+     {
+      "Engine Load": "0 %"
+     },
+     {
+      "Intake Temperature": "91 F"
+     },
+     {
+      "Oil Level": "3"
+     },
+     {
+      "Fuel Pressure (Cranking)": "103"
+     },
+     {
+      "Fuel Pressure (Running)": "108"
+     },
+     {
+      "Active Rotor Poles (Calculated)": "0"
+     }
+    ]
+   },
+   {
+    "Line": [
+     {
+      "Transfer Switch State": "Utility"
+     },
+     {
+      "Utility Voltage": "245 V"
+     },
+     {
+      "Utility Voltage L1": "123 V"
+     },
+     {
+      "Utility Voltage L2": "122 V"
+     },
+     {
+      "Utility Max Voltage": "245 V"
+     },
+     {
+      "Utility Min Voltage": "245 V"
+     },
+     {
+      "Utility Threshold Voltage": "185 V"
+     }
+    ]
+   },
+   {
+    "Last Log Entries": {
+     "Logs": {
+      "Alarm Log": "",
+      "Run Log": "08/07/26 <TIME> Stopped-Auto ",
+      "Service Log": "01/01/20 <TIME> Maintenance Reset "
+     }
+    }
+   },
+   {
+    "Time": [
+     {
+      "Monitor Time": "<NOW>"
+     },
+     {
+      "Generator Time": "Saturday August 8, 2026 17:10"
+     }
+    ]
+   }
+  ]
+ }
+}

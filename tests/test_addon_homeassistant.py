@@ -51,8 +51,7 @@ STATUS = {"Status": [
 ]}
 MAINT = {"Maintenance": [
     {"Model": "Test 22kW"},
-    {"Exercise": [{"Exercise Time": "Weekly Sunday 16:00 Quiet Mode On"},
-                  {"Quiet Mode": "On"}]},
+    {"Exercise": [{"Exercise Time": "Weekly Sunday 16:00 Quiet Mode On"}]},
 ]}
 OUTAGE = {"Outage": [{"Status": "OK"}, {"System In Outage": "No"}]}
 MONITOR = {"Monitor": [{"Generator Monitor Stats": [
@@ -77,7 +76,10 @@ class HomeAssistantTestCase(unittest.TestCase):
             "status_num_json": json.dumps(STATUS), "maint_num_json": json.dumps(MAINT),
             "outage_num_json": json.dumps(OUTAGE), "monitor_num_json": json.dumps(MONITOR),
             "gui_status_json": json.dumps({
-                "ExerciseInfo": {"Frequency": "Weekly", "EnhancedExerciseMode": enhanced},
+                # genmon reports quiet mode here (and in the Exercise Time
+                # text), not as a value of its own under Maintenance
+                "ExerciseInfo": {"Frequency": "Weekly", "QuietMode": "On",
+                                 "EnhancedExerciseMode": enhanced},
                 "tiles": [{"title": "CPU Temp", "value": 41.2}]}),
         }
         self.addCleanup(fixture.stop)
@@ -165,6 +167,14 @@ class DiscoveryTests(HomeAssistantTestCase):
             fixture.addon.SensorDefinitions["service_a_due"], "service_a_due"))
         self.assertTrue(fixture.addon._entity_allowed(
             fixture.addon.SensorDefinitions["oil_service"], "oil_service"))
+
+    def test_power_zone_controller_types(self):
+        for controller, expected in [("Power Zone 200, Air Cooled", "evolution"),
+                                     ("Power Zone", "powerzone"),
+                                     ("Power Zone 410 Controller", "custom")]:
+            with self.subTest(controller=controller):
+                fixture = self.start(controller=controller)
+                self.assertEqual(fixture.addon.ControllerType, expected)
 
     def test_blacklist(self):
         fixture = self.start(blacklist="battery, Line")
@@ -281,6 +291,13 @@ class StateTests(HomeAssistantTestCase):
         config = self.discovery(fixture, "sensor", entity_id)
         self.assertEqual((config["unit_of_measurement"], config["device_class"]), ("V", "voltage"))
 
+    def test_no_sensors_from_exercise_info(self):
+        # gui_status/ExerciseInfo is read for quiet mode only
+        fixture = self.start()
+        states = self.poll(fixture)
+        self.assertEqual(states["genmon/switch/quiet_mode/state"], "ON")
+        self.assertFalse([t for t in states if "gui_status" in t or "exerciseinfo" in t])
+
     def test_sensor_found_in_the_data_blacklisted(self):
         fixture = self.start(blacklist="unlisted")
         states = self.poll(fixture)
@@ -331,6 +348,14 @@ class CommandTests(HomeAssistantTestCase):
                 self.assertEqual(self.discovery(fixture, "button", button), "")
                 self.assertEqual(self.message(fixture, "genmon/button/%s/command" % button, "PRESS"), [])
         self.assertIsInstance(self.discovery(fixture, "button", "start_exercise"), dict)
+
+    def test_power_zone_set_time(self):
+        # Power Zone (Pro): genmon can set its clock
+        fixture = self.start(controller="Power Zone", start_info={"ExerciseControls": False})
+        self.connect(fixture)
+        self.assertIsInstance(self.discovery(fixture, "button", "set_generator_time"), dict)
+        self.assertEqual(self.message(fixture, "genmon/button/set_generator_time/command", "PRESS"),
+                         ["generator: settime"])
 
     def test_transfer_without_remote_transfer(self):
         # H-100 without an HTS transfer switch: start and stop, but no transfer
