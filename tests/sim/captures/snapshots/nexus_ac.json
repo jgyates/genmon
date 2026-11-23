@@ -139,7 +139,7 @@
    {
     "Controller Settings": [
      {
-      "Calibrate Volts": "1019 "
+      "Calibrate Volts": "1019"
      },
      {
       "Nominal Line Voltage": "240 V"
@@ -352,7 +352,7 @@
       "Battery Voltage": "13.30 V"
      },
      {
-      "RPM": "3604 "
+      "RPM": "3604"
      },
      {
       "Frequency": "59.00 Hz"
@@ -361,7 +361,7 @@
       "Output Voltage": "240 V"
      },
      {
-      "Active Rotor Poles (Calculated)": "2 "
+      "Active Rotor Poles (Calculated)": "2"
      }
     ]
    },

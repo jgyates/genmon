@@ -276,14 +276,20 @@ class MySupport(MyCommon):
                 DefaultReturn = ""
             if isinstance(value, int):
                 if not NoString:
-                    return "%d %s" % (int(value), str(unit))
+                    text = "%d" % int(value)
+                    if unit:
+                        text += " " + str(unit)
+                    return text
                 else:
                     ReturnDict["type"] = "int"
                     ReturnDict["value"] = value
                     return ReturnDict
             elif isinstance(value, float):
                 if not NoString:
-                    return "%.2f %s" % (float(value), str(unit))
+                    text = "%.2f" % float(value)
+                    if unit:
+                        text += " " + str(unit)
+                    return text
                 else:
                     ReturnDict["type"] = "float"
                     ReturnDict["value"] = round(value, 2)
