@@ -2050,7 +2050,7 @@
     13,
     "Evolution_Liquid_Cooled.json",
     "Only used for custom controller type. Select the controller configuration to use for the custom controller type. See the project wiki for more info on custom controller support",
-    "Basler_DGC_2020HD.json,Briggs_Stratton_GC-1032.json,ComAp.json,Deepsea_controller.json,Evolution_Liquid_Cooled.json,Kohler_APM402.json,Kohler_APM603.json,MEBAY_DCxx.json,Power_Zone_410.json,SmartGen_HGM4000.json",
+    "Basler_DGC_2020HD.json,Briggs_Stratton_GC-1032.json,ComAp.json,Cummins_PCC1302.json,Deepsea_controller.json,Evolution_Liquid_Cooled.json,Kohler_APM402.json,Kohler_APM603.json,MEBAY_DCxx.json,Power_Zone_410.json,SmartGen_HGM4000.json",
     "<CONF>/genmon.conf",
     "GenMon",
     "import_config_file"
