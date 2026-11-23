@@ -102,6 +102,7 @@ All notable changes to this project will be documented in this file.
 - Fixed genmon failing to start when serial_parity is set to 1 or 2 in genmon.conf (#1593). serial_parity now accepts None/Odd/Even or 0/1/2
 - Fixed serial_baud_rate being ignored for custom controllers. serial_rate is used if set, otherwise serial_baud_rate
 - Fixed values with no unit (e.g. RPM, Power Factor, Total Run Hours) having a trailing space ("1801 " is now "1801") in the web interface, JSON, MQTT and Home Assistant. Automations that compare these values as exact text may need updating (#1595, thanks @nicktdot)
+- Added support for the Cummins PowerCommand PCC1302 (PowerCommand 1.x) controller as a custom controller (Cummins_PCC1302.json), with an SNMP map. Monitoring only, no remote start / stop (#1594, thanks @millerchada)
 
 ## 2.0.3 -2026-10-07
 - Added support for an auxiliary alam log (see Advanced Settings to enable) and the Known Issues wiki for more info

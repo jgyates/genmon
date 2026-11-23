@@ -440,5 +440,161 @@ class GaugeTests(ControllerTestCase):
         self.assertEqual(controller.NominalKW, "45")
 
 
+# -------------------------------------------------------------------------------
+class CumminsPCC1302Tests(ControllerTestCase):
+    """Cummins_PCC1302.json with the register values of a running 208 V three
+    phase genset (values from the contributor's C36N6, Cummins A029X159)."""
+
+    FILE = "Cummins_PCC1302.json"
+    RUNNING = {
+        "0008": 71,      # 40009 controller type
+        "0009": 1,       # 40010 switch: Auto
+        "000a": 3,       # 40011 genset state: Running
+        "000b": 0,       # 40012 active fault code
+        "000c": 0,       # 40013 active fault type: Normal
+        "000f": 0x6000,  # 40016 NFPA 110: Genset Running, Genset Supplying Load
+        "0010": 0,       # 40017 extended annunciation
+        "0011": 120, "0012": 120, "0013": 120,          # L-N volts
+        "0015": 208, "0016": 208, "0017": 208, "0018": 208,  # L-L volts
+        "0019": 523, "001a": 500, "001b": 510, "001c": 511,  # x0.1 A
+        "002a": 18,      # 40043 kVA
+        "002b": 600,     # 40044 x0.1 Hz
+        "003c": 138,     # 40061 x0.1 V
+        "003d": 682,     # 40062 oil pressure, psi x0.1 (not kPa as documented)
+        "003f": 850,     # 40064 x0.1 C
+        "0043": 1800,    # 40068 RPM
+        "0044": 412,     # 40069 starts
+        "024a": 1,       # 40587 exercise scheduler: Active
+        "0bb7": 208, "0bb8": 0, "0bb9": 1, "0bba": 1,  # 43000-43003 ratings
+        "0d0f": 23, "0d10": 3, "0d11": 5, "0d13": 11, "0d14": 9, "0d15": 26,  # clock
+    }
+    RUN_SECONDS = 123 * 3600 + 1800  # 40070/40071, high word first
+
+    def registers(self, **changes):
+        with open(os.path.join(CONTROLLER_DIR, self.FILE)) as f:
+            regs = register_file(json.load(f))
+        values = dict(self.RUNNING, **changes)
+        for register, value in values.items():
+            regs["Registers"][register] = "%04x" % value
+        regs["Registers"]["0045"] = "%08x" % self.RUN_SECONDS
+        return regs
+
+    def pcc(self, registers=None, **settings):
+        return self.controller(self.FILE, registers=registers or self.registers(), **settings)
+
+    @staticmethod
+    def flat(section):
+        """{title: value} of a DisplayStatus / DisplayMaintenance list."""
+        out = {}
+        for item in section:
+            for key, value in item.items():
+                if isinstance(value, list) and all(isinstance(v, dict) for v in value):
+                    out.update(CumminsPCC1302Tests.flat(value))
+                else:
+                    out[key] = value
+        return out
+
+    def test_running(self):
+        c = self.pcc()
+        self.assertTrue(c.ControllerDetected)
+        status = self.flat(c.DisplayStatus(DictOut=True)["Status"])
+        self.assertEqual(status["Switch State"], "Auto")
+        self.assertEqual(status["Engine State"], "Running")
+        self.assertEqual(status["Active Fault Type"], "Normal")
+        self.assertEqual(status["NFPA 110 Annunciation"], "Genset Running, Genset Supplying Load")
+        self.assertEqual(status["Extended Annunciation"], "None")
+        self.assertEqual(status["Voltage L1-L2"], "208 V")
+        self.assertEqual(status["Current L1"], "52.30 A")
+        self.assertEqual(status["Average Current"], "51.10 A")
+        self.assertEqual(status["Output"], "18 kVA")
+        self.assertEqual(status["Frequency"], "60.00 Hz")
+        self.assertEqual(status["Engine Speed"], "1800 RPM")
+        self.assertEqual(status["Battery Voltage"], "13.80 V")
+        self.assertEqual(status["Oil Pressure"], "68.20 psi")
+        self.assertEqual(status["Generator Time"], "November 23, 2026 3:05:09")
+        # the duplicates of Switch State and Engine State were removed
+        self.assertNotIn("Switch Position", status)
+        self.assertNotIn("Genset State", status)
+        self.assertEqual(c.GetBaseStatus(), "RUNNING")
+        self.assertEqual(c.GetVoltageOutput(), 208)
+        self.assertEqual(self.code_errors(), [])
+
+    def test_maintenance(self):
+        c = self.pcc()
+        maint = self.flat(c.DisplayMaintenance(DictOut=True)["Maintenance"])
+        self.assertEqual(c.GetRunHours(), "123.5")
+        self.assertEqual(maint["Run Hours"], "123.50 h")
+        self.assertEqual(maint["Total Starts"], 412)
+        self.assertEqual(maint["Controller Exercise Scheduler"], "Active")
+        self.assertEqual(maint["Alternator Nominal Voltage"], "208 V")
+        self.assertEqual(maint["Alternator Frequency"], "60 Hz")
+        self.assertEqual(maint["Output Connection"], "Three Phase")
+        self.assertEqual(maint["Connection Type"], "Wye")
+
+    def test_rating_registers_not_read(self):
+        # 43000-43003 are not verified on hardware: if the controller rejects
+        # them, the controller is still detected and the lines are left out
+        regs = self.registers()
+        for register in ["0bb7", "0bb8", "0bb9", "0bba"]:
+            del regs["Registers"][register]
+        c = self.pcc(regs)
+        self.assertTrue(c.ControllerDetected)
+        maint = self.flat(c.DisplayMaintenance(DictOut=True)["Maintenance"])
+        self.assertNotIn("Alternator Nominal Voltage", maint)
+        self.assertEqual(maint["Run Hours"], "123.50 h")
+        self.assertEqual(self.code_errors(), [])
+
+    def test_states(self):
+        for switch, engine, base in [(0, 0, "OFF"), (1, 0, "READY"), (2, 0, "MANUAL"),
+                                     (1, 1, "READY"), (1, 3, "RUNNING")]:
+            with self.subTest(switch=switch, engine=engine):
+                c = self.pcc(self.registers(**{"0009": switch, "000a": engine, "000f": 0}))
+                self.assertEqual(c.GetBaseStatus(), base)
+        c = self.pcc(self.registers(**{"000a": 1}))
+        self.assertEqual(c.GetEngineState(), "Precrank")
+
+    def test_alarms(self):
+        c = self.pcc()
+        self.assertFalse(c.SystemInAlarm())
+        c = self.pcc(self.registers(**{"000b": 1438, "000c": 4, "0010": 0x0001}))
+        self.assertTrue(c.SystemInAlarm())
+        self.assertEqual(c.GetBaseStatus(), "ALARM")
+        self.assertEqual(c.GetAlarmState(), ["SHUTDOWN fault active (see Active Fault Code)"])
+        status = self.flat(c.DisplayStatus(DictOut=True)["Status"])
+        self.assertEqual(status["Active Fault Code"], 1438)
+        self.assertEqual(status["Active Fault Type"], "Shutdown")
+        self.assertEqual(status["Extended Annunciation"], "Emergency Stop")
+        self.assertEqual(status["Active Alarms"], ["SHUTDOWN fault active (see Active Fault Code)"])
+        c = self.pcc(self.registers(**{"000c": 1}))
+        self.assertEqual(c.GetAlarmState(), ["Warning fault active (see Active Fault Code)"])
+
+    def test_coolant_temperature(self):
+        # the status line and the gauge both follow the metric setting
+        for metric, text, units, nominal in [(False, "185.00 F", "F", 185), (True, "85.00 C", "C", 85)]:
+            with self.subTest(metric=metric):
+                c = self.pcc(metricweather=str(metric))
+                status = self.flat(c.DisplayStatus(DictOut=True)["Status"])
+                self.assertEqual(status["Coolant Temperature"], text)
+                tile = next(t for t in c.TileList if t.Type == "temperature")
+                self.assertEqual(tile.Units, units)
+                self.assertEqual(tile.Nominal, nominal)
+                self.assertEqual(float(tile.GetGUIInfo()["value"]), nominal)
+
+    def test_battery_from_setting(self):
+        # no battery voltage register: the gauge follows the setting
+        for setting in ["12", "24"]:
+            with self.subTest(nominalbattery=setting):
+                c = self.pcc(nominalbattery=setting)
+                tile = next(t for t in c.TileList if t.Type == "batteryvolts")
+                self.assertEqual(tile.Nominal, int(setting))
+
+    def test_read_only(self):
+        # no remote start / stop, E-stop or clock writes
+        c = self.pcc()
+        self.assertNotIn("buttons", c.controllerimport)
+        self.assertNotIn("settime", c.controllerimport)
+        self.assertFalse(c.GetStartInfo()["SetGenTime"])
+
+
 if __name__ == "__main__":
     unittest.main()
