@@ -113,6 +113,10 @@ class ValueTests(SupportTestCase):
     def test_value_out(self):
         self.assertEqual(self.s.ValueOut(240, "V"), "240 V")
         self.assertEqual(self.s.ValueOut(13.456, "V"), "13.46 V")
+        # empty unit must not leave a trailing space (e.g. RPM in status_json)
+        self.assertEqual(self.s.ValueOut(1801, ""), "1801")
+        self.assertEqual(self.s.ValueOut(13.456, ""), "13.46")
+        self.assertEqual(self.s.ValueOut(1801, None), "1801")
         self.assertEqual(self.s.ValueOut(240, "V", NoString=True),
                          collections.OrderedDict([("unit", "V"), ("type", "int"), ("value", 240)]))
         self.assertEqual(self.s.ValueOut(13.456, "V", NoString=True)["value"], 13.46)
