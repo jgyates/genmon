@@ -527,22 +527,64 @@ class CumminsPCC1302Tests(ControllerTestCase):
         self.assertEqual(maint["Total Starts"], 412)
         self.assertEqual(maint["Controller Exercise Scheduler"], "Active")
         self.assertEqual(maint["Alternator Nominal Voltage"], "208 V")
-        self.assertEqual(maint["Alternator Frequency"], "60 Hz")
-        self.assertEqual(maint["Output Connection"], "Three Phase")
         self.assertEqual(maint["Connection Type"], "Wye")
+        # the rated frequency and phase are shown by genmon (not repeated)
+        self.assertEqual(maint["Nominal Frequency"], 60)
+        self.assertEqual(maint["Phase"], 3)
+        self.assertNotIn("Alternator Frequency", maint)
+        self.assertNotIn("Output Connection", maint)
 
-    def test_rating_registers_not_read(self):
-        # 43000-43003 are not verified on hardware: if the controller rejects
-        # them, the controller is still detected and the lines are left out
+    def test_rated_values_from_controller(self):
+        # 43000-43002 (confirmed on the contributor's C36N6) set the rated
+        # voltage, frequency and phase, whatever the genmon settings are
+        for volts, freq_code, phase_code, freq, phase in [(208, 0, 1, 60, 3), (240, 1, 0, 50, 1)]:
+            with self.subTest(volts=volts, freq=freq, phase=phase):
+                c = self.pcc(self.registers(**{"0bb7": volts, "0bb8": freq_code, "0bb9": phase_code}),
+                             nominallinevolts="480", nominalfrequency="60" if freq == 50 else "50",
+                             phase="1" if phase == 3 else "3")
+                self.assertFalse(c.RatedValuesPending)
+                self.assertEqual(c.NominalLineVolts, volts)
+                self.assertEqual(c.NominalFreq, freq)
+                self.assertEqual(c.Phase, phase)
+                tiles = {t.Type: t for t in c.TileList}
+                self.assertEqual(tiles["linevolts"].Nominal, volts)
+                self.assertEqual(tiles["frequency"].Nominal, freq)
+
+    def test_rated_values_not_read(self):
+        # a controller that does not answer 43000-43003 (or not yet): it is
+        # still detected, and the genmon settings are used
         regs = self.registers()
         for register in ["0bb7", "0bb8", "0bb9", "0bba"]:
             del regs["Registers"][register]
-        c = self.pcc(regs)
+        c = self.pcc(regs, nominallinevolts="240", nominalfrequency="50", phase="1")
         self.assertTrue(c.ControllerDetected)
+        self.assertTrue(c.RatedValuesPending)
+        self.assertEqual(c.NominalLineVolts, 240)
+        self.assertEqual(int(c.NominalFreq), 50)
+        self.assertEqual(c.Phase, 1)
         maint = self.flat(c.DisplayMaintenance(DictOut=True)["Maintenance"])
         self.assertNotIn("Alternator Nominal Voltage", maint)
         self.assertEqual(maint["Run Hours"], "123.50 h")
         self.assertEqual(self.code_errors(), [])
+
+        # read later: the controller values are used from then on, and the
+        # gauges are set up again with them
+        c.Holding.update({"0bb7": "00d0", "0bb8": "0000", "0bb9": "0001", "0bba": "0001"})
+        with mock.patch.object(c.ModBus, "ProcessTransaction"):
+            c.MasterEmulation()
+        self.assertFalse(c.RatedValuesPending)
+        self.assertEqual(c.NominalLineVolts, 208)
+        self.assertEqual(c.NominalFreq, 60)
+        self.assertEqual(c.Phase, 3)
+        tiles = {t.Type: t for t in c.TileList}
+        self.assertEqual(tiles["linevolts"].Nominal, 208)
+        self.assertEqual(self.code_errors(), [])
+
+    def test_rated_values_fixed(self):
+        # controller files with fixed rated values are not pending
+        c = self.controller("Power_Zone_410.json", byte="01")
+        self.assertTrue(c.ControllerDetected)
+        self.assertFalse(c.RatedValuesPending)
 
     def test_states(self):
         for switch, engine, base in [(0, 0, "OFF"), (1, 0, "READY"), (2, 0, "MANUAL"),

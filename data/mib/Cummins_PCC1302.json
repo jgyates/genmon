@@ -267,21 +267,21 @@
         {
             "oid": "2, 5",
             "return_type": "str",
-            "description": "alternatorFrequency",
+            "description": "nominalFrequency",
             "default": "Unknown",
             "keywords": [
                 "Maintenance",
-                "Alternator Frequency"
+                "Nominal Frequency"
             ]
         },
         {
             "oid": "2, 6",
             "return_type": "str",
-            "description": "outputConnection",
+            "description": "phase",
             "default": "Unknown",
             "keywords": [
                 "Maintenance",
-                "Output Connection"
+                "Phase"
             ]
         },
         {

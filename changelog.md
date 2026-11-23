@@ -103,6 +103,7 @@ All notable changes to this project will be documented in this file.
 - Fixed serial_baud_rate being ignored for custom controllers. serial_rate is used if set, otherwise serial_baud_rate
 - Fixed values with no unit (e.g. RPM, Power Factor, Total Run Hours) having a trailing space ("1801 " is now "1801") in the web interface, JSON, MQTT and Home Assistant. Automations that compare these values as exact text may need updating (#1595, thanks @nicktdot)
 - Added support for the Cummins PowerCommand PCC1302 (PowerCommand 1.x) controller as a custom controller (Cummins_PCC1302.json), with an SNMP map. Monitoring only, no remote start / stop (#1594, thanks @millerchada)
+- Custom controllers that read their rated values (voltage, frequency, phase, etc.) from registers are now detected even if those registers can not be read; the genmon settings are used until the registers are read (genmon stayed on "Waiting for comms")
 
 ## 2.0.3 -2026-10-07
 - Added support for an auxiliary alam log (see Advanced Settings to enable) and the Known Issues wiki for more info

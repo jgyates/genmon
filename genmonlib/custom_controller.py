@@ -63,6 +63,7 @@ class CustomController(GeneratorController):
         )  # lock to synchronize access to the logs
         self.ConfigValidated = False
         self.ControllerDetected = False
+        self.RatedValuesPending = False    # a rated value register not read yet
         # for custom controllers
         self.SerialBaudRate = 9600
         self.SerialParity = None
@@ -242,23 +243,28 @@ class CustomController(GeneratorController):
             self.LogErrorLine("Error in GetSingleEntry: " + entry_name + ": " + str(e1))
             return False, None
 
-    # -------------CustomController:IdentifyController---------------------------
-    def IdentifyController(self):
+    # -------------CustomController:GetRatedEntry---------------------------------
+    # the value of a rated entry (e.g. rated_nominal_voltage) of the import
+    # file: a fixed value, or a register value. "Unknown" (use the genmon
+    # setting) if its register has not been read; its name is then added to
+    # NotRead
+    def GetRatedEntry(self, entry_name, NotRead):
+
+        ReturnValue, TempValue = self.GetSingleEntry(entry_name)
+        if not ReturnValue:
+            NotRead.append(entry_name)
+            return "Unknown"
+        return TempValue
+
+    # -------------CustomController:ReadRatedValues-------------------------------
+    # set the nominal values (line volts, battery volts, frequency, RPM, kW,
+    # phase) from the import file. Returns False if a register of one of them
+    # has not been read: the genmon setting (or default) is used for it
+    def ReadRatedValues(self):
 
         try:
-            if self.ControllerDetected:
-                return
-            if (self.Model != None and self.Model.lower() != str(self.controllerimport["controller_name"]).lower()) or self.Model == None:
-                self.config.WriteValue("model", str(self.controllerimport["controller_name"]))
-
-            self.Model = str(self.controllerimport["controller_name"])
-
-            ReturnValue = False
-
-            TempValue = None
-            ReturnValue, TempValue = self.GetSingleEntry("rated_nominal_voltage")
-            if not ReturnValue:
-                return False
+            NotRead = []
+            TempValue = self.GetRatedEntry("rated_nominal_voltage", NotRead)
             if isinstance(TempValue, float) and TempValue == 0:
                 # a float register (e.g. Basler) not set: the default, as for
                 # an int 0 (0 V divided by zero in the current gauge)
@@ -274,9 +280,7 @@ class CustomController(GeneratorController):
             else:
                 self.LogDebug("Nominal Line Volts: " + str(self.NominalLineVolts))
 
-            ReturnValue, TempValue = self.GetSingleEntry("nominal_battery_voltage")
-            if not ReturnValue:
-                return False
+            TempValue = self.GetRatedEntry("nominal_battery_voltage", NotRead)
             if isinstance(TempValue, int):
                 if TempValue == 0:
                     TempValue = 24
@@ -288,9 +292,7 @@ class CustomController(GeneratorController):
             else:
                 self.LogDebug("Nominal Battery Volts: " + str(self.NominalBatteryVolts))
 
-            ReturnValue, TempValue = self.GetSingleEntry("rated_nominal_freq")
-            if not ReturnValue:
-                return False
+            TempValue = self.GetRatedEntry("rated_nominal_freq", NotRead)
             if isinstance(TempValue, int):
                 if TempValue == 0:
                     TempValue = 60
@@ -305,9 +307,7 @@ class CustomController(GeneratorController):
             else:
                 self.LogDebug("Nominal Frequency: " + str(self.NominalFreq))
 
-            ReturnValue, TempValue = self.GetSingleEntry("rated_nominal_rpm")
-            if not ReturnValue:
-                return False
+            TempValue = self.GetRatedEntry("rated_nominal_rpm", NotRead)
 
             if isinstance(TempValue, int):
                 if TempValue == 0:
@@ -323,9 +323,7 @@ class CustomController(GeneratorController):
             else:
                 self.LogDebug("Nominal RPM: " + str(self.NominalRPM))
 
-            ReturnValue, TempValue = self.GetSingleEntry("rated_max_output_power_kw")
-            if not ReturnValue:
-                return False
+            TempValue = self.GetRatedEntry("rated_max_output_power_kw", NotRead)
             if isinstance(TempValue, int):
                 if TempValue == 0:
                     TempValue = 100
@@ -339,9 +337,7 @@ class CustomController(GeneratorController):
             else:
                 self.LogDebug("Nominal kW: " + str(self.NominalKW))
 
-            ReturnValue, TempValue = self.GetSingleEntry("generator_phase")
-            if not ReturnValue:
-                return False
+            TempValue = self.GetRatedEntry("generator_phase", NotRead)
             if isinstance(TempValue, int):
                 self.Phase = TempValue
                 if self.Phase != 1:
@@ -350,6 +346,31 @@ class CustomController(GeneratorController):
                 self.Phase = int(TempValue)
             else:
                 self.LogDebug("Phase: " + str(self.Phase))
+
+            if len(NotRead):
+                if not self.RatedValuesPending:
+                    self.LogDebug("Rated values not read, using the genmon settings until they are read: " + ", ".join(NotRead))
+                return False
+            return True
+        except Exception as e1:
+            self.LogErrorLine("Error in ReadRatedValues: " + str(e1))
+            return False
+
+    # -------------CustomController:IdentifyController---------------------------
+    def IdentifyController(self):
+
+        try:
+            if self.ControllerDetected:
+                return
+            if (self.Model != None and self.Model.lower() != str(self.controllerimport["controller_name"]).lower()) or self.Model == None:
+                self.config.WriteValue("model", str(self.controllerimport["controller_name"]))
+
+            self.Model = str(self.controllerimport["controller_name"])
+
+            # rated values: a register that has not been read (not answered
+            # yet, or not supported by this controller) uses the genmon
+            # settings until it is read (see MasterEmulation)
+            self.RatedValuesPending = not self.ReadRatedValues()
 
             if "identity" in self.controllerimport.keys():
                 Controller_Identity = self.GetExtendedDisplayString(self.controllerimport, "identity")
@@ -792,6 +813,13 @@ class CustomController(GeneratorController):
 
             if self.ControllerDetected == False:
                 self.IdentifyController()
+            elif self.RatedValuesPending and self.ReadRatedValues():
+                # a rated value register read after the controller was
+                # detected (with the genmon settings): use it from now on
+                self.RatedValuesPending = False
+                self.LogDebug("Rated values read from the controller")
+                if self.InitComplete:
+                    self.SetupTiles()
             self.CheckForAlarmEvent.set()
         except Exception as e1:
             self.LogErrorLine("Error in MasterEmulation: " + str(e1))
