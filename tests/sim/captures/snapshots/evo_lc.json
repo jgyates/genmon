@@ -117,7 +117,7 @@
    {
     "Controller Settings": [
      {
-      "Calibrate Volts": "1024 "
+      "Calibrate Volts": "1024"
      },
      {
       "Nominal Line Voltage": "Unknown V"
@@ -126,19 +126,19 @@
       "Rated Max Power": "Unknown kW"
      },
      {
-      "Param Group": "25 "
+      "Param Group": "25"
      },
      {
-      "Voltage Code": "24 "
+      "Voltage Code": "24"
      },
      {
       "Time Since Activation": "320 h"
      },
      {
-      "Volts Per Hertz": "10 "
+      "Volts Per Hertz": "10"
      },
      {
-      "Gain": "0 "
+      "Gain": "0"
      },
      {
       "Target Frequency": "60 Hz"
@@ -369,7 +369,7 @@
       "Battery Charger Current": "2 mA"
      },
      {
-      "RPM": "0 "
+      "RPM": "0"
      },
      {
       "Frequency": "0.00 Hz"
@@ -384,7 +384,7 @@
       "Output Power (Single Phase)": "0.00 kW"
      },
      {
-      "Active Rotor Poles (Calculated)": "0 "
+      "Active Rotor Poles (Calculated)": "0"
      }
     ]
    },

@@ -30,7 +30,7 @@
     "Fuel Level Sensor": "70 %"
    },
    {
-    "Model Number": "2020 "
+    "Model Number": "2020"
    },
    {
     "Hours Until Maintenance Due": "0 h"
@@ -51,7 +51,7 @@
     "Cum. Unloaded Engine Run Time": "25:44"
    },
    {
-    "Total Generator Starts": "158 "
+    "Total Generator Starts": "158"
    },
    {
     "Commission Date": "2/23/21"
@@ -282,10 +282,10 @@
       "Battery Voltage": "26.10 V"
      },
      {
-      "RPM": "0 "
+      "RPM": "0"
      },
      {
-      "Power Factor": "1.00 "
+      "Power Factor": "1.00"
      },
      {
       "Total kVA": "0 kVA"

@@ -73,7 +73,7 @@
       "Controller Temperature": "32 F"
      },
      {
-      "AUX Sensor": "0 "
+      "AUX Sensor": "0"
      }
     ]
    }
@@ -295,7 +295,7 @@
       "Battery Voltage": "12.60 V"
      },
      {
-      "RPM": "0 "
+      "RPM": "0"
      },
      {
       "Water Temperature": "95 F"
@@ -341,7 +341,7 @@
       "Apparent Power": "0.00 kVA"
      },
      {
-      "Power Factor": "1.00 "
+      "Power Factor": "1.00"
      },
      {
       "Output Load": "0 %"

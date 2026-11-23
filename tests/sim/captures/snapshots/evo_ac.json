@@ -156,13 +156,13 @@
    {
     "Controller Settings": [
      {
-      "Calibrate Current 1": "1453 "
+      "Calibrate Current 1": "1453"
      },
      {
-      "Calibrate Current 2": "1480 "
+      "Calibrate Current 2": "1480"
      },
      {
-      "Calibrate Volts": "1016 "
+      "Calibrate Volts": "1016"
      },
      {
       "Nominal Line Voltage": "240 V"
@@ -378,7 +378,7 @@
       "Battery Charger Current": "479 mA"
      },
      {
-      "RPM": "3601 "
+      "RPM": "3601"
      },
      {
       "Frequency": "0.00 Hz"
@@ -399,7 +399,7 @@
       "Output Power (Single Phase)": "0.00 kW"
      },
      {
-      "Active Rotor Poles (Calculated)": "0 "
+      "Active Rotor Poles (Calculated)": "0"
      }
     ]
    },

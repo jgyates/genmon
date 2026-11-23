@@ -41,7 +41,7 @@
       "Maintenance Countdown": "50 h"
      },
      {
-      "Total Crank Times": "0 "
+      "Total Crank Times": "0"
      },
      {
       "Dynamic Load": "0 %"
@@ -211,7 +211,7 @@
       "Generator Frequency": "0.00 Hz"
      },
      {
-      "RPM": "0.00 "
+      "RPM": "0.00"
      },
      {
       "Voltage L1": "0 V"
@@ -259,16 +259,16 @@
       "Total Reactive Power": "0.00 kVar"
      },
      {
-      "Power Factor PF1": "0.00 "
+      "Power Factor PF1": "0.00"
      },
      {
-      "Power Factor PF2": "0.00 "
+      "Power Factor PF2": "0.00"
      },
      {
-      "Power Factor PF3": "0.00 "
+      "Power Factor PF3": "0.00"
      },
      {
-      "Average Power Factor": "0.00 "
+      "Average Power Factor": "0.00"
      },
      {
       "Oil Pressure": "94 PSI"

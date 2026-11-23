@@ -198,7 +198,7 @@
    {
     "Service": [
      {
-      "Total Run Hours": "94.90 "
+      "Total Run Hours": "94.90"
      }
     ]
    },
@@ -334,10 +334,10 @@
       "Output Power": "0.00 kW"
      },
      {
-      "Power Factor": "1.00 "
+      "Power Factor": "1.00"
      },
      {
-      "RPM": "0 "
+      "RPM": "0"
      },
      {
       "Frequency": "0.00 Hz"
@@ -358,10 +358,10 @@
       "Oil Temp": "0 F"
      },
      {
-      "Fuel Level": "0 "
+      "Fuel Level": "0"
      },
      {
-      "Oxygen Sensor": "1 "
+      "Oxygen Sensor": "1"
      },
      {
       "Current Phase A": "0 A"
@@ -388,17 +388,17 @@
       "Average Voltage": "0 V"
      },
      {
-      "Air Fuel Duty Cycle": "9.80 "
+      "Air Fuel Duty Cycle": "9.80"
      }
     ]
    },
    {
     "Alarms": [
      {
-      "Number of Active Alarms": "0 "
+      "Number of Active Alarms": "0"
      },
      {
-      "Number of Acknowledged Alarms": "0 "
+      "Number of Acknowledged Alarms": "0"
      }
     ]
    },

@@ -216,13 +216,13 @@
    {
     "Service": [
      {
-      "Firmware Version": "1.07 "
+      "Firmware Version": "1.07"
      },
      {
-      "Hardware Version": "1.01 "
+      "Hardware Version": "1.01"
      },
      {
-      "EEProm Version": "0.01 "
+      "EEProm Version": "0.01"
      },
      {
       "Run Hours": "58.83 h"
