@@ -925,13 +925,13 @@ class GeneratorController(MySupport):
                     return int(FloatValue)
                 if ReturnFloat:
                     return round(FloatValue, 3)
-                if not Label == None:
+                if Label:
                     return "%.2f %s" % (FloatValue, Label)
                 else:
                     return "%.2f" % (FloatValue)
             elif ReturnInt:
                 return IntValue
-            elif not Label == None:
+            elif Label:
                 return "%d %s" % (IntValue, Label)
             else:
                 return str(int(Value, 16))
