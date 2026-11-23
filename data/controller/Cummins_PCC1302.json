@@ -1,0 +1,662 @@
+{
+    "controller_name": "Cummins PCC1302",
+    "information": "Cummins PowerCommand PCC1302 (PowerCommand 1.x family) over Modbus RTU on the controller's RS485 port (PCC1302 TB15-3 A+, TB15-4 B-, TB15-1 common). Register map from Cummins document A029X159, section 'PCC 1301/PowerCommand 1.x/PS0500 Modbus Register Map'. Typical comms 9600 baud, even parity (genmon.conf: serial_parity = even), slave address 1. READ-ONLY profile: no buttons, no settime. Tested on a 36 kW natural gas C36N6 genset (controller type code 71).",
+    "register_format_info": "Addresses are 0-based Modbus PDU addresses in hex: Cummins 4xxxx = (xxxx - 1), e.g. 40010 -> 0009. The controller accepts reads of 1-16 contiguous registers and rejects a block containing an unimplemented address, so each register is declared on its own.",
+    "rated_max_output_power_kw": "Unknown",
+    "rated_nominal_voltage": "Unknown",
+    "rated_nominal_rpm": "Unknown",
+    "rated_nominal_freq": "Unknown",
+    "nominal_battery_voltage": 12,
+    "generator_phase": "Unknown",
+    "holding_registers": {
+        "0008": {
+            "length": 2,
+            "text": "Controller Type",
+            "comment": "40009"
+        },
+        "0009": {
+            "length": 2,
+            "text": "Operation Mode Switch",
+            "comment": "40010 0=Off 1=Auto 2=Manual"
+        },
+        "000a": {
+            "length": 2,
+            "text": "Genset State",
+            "comment": "40011 0=Ready 1=Precrank 2=Ramp 3=Running"
+        },
+        "000b": {
+            "length": 2,
+            "text": "Active Fault Code",
+            "comment": "40012"
+        },
+        "000c": {
+            "length": 2,
+            "text": "Active Fault Type",
+            "comment": "40013 0=Normal 1=Warning 4=Shutdown"
+        },
+        "000f": {
+            "length": 2,
+            "text": "NFPA 110 Fault Register",
+            "comment": "40016"
+        },
+        "0010": {
+            "length": 2,
+            "text": "Extended Annunciation Fault Register",
+            "comment": "40017"
+        },
+        "0011": {
+            "length": 2,
+            "text": "Voltage L1-N",
+            "comment": "40018 Vac"
+        },
+        "0012": {
+            "length": 2,
+            "text": "Voltage L2-N",
+            "comment": "40019 Vac"
+        },
+        "0013": {
+            "length": 2,
+            "text": "Voltage L3-N",
+            "comment": "40020 Vac"
+        },
+        "0015": {
+            "length": 2,
+            "text": "Voltage L1-L2",
+            "comment": "40022 Vac"
+        },
+        "0016": {
+            "length": 2,
+            "text": "Voltage L2-L3",
+            "comment": "40023 Vac"
+        },
+        "0017": {
+            "length": 2,
+            "text": "Voltage L3-L1",
+            "comment": "40024 Vac"
+        },
+        "0018": {
+            "length": 2,
+            "text": "Average L-L Voltage",
+            "comment": "40025 Vac"
+        },
+        "0019": {
+            "length": 2,
+            "text": "Current L1",
+            "comment": "40026 x0.1 A"
+        },
+        "001a": {
+            "length": 2,
+            "text": "Current L2",
+            "comment": "40027 x0.1 A"
+        },
+        "001b": {
+            "length": 2,
+            "text": "Current L3",
+            "comment": "40028 x0.1 A"
+        },
+        "001c": {
+            "length": 2,
+            "text": "Average Current",
+            "comment": "40029 x0.1 A"
+        },
+        "002a": {
+            "length": 2,
+            "text": "Total kVA",
+            "comment": "40043 kVA"
+        },
+        "002b": {
+            "length": 2,
+            "text": "Frequency",
+            "comment": "40044 x0.1 Hz"
+        },
+        "003c": {
+            "length": 2,
+            "text": "Battery Voltage",
+            "comment": "40061 x0.1 Vdc"
+        },
+        "003d": {
+            "length": 2,
+            "text": "Oil Pressure",
+            "comment": "40062 - A029X159 lists kPa x1, but the tested unit reports psi x0.1 (raw 682 = 68.2 psi, matching a mechanic's 68 psi). Verify on your unit."
+        },
+        "003f": {
+            "length": 2,
+            "text": "Coolant Temperature",
+            "comment": "40064 x0.1 degC"
+        },
+        "0043": {
+            "length": 2,
+            "text": "Engine Speed",
+            "comment": "40068 RPM"
+        },
+        "0044": {
+            "length": 2,
+            "text": "Total Starts",
+            "comment": "40069"
+        },
+        "0045": {
+            "length": 4,
+            "text": "Engine Run Time",
+            "comment": "40070 (high) + 40071 (low), seconds"
+        },
+        "024a": {
+            "length": 2,
+            "text": "Exercise Scheduler Status",
+            "comment": "40587 0=Inactive 1=Active"
+        },
+        "0d0f": {
+            "length": 2,
+            "text": "Clock Date",
+            "comment": "43344 day of month (writable on the controller; read only here)"
+        },
+        "0d10": {
+            "length": 2,
+            "text": "Clock Hours",
+            "comment": "43345 1-12, no AM/PM register"
+        },
+        "0d11": {
+            "length": 2,
+            "text": "Clock Minutes",
+            "comment": "43346"
+        },
+        "0d13": {
+            "length": 2,
+            "text": "Clock Month",
+            "comment": "43348"
+        },
+        "0d14": {
+            "length": 2,
+            "text": "Clock Seconds",
+            "comment": "43349"
+        },
+        "0d15": {
+            "length": 2,
+            "text": "Clock Year",
+            "comment": "43350 0-99"
+        }
+    },
+    "datetime": {
+        "type": "list",
+        "format": "%s %s, 20%s %s:%s:%s",
+        "title": "Generator Time",
+        "value": [
+            {
+                "reg": "0d13",
+                "mask": "ffff",
+                "type": "object_int_index",
+                "object": {
+                    "1": "January",
+                    "2": "February",
+                    "3": "March",
+                    "4": "April",
+                    "5": "May",
+                    "6": "June",
+                    "7": "July",
+                    "8": "August",
+                    "9": "September",
+                    "10": "October",
+                    "11": "November",
+                    "12": "December"
+                },
+                "default": "Unknown",
+                "title": "Month"
+            },
+            {
+                "reg": "0d0f",
+                "mask": "ffff",
+                "type": "int",
+                "title": "Day"
+            },
+            {
+                "reg": "0d15",
+                "mask": "ffff",
+                "type": "int",
+                "format": "%02d",
+                "title": "Year"
+            },
+            {
+                "reg": "0d10",
+                "mask": "ffff",
+                "type": "int",
+                "title": "Hours"
+            },
+            {
+                "reg": "0d11",
+                "mask": "ffff",
+                "type": "int",
+                "format": "%02d",
+                "title": "Minutes"
+            },
+            {
+                "reg": "0d14",
+                "mask": "ffff",
+                "type": "int",
+                "format": "%02d",
+                "title": "Seconds"
+            }
+        ]
+    },
+    "switch_state": [
+        {
+            "reg": "0009",
+            "type": "object_int_index",
+            "title": "Switch State",
+            "default": "Unknown",
+            "mask": "ffff",
+            "object": {
+                "0": "Off",
+                "1": "Auto",
+                "2": "Manual"
+            }
+        }
+    ],
+    "engine_state": [
+        {
+            "reg": "000a",
+            "type": "object_int_index",
+            "title": "Engine State",
+            "default": "Unknown",
+            "mask": "ffff",
+            "object": {
+                "0": "Stopped",
+                "1": "Cranking",
+                "2": "Starting",
+                "3": "Running"
+            }
+        }
+    ],
+    "basestatus": [
+        {
+            "reg": "000c",
+            "mask": "ffff",
+            "value": "1",
+            "type": "regex",
+            "regex": "^[1-9a-f][0-9a-f]*$",
+            "title": "Base Status",
+            "text": "ALARM"
+        },
+        {
+            "reg": "000a",
+            "mask": "ffff",
+            "value": "1",
+            "type": "regex",
+            "regex": "^3$",
+            "title": "Base Status",
+            "text": "RUNNING"
+        },
+        {
+            "reg": "0009",
+            "mask": "ffff",
+            "value": "1",
+            "type": "regex",
+            "regex": "^0$",
+            "title": "Base Status",
+            "text": "OFF"
+        },
+        {
+            "reg": "0009",
+            "mask": "ffff",
+            "value": "1",
+            "type": "regex",
+            "regex": "^2$",
+            "title": "Base Status",
+            "text": "MANUAL"
+        },
+        {
+            "reg": "0009",
+            "mask": "ffff",
+            "value": "1",
+            "type": "regex",
+            "regex": "^1$",
+            "title": "Base Status",
+            "text": "READY"
+        }
+    ],
+    "alarm_active": [
+        {
+            "reg": "000c",
+            "mask": "ffff",
+            "value": "1",
+            "type": "regex",
+            "regex": "^[1-9a-f][0-9a-f]*$",
+            "title": "Alarm",
+            "text": "Alarm Active"
+        }
+    ],
+    "alarm_conditions": [
+        {
+            "reg": "000c",
+            "mask": "ffff",
+            "value": "1",
+            "type": "regex",
+            "regex": "^1$",
+            "title": "Warning",
+            "text": "Warning fault active (see Active Fault Code)"
+        },
+        {
+            "reg": "000c",
+            "mask": "ffff",
+            "value": "1",
+            "type": "regex",
+            "regex": "^4$",
+            "title": "Shutdown",
+            "text": "SHUTDOWN fault active (see Active Fault Code)"
+        }
+    ],
+    "status": [
+        {
+            "reg": "0009",
+            "type": "object_int_index",
+            "title": "Switch Position",
+            "default": "Unknown",
+            "mask": "ffff",
+            "object": {
+                "0": "Off",
+                "1": "Auto",
+                "2": "Manual"
+            }
+        },
+        {
+            "reg": "000a",
+            "type": "object_int_index",
+            "title": "Genset State",
+            "default": "Unknown",
+            "mask": "ffff",
+            "object": {
+                "0": "Ready",
+                "1": "Precrank",
+                "2": "Ramp",
+                "3": "Running"
+            }
+        },
+        {
+            "reg": "000b",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Active Fault Code"
+        },
+        {
+            "reg": "000c",
+            "type": "object_int_index",
+            "title": "Active Fault Type",
+            "default": "Unknown",
+            "mask": "ffff",
+            "object": {
+                "0": "Normal",
+                "1": "Warning",
+                "4": "Shutdown"
+            }
+        },
+        {
+            "reg": "0011",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Voltage L1-N",
+            "units": "V"
+        },
+        {
+            "reg": "0012",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Voltage L2-N",
+            "units": "V"
+        },
+        {
+            "reg": "0013",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Voltage L3-N",
+            "units": "V"
+        },
+        {
+            "reg": "0015",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Voltage L1-L2",
+            "units": "V"
+        },
+        {
+            "reg": "0016",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Voltage L2-L3",
+            "units": "V"
+        },
+        {
+            "reg": "0017",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Voltage L3-L1",
+            "units": "V"
+        },
+        {
+            "reg": "0019",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "round": 1,
+            "title": "Current L1",
+            "units": "A"
+        },
+        {
+            "reg": "001a",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "round": 1,
+            "title": "Current L2",
+            "units": "A"
+        },
+        {
+            "reg": "001b",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "round": 1,
+            "title": "Current L3",
+            "units": "A"
+        },
+        {
+            "reg": "002a",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Output",
+            "units": "kVA"
+        },
+        {
+            "reg": "002b",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "round": 1,
+            "title": "Frequency",
+            "units": "Hz"
+        },
+        {
+            "reg": "0043",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Engine Speed",
+            "units": "RPM"
+        },
+        {
+            "reg": "003c",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "round": 1,
+            "title": "Battery Voltage",
+            "units": "V"
+        },
+        {
+            "reg": "003d",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "round": 1,
+            "title": "Oil Pressure",
+            "units": "psi"
+        },
+        {
+            "reg": "003f",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "round": 1,
+            "title": "Coolant Temperature",
+            "units": "C",
+            "temperature": "celsius"
+        }
+    ],
+    "maintenance": [
+        {
+            "reg": "0045",
+            "mask": "ffffffff",
+            "multiplier": 0.000277777778,
+            "type": "float",
+            "round": 1,
+            "title": "Run Hours",
+            "units": "h"
+        },
+        {
+            "reg": "0044",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Total Starts"
+        },
+        {
+            "reg": "024a",
+            "type": "object_int_index",
+            "title": "Controller Exercise Scheduler",
+            "default": "Unknown",
+            "mask": "ffff",
+            "object": {
+                "0": "Inactive",
+                "1": "Active"
+            }
+        },
+        {
+            "reg": "0008",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Controller Type Code"
+        }
+    ],
+    "gauges": [
+        {
+            "reg": "003c",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Battery Voltage",
+            "units": "V",
+            "sensor": "batteryvolts",
+            "nominal": 12,
+            "values": [
+                0,
+                10,
+                11.5,
+                14.5,
+                15.5,
+                18
+            ],
+            "maximum": 18
+        },
+        {
+            "reg": "0018",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Output Voltage (avg L-L)",
+            "units": "V",
+            "sensor": "linevolts",
+            "nominal": "Unknown"
+        },
+        {
+            "reg": "002b",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Frequency",
+            "units": "Hz",
+            "sensor": "frequency",
+            "nominal": "Unknown"
+        },
+        {
+            "reg": "0043",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "RPM",
+            "units": null,
+            "sensor": "rpm",
+            "nominal": "Unknown"
+        },
+        {
+            "reg": "003f",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Coolant Temperature",
+            "units": "C",
+            "sensor": "temperature",
+            "nominal": 85,
+            "values": [
+                0,
+                20,
+                35,
+                100,
+                105,
+                120
+            ],
+            "maximum": 120
+        },
+        {
+            "reg": "003d",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Oil Pressure",
+            "units": "psi",
+            "sensor": "pressure",
+            "nominal": 60,
+            "values": [
+                0,
+                15,
+                25,
+                80,
+                90,
+                100
+            ],
+            "maximum": 100
+        }
+    ],
+    "outputvoltage": {
+        "reg": "0018",
+        "mask": "ffff",
+        "multiplier": 1,
+        "type": "int",
+        "title": "Output Voltage",
+        "units": "V"
+    },
+    "run_hours": {
+        "reg": "0045",
+        "mask": "ffffffff",
+        "multiplier": 0.000277777778,
+        "type": "float",
+        "round": 1,
+        "title": "Run Hours",
+        "units": "h"
+    }
+}
