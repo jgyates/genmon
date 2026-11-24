@@ -1168,6 +1168,20 @@
           "exec": "exec_out = round(({} * ({} / 1000.0)) / 1000.0, 2)",
           "sensor": "power",
           "nominal": "Unknown"
+      },
+      {
+          "comment": "Power graph on the dashboard: same value as the Power Output gauge (the title must be unique)",
+          "reg": "0058",
+          "type": "list",
+          "title": "Power Graph",
+          "units": "kW",
+          "value": [
+            {"reg": "0012", "mask": "ffff", "type": "int", "title": "Output Voltage"},
+            {"reg": "0058", "mask": "ffff", "type": "int", "title": "Hall Effect Sensor"}
+          ],
+          "exec": "exec_out = round(({} * ({} / 1000.0)) / 1000.0, 2)",
+          "sensor": "powergraph",
+          "nominal": "Unknown"
       }
     ],
     "buttons" : [
