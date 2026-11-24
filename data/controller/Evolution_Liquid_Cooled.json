@@ -209,6 +209,17 @@
               "units": "V"
           },
           {
+              "comment": "Power = output voltage (0012) * hall effect sensor current (0058, mA on firmware V1.43 or later; older firmware: divide by 100 instead of 1000), power factor of 1.0",
+              "type": "list",
+              "title": "Power",
+              "units": "kW",
+              "value": [
+                {"reg": "0012", "mask": "ffff", "type": "int", "title": "Output Voltage"},
+                {"reg": "0058", "mask": "ffff", "type": "int", "title": "Hall Effect Sensor"}
+              ],
+              "exec": "exec_out = round(({} * ({} / 1000.0)) / 1000.0, 2)"
+          },
+          {
               "reg": "0008",
               "mask": "ffff",
               "multiplier": 1,
@@ -1143,6 +1154,20 @@
           "units": null,
           "sensor": "rpm",
           "nominal": 1800
+      },
+      {
+          "comment": "Power = output voltage (0012) * hall effect sensor current (0058, mA on firmware V1.43 or later). The reg is required for a gauge, the value comes from the list.",
+          "reg": "0058",
+          "type": "list",
+          "title": "Power Output",
+          "units": "kW",
+          "value": [
+            {"reg": "0012", "mask": "ffff", "type": "int", "title": "Output Voltage"},
+            {"reg": "0058", "mask": "ffff", "type": "int", "title": "Hall Effect Sensor"}
+          ],
+          "exec": "exec_out = round(({} * ({} / 1000.0)) / 1000.0, 2)",
+          "sensor": "power",
+          "nominal": "Unknown"
       }
     ],
     "buttons" : [
@@ -1331,6 +1356,17 @@
           "title": "Fuel Sensor",
           "units": "%",
           "sensor": "fuel"
+      },
+    "power": {
+        "comment": "Power in kW = output voltage (0012) * hall effect sensor current (0058), power factor of 1.0. Assumes firmware V1.43 or later, where 0058 is in mA (older firmware reports in 1/100 A: divide by 100.0 instead of 1000.0)",
+        "type": "list",
+        "title": "Power Output",
+        "units": "kW",
+        "value": [
+          {"reg": "0012", "mask": "ffff", "type": "int", "title": "Output Voltage"},
+          {"reg": "0058", "mask": "ffff", "type": "int", "title": "Hall Effect Sensor"}
+        ],
+        "exec": "exec_out = round(({} * ({} / 1000.0)) / 1000.0, 2)"
       },
     "outputvoltage": {
         "reg": "0012",
