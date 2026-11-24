@@ -544,6 +544,22 @@
             "units": "A"
         },
         {
+            "comment": "Power in kW calculated from the voltage and current (the controller has no kW or power factor register). Single phase (43002 = 0): V(L1-L2) * (I1 + I2) / 2, no power factor. Three phase (43002 = 1): sqrt(3) * V(average L-L) * I(average) * power factor. The power factor is 0.9 unless power_factor is set in genmon.conf (e.g. power_factor = 0.85)",
+            "type": "list",
+            "title": "Power",
+            "units": "kW",
+            "value": [
+                {"reg": "0bb9", "mask": "ffff", "type": "int", "title": "Phase", "comment": "43002 0=Single Phase 1=Three Phase"},
+                {"reg": "power_factor", "reg_type": "config", "type": "float", "multiplier": 1, "default": 0.9, "title": "Power Factor", "comment": "three phase only: genmon.conf power_factor, 0.9 if not set"},
+                {"reg": "0015", "mask": "ffff", "type": "int", "title": "Voltage L1-L2", "comment": "40022"},
+                {"reg": "0019", "mask": "ffff", "multiplier": 0.1, "type": "float", "title": "Current L1", "comment": "40026"},
+                {"reg": "001a", "mask": "ffff", "multiplier": 0.1, "type": "float", "title": "Current L2", "comment": "40027"},
+                {"reg": "0018", "mask": "ffff", "type": "int", "title": "Average L-L Voltage", "comment": "40025"},
+                {"reg": "001c", "mask": "ffff", "multiplier": 0.1, "type": "float", "title": "Average Current", "comment": "40029"}
+            ],
+            "exec": "exec_out = round(((({2} * ({3} + {4}) / 2.0) if {0} == 0 else (1.7320508 * {5} * {6} * {1}))) / 1000.0, 2)"
+        },
+        {
             "reg": "002a",
             "mask": "ffff",
             "multiplier": 1,
@@ -731,8 +747,43 @@
                 100
             ],
             "maximum": 100
+        },
+        {
+            "comment": "Power in kW calculated from the voltage and current (the controller has no kW or power factor register). Single phase (43002 = 0): V(L1-L2) * (I1 + I2) / 2, no power factor. Three phase (43002 = 1): sqrt(3) * V(average L-L) * I(average) * power factor. The power factor is 0.9 unless power_factor is set in genmon.conf (e.g. power_factor = 0.85) The reg is required for a gauge, the value comes from the list.",
+            "reg": "001c",
+            "type": "list",
+            "title": "Power Output",
+            "units": "kW",
+            "value": [
+                {"reg": "0bb9", "mask": "ffff", "type": "int", "title": "Phase", "comment": "43002 0=Single Phase 1=Three Phase"},
+                {"reg": "power_factor", "reg_type": "config", "type": "float", "multiplier": 1, "default": 0.9, "title": "Power Factor", "comment": "three phase only: genmon.conf power_factor, 0.9 if not set"},
+                {"reg": "0015", "mask": "ffff", "type": "int", "title": "Voltage L1-L2", "comment": "40022"},
+                {"reg": "0019", "mask": "ffff", "multiplier": 0.1, "type": "float", "title": "Current L1", "comment": "40026"},
+                {"reg": "001a", "mask": "ffff", "multiplier": 0.1, "type": "float", "title": "Current L2", "comment": "40027"},
+                {"reg": "0018", "mask": "ffff", "type": "int", "title": "Average L-L Voltage", "comment": "40025"},
+                {"reg": "001c", "mask": "ffff", "multiplier": 0.1, "type": "float", "title": "Average Current", "comment": "40029"}
+            ],
+            "exec": "exec_out = round(((({2} * ({3} + {4}) / 2.0) if {0} == 0 else (1.7320508 * {5} * {6} * {1}))) / 1000.0, 2)",
+            "sensor": "power",
+            "nominal": "Unknown"
         }
     ],
+    "power": {
+        "comment": "Power in kW calculated from the voltage and current (the controller has no kW or power factor register). Single phase (43002 = 0): V(L1-L2) * (I1 + I2) / 2, no power factor. Three phase (43002 = 1): sqrt(3) * V(average L-L) * I(average) * power factor. The power factor is 0.9 unless power_factor is set in genmon.conf (e.g. power_factor = 0.85)",
+        "type": "list",
+        "title": "Power Output",
+        "units": "kW",
+        "value": [
+            {"reg": "0bb9", "mask": "ffff", "type": "int", "title": "Phase", "comment": "43002 0=Single Phase 1=Three Phase"},
+            {"reg": "power_factor", "reg_type": "config", "type": "float", "multiplier": 1, "default": 0.9, "title": "Power Factor", "comment": "three phase only: genmon.conf power_factor, 0.9 if not set"},
+            {"reg": "0015", "mask": "ffff", "type": "int", "title": "Voltage L1-L2", "comment": "40022"},
+            {"reg": "0019", "mask": "ffff", "multiplier": 0.1, "type": "float", "title": "Current L1", "comment": "40026"},
+            {"reg": "001a", "mask": "ffff", "multiplier": 0.1, "type": "float", "title": "Current L2", "comment": "40027"},
+            {"reg": "0018", "mask": "ffff", "type": "int", "title": "Average L-L Voltage", "comment": "40025"},
+            {"reg": "001c", "mask": "ffff", "multiplier": 0.1, "type": "float", "title": "Average Current", "comment": "40029"}
+        ],
+        "exec": "exec_out = round(((({2} * ({3} + {4}) / 2.0) if {0} == 0 else (1.7320508 * {5} * {6} * {1}))) / 1000.0, 2)"
+    },
     "outputvoltage": {
         "reg": "0018",
         "mask": "ffff",
