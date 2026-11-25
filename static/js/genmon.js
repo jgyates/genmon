@@ -4397,7 +4397,9 @@ var Pages = {
 
       $('#j-search').on('input', function() { Pages.journal._renderList(); });
 
-      $('#j-date').val(new Date().toISOString().slice(0,16));
+      /* datetime-local wants local time; toISOString() is UTC, so shift by the offset first */
+      var _now = new Date();
+      $('#j-date').val(new Date(_now.getTime() - _now.getTimezoneOffset() * 60000).toISOString().slice(0,16));
 
       /* Auto-fill engine hours from the global polling data */
       if (S.runHours) {

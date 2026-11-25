@@ -108,6 +108,7 @@ All notable changes to this project will be documented in this file.
 - Home Assistant (native integration and MQTT) and Hubitat: the Quiet Mode switch now shows the generator's quiet mode setting (it was always unknown)
 - Home Assistant (native integration and MQTT) and Hubitat: the Power Zone 200 and Power Zone controllers are now recognized (they were treated as custom controllers). The Power Zone 200 now has the exercise controls and Set Generator Time, and only its own Start Exercise Cycle button (the duplicate Start Exercise button was removed); the Power Zone now has Set Generator Time
 - Tests: added Evolution 2.0 and Power Zone 200 register captures for the simulator tests; tests/sim/anonymize_capture.py now also replaces the serial number in captures that store the registers as "Holding"
+- Fixed the Service Journal new entry time defaulting to UTC instead of the browser's local time (#1596, thanks @djmike3404)
 
 ## 2.0.3 -2026-10-07
 - Added support for an auxiliary alam log (see Advanced Settings to enable) and the Known Issues wiki for more info
