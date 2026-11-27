@@ -129,6 +129,7 @@ class MyMQTT(MyCommon):
             self.strict = config.ReadValue("strict", return_type=bool, default=False)
             self.use_for_power_fuel = config.ReadValue("use_for_power_fuel", return_type=bool, default=False)
             self.topics = self.ParseStringToList(config.ReadValue("topics", default=""))
+            self.json_keys = self.ParseStringToList(config.ReadValue("json_keys", default=""))
             self.types = self.ParseStringToList(config.ReadValue("types", default=""))
             self.units = self.ParseStringToList(config.ReadValue("units", default=""))
             self.labels = self.ParseStringToList(config.ReadValue("labels", default=""))
@@ -177,6 +178,12 @@ class MyMQTT(MyCommon):
             if len(self.topics) != len(self.max_values):
                 self.LogError("Number of topics does not equal the number of max values. " + str(len(self.topics)) +", " + str(len(self.max_values)))
                 sys.exit(1)
+            # json_keys is optional, a blank entry means the topic is a plain number
+            if self.json_keys == None or not any(self.json_keys):
+                self.json_keys = [""] * len(self.topics)
+            if len(self.topics) != len(self.json_keys):
+                self.LogError("Number of topics does not equal the number of JSON keys. " + str(len(self.topics)) +", " + str(len(self.json_keys)))
+                sys.exit(1)
             
             self.UseCT1CT2 = False
             self.UseP1P2 = False
@@ -191,8 +198,11 @@ class MyMQTT(MyCommon):
                 self.LogDebug("Using voltageleg1 and voltagelegs2")
                 self.UseVoltageLegs = True
 
-            # build dict
+            # build dict. Sensors are keyed by topic, or topic#json_key when the
+            # value is read from a JSON payload, so one topic can feed several sensors
             self.Sensors = {}
+            # MQTT topic: list of (sensor key, json key) read from that topic
+            self.TopicSensors = {}
             index = 0
             self.GaugeData = []
             for topic in self.topics:
@@ -205,7 +215,10 @@ class MyMQTT(MyCommon):
                     exclude_gauge = self.labels[index] in self.exclude_gauge
 
                 sensor_type = self.types[index]
-                self.Sensors[topic] = {"title": self.labels[index], 
+                json_key = self.json_keys[index]
+                sensor_key = topic + "#" + json_key if json_key else topic
+                self.TopicSensors.setdefault(topic, []).append((sensor_key, json_key))
+                self.Sensors[sensor_key] = {"title": self.labels[index], 
                                        "type": sensor_type, 
                                        "units": self.units[index], 
                                        "nominal": self.ConvertToNumber(self.nominal_values[index]),
@@ -213,7 +226,7 @@ class MyMQTT(MyCommon):
                                        "exclude_gauge": exclude_gauge,
                                        "from": "genmqttin",
                                        "strict": self.strict}
-                GaugeDict = self.Sensors[topic].copy()
+                GaugeDict = self.Sensors[sensor_key].copy()
                 if GaugeDict['type'] in ['ct1','ct2']:
                     GaugeDict['type'] = 'current'
                 elif GaugeDict['type'] in ['ctpower1','ctpower2']:
@@ -370,7 +383,7 @@ class MyMQTT(MyCommon):
 
             # Subscribing in on_connect() means that if we lose the connection and
             # reconnect then subscriptions will be renewed.
-            for topic in self.topics:
+            for topic in self.TopicSensors:
                 self.MQTTclient.subscribe(topic)
 
             # Setup Last Will value
@@ -384,18 +397,61 @@ class MyMQTT(MyCommon):
     def on_message(self, client, userdata, message):
 
         try:
-            value = self.ConvertToNumber(str(message.payload))
-            self.LogDebug("on_message: " + message.topic + ": " + str(value))
-
-            topic_data = self.Sensors.get(message.topic, None)
-            if topic_data == None:
+            sensors = self.TopicSensors.get(message.topic, None)
+            if sensors == None:
                 self.LogDebug("No topic data found for " + str(message.topic))
-            else:
-                self.SendData(message.topic, topic_data, value)
-            # send data to genmon
-            
+                return
+            payload = None
+            for sensor_key, json_key in sensors:
+                if not json_key:
+                    value = self.ConvertToNumber(str(message.payload))
+                else:
+                    if payload == None:
+                        payload = self.DecodeJSON(message)
+                        if payload == None:
+                            return
+                    value = self.GetJSONValue(payload, json_key)
+                    if value == None:
+                        self.LogDebug("No numeric value for " + json_key + " in " + message.topic)
+                        continue
+                self.LogDebug("on_message: " + sensor_key + ": " + str(value))
+                # send data to genmon
+                self.SendData(sensor_key, self.Sensors[sensor_key], value)
+
         except Exception as e1:
             self.LogErrorLine("Error in MyMQTT:on_message: " + str(e1))
+
+    # ------------ MyMQTT::DecodeJSON-------------------------------------------
+    def DecodeJSON(self, message):
+        try:
+            return json.loads(message.payload.decode("utf-8"))
+        except Exception as e1:
+            self.LogDebug("Payload is not JSON for " + str(message.topic) + ": " + str(e1))
+            return None
+
+    # ------------ MyMQTT::GetJSONValue-----------------------------------------
+    # json_key is a key, or a dotted path for nested objects (e.g. em.a_current,
+    # a number selects a list item). Returns None if there is no numeric value.
+    def GetJSONValue(self, payload, json_key):
+        try:
+            value = payload
+            for part in json_key.split("."):
+                if isinstance(value, dict):
+                    value = value.get(part, None)
+                elif isinstance(value, list) and part.isdigit() and int(part) < len(value):
+                    value = value[int(part)]
+                else:
+                    return None
+            if isinstance(value, bool):
+                return None
+            if isinstance(value, (int, float)):
+                return value
+            if isinstance(value, str) and any(c.isdigit() for c in value):
+                return self.ConvertToNumber(value)
+            return None
+        except Exception as e1:
+            self.LogErrorLine("Error in GetJSONValue: " + str(e1) + ": " + str(json_key))
+            return None
 
     # ------------ MyMQTT::on_subscribe-----------------------------------------
     def on_subscribe(self, client, userdata, mid, qos, properties=None):

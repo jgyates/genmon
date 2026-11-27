@@ -672,7 +672,15 @@ ADDONS = (
               Param("topics", "string", "Topics",
                     "Comma separated list of MQTT topics to subscribe and import into genmon. "
                     "All topics must return a numeric value or a string representation of a "
-                    "numeric value.",
+                    "numeric value, or a JSON object (see JSON Keys below).",
+                    ""),
+              Param("json_keys", "string", "JSON Keys",
+                    "Optional. Comma separated list of JSON keys for each topic listed above, "
+                    "for topics that publish a JSON object instead of a single number (e.g. "
+                    "Shelly, Tasmota or Zigbee2MQTT). Use a dotted path for nested values "
+                    "(e.g. ENERGY.Power). Leave an entry blank for a topic that publishes a "
+                    "number. The same topic can be listed more than once with different keys. "
+                    "Leave empty if no topics use JSON.",
                     ""),
               Param("labels", "string", "Displayed Name",
                     "Comma separated list of display names for each topic listed above. These "

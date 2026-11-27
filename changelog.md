@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+- genmqttin can read values from topics that publish JSON (new JSON Keys setting), e.g. Shelly energy meters
+
 ## 2.0.4 -2026-11-19
 - Added initial support for Kohler APM402
 - Web UI security updates (thanks @MichaelB2018 and @skipfire)

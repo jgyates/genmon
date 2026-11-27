@@ -389,8 +389,50 @@ class MQTTInTests(unittest.TestCase):
         power = fixture.commands("generator: set_power_data=")[-1]
         self.assertEqual((power["voltagelegs"], power["voltage"]), ([121, 119], 240))
 
+    def test_json_keys(self):
+        # one Shelly Pro 3EM topic feeds four sensors
+        topic = "shellypro3em400/status/em:0"
+        fixture = self.start([(topic, "ct1", "Leg A Current", "A", "100", "125"),
+                              (topic, "ct2", "Leg B Current", "A", "100", "125"),
+                              (topic, "voltageleg1", "Leg A Voltage", "V", "120", "150"),
+                              (topic, "voltageleg2", "Leg B Voltage", "V", "120", "150")],
+                             json_keys="a_current,b_current,a_voltage,b_voltage",
+                             use_for_power_fuel="True")
+        self.assertEqual(len(fixture.commands("generator: set_external_gauge_data=")[0]), 4)
+        fixture.addon.on_connect(self.client, None, {}, 0)
+        self.assertEqual(self.client.subscribed, [topic])  # subscribed once
+        self.receive(fixture, topic, json.dumps(
+            {"id": 0, "a_current": 10.088, "a_voltage": 122.6, "b_current": 2.226,
+             "b_voltage": 123.3, "n_current": None}))
+        sensor = fixture.commands("generator: set_sensor_data=")
+        self.assertIn([{"Leg B Current": "2.226 A"}, {"Leg A Current": "10.088 A"}], sensor)
+        self.assertIn([{"Leg A Voltage": "122.6 V"}], sensor)
+        self.assertIn([{"Leg B Voltage": "123.3 V"}], sensor)
+        power = fixture.commands("generator: set_power_data=")[-1]
+        self.assertEqual((power["ctdata"], power["voltagelegs"]), ([10, 2], [122, 123]))
+
+    def test_json_keys_mixed_and_nested(self):
+        fixture = self.start([("home/temp", "temperature", "Temp", "F", "100", "250"),
+                              ("tasmota/SENSOR", "power", "Load", "W", "5000", "22000"),
+                              ("z2m/plug", "current", "Plug", "A", "10", "15")],
+                             json_keys=",ENERGY.Power,list.1")
+        self.receive(fixture, "home/temp", "77")
+        self.receive(fixture, "tasmota/SENSOR", '{"ENERGY": {"Power": "1500"}}')
+        self.receive(fixture, "z2m/plug", '{"list": [1, 3.5]}')
+        # missing key, null, bool and non-JSON payloads are skipped
+        self.receive(fixture, "tasmota/SENSOR", '{"ENERGY": {"Voltage": 120}}')
+        self.receive(fixture, "tasmota/SENSOR", '{"ENERGY": {"Power": null}}')
+        self.receive(fixture, "tasmota/SENSOR", '{"ENERGY": {"Power": true}}')
+        self.receive(fixture, "tasmota/SENSOR", "offline")
+        self.assertEqual(fixture.commands("generator: set_sensor_data="),
+                         [[{"Temp": "77 F"}], [{"Load": "1500 W"}], [{"Plug": "3.5 A"}]])
+
     def test_invalid_settings(self):
         for sensors, settings in [
+                ([("t", "temperature", "T", "F", "1", "2")],
+                 {"topics": "a,b", "types": "temperature,temperature", "labels": "A,B",
+                  "units": "F,F", "nominal_values": "1,1", "maximum_values": "2,2",
+                  "json_keys": "x,y,z"}),                                     # json key count
                 ([("t", "humidity", "H", "%", "1", "2")], {}),            # unknown type
                 ([("t", "temperature", "T", "F", "1", "2")], {"labels": "A,B"}),  # counts differ
                 ([("t", "temperature", "T", "F", "1", "2")], {"topics": ""})]:   # no topics
